@@ -41,3 +41,10 @@ export interface PreparedState<TState, TDelta> {
   readonly snapshot: StateSnapshot<TState>;
   readonly transition: StateTransition<TDelta>;
 }
+
+export interface StatePrepareContext {
+  readonly entityId: EntityId;
+  readonly executionId: ExecutionId;
+  readonly operationKey: string;
+  readonly now: IsoTimestamp;
+}

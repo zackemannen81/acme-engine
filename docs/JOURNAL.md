@@ -140,3 +140,33 @@ Add one dated, signed entry for every meaningful work session or handoff.
   it and explicitly change the task to `Ready` with a recorded freeze
   timestamp before implementation.
 - Signature: Codex
+
+## 2026-07-29 — Pure StateEngine completed
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0006
+- Summary: Froze the approved StateEngine charter and implemented pure,
+  domain-neutral state preparation in `@acme/core`. Added explicit entity,
+  execution, operation and time prepare context; initial and existing revision
+  handling; current-state, delta, reduced-state and invariant validation;
+  immutable reducer inputs; canonical snapshot/transition hashes; complete
+  provenance; and no-op behavior when no delta exists. Accepted ADR-0004 and
+  implemented versioned deterministic transition identity
+  `acme-transition-id-1` without extending `IdGenerator`. No repository,
+  persistence, memory, orchestration, provider or reference-domain behavior
+  was added.
+- Verification: Frozen install, formatting, lint, strict typecheck,
+  dependency boundaries and build passed. Unit tests passed 5 files and 35
+  tests, including 16 StateEngine tests for the ID golden vector,
+  stability/sensitivity, revision behavior, no delta, stale conflicts,
+  validation failures, immutability, hashes and provenance. Conformance,
+  integration and scenario gates passed empty because those layers remain
+  outside this charter. Documentation checks and `git diff --check` passed
+  after archival. No checks were skipped. Remote CI was not run because the
+  branch was not pushed; local Node was `24.14.1` while CI remains pinned to
+  `24.18.0`.
+- Follow-ups: Explicitly charter the pure MemoryEngine as the next bounded
+  Milestone 1 task. Later repository work must enforce compare-and-swap and
+  reject divergent content under one deterministic `transitionId`.
+- Signature: Codex

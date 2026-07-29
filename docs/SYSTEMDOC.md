@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Approved architecture with pure contract layer
+Status: Approved architecture with pure contract layer and StateEngine
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -21,7 +21,7 @@ protocols and milestones are defined in
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
-This substrate does not implement or claim execution, memory, state,
+This substrate does not implement or claim execution orchestration, memory,
 persistence, scenario or provider behavior.
 
 ## Implemented Contract Layer
@@ -41,8 +41,31 @@ persistence, scenario or provider behavior.
 - task-typed module authoring and compile-time task input/output inference
 - state and memory envelopes/policy declarations required by module contracts
 
-StateEngine, MemoryEngine, ExecutionEngine, persistence ports, adapters and
+MemoryEngine, ExecutionEngine, persistence ports, adapters and
 reference-domain behavior are not implemented.
+
+## Implemented StateEngine
+
+`@acme/core` implements pure state preparation without store access:
+
+- `StatePrepareContext` carries entity, execution, operation and time context;
+  namespace remains module-owned
+- revision zero initializes state through
+  `module.initialState({ entityId, now })`
+- existing snapshots, delta envelopes, reduced state and invariants are
+  validated before a candidate can be returned
+- stale expected revisions fail with `CONFLICT_STATE_REVISION`
+- reducers receive detached, deeply frozen state and delta values
+- missing deltas return `null` without invoking initialization, reduction or
+  invariants
+- accepted results produce immutable next-snapshot and transition candidates
+  with canonical SHA-256 hashes and execution provenance
+- transition IDs use the immutable `acme-transition-id-1` derivation from
+  execution ID, operation key, module namespace and entity ID
+
+The StateEngine does not persist candidates. Repository compare-and-swap,
+transition-content idempotency and atomic Unit of Work behavior remain future
+boundaries.
 
 ## System Purpose
 
@@ -122,7 +145,9 @@ interface StateSnapshot<TState> {
   schemaVersion: string;
   revision: number;
   value: TState;
-  updatedAt: string;
+  valueHash: string;
+  createdAt: string;
+  executionId: string;
 }
 ```
 
@@ -145,10 +170,11 @@ Raw provider response
 
 No earlier stage is canonical truth.
 
-The implemented portion currently begins with an already normalized model
-response and ends with a validated contract output plus deterministic parsed
-hash. Provider normalization and all downstream domain/canonical effects
-remain future work.
+The implemented trust path begins with an already normalized model response
+and can produce validated contract output plus a deterministic parsed hash.
+Separately, the StateEngine accepts an interpreted typed delta and prepares a
+validated next-state candidate. Provider normalization, module interpretation,
+memory effects and canonical persistence remain future work.
 
 ## Initial Persistence Direction
 
@@ -173,8 +199,8 @@ branches in core.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- StateEngine and MemoryEngine behavior using the implemented static module
-  and contract composition surface.
+- MemoryEngine behavior using the implemented static module and contract
+  composition surface.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.

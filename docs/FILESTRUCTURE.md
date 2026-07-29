@@ -31,11 +31,13 @@ acme-engine/
 │   │   │   ├── modules.ts
 │   │   │   ├── registries.ts
 │   │   │   ├── response-pipeline.ts
+│   │   │   ├── state-engine.ts
 │   │   │   └── state.ts
 │   │   ├── test/
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── registries.test.ts
-│   │   │   └── response-pipeline.test.ts
+│   │   │   ├── response-pipeline.test.ts
+│   │   │   └── state-engine.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
 │   └── testing/
@@ -56,6 +58,12 @@ acme-engine/
 │       └── tsconfig.base.json
 ├── docs/
 │   ├── adr/
+│   │   ├── 0001-typescript-pnpm-workspace.md
+│   │   ├── 0002-static-task-typed-module-composition.md
+│   │   ├── 0003-sqlite-revisioned-unit-of-work.md
+│   │   ├── 0004-deterministic-transition-identity.md
+│   │   ├── README.md
+│   │   └── template.md
 │   ├── backlog/
 │   ├── design/
 │   ├── finished/
@@ -90,8 +98,8 @@ acme-engine/
 ## Implemented Workspace
 
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
-  response validation and static registries. Zod is its only external runtime
-  dependency.
+  response validation, static registries and pure revisioned state
+  preparation. Zod is its only external runtime dependency.
 - `@acme/testing`: typed test-support skeleton importing `@acme/core` through
   the workspace.
 - `@acme/cli`: behavior-free composition-root skeleton importing
