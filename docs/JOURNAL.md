@@ -120,3 +120,23 @@ Add one dated, signed entry for every meaningful work session or handoff.
   MemoryEngine, in-memory repository/model mock and the Narrative slice remain
   separate Milestone 1 tasks.
 - Signature: Codex
+
+## 2026-07-29 — Pure StateEngine charter drafted
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0006
+- Summary: Drafted the bounded pure StateEngine charter for maintainer review.
+  The charter resolves transition identity through the versioned
+  `acme-transition-id-1` derivation instead of extending `IdGenerator`. It
+  requires `entityId` in the prepare context so revision-zero state can be
+  initialized, excludes mutable transition content from identity and requires
+  ADR-0004 plus a normative specification correction. No StateEngine code,
+  public contract or persistence behavior was changed in this session.
+- Verification: Documentation links, balanced Markdown fences and
+  `git diff --check` passed. Runtime checks are not applicable because this
+  change only drafts the next task charter.
+- Follow-ups: Review the Draft charter in the pull request. If approved, merge
+  it and explicitly change the task to `Ready` with a recorded freeze
+  timestamp before implementation.
+- Signature: Codex
