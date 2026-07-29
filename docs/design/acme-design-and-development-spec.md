@@ -817,17 +817,95 @@ export type MemoryLifecycleDecision =
   | { readonly action: "update-strength"; readonly strength: number }
   | { readonly action: "forget"; readonly reason: string };
 
-export type MemoryResolution = { readonly candidateKey: string } & (
-  | { readonly action: "create"; readonly identityKey: string; readonly value: JsonValue }
-  | { readonly action: "reinforce"; readonly memoryId: string }
-  | { readonly action: "merge"; readonly memoryId: string; readonly value: JsonValue }
+export type MemoryLifecycleHook =
+  | "execution-start"
+  | "execution-commit"
+  | "maintenance";
+
+export type MemoryResolution =
   | {
+      readonly candidateKey: string;
+      readonly action: "create";
+      readonly value: JsonValue;
+      readonly strength: number;
+    }
+  | {
+      readonly candidateKey: string;
+      readonly action: "reinforce";
+      readonly memoryId: string;
+      readonly strength: number;
+    }
+  | {
+      readonly candidateKey: string;
+      readonly action: "merge";
+      readonly memoryId: string;
+      readonly value: JsonValue;
+      readonly strength: number;
+    }
+  | {
+      readonly candidateKey: string;
       readonly action: "contradict";
       readonly memoryIds: readonly string[];
-      readonly disposition: "contest" | "supersede-existing" | "reject-candidate";
+      readonly disposition: "contest" | "reject-candidate";
     }
-  | { readonly action: "ignore"; readonly reason: string }
-);
+  | {
+      readonly candidateKey: string;
+      readonly action: "contradict";
+      readonly memoryIds: readonly string[];
+      readonly disposition: "supersede-existing";
+      readonly replacement: {
+        readonly value: JsonValue;
+        readonly strength: number;
+      };
+    }
+  | {
+      readonly candidateKey: string;
+      readonly action: "ignore";
+      readonly reason: string;
+    };
+
+export interface MemoryPrepareContext {
+  readonly namespace: Namespace;
+  readonly entityId: EntityId;
+  readonly executionId: ExecutionId;
+  readonly now: IsoTimestamp;
+}
+
+export interface MemoryLifecycleContext {
+  readonly namespace: Namespace;
+  readonly entityId: EntityId;
+  readonly now: IsoTimestamp;
+}
+
+export type MemoryMutation =
+  | { readonly action: "create"; readonly record: MemoryRecord }
+  | {
+      readonly action: "update";
+      readonly expectedRecordVersion: number;
+      readonly record: MemoryRecord;
+    };
+
+export interface PreparedMemoryDecision {
+  readonly candidateKey: string;
+  readonly identityKey: string;
+  readonly resolution: MemoryResolution;
+  readonly affectedMemoryIds: readonly string[];
+}
+
+export interface PreparedMemory {
+  readonly decisions: readonly PreparedMemoryDecision[];
+  readonly mutations: readonly MemoryMutation[];
+}
+
+export interface PreparedMemoryLifecycleDecision {
+  readonly memoryId: string;
+  readonly decision: MemoryLifecycleDecision;
+}
+
+export interface PreparedMemoryLifecycle {
+  readonly decisions: readonly PreparedMemoryLifecycleDecision[];
+  readonly mutations: readonly MemoryMutation[];
+}
 
 export interface DomainMemoryPolicy {
   validate(candidate: MemoryCandidate): readonly DomainIssue[];
@@ -843,17 +921,53 @@ export interface DomainMemoryPolicy {
   ): MemoryResolution;
   lifecycle(
     record: MemoryRecord,
-    hook: "execution-start" | "execution-commit" | "maintenance",
+    hook: MemoryLifecycleHook,
     context: { now: IsoTimestamp },
   ): MemoryLifecycleDecision;
+}
+
+export interface MemoryEngine {
+  prepare(
+    policy: DomainMemoryPolicy,
+    candidates: readonly MemoryCandidate[],
+    existing: readonly MemoryRecord[],
+    context: MemoryPrepareContext,
+  ): PreparedMemory;
+  retrieve(
+    policy: DomainMemoryPolicy,
+    query: MemoryQuery,
+    records: readonly MemoryRecord[],
+  ): readonly RankedMemory[];
+  applyLifecycle(
+    policy: DomainMemoryPolicy,
+    records: readonly MemoryRecord[],
+    hook: MemoryLifecycleHook,
+    context: MemoryLifecycleContext,
+  ): PreparedMemoryLifecycle;
 }
 ```
 
 Core owns fetching, stable ordering, timestamps, provenance append,
 record-version checks and applying policy decisions. The domain owns identity,
 equivalence, contradiction, merge semantics, relevance, reinforcement,
-decay and promotion. Scores MUST be finite numbers; ties are resolved by
-`identityKey`, then `memoryId`, never database return order.
+decay and promotion. Domain decisions MUST therefore provide the complete
+resulting strength for create, reinforce, merge and supersede replacement;
+core MUST NOT invent a generic strength formula. Strengths MUST be finite and
+non-negative. Candidate confidence, when supplied, MUST be finite and between
+zero and one inclusive.
+
+Candidates are processed by candidate key against an immutable evolving
+working set sorted by `identityKey`, then `memoryId`. Later candidates observe
+earlier prepared decisions. Creates and supersede replacements consume
+`IdGenerator.next("memory")` only after their complete decision validates.
+New records start at record version one. Every update carries the previous
+version as `expectedRecordVersion` and increments once. Candidate provenance
+is appended without an identical duplicate.
+
+Retrieval scores MUST be finite numbers. Core rejects records not present in
+the supplied set and duplicate ranked records, then sorts by descending score,
+`identityKey` and `memoryId` before applying the query limit. Database return
+order never breaks a tie.
 
 Lifecycle hooks run only at explicit deterministic boundaries. Wall-clock
 background decay is forbidden in version 1. A maintenance execution MAY
@@ -861,6 +975,7 @@ invoke the hook with a recorded timestamp.
 
 Candidate rows are retained for audit even when ignored or rejected. Memory
 records are written only inside the canonical Unit of Work.
+See [ADR-0005](../adr/0005-pure-memory-decision-application.md).
 
 ## 13. Evaluator and safety composition
 
@@ -1255,7 +1370,7 @@ export interface PreparedCommit {
   readonly operationDigest: string;
   readonly documents: readonly CandidateDocument[];
   readonly memoryCandidates: readonly MemoryCandidate[];
-  readonly memoryOperations: readonly MemoryResolution[];
+  readonly memory: PreparedMemory;
   readonly state: PreparedState<JsonValue, JsonValue> | null;
   readonly evaluatorRuns: readonly {
     evaluatorId: string;

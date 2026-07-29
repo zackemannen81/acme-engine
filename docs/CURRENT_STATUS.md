@@ -29,9 +29,11 @@ implementation baseline:
 - ADR-0002: Static task-typed module composition
 - ADR-0003: SQLite revisioned Unit of Work
 - ADR-0004: Deterministic transition identity
+- ADR-0005: Pure memory decision application
 
-ACME has a build substrate, pure contract layer and pure StateEngine but no
-execution orchestration or persistence. There is currently:
+ACME has a build substrate, pure contract layer, pure StateEngine and pure
+MemoryEngine but no execution orchestration or persistence. There is
+currently:
 
 - common JSON, identity, time, document and diagnostic contracts
 - deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
@@ -47,16 +49,23 @@ execution orchestration or persistence. There is currently:
 - versioned deterministic transition identity `acme-transition-id-1`, derived
   from execution/operation/module/entity identity without consuming
   `IdGenerator`
+- a pure MemoryEngine that validates candidates and loaded records, executes
+  domain-owned resolution against a deterministic evolving working set and
+  prepares immutable create/update mutations with expected record versions
+- deterministic memory retrieval with validated policy results, stable
+  score/identity/ID ordering and enforced limits
+- explicit lifecycle preparation for retain, strength-update and forget
+  decisions without background wall-clock behavior
 - a typed `@acme/testing` skeleton that imports `@acme/core` through the
   workspace
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 35 passing unit tests across canonicalization, hashing, response validation,
-  registries, state preparation and workspace imports
+- 52 passing unit tests across canonicalization, hashing, response validation,
+  registries, state/memory preparation and workspace imports
 - compile-time task-name/input/output inference checks
 - empty, passing conformance, integration and scenario gates
-- no ExecutionEngine or MemoryEngine behavior
+- no ExecutionEngine behavior
 - no database schema
 - no model provider adapter
 - no published package
@@ -69,13 +78,15 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No task is active. ACME-0006 completed the pure StateEngine. The recommended
-next bounded Milestone 1 task is the pure MemoryEngine and requires an
-explicitly approved charter.
+No task is active. ACME-0007 completed the pure MemoryEngine. The recommended
+next bounded Milestone 1 task is the aggregate repository port and in-memory
+Unit of Work and requires an explicitly approved charter.
 
 ## Persistent Gaps
 
-- MemoryEngine and ExecutionEngine behavior is not implemented.
+- ExecutionEngine behavior is not implemented.
+- Candidate audit persistence and memory mutation compare-and-swap are not
+  implemented.
 - Repository-level compare-and-swap and idempotency enforcement for prepared
   state transitions is not implemented.
 - Repository ports, in-memory persistence and model mock are not implemented.

@@ -8,6 +8,7 @@ export * from './errors.js';
 export * from './execution-types.js';
 export * from './hashing.js';
 export * from './memory.js';
+export * from './memory-engine.js';
 export * from './model.js';
 export * from './modules.js';
 export * from './registries.js';
