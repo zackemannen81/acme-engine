@@ -65,3 +65,29 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Follow-ups: Activate the bounded ACME-0004 repository-bootstrap charter from
   specification section 26 when implementation is explicitly approved.
 - Signature: Codex
+
+## 2026-07-29 — Repository bootstrap completed
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0004
+- Summary: Activated and completed the frozen repository-bootstrap charter.
+  Added a pnpm workspace and lockfile, exact Node/pnpm and development
+  dependency pins, shared strict ESM TypeScript configuration, ESLint,
+  Prettier, Vitest and dependency-cruiser. Added behavior-free `@acme/core`,
+  `@acme/testing` and `@acme/cli` skeletons, a passing workspace import test,
+  a core vocabulary guard and a negative dependency fixture. Added a
+  secret-free GitHub Actions workflow mirroring the local gates. No execution,
+  memory, state, persistence, provider or domain behavior was introduced.
+- Verification: `pnpm install --frozen-lockfile` and a forced frozen reinstall
+  passed with pnpm `10.34.5`. Documentation checks covered 24 Markdown files.
+  Format, lint, strict typecheck, dependency boundaries, unit tests and build
+  passed. The unit suite passed 1 file and 1 test. Conformance, integration
+  and scenario commands passed with no test files, as expected for this
+  behavior-free milestone. `git diff --check` passed. Remote GitHub Actions was
+  not run because no push was authorized. Local checks used installed Node
+  `24.14.1`; CI uses the exact repository pin `24.18.0`.
+- Follow-ups: Shape and explicitly approve a bounded Milestone 1 task for pure
+  contracts and in-memory execution. Do not begin runtime work from the empty
+  task template.
+- Signature: Codex

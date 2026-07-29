@@ -1,12 +1,27 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Approved pre-implementation architecture
+Status: Approved architecture with repository bootstrap
 
 This document describes long-lived system boundaries. It does not claim that
-the runtime currently exists. Exact contracts, storage schema, protocols and
+the runtime engines currently exist. Exact contracts, storage schema, protocols and
 milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
+
+## Implemented Substrate
+
+- pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
+- strict ESM TypeScript project references
+- behavior-free `@acme/core`, `@acme/testing` and `@acme/cli` skeletons
+- workspace import test from `@acme/testing` to `@acme/core`
+- dependency-cruiser package-boundary enforcement
+- source vocabulary guard for `packages/core/src`
+- negative fixture proving forbidden core-to-app dependencies fail
+- secret-free CI gates for documentation, formatting, lint, typecheck,
+  boundaries, tests and builds
+
+This substrate does not implement or claim execution, memory, state,
+persistence, scenario or provider behavior.
 
 ## System Purpose
 
@@ -129,7 +144,7 @@ No earlier stage is canonical truth.
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
 
-## Implementation Baseline
+## Planned Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
 - Static task-typed module and contract registries.

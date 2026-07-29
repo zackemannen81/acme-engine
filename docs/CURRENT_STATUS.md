@@ -7,6 +7,13 @@ Last updated: 2026-07-29
 - Git repository initialized on `main`.
 - Remote: `https://github.com/zackemannen81/acme-engine.git`.
 - Docs-first foundation is present.
+- A pnpm workspace and lockfile now provide the implementation substrate.
+- Node `24.18.0` and pnpm `10.34.5` are pinned; all root development
+  dependencies use exact versions.
+- Strict ESM TypeScript, ESLint, Prettier, Vitest and dependency-cruiser are
+  configured.
+- Secret-free GitHub Actions CI mirrors documentation, formatting, lint,
+  typecheck, boundary, test and build commands.
 - Frozen task charters, parent/child tasks, paused tasks and backlog proposals
   are governed by `docs/TASK_WORKFLOW.md`.
 - LF line endings are enforced through `.gitattributes`.
@@ -21,11 +28,17 @@ implementation baseline:
 - ADR-0002: Static task-typed module composition
 - ADR-0003: SQLite revisioned Unit of Work
 
-ACME remains pre-implementation. There is currently:
+ACME has a build substrate but remains pre-runtime. There is currently:
 
-- no runtime source tree
-- no package manager or workspace configuration
-- no TypeScript configuration
+- a typed, behavior-free `@acme/core` package skeleton
+- a typed `@acme/testing` skeleton that imports `@acme/core` through the
+  workspace
+- a typed `@acme/cli` composition-root skeleton
+- an automated dependency rule, core vocabulary guard and negative boundary
+  fixture
+- one passing workspace import unit test
+- empty, passing conformance, integration and scenario gates
+- no ExecutionEngine, StateEngine or MemoryEngine behavior
 - no database schema
 - no model provider adapter
 - no published package
@@ -38,15 +51,16 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. `ACME-0003` completed the design baseline.
-The specification proposes a bounded `ACME-0004` repository-bootstrap charter,
-but it has not been activated.
+No task is active. `ACME-0004` completed the repository bootstrap. The next
+implementation task has not been approved or activated.
 
 ## Persistent Gaps
 
 - The proposed contracts and persistence schema are not implemented.
-- Exact dependency patch versions and the lockfile are not yet created.
-- Package boundaries and conformance suite are not yet implemented.
+- Package boundary enforcement currently covers the implemented core/testing/
+  CLI substrate; future adapters and modules must extend its rule set.
+- The conformance, integration and scenario commands are established but have
+  no behavioral suites yet.
 - No deterministic or live evaluation harness exists.
 - Live provider call reconciliation, encrypted retention and privacy deletion
   intentionally require future ADRs before implementation.

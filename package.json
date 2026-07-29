@@ -1,0 +1,44 @@
+{
+  "name": "acme-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Adaptive Context Memory Engine workspace",
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "pnpm": "10.34.5"
+  },
+  "scripts": {
+    "boundaries": "node tooling/boundaries/check-boundaries.mjs",
+    "build": "tsc -b --pretty false --force",
+    "clean": "tsc -b --clean",
+    "docs:check": "node tooling/docs/check-docs.mjs",
+    "format": "prettier --write \"**/*.{json,yaml,yml,mjs,ts}\"",
+    "format:check": "prettier --check \"**/*.{json,yaml,yml,mjs,ts}\"",
+    "lint": "eslint .",
+    "test": "pnpm test:unit && pnpm test:conformance && pnpm test:integration && pnpm test:scenario",
+    "test:conformance": "vitest run --passWithNoTests --dir tests/conformance",
+    "test:integration": "vitest run --passWithNoTests --dir tests/integration",
+    "test:scenario": "vitest run --passWithNoTests --dir tests/scenario",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --noEmit --pretty false"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "dependency-cruiser": "18.1.0",
+    "eslint": "10.8.0",
+    "globals": "17.8.0",
+    "prettier": "3.9.6",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.0.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
