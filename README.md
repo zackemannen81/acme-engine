@@ -45,6 +45,5 @@ tooling/                   Shared configuration and repository checks
 
 ## Current objective
 
-`ACME-0008` completed the aggregate repository port and in-memory Unit of Work.
-No next task is active; the next bounded Milestone 1 charter requires explicit
-approval.
+`ACME-0009` is the active Draft charter for the deterministic model mock,
+versioned model-request hashing and provider-neutral gateway conformance.

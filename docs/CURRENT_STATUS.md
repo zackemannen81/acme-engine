@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Repository
 
@@ -91,8 +91,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0008 is complete. No next task is active; the next Milestone 1 task
-requires explicit maintainer approval.
+ACME-0009 is the active Draft charter for a deterministic model mock and
+provider-neutral gateway conformance suite. Implementation requires explicit
+maintainer review and charter freeze.
 
 ## Persistent Gaps
 

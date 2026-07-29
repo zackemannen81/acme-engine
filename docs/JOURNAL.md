@@ -233,3 +233,26 @@ Add one dated, signed entry for every meaningful work session or handoff.
   provider-neutral gateway conformance next. ExecutionEngine orchestration and
   the Narrative acceptance slice remain separate bounded Milestone 1 work.
 - Signature: Codex
+
+## 2026-07-30 — Deterministic model-mock charter drafted
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0009
+- Summary: Drafted the bounded deterministic model-mock and gateway
+  conformance charter after confirming merged ACME-0008 on synchronized
+  `main`. The Draft isolates `@acme/adapter-model-mock`, a reusable
+  provider-neutral conformance kit and the missing versioned
+  `acme-model-request-hash-1` contract. It proposes exact
+  `(executionId, callKey)`, selection and request-hash matching; finite
+  single-consumption scripts; fully scripted response timestamps; explicit
+  capability/cancellation behavior; immutable invocation evidence; and no
+  implicit fallback or external effects. ExecutionEngine, ledger/replay,
+  provider SDKs and reference scenarios remain separate tasks.
+- Verification: Local `main` and `origin/main` both resolved to merge commit
+  `7fceac1`. Documentation links, Markdown fences and `git diff --check` are
+  the applicable Draft-charter checks.
+- Follow-ups: Review the Draft proposals for request-hash scope, call identity
+  and consumption semantics. If approved, explicitly move ACME-0009 to
+  `Ready`, record the freeze date and begin implementation.
+- Signature: Codex
