@@ -691,6 +691,13 @@ export interface PreparedState<TState, TDelta> {
   readonly snapshot: StateSnapshot<TState>;
   readonly transition: StateTransition<TDelta>;
 }
+
+export interface StatePrepareContext {
+  readonly entityId: EntityId;
+  readonly executionId: ExecutionId;
+  readonly operationKey: string;
+  readonly now: IsoTimestamp;
+}
 ```
 
 The StateEngine algorithm is:
@@ -707,12 +714,16 @@ The StateEngine algorithm is:
 
 ```ts
 export interface StateEngine {
-  prepare<TState, TDelta>(
-    module: DomainModule<TState, TDelta, TaskMap<TState, TDelta>>,
+  prepare<
+    TState,
+    TDelta,
+    TTasks extends TaskMap<TState, TDelta>,
+  >(
+    module: DomainModule<TState, TDelta, TTasks>,
     current: StateSnapshot<TState> | null,
     expectedRevision: number,
     delta: StateDelta<TDelta> | undefined,
-    provenance: { executionId: ExecutionId; operationKey: string; now: IsoTimestamp },
+    context: StatePrepareContext,
   ): PreparedState<TState, TDelta> | null;
 }
 ```
@@ -723,6 +734,28 @@ equal `module.deltaSchemaVersion`. A stale revision yields
 `CONFLICT_STATE_REVISION`; core MUST NOT automatically re-run model calls. A
 caller may start a new execution against the new revision. Reducers MUST be
 pure and MUST NOT read time, random values, stores or providers.
+
+Transition identity uses the immutable algorithm `acme-transition-id-1`:
+
+```ts
+transitionId =
+  "transition_" +
+  sha256(
+    canonicalJson({
+      algorithm: "acme-transition-id-1",
+      executionId: context.executionId,
+      operationKey: context.operationKey,
+      namespace: module.namespace,
+      entityId: context.entityId,
+    }),
+  );
+```
+
+Revision, delta content, timestamps, previous/next hashes and retry order MUST
+NOT participate in this identity. `IdGenerator` MUST NOT allocate transition
+IDs. Divergent transition content under one derived identity is a repository
+conflict. See
+[ADR-0004](../adr/0004-deterministic-transition-identity.md).
 
 Schema migrations are explicit functions from one state schema version to the
 next. A migration never rewrites history in place; it creates a transition

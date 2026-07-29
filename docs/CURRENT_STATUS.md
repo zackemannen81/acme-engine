@@ -28,9 +28,10 @@ implementation baseline:
 - ADR-0001: TypeScript and pnpm workspace
 - ADR-0002: Static task-typed module composition
 - ADR-0003: SQLite revisioned Unit of Work
+- ADR-0004: Deterministic transition identity
 
-ACME has a build substrate and pure contract layer but remains pre-engine.
-There is currently:
+ACME has a build substrate, pure contract layer and pure StateEngine but no
+execution orchestration or persistence. There is currently:
 
 - common JSON, identity, time, document and diagnostic contracts
 - deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
@@ -40,16 +41,22 @@ There is currently:
 - immutable contract and module registries with deterministic ordering and
   contract fingerprints
 - task-typed module authoring plus state/memory envelope and policy types
+- a pure StateEngine that validates current state and typed deltas, enforces
+  expected revisions, invokes module initialization/reduction/invariants and
+  prepares immutable snapshot/transition candidates without persistence
+- versioned deterministic transition identity `acme-transition-id-1`, derived
+  from execution/operation/module/entity identity without consuming
+  `IdGenerator`
 - a typed `@acme/testing` skeleton that imports `@acme/core` through the
   workspace
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 19 passing unit tests across canonicalization, hashing, response validation,
-  registries and workspace imports
+- 35 passing unit tests across canonicalization, hashing, response validation,
+  registries, state preparation and workspace imports
 - compile-time task-name/input/output inference checks
 - empty, passing conformance, integration and scenario gates
-- no ExecutionEngine, StateEngine or MemoryEngine behavior
+- no ExecutionEngine or MemoryEngine behavior
 - no database schema
 - no model provider adapter
 - no published package
@@ -62,13 +69,15 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-`ACME-0006` is a Draft charter for the pure StateEngine. It specifies
-deterministic transition identity, corrects the first-snapshot prepare context
-and awaits maintainer review before it may become `Ready`.
+No task is active. ACME-0006 completed the pure StateEngine. The recommended
+next bounded Milestone 1 task is the pure MemoryEngine and requires an
+explicitly approved charter.
 
 ## Persistent Gaps
 
-- StateEngine, MemoryEngine and ExecutionEngine behavior is not implemented.
+- MemoryEngine and ExecutionEngine behavior is not implemented.
+- Repository-level compare-and-swap and idempotency enforcement for prepared
+  state transitions is not implemented.
 - Repository ports, in-memory persistence and model mock are not implemented.
 - Narrative and Research reference modules are not implemented.
 - The persistence schema remains design-only.
