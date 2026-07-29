@@ -170,3 +170,35 @@ Add one dated, signed entry for every meaningful work session or handoff.
   Milestone 1 task. Later repository work must enforce compare-and-swap and
   reject divergent content under one deterministic `transitionId`.
 - Signature: Codex
+
+## 2026-07-29 — Pure MemoryEngine completed
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0007
+- Summary: Activated and completed the bounded pure MemoryEngine task.
+  Corrected the public resolution contract so domain policy supplies complete
+  resulting strength and supersede replacement data instead of core inventing
+  reinforcement/promotion semantics. Added immutable prepare, retrieval and
+  lifecycle contracts plus a pure engine that validates candidates and loaded
+  records, resolves candidates against a deterministic evolving working set,
+  prepares create/update mutations with expected record versions, appends
+  provenance, manages timestamps, validates/sorts retrieval results and
+  applies explicit lifecycle hooks. Accepted ADR-0005. No repository,
+  persistence, execution orchestration, provider or reference-domain behavior
+  was added.
+- Verification: Frozen install, formatting, lint, strict typecheck,
+  dependency boundaries and build passed. Unit tests passed 6 files and 52
+  tests, including 17 MemoryEngine tests covering every resolution action,
+  stable candidate/ID order, evolving working-set visibility, versions,
+  timestamps, provenance, error mapping, immutability, retrieval ties/limits
+  and lifecycle actions. Conformance, integration and scenario gates passed
+  empty because those layers remain outside this charter. Documentation checks
+  and `git diff --check` passed after archival. No checks were skipped. Remote
+  CI was not run because the branch was not pushed; local Node was `24.14.1`
+  while CI remains pinned to `24.18.0`.
+- Follow-ups: Explicitly charter the aggregate repository port and in-memory
+  Unit of Work as the next bounded Milestone 1 task. That work must retain
+  candidate decisions, enforce expected memory record versions and combine
+  state/memory/document/event effects atomically.
+- Signature: Codex

@@ -44,5 +44,6 @@ tooling/                   Shared configuration and repository checks
 
 ## Current objective
 
-No task is active. The next Milestone 1 task should be explicitly chartered
-before work begins; the recommended boundary is the pure MemoryEngine.
+No task is active. The next Milestone 1 task should be explicitly chartered;
+the recommended boundary is the aggregate repository port and in-memory Unit
+of Work.

@@ -27,6 +27,7 @@ acme-engine/
 │   │   │   ├── hashing.ts
 │   │   │   ├── index.ts
 │   │   │   ├── memory.ts
+│   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
 │   │   │   ├── modules.ts
 │   │   │   ├── registries.ts
@@ -35,6 +36,7 @@ acme-engine/
 │   │   │   └── state.ts
 │   │   ├── test/
 │   │   │   ├── hashing.test.ts
+│   │   │   ├── memory-engine.test.ts
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
 │   │   │   └── state-engine.test.ts
@@ -62,6 +64,7 @@ acme-engine/
 │   │   ├── 0002-static-task-typed-module-composition.md
 │   │   ├── 0003-sqlite-revisioned-unit-of-work.md
 │   │   ├── 0004-deterministic-transition-identity.md
+│   │   ├── 0005-pure-memory-decision-application.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
@@ -98,7 +101,7 @@ acme-engine/
 ## Implemented Workspace
 
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
-  response validation, static registries and pure revisioned state
+  response validation, static registries and pure revisioned state/memory
   preparation. Zod is its only external runtime dependency.
 - `@acme/testing`: typed test-support skeleton importing `@acme/core` through
   the workspace.

@@ -62,26 +62,96 @@ export type MemoryLifecycleDecision =
   | { readonly action: 'update-strength'; readonly strength: number }
   | { readonly action: 'forget'; readonly reason: string };
 
-export type MemoryResolution = { readonly candidateKey: string } & (
+export type MemoryLifecycleHook =
+  'execution-start' | 'execution-commit' | 'maintenance';
+
+export type MemoryResolution =
   | {
+      readonly candidateKey: string;
       readonly action: 'create';
-      readonly identityKey: string;
       readonly value: JsonValue;
+      readonly strength: number;
     }
-  | { readonly action: 'reinforce'; readonly memoryId: string }
   | {
+      readonly candidateKey: string;
+      readonly action: 'reinforce';
+      readonly memoryId: string;
+      readonly strength: number;
+    }
+  | {
+      readonly candidateKey: string;
       readonly action: 'merge';
       readonly memoryId: string;
       readonly value: JsonValue;
+      readonly strength: number;
     }
   | {
+      readonly candidateKey: string;
       readonly action: 'contradict';
       readonly memoryIds: readonly string[];
-      readonly disposition:
-        'contest' | 'supersede-existing' | 'reject-candidate';
+      readonly disposition: 'contest' | 'reject-candidate';
     }
-  | { readonly action: 'ignore'; readonly reason: string }
-);
+  | {
+      readonly candidateKey: string;
+      readonly action: 'contradict';
+      readonly memoryIds: readonly string[];
+      readonly disposition: 'supersede-existing';
+      readonly replacement: {
+        readonly value: JsonValue;
+        readonly strength: number;
+      };
+    }
+  | {
+      readonly candidateKey: string;
+      readonly action: 'ignore';
+      readonly reason: string;
+    };
+
+export interface MemoryPrepareContext {
+  readonly namespace: Namespace;
+  readonly entityId: EntityId;
+  readonly executionId: ExecutionId;
+  readonly now: IsoTimestamp;
+}
+
+export interface MemoryLifecycleContext {
+  readonly namespace: Namespace;
+  readonly entityId: EntityId;
+  readonly now: IsoTimestamp;
+}
+
+export type MemoryMutation =
+  | {
+      readonly action: 'create';
+      readonly record: MemoryRecord;
+    }
+  | {
+      readonly action: 'update';
+      readonly expectedRecordVersion: number;
+      readonly record: MemoryRecord;
+    };
+
+export interface PreparedMemoryDecision {
+  readonly candidateKey: string;
+  readonly identityKey: string;
+  readonly resolution: MemoryResolution;
+  readonly affectedMemoryIds: readonly string[];
+}
+
+export interface PreparedMemory {
+  readonly decisions: readonly PreparedMemoryDecision[];
+  readonly mutations: readonly MemoryMutation[];
+}
+
+export interface PreparedMemoryLifecycleDecision {
+  readonly memoryId: string;
+  readonly decision: MemoryLifecycleDecision;
+}
+
+export interface PreparedMemoryLifecycle {
+  readonly decisions: readonly PreparedMemoryLifecycleDecision[];
+  readonly mutations: readonly MemoryMutation[];
+}
 
 export interface DomainMemoryPolicy {
   validate(candidate: MemoryCandidate): readonly DomainIssue[];
@@ -97,7 +167,7 @@ export interface DomainMemoryPolicy {
   ): MemoryResolution;
   lifecycle(
     record: MemoryRecord,
-    hook: 'execution-start' | 'execution-commit' | 'maintenance',
+    hook: MemoryLifecycleHook,
     context: { readonly now: IsoTimestamp },
   ): MemoryLifecycleDecision;
 }

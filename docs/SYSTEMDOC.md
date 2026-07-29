@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Approved architecture with pure contract layer and StateEngine
+Status: Approved architecture with pure contract, state and memory engines
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -41,8 +41,8 @@ persistence, scenario or provider behavior.
 - task-typed module authoring and compile-time task input/output inference
 - state and memory envelopes/policy declarations required by module contracts
 
-MemoryEngine, ExecutionEngine, persistence ports, adapters and
-reference-domain behavior are not implemented.
+ExecutionEngine, persistence ports, adapters and reference-domain behavior are
+not implemented.
 
 ## Implemented StateEngine
 
@@ -66,6 +66,31 @@ reference-domain behavior are not implemented.
 The StateEngine does not persist candidates. Repository compare-and-swap,
 transition-content idempotency and atomic Unit of Work behavior remain future
 boundaries.
+
+## Implemented MemoryEngine
+
+`@acme/core` implements pure memory policy execution without store access:
+
+- candidate and loaded-record envelopes are strictly validated at their trust
+  boundaries
+- candidates run by stable key against an immutable evolving working set
+- the domain policy owns identity, resolution value, resulting strength,
+  contradiction, relevance and lifecycle choices
+- create, reinforce, merge, contest, supersede, reject and ignore decisions
+  have explicit application semantics
+- create/replacement records use the injected memory ID generator only after a
+  complete decision validates
+- new records start at version one; updates carry the exact expected prior
+  version and increment once
+- affected timestamps and deduplicated provenance append are core mechanics
+- retrieval rejects foreign, modified, duplicate or non-finite policy results,
+  then sorts by score, identity and memory ID before applying its limit
+- lifecycle runs only at explicit hooks and prepares retain, strength-update or
+  forget decisions
+
+The MemoryEngine returns immutable decisions and mutations but does not retain
+candidate audit rows or persist canonical records. Compare-and-swap, atomic
+commit and replay idempotency remain repository/execution responsibilities.
 
 ## System Purpose
 
@@ -173,8 +198,10 @@ No earlier stage is canonical truth.
 The implemented trust path begins with an already normalized model response
 and can produce validated contract output plus a deterministic parsed hash.
 Separately, the StateEngine accepts an interpreted typed delta and prepares a
-validated next-state candidate. Provider normalization, module interpretation,
-memory effects and canonical persistence remain future work.
+validated next-state candidate. The MemoryEngine accepts interpreted memory
+candidates and prepares validated record decisions/mutations. Provider
+normalization, module interpretation and canonical persistence remain future
+work.
 
 ## Initial Persistence Direction
 
@@ -199,8 +226,7 @@ branches in core.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- MemoryEngine behavior using the implemented static module and contract
-  composition surface.
+- In-memory repository, candidate audit storage and model mock.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.
