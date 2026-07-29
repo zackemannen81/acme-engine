@@ -43,6 +43,5 @@ tooling/                   Shared configuration and repository checks
 
 ## Current objective
 
-No task is active. The next bounded Milestone 1 charter should implement the
-pure StateEngine against the approved module and state contracts; it must be
-explicitly approved before work begins.
+`ACME-0006` is a Draft charter for the pure StateEngine. It must be reviewed
+and frozen as `Ready` before implementation begins.

@@ -62,8 +62,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No task is active. `ACME-0005` completed the pure contract and static-registry
-foundation. The next implementation task has not been approved or activated.
+`ACME-0006` is a Draft charter for the pure StateEngine. It specifies
+deterministic transition identity, corrects the first-snapshot prepare context
+and awaits maintainer review before it may become `Ready`.
 
 ## Persistent Gaps
 
