@@ -1,5 +1,5 @@
 import type { JsonValue } from './common.js';
-import type { ExecutionStatus } from './execution-types.js';
+import type { ExecutionStatus } from './execution-status.js';
 
 export type AcmeErrorCode =
   | 'INVALID_REQUEST'
@@ -9,6 +9,7 @@ export type AcmeErrorCode =
   | 'UNSUPPORTED_CAPABILITY'
   | 'CONFLICT_IDEMPOTENCY_KEY'
   | 'CONFLICT_STATE_REVISION'
+  | 'CONFLICT_MEMORY_VERSION'
   | 'BUDGET_EXCEEDED'
   | 'CANCELLED'
   | 'TIMEOUT'

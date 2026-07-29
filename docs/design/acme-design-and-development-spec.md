@@ -1167,6 +1167,7 @@ export type AcmeErrorCode =
   | "UNSUPPORTED_CAPABILITY"
   | "CONFLICT_IDEMPOTENCY_KEY"
   | "CONFLICT_STATE_REVISION"
+  | "CONFLICT_MEMORY_VERSION"
   | "BUDGET_EXCEEDED"
   | "CANCELLED"
   | "TIMEOUT"
@@ -1332,7 +1333,9 @@ export interface ModelCallRecord extends ModelCallReservation {
   readonly status: "reserved" | "in-flight" | "succeeded" | "failed" | "ambiguous";
   readonly response?: NormalizedModelResponse;
   readonly responseHash?: string;
+  readonly protectedResponse?: string;
   readonly error?: AcmeErrorData;
+  readonly completedAt?: IsoTimestamp;
 }
 
 export interface CompletedModelCall {
@@ -1414,6 +1417,29 @@ export interface ExecutionRepository {
 The in-memory and SQLite adapters MUST implement the identical conformance
 suite. Separate internal stores MAY exist inside an adapter, but core receives
 one transaction-capable repository.
+
+`PreparedCommit.operationDigest` uses `acme-operation-digest-1`:
+
+```text
+sha256(acme-cjson-1({
+  algorithm: "acme-operation-digest-1",
+  executionId,
+  expectedRevision,
+  documents,
+  memoryCandidates,
+  memory,
+  state,
+  evaluatorRuns,
+  events,
+  committedAt
+}))
+```
+
+The digest field itself is excluded. Documents, memory candidates and events
+are sorted by `key`; evaluator runs are sorted by `(evaluatorId, attempt)`.
+Memory decisions and mutations retain their prepared order because sequential
+mutation order is semantic. Adapters MUST recompute and verify the digest
+before commit.
 
 ### 15.2 SQLite schema
 
@@ -1608,23 +1634,34 @@ Production adapters MUST reject a migration checksum mismatch.
 
 ### 15.3 Unit of Work
 
-`commit(prepared)` opens `BEGIN IMMEDIATE` and performs:
+Every adapter performs the same logical Unit of Work. The in-memory adapter
+applies it to a private staged copy and publishes that copy only after every
+step succeeds. SQLite opens `BEGIN IMMEDIATE` and commits only after the same
+checks and writes succeed:
 
-1. verify execution is non-terminal and fingerprint-compatible
-2. verify no existing operation keys disagree
-3. compare `state_heads.revision` to expected revision
-4. insert candidates and evaluator evidence
-5. upsert memory records with `record_version` checks
-6. insert documents
-7. insert snapshot and transition when a delta exists
-8. update the state head using compare-and-swap
-9. insert domain events and matching outbox rows
-10. write terminal execution result as `committed`
-11. commit
+1. recompute and verify `acme-operation-digest-1`
+2. verify execution is non-terminal and fingerprint-compatible
+3. return the original projection when the same digest already committed
+4. reject a divergent retry or persisted identity reuse as corruption
+5. compare the state-head revision even when no state delta exists
+6. validate candidate/decision and evaluator correlation
+7. validate state scope, revision, hash chain, transition ID and operation key
+8. apply memory mutations sequentially with record-version compare-and-swap
+9. validate document hashes, then allocate document and event IDs
+10. retain candidates/evaluator evidence and promote canonical effects
+11. insert domain events and matching pending outbox rows
+12. write the terminal execution projection as `committed`
+13. publish the staged copy or commit the database transaction
 
 Any failure rolls back all canonical effects. Repeating the identical prepared
 commit returns the existing committed result. Repeating an operation key with
 a different hash is corruption, not an upsert.
+
+State-head mismatch uses `CONFLICT_STATE_REVISION`. Memory record-version
+mismatch uses `CONFLICT_MEMORY_VERSION`. Document and event IDs are
+adapter-created only after logical validation and compare-and-swap checks;
+their IDs are therefore not part of the operation digest. Memory IDs are
+already present in prepared mutations.
 
 An execution with no state delta still compares the expected revision before
 committing documents or memory. This prevents attaching effects to a stale

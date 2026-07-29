@@ -6,11 +6,11 @@ ACME is a greenfield project for building and evaluating a domain-neutral,
 replayable AI execution engine. Narrative is the first reference module, not
 the engine itself.
 
-The complete design baseline, repository bootstrap, pure contract layer and
-pure StateEngine are complete. The workspace contains deterministic
-model-output validation, static composition contracts and revisioned state
-preparation; no orchestration engine, persistence adapter or published package
-exists yet.
+The complete design baseline, repository bootstrap, pure state/memory engines
+and deterministic in-memory Unit of Work are complete. The workspace contains
+model-output validation, static composition contracts, revisioned preparation
+and an aggregate repository conformance suite; no orchestration engine,
+durable persistence adapter or published package exists yet.
 
 ## Start here
 
@@ -38,12 +38,13 @@ docs/backlog/             Non-activated work proposals
 docs/finished/            Completed task archive
 apps/cli/                 CLI composition-root skeleton
 packages/core/            Domain-neutral contracts and deterministic primitives
-packages/testing/         Test-support skeleton and workspace import test
+packages/adapter-memory/  Deterministic copy-on-commit repository
+packages/testing/         Reusable conformance and test support
 tooling/                   Shared configuration and repository checks
 ```
 
 ## Current objective
 
-No task is active. The next Milestone 1 task should be explicitly chartered;
-the recommended boundary is the aggregate repository port and in-memory Unit
-of Work.
+`ACME-0008` completed the aggregate repository port and in-memory Unit of Work.
+No next task is active; the next bounded Milestone 1 charter requires explicit
+approval.

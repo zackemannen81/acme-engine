@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Approved architecture with pure contract, state and memory engines
+Status: Approved architecture with pure state/memory engines and in-memory Unit of Work
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -12,8 +12,8 @@ protocols and milestones are defined in
 
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
-- `@acme/core` contract package plus behavior-free `@acme/testing` and
-  `@acme/cli` skeletons
+- `@acme/core` contract package, `@acme/adapter-memory`, reusable repository
+  conformance support in `@acme/testing` and the behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
@@ -21,8 +21,8 @@ protocols and milestones are defined in
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
-This substrate does not implement or claim execution orchestration, memory,
-persistence, scenario or provider behavior.
+This substrate does not implement execution orchestration, durable
+persistence, scenarios or provider behavior.
 
 ## Implemented Contract Layer
 
@@ -40,9 +40,12 @@ persistence, scenario or provider behavior.
 - deterministic contract fingerprints
 - task-typed module authoring and compile-time task input/output inference
 - state and memory envelopes/policy declarations required by module contracts
+- execution request/policy/result, evaluation evidence and aggregate
+  `ExecutionRepository` contracts
+- versioned `acme-operation-digest-1` prepared-commit hashing
 
-ExecutionEngine, persistence ports, adapters and reference-domain behavior are
-not implemented.
+ExecutionEngine, durable adapters and reference-domain behavior are not
+implemented.
 
 ## Implemented StateEngine
 
@@ -63,9 +66,9 @@ not implemented.
 - transition IDs use the immutable `acme-transition-id-1` derivation from
   execution ID, operation key, module namespace and entity ID
 
-The StateEngine does not persist candidates. Repository compare-and-swap,
-transition-content idempotency and atomic Unit of Work behavior remain future
-boundaries.
+The StateEngine does not persist candidates. The in-memory repository enforces
+state-head compare-and-swap, transition/operation identity and atomic
+promotion.
 
 ## Implemented MemoryEngine
 
@@ -88,9 +91,33 @@ boundaries.
 - lifecycle runs only at explicit hooks and prepares retain, strength-update or
   forget decisions
 
-The MemoryEngine returns immutable decisions and mutations but does not retain
-candidate audit rows or persist canonical records. Compare-and-swap, atomic
-commit and replay idempotency remain repository/execution responsibilities.
+The MemoryEngine returns immutable decisions and mutations. The in-memory
+repository retains candidate/decision evidence, enforces memory record-version
+compare-and-swap and promotes mutations atomically.
+
+## Implemented In-Memory Unit of Work
+
+`@acme/adapter-memory` implements the aggregate `ExecutionRepository`:
+
+- request-key/fingerprint acceptance, immutable execution lookup and terminal
+  outcomes
+- idempotent attempt and model-call evidence with divergent-key protection
+- deterministic state, memory and document reads
+- `acme-operation-digest-1` verification before commit
+- private copy-on-commit staging with one final publication point
+- state-head CAS even when no state delta exists
+- snapshot/transition scope, revision, hash-chain and identity validation
+- sequential memory mutation CAS using `CONFLICT_MEMORY_VERSION`
+- document hash validation and late document/event ID allocation
+- atomic candidate, evaluator, document, memory, state, event/outbox and
+  terminal execution promotion
+- identical committed retry without new writes or IDs; divergent retry as
+  `PERSISTENCE_CORRUPTION`
+- detached, deeply frozen read results and deterministic evidence snapshots
+
+The adapter is deterministic test persistence only. It does not survive
+process termination and makes no crash-durability claim. The same core port is
+covered by a reusable non-empty conformance suite in `@acme/testing`.
 
 ## System Purpose
 
@@ -199,13 +226,14 @@ The implemented trust path begins with an already normalized model response
 and can produce validated contract output plus a deterministic parsed hash.
 Separately, the StateEngine accepts an interpreted typed delta and prepares a
 validated next-state candidate. The MemoryEngine accepts interpreted memory
-candidates and prepares validated record decisions/mutations. Provider
-normalization, module interpretation and canonical persistence remain future
+candidates and prepares validated record decisions/mutations. The in-memory
+repository can atomically promote those prepared effects. Provider
+normalization, module interpretation and durable persistence remain future
 work.
 
 ## Initial Persistence Direction
 
-- In-memory adapters for deterministic tests.
+- The in-memory adapter is implemented for deterministic tests.
 - SQLite in WAL mode for the first durable local implementation.
 - One aggregate repository owns the atomic Unit of Work.
 - State uses complete snapshots, explicit transitions and revision
@@ -226,7 +254,7 @@ branches in core.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- In-memory repository, candidate audit storage and model mock.
+- SQLite persistence and a deterministic model mock.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.
