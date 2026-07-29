@@ -6,7 +6,7 @@ ACME is a greenfield project for building and evaluating a domain-neutral,
 replayable AI execution engine. Narrative is the first reference module, not
 the engine itself.
 
-The project is currently in its design phase. No runtime implementation or
+The complete design baseline is approved. No runtime implementation or
 published package exists yet.
 
 ## Start here
@@ -14,7 +14,8 @@ published package exists yet.
 1. Read [the active task](docs/CURRENT_TASK.md).
 2. Read [the task workflow](docs/TASK_WORKFLOW.md).
 3. Read [the project brief](docs/PROJECT_BRIEF.md).
-4. Follow [the contribution workflow](docs/CONTRIBUTING.md).
+4. Read [the design and development specification](docs/design/acme-design-and-development-spec.md).
+5. Follow [the contribution workflow](docs/CONTRIBUTING.md).
 
 ## Repository map
 
@@ -36,5 +37,6 @@ docs/finished/            Completed task archive
 
 ## Current objective
 
-Produce the complete design and development specification before bootstrapping
-runtime packages.
+No implementation task is active. The next recommended task is the bounded
+repository bootstrap defined in specification section 26; it must be
+explicitly activated before implementation begins.

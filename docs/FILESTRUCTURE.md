@@ -19,10 +19,14 @@ acme-engine/
     ├── TASK_WORKFLOW.md
     ├── template_CURRENT_TASK.md
     ├── adr/
+    │   ├── 0001-typescript-pnpm-workspace.md
+    │   ├── 0002-static-task-typed-module-composition.md
+    │   ├── 0003-sqlite-revisioned-unit-of-work.md
     │   ├── README.md
     │   └── template.md
     ├── design/
-    │   └── README.md
+    │   ├── README.md
+    │   └── acme-design-and-development-spec.md
     ├── paused/
     │   └── README.md
     ├── backlog/
@@ -30,7 +34,8 @@ acme-engine/
     └── finished/
         ├── README.md
         ├── ACME-0001_docs-first-foundation.md
-        └── ACME-0002_frozen-task-charter-workflow.md
+        ├── ACME-0002_frozen-task-charter-workflow.md
+        └── ACME-0003_complete-design-and-development-specification.md
 ```
 
 ## Root Files
@@ -50,7 +55,11 @@ acme-engine/
 - `JOURNAL.md`: Dated handoff log.
 - `CONTRIBUTING.md`: Task and contribution workflow.
 - `adr/`: Architecture decision records.
-- `design/`: Complete system and package specifications.
+- `adr/0001`: TypeScript, Node and pnpm workspace decision.
+- `adr/0002`: Static task-typed module composition decision.
+- `adr/0003`: SQLite revisioned Unit of Work decision.
+- `design/acme-design-and-development-spec.md`: Normative implementation
+  architecture, contracts, schemas, protocols, quality plan and milestones.
 - `paused/`: Frozen parent tasks waiting on an explicit resume condition.
 - `backlog/`: Non-activated proposals outside the active task charter.
 - `finished/`: Archived completed tasks.

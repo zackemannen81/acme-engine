@@ -13,7 +13,15 @@ Last updated: 2026-07-29
 
 ## Project Phase
 
-ACME is in design. There is currently:
+The complete design and development specification is approved as the
+implementation baseline:
+
+- `docs/design/acme-design-and-development-spec.md`
+- ADR-0001: TypeScript and pnpm workspace
+- ADR-0002: Static task-typed module composition
+- ADR-0003: SQLite revisioned Unit of Work
+
+ACME remains pre-implementation. There is currently:
 
 - no runtime source tree
 - no package manager or workspace configuration
@@ -30,13 +38,15 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-The active task is `ACME-0003`: create the complete design and development
-specification before bootstrapping implementation packages.
+No implementation task is active. `ACME-0003` completed the design baseline.
+The specification proposes a bounded `ACME-0004` repository-bootstrap charter,
+but it has not been activated.
 
 ## Persistent Gaps
 
-- Exact TypeScript contracts are not yet locked.
-- Persistence schema and transaction boundaries are not yet specified.
-- Toolchain and workspace manager are not yet selected.
+- The proposed contracts and persistence schema are not implemented.
+- Exact dependency patch versions and the lockfile are not yet created.
 - Package boundaries and conformance suite are not yet implemented.
 - No deterministic or live evaluation harness exists.
+- Live provider call reconciliation, encrypted retention and privacy deletion
+  intentionally require future ADRs before implementation.

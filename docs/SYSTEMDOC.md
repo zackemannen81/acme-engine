@@ -1,10 +1,12 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Pre-implementation architecture intent
+Status: Approved pre-implementation architecture
 
 This document describes long-lived system boundaries. It does not claim that
-the runtime currently exists.
+the runtime currently exists. Exact contracts, storage schema, protocols and
+milestones are defined in
+[`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
 ## System Purpose
 
@@ -110,7 +112,13 @@ No earlier stage is canonical truth.
 ## Initial Persistence Direction
 
 - In-memory adapters for deterministic tests.
-- SQLite for the first durable local implementation.
+- SQLite in WAL mode for the first durable local implementation.
+- One aggregate repository owns the atomic Unit of Work.
+- State uses complete snapshots, explicit transitions and revision
+  compare-and-swap.
+- Model responses are durably recorded before interpretation and canonical
+  commit.
+- Domain events and outbox rows commit together.
 - No production database decision has been made.
 
 ## Initial Domain Proof
@@ -121,17 +129,24 @@ No earlier stage is canonical truth.
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
 
-## Open Design Areas
+## Implementation Baseline
 
-The complete design specification must decide:
+- Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
+- Static task-typed module and contract registries.
+- Core, testing, in-memory, SQLite, model adapters and reference modules are
+  separate workspace packages.
+- `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.
+- Retry, repair and revision are bounded and ledgered.
+- Replay uses recorded model results and never invokes a live provider.
+- Structured logs redact content by default.
 
-- exact task and registry typing
-- error taxonomy and retry semantics
-- cancellation and execution budgets
-- storage schema and Unit of Work
-- replay protocol
-- package and workspace tooling
-- CLI and scenario format
-- conformance and evaluation framework
-- observability, privacy and retention
-- compatibility and versioning rules
+## Deliberately Deferred Decisions
+
+- production hosting and production database
+- dynamic module discovery
+- workflow runtime beyond ScenarioRunner
+- vector retrieval
+- provider-specific reconciliation details
+- encryption key lifecycle and privacy deletion
+
+These require evidence and ADRs before implementation.

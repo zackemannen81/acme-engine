@@ -21,6 +21,8 @@ Charter frozen at:
 - Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
 Describe the task, why it is being done now and the intended outcome.
 
@@ -64,7 +66,7 @@ Name the concrete artifact or behavior that completes the task.
 - [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
 - Record decisions and assumptions within the frozen charter.
 - Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
@@ -72,7 +74,7 @@ Name the concrete artifact or behavior that completes the task.
 
 Only non-semantic corrections are allowed after `Ready`.
 
-- None.
+-none
 
 ## Verification
 
