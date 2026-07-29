@@ -18,7 +18,7 @@
     "format:check": "prettier --check \"**/*.{json,yaml,yml,mjs,ts}\"",
     "lint": "eslint .",
     "test": "pnpm test:unit && pnpm test:conformance && pnpm test:integration && pnpm test:scenario",
-    "test:conformance": "vitest run --passWithNoTests --dir tests/conformance",
+    "test:conformance": "vitest run tests/conformance",
     "test:integration": "vitest run --passWithNoTests --dir tests/integration",
     "test:scenario": "vitest run --passWithNoTests --dir tests/scenario",
     "test:unit": "vitest run --config vitest.config.ts",

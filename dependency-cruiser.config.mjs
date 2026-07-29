@@ -21,6 +21,18 @@ export default {
         circular: true,
       },
     },
+    {
+      name: 'memory-adapter-depends-only-on-core',
+      severity: 'error',
+      comment:
+        'The in-memory adapter may depend on itself and core, not apps, modules, or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-memory/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-memory(?:/|$)))',
+      },
+    },
   ],
   options: {
     doNotFollow: {

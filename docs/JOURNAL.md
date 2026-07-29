@@ -202,3 +202,34 @@ Add one dated, signed entry for every meaningful work session or handoff.
   candidate decisions, enforce expected memory record versions and combine
   state/memory/document/event effects atomically.
 - Signature: Codex
+
+## 2026-07-29 — Aggregate in-memory Unit of Work completed
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0008
+- Summary: Froze and completed the aggregate repository boundary and
+  deterministic `@acme/adapter-memory`. Added execution, ledger, model-call,
+  read-set, evaluation and prepared-commit contracts; accepted ADR-0006;
+  defined golden-tested `acme-operation-digest-1`; and added explicit
+  `CONFLICT_MEMORY_VERSION`. The adapter implements request acceptance,
+  immutable evidence, deterministic reads and private copy-on-commit staging.
+  One commit now atomically validates state hashes/identities, applies
+  sequential memory CAS, retains candidate/evaluator evidence, validates and
+  allocates documents/events late, creates matching outbox rows and marks the
+  execution committed. Identical retries return the original projection
+  without allocating IDs; divergent retries and identity reuse fail as
+  persistence corruption.
+- Verification: Frozen install, formatting, lint, strict typecheck,
+  dependency boundaries, build, documentation checks and `git diff --check`
+  passed. Unit execution passed 9 files and 65 tests, including digest golden/
+  ordering/sensitivity, full-effect commit, late-failure rollback, state and
+  memory CAS, transition collisions, immutable evidence and the repository
+  conformance cases. The dedicated non-empty conformance gate passed 1 file
+  and 5 tests. Integration and scenario gates passed empty because execution
+  orchestration and reference scenarios remain outside this charter. No
+  required checks were skipped.
+- Follow-ups: Explicitly charter a deterministic model mock and
+  provider-neutral gateway conformance next. ExecutionEngine orchestration and
+  the Narrative acceptance slice remain separate bounded Milestone 1 work.
+- Signature: Codex

@@ -1,5 +1,5 @@
 {
-  "name": "@acme/testing",
+  "name": "@acme/adapter-memory",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -18,8 +18,5 @@
   },
   "dependencies": {
     "@acme/core": "workspace:*"
-  },
-  "devDependencies": {
-    "vitest": "4.0.18"
   }
 }

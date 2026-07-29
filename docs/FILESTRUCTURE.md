@@ -16,6 +16,14 @@ acme-engine/
 │       └── src/
 │           └── index.ts
 ├── packages/
+│   ├── adapter-memory/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   └── repository.ts
+│   │   └── test/
+│   │       └── repository.test.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -23,6 +31,8 @@ acme-engine/
 │   │   │   ├── common.ts
 │   │   │   ├── contracts.ts
 │   │   │   ├── errors.ts
+│   │   │   ├── evaluation.ts
+│   │   │   ├── execution-status.ts
 │   │   │   ├── execution-types.ts
 │   │   │   ├── hashing.ts
 │   │   │   ├── index.ts
@@ -32,11 +42,15 @@ acme-engine/
 │   │   │   ├── modules.ts
 │   │   │   ├── registries.ts
 │   │   │   ├── response-pipeline.ts
+│   │   │   ├── repository-digest.ts
+│   │   │   ├── repository-model-call.ts
+│   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
 │   │   │   └── state.ts
 │   │   ├── test/
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
+│   │   │   ├── repository-digest.test.ts
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
 │   │   │   └── state-engine.test.ts
@@ -46,9 +60,13 @@ acme-engine/
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── src/
-│       │   └── index.ts
+│       │   ├── index.ts
+│       │   └── repository-conformance.ts
 │       └── test/
 │           └── workspace-import.test.ts
+├── tests/
+│   └── conformance/
+│       └── adapter-memory.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -101,10 +119,13 @@ acme-engine/
 ## Implemented Workspace
 
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
-  response validation, static registries and pure revisioned state/memory
-  preparation. Zod is its only external runtime dependency.
-- `@acme/testing`: typed test-support skeleton importing `@acme/core` through
-  the workspace.
+  response validation, static registries, pure revisioned state/memory
+  preparation and the aggregate repository port/digest. Zod is its only
+  external runtime dependency.
+- `@acme/adapter-memory`: deterministic aggregate repository with immutable
+  copy-on-commit transactions and read-only evidence inspection.
+- `@acme/testing`: reusable ExecutionRepository conformance plus typed test
+  support.
 - `@acme/cli`: behavior-free composition-root skeleton importing
   `@acme/core`.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
@@ -116,6 +137,5 @@ acme-engine/
 ## Planned Structure
 
 The design specification retains the future package map for engine behavior,
-in-memory and SQLite adapters, model adapters, Narrative and Research modules
-and scenarios. Those files and directories must be added only by explicitly
-activated tasks.
+SQLite/model adapters, Narrative and Research modules and scenarios. Those
+files and directories must be added only by explicitly activated tasks.

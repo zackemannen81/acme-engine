@@ -30,10 +30,11 @@ implementation baseline:
 - ADR-0003: SQLite revisioned Unit of Work
 - ADR-0004: Deterministic transition identity
 - ADR-0005: Pure memory decision application
+- ADR-0006: Aggregate in-memory Unit of Work
 
-ACME has a build substrate, pure contract layer, pure StateEngine and pure
-MemoryEngine but no execution orchestration or persistence. There is
-currently:
+ACME has a build substrate, pure contract layer, pure StateEngine, pure
+MemoryEngine and deterministic in-memory Unit of Work, but no execution
+orchestration or durable persistence. There is currently:
 
 - common JSON, identity, time, document and diagnostic contracts
 - deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
@@ -56,15 +57,27 @@ currently:
   score/identity/ID ordering and enforced limits
 - explicit lifecycle preparation for retain, strength-update and forget
   decisions without background wall-clock behavior
-- a typed `@acme/testing` skeleton that imports `@acme/core` through the
-  workspace
+- one aggregate `ExecutionRepository` contract with execution, attempt,
+  model-call, context, prepared commit and terminal evidence types
+- versioned `acme-operation-digest-1` with canonical ordering rules
+- a deterministic `@acme/adapter-memory` that implements request idempotency,
+  ledger/model-call evidence, state/memory/document reads and immutable
+  copy-on-commit transactions
+- atomic promotion of candidate/evaluator evidence, documents, memory
+  mutations, optional state, events/outbox and terminal execution results
+- state-head and memory-record compare-and-swap with explicit conflict codes
+- identical commit replay without new writes or IDs, with divergent identity
+  reuse rejected as persistence corruption
+- a reusable non-empty repository conformance suite in `@acme/testing`
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 52 passing unit tests across canonicalization, hashing, response validation,
-  registries, state/memory preparation and workspace imports
+- 65 passing unit/conformance tests across canonicalization, hashing, response
+  validation, registries, state/memory preparation, repository digest,
+  repository conformance, atomic rollback and workspace imports
 - compile-time task-name/input/output inference checks
-- empty, passing conformance, integration and scenario gates
+- non-empty passing repository conformance plus empty passing integration and
+  scenario gates
 - no ExecutionEngine behavior
 - no database schema
 - no model provider adapter
@@ -78,24 +91,20 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No task is active. ACME-0007 completed the pure MemoryEngine. The recommended
-next bounded Milestone 1 task is the aggregate repository port and in-memory
-Unit of Work and requires an explicitly approved charter.
+ACME-0008 is complete. No next task is active; the next Milestone 1 task
+requires explicit maintainer approval.
 
 ## Persistent Gaps
 
 - ExecutionEngine behavior is not implemented.
-- Candidate audit persistence and memory mutation compare-and-swap are not
-  implemented.
-- Repository-level compare-and-swap and idempotency enforcement for prepared
-  state transitions is not implemented.
-- Repository ports, in-memory persistence and model mock are not implemented.
+- Durable SQLite persistence and crash recovery are not implemented.
+- A deterministic model mock is not implemented.
 - Narrative and Research reference modules are not implemented.
 - The persistence schema remains design-only.
-- Package boundary enforcement currently covers the implemented core/testing/
+- Package boundary enforcement covers core, testing, the in-memory adapter and
   CLI substrate; future adapters and modules must extend its rule set.
-- The conformance, integration and scenario commands are established but have
-  no behavioral suites yet.
+- Integration and scenario commands are established but have no behavioral
+  suites yet.
 - No deterministic scenario or live evaluation harness exists.
 - Live provider call reconciliation, encrypted retention and privacy deletion
   intentionally require future ADRs before implementation.
