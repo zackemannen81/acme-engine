@@ -1,18 +1,19 @@
 # System Documentation
 
 Last updated: 2026-07-29
-Status: Approved architecture with repository bootstrap
+Status: Approved architecture with pure contract layer
 
 This document describes long-lived system boundaries. It does not claim that
-the runtime engines currently exist. Exact contracts, storage schema, protocols and
-milestones are defined in
+the runtime engines currently exist. Exact contracts, storage schema,
+protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
 ## Implemented Substrate
 
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
-- behavior-free `@acme/core`, `@acme/testing` and `@acme/cli` skeletons
+- `@acme/core` contract package plus behavior-free `@acme/testing` and
+  `@acme/cli` skeletons
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
@@ -22,6 +23,26 @@ milestones are defined in
 
 This substrate does not implement or claim execution, memory, state,
 persistence, scenario or provider behavior.
+
+## Implemented Contract Layer
+
+`@acme/core` now implements:
+
+- common JSON, identity, timestamp, document and diagnostic types
+- canonical JSON algorithm `acme-cjson-1` and SHA-256 hashing
+- the ACME error-code taxonomy and structured `AcmeError`
+- provider-neutral model request/response and gateway port types
+- versioned prompt-contract types backed by Zod runtime schemas
+- a strict response pipeline with empty, parse, schema and semantic stages
+- explicit warnings for the permitted BOM and Markdown JSON-fence cleanup
+- rejection of schema coercion or other parsed-value transformations
+- immutable contract and module registries with deterministic lists
+- deterministic contract fingerprints
+- task-typed module authoring and compile-time task input/output inference
+- state and memory envelopes/policy declarations required by module contracts
+
+StateEngine, MemoryEngine, ExecutionEngine, persistence ports, adapters and
+reference-domain behavior are not implemented.
 
 ## System Purpose
 
@@ -124,6 +145,11 @@ Raw provider response
 
 No earlier stage is canonical truth.
 
+The implemented portion currently begins with an already normalized model
+response and ends with a validated contract output plus deterministic parsed
+hash. Provider normalization and all downstream domain/canonical effects
+remain future work.
+
 ## Initial Persistence Direction
 
 - In-memory adapters for deterministic tests.
@@ -144,10 +170,11 @@ No earlier stage is canonical truth.
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
 
-## Planned Implementation Baseline
+## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- Static task-typed module and contract registries.
+- StateEngine and MemoryEngine behavior using the implemented static module
+  and contract composition surface.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.

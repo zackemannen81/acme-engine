@@ -91,3 +91,32 @@ Add one dated, signed entry for every meaningful work session or handoff.
   contracts and in-memory execution. Do not begin runtime work from the empty
   task template.
 - Signature: Codex
+
+## 2026-07-29 — Pure contracts and static registries completed
+
+- Date: 2026-07-29
+- Author: Codex
+- Task: ACME-0005
+- Summary: Began Milestone 1 with a bounded pure contract-layer task. Added
+  Zod-backed public schemas, common JSON/identity/time/document types,
+  `acme-cjson-1` canonical JSON, SHA-256 hashing, the ACME error taxonomy,
+  provider-neutral model and prompt-contract types, a strict response
+  pipeline and immutable contract/module registries. Added task-typed module
+  authoring, state/memory envelope and policy declarations and compile-time
+  task inference examples. The pipeline records permitted BOM/JSON-fence
+  cleanup, rejects parsed-value coercion and produces a deterministic parsed
+  hash. No engine, repository, adapter or reference-domain behavior was added.
+- Verification: Frozen install, formatting, lint, strict typecheck,
+  dependency boundaries and build passed. Typecheck compiled the task
+  inference and expected invalid-name example. Unit tests passed 4 files and
+  19 tests covering canonicalization, hashing, all pipeline stages, cleanup,
+  coercion rejection, fingerprints, ordering, lookup and duplicates.
+  Conformance, integration and scenario gates passed empty because their
+  implementations remain outside this charter. Documentation checks covered
+  25 files before archival and `git diff --check` passed. Remote CI was not
+  run because no push was authorized; local checks used Node `24.14.1` while
+  CI remains pinned to `24.18.0`.
+- Follow-ups: Explicitly activate a bounded pure StateEngine task next.
+  MemoryEngine, in-memory repository/model mock and the Narrative slice remain
+  separate Milestone 1 tasks.
+- Signature: Codex

@@ -12,6 +12,7 @@ Last updated: 2026-07-29
   dependencies use exact versions.
 - Strict ESM TypeScript, ESLint, Prettier, Vitest and dependency-cruiser are
   configured.
+- `@acme/core` uses exact Zod `4.4.3` for public runtime schemas.
 - Secret-free GitHub Actions CI mirrors documentation, formatting, lint,
   typecheck, boundary, test and build commands.
 - Frozen task charters, parent/child tasks, paused tasks and backlog proposals
@@ -28,15 +29,25 @@ implementation baseline:
 - ADR-0002: Static task-typed module composition
 - ADR-0003: SQLite revisioned Unit of Work
 
-ACME has a build substrate but remains pre-runtime. There is currently:
+ACME has a build substrate and pure contract layer but remains pre-engine.
+There is currently:
 
-- a typed, behavior-free `@acme/core` package skeleton
+- common JSON, identity, time, document and diagnostic contracts
+- deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
+- the structured ACME error taxonomy
+- provider-neutral model, prompt-contract and gateway port types
+- a strict response pipeline for empty/parse/schema/semantic validation
+- immutable contract and module registries with deterministic ordering and
+  contract fingerprints
+- task-typed module authoring plus state/memory envelope and policy types
 - a typed `@acme/testing` skeleton that imports `@acme/core` through the
   workspace
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- one passing workspace import unit test
+- 19 passing unit tests across canonicalization, hashing, response validation,
+  registries and workspace imports
+- compile-time task-name/input/output inference checks
 - empty, passing conformance, integration and scenario gates
 - no ExecutionEngine, StateEngine or MemoryEngine behavior
 - no database schema
@@ -51,16 +62,19 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No task is active. `ACME-0004` completed the repository bootstrap. The next
-implementation task has not been approved or activated.
+No task is active. `ACME-0005` completed the pure contract and static-registry
+foundation. The next implementation task has not been approved or activated.
 
 ## Persistent Gaps
 
-- The proposed contracts and persistence schema are not implemented.
+- StateEngine, MemoryEngine and ExecutionEngine behavior is not implemented.
+- Repository ports, in-memory persistence and model mock are not implemented.
+- Narrative and Research reference modules are not implemented.
+- The persistence schema remains design-only.
 - Package boundary enforcement currently covers the implemented core/testing/
   CLI substrate; future adapters and modules must extend its rule set.
 - The conformance, integration and scenario commands are established but have
   no behavioral suites yet.
-- No deterministic or live evaluation harness exists.
+- No deterministic scenario or live evaluation harness exists.
 - Live provider call reconciliation, encrypted retention and privacy deletion
   intentionally require future ADRs before implementation.

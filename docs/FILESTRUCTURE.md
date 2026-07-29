@@ -19,8 +19,25 @@ acme-engine/
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   └── src/
-│   │       └── index.ts
+│   │   ├── src/
+│   │   │   ├── common.ts
+│   │   │   ├── contracts.ts
+│   │   │   ├── errors.ts
+│   │   │   ├── execution-types.ts
+│   │   │   ├── hashing.ts
+│   │   │   ├── index.ts
+│   │   │   ├── memory.ts
+│   │   │   ├── model.ts
+│   │   │   ├── modules.ts
+│   │   │   ├── registries.ts
+│   │   │   ├── response-pipeline.ts
+│   │   │   └── state.ts
+│   │   ├── test/
+│   │   │   ├── hashing.test.ts
+│   │   │   ├── registries.test.ts
+│   │   │   └── response-pipeline.test.ts
+│   │   └── test-d/
+│   │       └── task-inference.test-d.ts
 │   └── testing/
 │       ├── package.json
 │       ├── tsconfig.json
@@ -72,8 +89,9 @@ acme-engine/
 
 ## Implemented Workspace
 
-- `@acme/core`: behavior-free, typed core package skeleton with no runtime
-  dependencies.
+- `@acme/core`: pure domain-neutral contracts, deterministic primitives,
+  response validation and static registries. Zod is its only external runtime
+  dependency.
 - `@acme/testing`: typed test-support skeleton importing `@acme/core` through
   the workspace.
 - `@acme/cli`: behavior-free composition-root skeleton importing
@@ -86,6 +104,7 @@ acme-engine/
 
 ## Planned Structure
 
-The design specification retains the future package map for in-memory and
-SQLite adapters, model adapters, Narrative and Research modules and scenarios.
-Those directories must be added only by explicitly activated tasks.
+The design specification retains the future package map for engine behavior,
+in-memory and SQLite adapters, model adapters, Narrative and Research modules
+and scenarios. Those files and directories must be added only by explicitly
+activated tasks.
