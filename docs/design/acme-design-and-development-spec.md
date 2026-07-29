@@ -219,7 +219,8 @@ Package responsibilities:
 - `@acme/testing`: conformance kits, fixture clock/IDs and ScenarioRunner.
 - `@acme/adapter-memory`: deterministic store and Unit of Work.
 - `@acme/adapter-sqlite`: schema, migrations and durable implementation.
-- `@acme/adapter-model-mock`: scripted normalized model responses.
+- `@acme/adapter-model-mock`: exact finite call scripts and normalized model
+  outcomes with no external dependencies.
 - `@acme/adapter-model-openai`: first optional live provider adapter.
 - `@acme/module-narrative`: narrative schemas, tasks, policies and fixtures.
 - `@acme/module-research`: research schemas, tasks, policies and fixtures.
@@ -245,6 +246,10 @@ Forbidden:
 - an adapter deciding domain equivalence, contradiction or invariants
 - a prompt contract writing to a store
 - barrel exports that hide a forbidden package dependency
+
+Model adapters MAY depend on core. The deterministic model mock MUST NOT
+depend on another adapter, provider SDK, network, environment, filesystem,
+clock or random source.
 
 `dependency-cruiser` MUST enforce package rules in CI. A separate source scan
 MUST reject `narrative`, `research`, `chapter`, `character`, `claim` and other
@@ -470,6 +475,27 @@ export interface ModelGateway {
 Provider error objects MUST be translated into the ACME error taxonomy.
 Core never branches on provider names. Provider choice is resolved before the
 call and frozen in the model-call record.
+
+The gateway boundary validates complete closed shapes for selections,
+requests, capabilities, call contexts and normalized responses. Model
+identities are non-empty, numeric limits and usage counts are safe integers,
+and `receivedAt` is a canonical UTC ISO timestamp. Returned capabilities and
+responses are detached and deeply frozen.
+
+Capability discovery is deterministic for an exact supplied selection.
+Required boolean capabilities constrain the selection only when `true`;
+required numeric limits are minimums. A missing requirement is non-retryable
+`UNSUPPORTED_CAPABILITY` at `calling-model`. An already-aborted signal is
+non-retryable `CANCELLED` before provider invocation.
+
+The deterministic mock uses declared immutable profiles and finite exact call
+scripts. Each call has unique `(executionId, callKey)`, exact selection,
+expected `acme-model-request-hash-1` and one response or model-stage error.
+Cancellation and capability rejection consume nothing. A matching scripted
+success or error consumes once. Unexpected, mismatched, repeated or
+unconsumed calls are non-retryable `INTERNAL` test-harness failures; no queue,
+fallback output or synthesized response field is permitted. Mock invocation
+inspection remains outside the core port.
 
 ### 9.2 Response pipeline
 
@@ -1234,6 +1260,21 @@ selection and status. Immediately after receiving a normalized response, it
 durably stores the response or its configured protected payload before
 interpretation.
 
+`requestHash` uses immutable `acme-model-request-hash-1`:
+
+```text
+sha256(acme-cjson-1({
+  algorithm: "acme-model-request-hash-1",
+  request: <complete validated ModelRequest>
+}))
+```
+
+The hash excludes `GatewayCallContext` and `ModelSelection`, which are
+separate ledger facts. Object key insertion order is irrelevant; array order
+is preserved and significant. Changing any request content changes the
+digest. A future hash change requires a new algorithm identifier and
+compatibility handling.
+
 On resume:
 
 - a succeeded compatible call is reused
@@ -1943,6 +1984,16 @@ environment opt-in and budget.
 Fault injection points MUST be named constants around stage transitions and
 transaction statements. Tests use injected failures, never timing races as
 their only oracle.
+
+The reusable `ModelGateway` conformance kit MUST run only through the core
+port and cover exact capability discovery, required-capability rejection,
+pre-call cancellation, normalized success, structured model failure and deep
+immutability. Mock-specific tests separately cover full configuration
+validation, exact identity/selection/request-hash matching, single
+consumption, deterministic invocation order, unconsumed scripts and absence
+of nondeterministic fallbacks. Future provider adapters run the same portable
+kit with injected fixture transports plus provider-specific normalization
+tests.
 
 ### 19.3 Live evaluation
 

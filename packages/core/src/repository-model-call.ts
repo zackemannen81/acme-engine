@@ -9,6 +9,7 @@ export interface ModelCallReservation {
   readonly attempt: number;
   readonly purpose: 'primary' | 'repair' | 'revision';
   readonly selection: ModelSelection;
+  /** Digest produced by the immutable acme-model-request-hash-1 algorithm. */
   readonly requestHash: string;
   readonly protectedRequest?: string;
   readonly startedAt: IsoTimestamp;

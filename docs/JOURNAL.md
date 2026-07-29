@@ -256,3 +256,31 @@ Add one dated, signed entry for every meaningful work session or handoff.
   and consumption semantics. If approved, explicitly move ACME-0009 to
   `Ready`, record the freeze date and begin implementation.
 - Signature: Codex
+
+## 2026-07-30 — Deterministic model mock and gateway conformance completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0009
+- Summary: Froze the approved charter and implemented immutable
+  `acme-model-request-hash-1`, closed core gateway-boundary validation and the
+  deterministic `@acme/adapter-model-mock`. The adapter validates exact
+  selection profiles and complete finite call scripts before use, matches
+  `(executionId, callKey)`, selection and request hash, consumes matching
+  response/error outcomes once and exposes immutable invocation/unconsumed
+  evidence outside the core port. Added the reusable provider-neutral
+  `ModelGateway` conformance kit and accepted ADR-0007. No live provider,
+  network, clock, filesystem, retry/orchestration or ledger integration was
+  introduced.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries
+  and build passed. Unit execution passed 12 files and 85 tests. The dedicated
+  conformance gate passed 2 files and 10 tests, with non-empty repository and
+  gateway suites. Integration and scenario gates passed empty because those
+  behaviors remain outside this charter. Documentation checks covered 34
+  Markdown files and `git diff --check` passed. No required check was skipped.
+  Local Node was `24.14.1` while the repository/CI pin remains `24.18.0`; pnpm
+  was the pinned `10.34.5`.
+- Follow-ups: Explicitly charter ExecutionEngine orchestration as the next
+  bounded Milestone 1 task. Durable ledger reuse, live provider adapters and
+  the Narrative acceptance slice remain separate future work.
+- Signature: Codex

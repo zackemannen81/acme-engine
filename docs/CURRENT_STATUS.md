@@ -31,6 +31,7 @@ implementation baseline:
 - ADR-0004: Deterministic transition identity
 - ADR-0005: Pure memory decision application
 - ADR-0006: Aggregate in-memory Unit of Work
+- ADR-0007: Deterministic model mock and gateway conformance
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine and deterministic in-memory Unit of Work, but no execution
@@ -38,8 +39,12 @@ orchestration or durable persistence. There is currently:
 
 - common JSON, identity, time, document and diagnostic contracts
 - deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
+- versioned `acme-model-request-hash-1` over the complete validated
+  provider-neutral model request
 - the structured ACME error taxonomy
 - provider-neutral model, prompt-contract and gateway port types
+- closed gateway-boundary validation for selections, requests, capabilities,
+  required-capability matching, call contexts and normalized responses
 - a strict response pipeline for empty/parse/schema/semantic validation
 - immutable contract and module registries with deterministic ordering and
   contract fingerprints
@@ -69,18 +74,27 @@ orchestration or durable persistence. There is currently:
 - identical commit replay without new writes or IDs, with divergent identity
   reuse rejected as persistence corruption
 - a reusable non-empty repository conformance suite in `@acme/testing`
+- a deterministic `@acme/adapter-model-mock` with immutable exact-selection
+  profiles, finite exact-call scripts and no provider, network, environment,
+  filesystem, clock or random dependency
+- exact `(executionId, callKey)`, selection and request-hash matching with
+  single consumption, scripted response/error outcomes and immutable
+  invocation/unconsumed-call evidence
+- a reusable non-empty provider-neutral `ModelGateway` conformance suite in
+  `@acme/testing`
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 65 passing unit/conformance tests across canonicalization, hashing, response
-  validation, registries, state/memory preparation, repository digest,
-  repository conformance, atomic rollback and workspace imports
+- 85 passing unit/conformance tests across canonicalization, model-request
+  hashing, response/gateway validation, registries, state/memory preparation,
+  repository digest, repository/gateway conformance, mock matching,
+  immutability, atomic rollback and workspace imports
 - compile-time task-name/input/output inference checks
 - non-empty passing repository conformance plus empty passing integration and
   scenario gates
 - no ExecutionEngine behavior
 - no database schema
-- no model provider adapter
+- no live model provider adapter
 - no published package
 - no deployment
 
@@ -91,15 +105,16 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0009 is the active Draft charter for a deterministic model mock and
-provider-neutral gateway conformance suite. Implementation requires explicit
-maintainer review and charter freeze.
+ACME-0009 implemented the deterministic model mock, versioned request identity
+and provider-neutral gateway conformance. No next implementation task is
+active until a maintainer approves a new bounded charter.
 
 ## Persistent Gaps
 
 - ExecutionEngine behavior is not implemented.
 - Durable SQLite persistence and crash recovery are not implemented.
-- A deterministic model mock is not implemented.
+- A live provider adapter and provider-specific normalization are not
+  implemented.
 - Narrative and Research reference modules are not implemented.
 - The persistence schema remains design-only.
 - Package boundary enforcement covers core, testing, the in-memory adapter and

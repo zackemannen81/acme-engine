@@ -33,6 +33,18 @@ export default {
         path: '^(?:apps|packages/(?!core(?:/|$)|adapter-memory(?:/|$)))',
       },
     },
+    {
+      name: 'model-mock-adapter-depends-only-on-core',
+      severity: 'error',
+      comment:
+        'The model mock may depend on itself and core, not apps, modules, provider SDKs, or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-model-mock/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-model-mock(?:/|$)))',
+      },
+    },
   ],
   options: {
     doNotFollow: {
