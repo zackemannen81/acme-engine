@@ -161,7 +161,9 @@ The first platform version is successful when:
 
 ## Next Deliverable
 
-The next implementation deliverable is one bounded reference module using the
-implemented public contracts, pure engines and shared DomainModule conformance
-kit. End-to-end offline acceptance remains a separate ExecutionEngine-backed
-step.
+The first bounded reference module now implements the public contracts, pure
+engines and shared DomainModule conformance boundary. The recommended next
+implementation deliverable is the single-task ExecutionEngine required to run
+its offline acceptance scenario. That work remains unactivated until an
+explicitly approved task charter exists; ResearchModule and durable
+persistence remain separate deliverables.

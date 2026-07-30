@@ -567,3 +567,35 @@ Add one dated, signed entry for every meaningful work session or handoff.
   ACME-0017 at `Ready` only after that review; implementation remains
   unauthorized while the task is `Draft`.
 - Signature: Codex
+
+## 2026-07-30 — NarrativeModule observe-document implementation complete
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0017
+- Summary: Implemented `@acme/module-narrative` through build-plan phases
+  1–4. Added strict v1 schemas, ADR-0009 identity normalization and golden
+  entity keys, ADR-0011 `previous-document-tail-1` and
+  `narrative-window-1`, the immutable
+  `narrative.observe-document@1.0.0` contract, deterministic project and
+  input-bound interpretation, applied-decision-only state projection, pure
+  state/reducer/invariants and the domain-owned memory validation, retrieval,
+  resolution and lifecycle policy. The module emits the source document,
+  three approved memory-candidate kinds, direct scene/window/outline intent
+  and diagnostics without domain events. Added Narrative-owned schema,
+  context, task, policy, reducer, type-inference and unchanged shared
+  DomainModule conformance coverage. No core contract, adapter, repository,
+  model invocation, orchestration, persistence, ResearchModule or UI behavior
+  was added.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries and
+  build passed. Unit execution passed 20 files and 146 tests. Dedicated
+  conformance passed 4 files and 28 tests: 5 repository, 5 gateway, 12 neutral
+  DomainModule and 6 NarrativeModule cases. Integration and scenario gates
+  passed empty because ExecutionEngine and ScenarioRunner remain outside the
+  charter. Documentation links/fences and `git diff --check` passed. No
+  required check was skipped.
+- Follow-ups: Explicitly charter the single-task ExecutionEngine to exercise
+  Narrative Phase 5 offline acceptance. Keep ResearchModule and durable
+  persistence as separate, explicitly approved tasks. The Domain Test UI
+  remains in backlog.
+- Signature: Codex

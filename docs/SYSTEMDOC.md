@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, post-memory projection, reference identity/context contracts, shared module conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with pure engines, NarrativeModule, post-memory projection, shared conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 end-to-end execution orchestration or durable runtime persistence exists.
@@ -13,8 +13,9 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
 - `@acme/core` contract package, `@acme/adapter-memory`,
-  `@acme/adapter-model-mock`, reusable repository/gateway conformance support
-  in `@acme/testing` and the behavior-free `@acme/cli`
+  `@acme/adapter-model-mock`, `@acme/module-narrative`, reusable
+  repository/gateway/module conformance support in `@acme/testing` and the
+  behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
@@ -57,7 +58,7 @@ persistence, scenarios or live provider behavior.
   `ExecutionRepository` contracts
 - versioned `acme-operation-digest-1` prepared-commit hashing
 
-ExecutionEngine, durable adapters and reference-domain behavior are not
+ExecutionEngine, durable adapters and ResearchModule behavior are not
 implemented.
 
 ## Implemented Input-Bound Contract Surface
@@ -99,8 +100,9 @@ adding domain vocabulary to core:
   duplicating complete evidence
 
 All four identifiers use `acme-cjson-1`, SHA-256, immutable algorithm names
-and documented golden vectors. They are module contracts, not implemented
-reference-module behavior.
+and documented golden vectors. Narrative entity identity is implemented by
+`@acme/module-narrative`; Research identity remains a module contract awaiting
+implementation.
 
 ## Approved Narrative Knowledge and Context Ownership
 
@@ -118,8 +120,31 @@ context boundary:
   sentences and 320 Unicode code points from the previous immutable source
   document, with key/hash provenance and no summary fallback
 
-The previous tail is projected contract context, not state or memory. These
-are accepted module contracts awaiting ACME-0017 implementation.
+The previous tail is projected contract context, not state or memory.
+`@acme/module-narrative` implements these contracts with strict schemas,
+deterministic derivation and golden fixtures.
+
+## Implemented NarrativeModule
+
+`@acme/module-narrative` implements the bounded module-level phases 1–4:
+
+- strict task, contract, source, memory, state and delta schemas
+- immutable `narrative.observe-document@1.0.0` request construction and
+  input-bound semantic validation
+- deterministic projection of stable state context, two summaries, exact
+  previous-document tail and relevant memory
+- interpretation into one source document, character-fact, relationship and
+  world-rule candidates, direct scene/window/outline intent and diagnostics
+- pure post-memory entity/alias projection that accepts only applied memory
+  decisions
+- pure state initialization, reduction and invariants
+- domain-owned memory validation, identity, retrieval, resolution and
+  lifecycle behavior, including evidence-backed supersession
+
+The module runs the unchanged shared DomainModule conformance suite and
+contains no concrete adapter, provider, database, app or testing-support
+dependency. It does not invoke a model, write a repository or claim the Phase
+5 acceptance scenario; those remain ExecutionEngine responsibilities.
 
 ## Implemented DomainModule Conformance
 
@@ -141,8 +166,8 @@ public `@acme/core` contracts:
   meaning
 - analyzer tasks may return an explicit empty result
 
-The identical suite passes for testing-owned producer and empty-analyzer
-fixtures. Narrative and Research must run it with their own fixtures; their
+The identical suite passes for testing-owned producer, empty-analyzer and
+Narrative-owned fixtures. Research must run it with its own fixtures; domain
 identity, contradiction, merge, promotion and invariant semantics remain
 module-owned unit-test concerns. A dependency rule rejects future
 `packages/module-*` imports of apps, concrete adapters or `@acme/testing`.
@@ -400,8 +425,8 @@ work.
 
 ## Initial Domain Proof
 
-- NarrativeModule
-- ResearchModule
+- NarrativeModule — implemented at the pure module boundary
+- ResearchModule — not implemented
 
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
@@ -411,14 +436,15 @@ The team-facing construction and verification plans are:
 - [`NarrativeModule — Build and Test Plan`](design/narrative-module-build-and-test-plan.md)
 - [`ResearchModule — Build and Test Plan`](design/research-module-build-and-test-plan.md)
 
-These guides translate the approved baseline into proposed package layouts,
-component ownership, ordered build phases, decision gates and layered test
-matrices. They are implementation guidance, not evidence that either module
-exists. Both now use ADR-0008's post-memory state-projection boundary, require
-ADR-0009's explicit domain identity/evidence contracts, follow the same core
-path and forbid domain branches in core or concrete adapter dependencies in a
-module. Narrative additionally follows ADR-0011's exclusive knowledge
-ownership and fixed source-backed context policy.
+These guides translate the approved baseline into package layouts, component
+ownership, ordered build phases, decision gates and layered test matrices.
+Narrative phases 1–4 are implemented; its Phase 5 acceptance remains
+ExecutionEngine-dependent. Research remains implementation guidance only.
+Both use ADR-0008's post-memory state-projection boundary, require ADR-0009's
+explicit domain identity/evidence contracts, follow the same core path and
+forbid domain branches in core or concrete adapter dependencies in a module.
+Narrative additionally follows ADR-0011's exclusive knowledge ownership and
+fixed source-backed context policy.
 
 ## Proposed Domain Test Surface
 

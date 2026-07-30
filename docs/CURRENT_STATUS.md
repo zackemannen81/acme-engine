@@ -98,14 +98,23 @@ currently:
 - a reusable non-empty public-core-only `DomainModule` conformance suite in
   `@acme/testing`, proven unchanged against testing-owned producer and empty
   analyzer fixtures
+- `@acme/module-narrative` with strict v1 schemas, deterministic
+  `narrative.observe-document@1.0.0`, pure state/reducer/invariants and a
+  domain-owned memory policy
+- ADR-0011-compliant `narrative-window-1` and source-backed
+  `previous-document-tail-1`, including golden request, entity and context
+  fixtures
+- Narrative-owned execution of the unchanged shared DomainModule conformance
+  suite plus compile-time task inference checks
 - a typed `@acme/cli` composition-root skeleton
 - automated dependency rules, a core vocabulary guard and negative core plus
   future-module boundary fixtures
-- 107 passing unit/conformance tests across canonicalization, model-request
+- 146 passing unit/conformance tests across canonicalization, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
-  plus module conformance, mock matching, immutability, atomic rollback and
-  workspace imports
+  plus neutral and Narrative module conformance, Narrative schemas, context,
+  identity, policy and state behavior, mock matching, immutability, atomic
+  rollback and workspace imports
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance plus empty
@@ -143,15 +152,14 @@ implemented workspace after ACME-0015. It corrected pre-implementation phase
 claims and audited the canonical repository map without changing runtime
 behavior or historical records.
 
-ACME-0017 is active as a `Draft` charter for
-`@acme/module-narrative` and `narrative.observe-document@1.0.0`, bounded to
-module-level build phases 1–4. ADR-0011 now fixes memory as the sole owner of
-Narrative facts/relationships/world rules, state as the revisioned
-entity/alias and working-position owner, a two-summary
-`narrative-window-1`, and source-backed `previous-document-tail-1`. No
-Narrative source exists and implementation must not begin until the remaining
-prompt-contract semantics are reviewed and the charter is explicitly frozen
-at `Ready`.
+ACME-0017 completed NarrativeModule build phases 1–4.
+`@acme/module-narrative` now implements
+`narrative.observe-document@1.0.0`, strict schemas, deterministic projection
+and interpretation, post-memory state projection, pure state behavior and the
+Narrative memory policy. ADR-0011's exclusive memory/state ownership,
+two-summary `narrative-window-1` and source-backed
+`previous-document-tail-1` are executable and golden-tested. Phase 5 remains
+blocked on the absent ExecutionEngine and is not claimed by ACME-0017.
 
 ## Persistent Gaps
 
@@ -159,9 +167,9 @@ at `Ready`.
 - Durable SQLite persistence and crash recovery are not implemented.
 - A live provider adapter and provider-specific normalization are not
   implemented.
-- Narrative and Research reference modules are not implemented.
-- Narrative and Research must run the implemented shared conformance suite
-  with their own fixtures in addition to module-specific policy tests.
+- ResearchModule is not implemented.
+- ResearchModule must run the implemented shared conformance suite with its
+  own fixtures in addition to module-specific policy tests.
 - ExecutionEngine must orchestrate the implemented post-memory projection
   boundary and retain the evidence required for replay.
 - The persistence schema remains design-only.

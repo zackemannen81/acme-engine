@@ -1784,6 +1784,11 @@ Role: analyzer
 
 Contract: `narrative.observe-document@1.0.0`
 
+Implementation status: ACME-0017 implements the pure package, schemas,
+contract/task, state behavior, memory policy and shared conformance boundary.
+The acceptance scenario in section 16.2 remains pending because
+ExecutionEngine does not yet exist.
+
 ### 16.1 Input, output and state
 
 ```ts
