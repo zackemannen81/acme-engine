@@ -69,6 +69,31 @@ acme-engine/
 │   │   │   └── state-projection.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
+│   ├── module-narrative/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── contracts/
+│   │   │   │   └── observe-document.ts
+│   │   │   ├── tasks/
+│   │   │   │   └── observe-document.ts
+│   │   │   ├── identity.ts
+│   │   │   ├── immutable.ts
+│   │   │   ├── index.ts
+│   │   │   ├── memory-policy.ts
+│   │   │   ├── module.ts
+│   │   │   ├── previous-document-tail.ts
+│   │   │   ├── schemas.ts
+│   │   │   └── state.ts
+│   │   ├── test/
+│   │   │   ├── fixtures.ts
+│   │   │   ├── memory-policy.test.ts
+│   │   │   ├── observe-document.test.ts
+│   │   │   ├── previous-document-tail.test.ts
+│   │   │   ├── schemas.test.ts
+│   │   │   └── state.test.ts
+│   │   └── test-d/
+│   │       └── task-inference.test-d.ts
 │   └── testing/
 │       ├── package.json
 │       ├── tsconfig.json
@@ -85,7 +110,8 @@ acme-engine/
 │   └── conformance/
 │       ├── adapter-memory.test.ts
 │       ├── adapter-model-mock.test.ts
-│       └── domain-module.test.ts
+│       ├── domain-module.test.ts
+│       └── module-narrative.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -137,6 +163,7 @@ acme-engine/
 │   │   ├── ACME-0014_domain-test-ui-specification.md
 │   │   ├── ACME-0015_reusable-domain-module-conformance.md
 │   │   ├── ACME-0016_documentation-reality-sync.md
+│   │   ├── ACME-0017_narrative-module-observe-document.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -187,6 +214,9 @@ content remains intentionally omitted here.
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
+- `@acme/module-narrative`: strict Narrative v1 schemas, deterministic
+  observe-document contract/task, pure state behavior and domain-owned memory
+  policy.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway and
   DomainModule conformance plus typed test support.
 - `@acme/cli`: behavior-free composition-root skeleton importing
@@ -200,8 +230,9 @@ content remains intentionally omitted here.
 ## Planned Structure
 
 The design specification retains the future package map for engine behavior,
-SQLite/model adapters, Narrative and Research modules and scenarios. Those
-files and directories must be added only by explicitly activated tasks.
+SQLite/live-model adapters, ResearchModule and scenarios. Those files and
+directories must be added only by explicitly activated tasks. NarrativeModule
+phases 1–4 are implemented in the workspace.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions

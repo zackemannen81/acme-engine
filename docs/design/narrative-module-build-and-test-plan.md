@@ -1,6 +1,6 @@
 # NarrativeModule — Build and Test Plan
 
-Status: Team implementation guide  
+Status: Phases 1–4 implemented; Phase 5 awaits ExecutionEngine
 Audience: ACME maintainers, domain engineers and test engineers  
 Prepared: 2026-07-30
 
@@ -18,6 +18,10 @@ The first implementation target is:
 - role: `analyzer`
 - contract: `narrative.observe-document@1.0.0`
 - package: `@acme/module-narrative`
+
+ACME-0017 implements this target through module assembly and shared
+conformance. The offline acceptance flow remains deliberately deferred until
+ExecutionEngine exists.
 
 The module proves that story continuity can be implemented entirely through
 the shared `PromptContract`, `DomainModule`, `MemoryEngine`, `StateEngine` and
@@ -325,7 +329,8 @@ must not be presented as settled truth.
 3. Define strict schemas and compile-time types.
 4. Add valid/invalid schema fixtures.
 
-**Exit:** typecheck, schema tests and boundary checks pass.
+**Exit:** typecheck, schema tests and boundary checks pass. Implemented by
+ACME-0017.
 
 ### Phase 2 — Pure state and memory policy
 
@@ -334,7 +339,8 @@ must not be presented as settled truth.
 3. Implement deterministic identity and resolution policy.
 4. Add retrieval and lifecycle behavior.
 
-**Exit:** all pure tests pass without adapters or model calls.
+**Exit:** all pure tests pass without adapters or model calls. Implemented by
+ACME-0017.
 
 ### Phase 3 — Contract and task
 
@@ -347,6 +353,7 @@ must not be presented as settled truth.
    decisions into the final delta.
 
 **Exit:** fixed inputs/context/output produce byte-equivalent module results.
+Implemented by ACME-0017.
 
 ### Phase 4 — Module assembly and conformance
 
@@ -355,7 +362,8 @@ must not be presented as settled truth.
 3. Run type-inference and module-conformance suites.
 4. Prove returned inputs/results are detached and immutable.
 
-**Exit:** the package satisfies the shared module contract.
+**Exit:** the package satisfies the shared module contract. Implemented by
+ACME-0017 with the unchanged shared conformance suite.
 
 ### Phase 5 — Offline acceptance
 
@@ -454,9 +462,9 @@ decision and the ACME-0015 conformance implementation.
 
 - [x] Do the state and memory ownership boundaries match the intended product?
 - [x] Is the v1 alias/correction policy precise enough to golden-test?
-- [ ] Are all prompt-contract semantics immutable under version `1.0.0`?
+- [x] Are all prompt-contract semantics immutable under version `1.0.0`?
 - [x] Is the narrative window limit versioned and fingerprinted?
-- [ ] Does every contradiction remain visible in audit evidence?
+- [x] Does every contradiction remain visible in audit evidence?
 - [ ] Can the full acceptance scenario run with no network or wall clock?
 - [ ] Can ResearchModule use the same engine path with no core branch?
 

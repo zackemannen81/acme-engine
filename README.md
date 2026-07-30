@@ -11,8 +11,9 @@ deterministic in-memory Unit of Work and exact scripted model mock are
 complete. The workspace contains model-output validation, versioned request
 hashing, static composition contracts, revisioned preparation and reusable
 repository/gateway/module conformance suites; no orchestration engine, durable
-persistence adapter, reference module, live model adapter or published package
-exists yet.
+persistence adapter, Research reference module, live model adapter or
+published package exists yet. The pure `@acme/module-narrative` package now
+implements the first bounded reference-domain behavior.
 
 ## Start here
 
@@ -42,13 +43,14 @@ apps/cli/                 CLI composition-root skeleton
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-model-mock/ Exact finite model-call scripts
+packages/module-narrative/ Narrative observe-document reference module
 packages/testing/         Reusable repository/gateway/module conformance support
 tooling/                   Shared configuration and repository checks
 ```
 
 ## Current objective
 
-`docs/CURRENT_TASK.md` is the sole source for active work. The next Milestone 1
-implementation focus is a bounded first reference module using the shared
-DomainModule conformance kit; its full offline acceptance remains dependent on
-the future ExecutionEngine.
+`docs/CURRENT_TASK.md` is the sole source for active work. NarrativeModule
+phases 1–4 are implemented; its full offline acceptance remains dependent on
+the future ExecutionEngine. The next task must be explicitly approved before
+activation.
