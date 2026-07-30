@@ -1,5 +1,6 @@
 import type {
   DomainModule,
+  StateProjectionInput,
   TaskContractOutput,
   TaskDefinition,
   TaskInput,
@@ -56,6 +57,14 @@ export type TaskInputProof = Assert<
 
 export type TaskOutputProof = Assert<
   Equal<TaskContractOutput<FixtureModule, 'adjust'>, FixtureContractOutput>
+>;
+
+type FixtureProjectionInput = Parameters<
+  FixtureTasks['adjust']['projectState']
+>[0];
+
+export type TaskProjectionProof = Assert<
+  Equal<FixtureProjectionInput, StateProjectionInput<FixtureDelta>>
 >;
 
 // @ts-expect-error "missing" is not a registered task name.

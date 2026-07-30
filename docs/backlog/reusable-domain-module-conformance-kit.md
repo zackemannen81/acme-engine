@@ -35,8 +35,7 @@ is a separate cross-package implementation deliverable.
 
 - current `DomainModule`, `TaskDefinition` and `ModuleResult` contracts
 - `@acme/testing`
-- resolution of the post-memory state projection boundary if it changes
-  module conformance
+- ADR-0008 post-memory state projection and its filtering invariants
 
 ## Suggested verification
 
@@ -45,4 +44,3 @@ is a separate cross-package implementation deliverable.
 - adapter-specific inspection is not required
 - negative fixtures prove domain packages cannot import adapters
 - typecheck includes valid and invalid task-name examples
-

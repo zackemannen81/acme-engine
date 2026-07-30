@@ -10,6 +10,7 @@ import type {
 } from './common.js';
 import type { ContractRef } from './contracts.js';
 import type {
+  AppliedMemoryResolution,
   DomainMemoryPolicy,
   MemoryCandidate,
   MemoryRecord,
@@ -50,9 +51,21 @@ export interface StateDelta<TDelta> {
 export interface ModuleResult<TDelta> {
   readonly documents: readonly CandidateDocument[];
   readonly memories: readonly MemoryCandidate[];
-  readonly stateDelta?: StateDelta<TDelta>;
+  readonly stateIntent?: StateDelta<TDelta>;
   readonly events: readonly CandidateEvent[];
   readonly diagnostics: readonly DiagnosticFact[];
+}
+
+export interface StateProjectionMemoryDecision {
+  readonly candidate: MemoryCandidate;
+  readonly identityKey: string;
+  readonly resolution: AppliedMemoryResolution;
+  readonly affectedMemoryIds: readonly string[];
+}
+
+export interface StateProjectionInput<TDelta> {
+  readonly stateIntent?: StateDelta<TDelta>;
+  readonly memory: readonly StateProjectionMemoryDecision[];
 }
 
 export interface TaskDefinition<
@@ -73,6 +86,10 @@ export interface TaskDefinition<
     output: TContractOutput,
     context: ExecutionReadContext<TState>,
   ): Promise<ModuleResult<TDelta>> | ModuleResult<TDelta>;
+  projectState(
+    input: StateProjectionInput<TDelta>,
+    context: ExecutionReadContext<TState>,
+  ): StateDelta<TDelta> | undefined;
 }
 
 // Generic erasure is intentionally confined to the runtime registry boundary.

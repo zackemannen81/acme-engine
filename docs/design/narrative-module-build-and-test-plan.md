@@ -73,7 +73,9 @@ flowchart LR
   pipeline --> interpret["interpret()"]
   interpret --> result["ModuleResult<NarrativeDelta>"]
   result --> memory["Narrative memory policy + MemoryEngine"]
-  result --> state["Narrative reducer/invariants + StateEngine"]
+  result --> projection["projectState()"]
+  memory --> projection
+  projection --> state["Narrative reducer/invariants + StateEngine"]
   memory --> commit["ExecutionRepository Unit of Work"]
   state --> commit
 ```
@@ -121,7 +123,7 @@ provider SDK, database library or application package.
 | --- | --- | --- |
 | `schemas.ts` | Strict runtime schemas for task input, contract input/output, state, delta and domain values | Accept valid fixtures; reject extra, malformed and non-finite values |
 | `contracts/observe-document.ts` | Immutable prompt contract, required capabilities, request construction and semantic validation | Golden request hash; schema/semantic failure tests |
-| `tasks/observe-document.ts` | `project()` context into contract input and `interpret()` validated output into candidates | Deterministic projection and exact result fixtures |
+| `tasks/observe-document.ts` | `project()` context into contract input, `interpret()` output into candidates/state intent and `projectState()` applied decisions into the final delta | Deterministic contract/state projection and exact result fixtures |
 | `memory-policy.ts` | Validate, identify, retrieve, resolve and lifecycle-manage narrative memories | Identity, equivalence, contradiction, merge, ranking and lifecycle tests |
 | `state.ts` | State/delta types, initial state, pure reducer and invariants | Revision-zero initialization, reducer purity and invariant matrix |
 | `module.ts` | Assemble namespace, schema versions, tasks and policy with `defineModule()` | Registry/conformance and immutable task map |
@@ -206,8 +208,8 @@ source. The supplied `now` must not be replaced with current time.
 - replace the scene
 - append one window summary and retain the configured maximum
 - advance outline beats monotonically
-- apply the approved projection of resolved memory decisions once that
-  boundary is defined
+- apply accepted resolved memory decisions through the ADR-0008
+  `projectState()` boundary
 
 ### Invariants
 
@@ -280,7 +282,10 @@ must not be presented as settled truth.
 1. Implement `narrative.observe-document@1.0.0`.
 2. Golden-test request construction and request hash.
 3. Implement deterministic `project()`.
-4. Implement `interpret()` into documents, memories, delta and diagnostics.
+4. Implement `interpret()` into documents, memories, state intent and
+   diagnostics.
+5. Implement pure `projectState()` from state intent and applied memory
+   decisions into the final delta.
 
 **Exit:** fixed inputs/context/output produce byte-equivalent module results.
 
@@ -356,10 +361,10 @@ Fixture updates require human review and a before/after digest rationale.
 
 ## Decision gates before implementation
 
-1. **Memory decisions → state delta.** Current contracts let `interpret()`
-   return a delta before `MemoryEngine.prepare()` produces resolved decisions,
-   while the approved behavior expects resolved narrative operations to affect
-   state. The bridge must be defined before reducer implementation.
+1. **Memory decisions → state delta — resolved.** ADR-0008 and
+   `buildStateProjectionInput()` define the post-memory, task-owned bridge.
+   Narrative must project only applied decisions; ignored/rejected candidates
+   remain audit evidence and cannot drive memory-derived state.
 2. **Correction provenance.** The approved behavior permits supersession only
    with explicit accepted correction provenance, but the current
    `NarrativeContractOutput` does not carry that field.
@@ -371,9 +376,11 @@ Fixture updates require human review and a before/after digest rationale.
 
 See the bounded backlog proposals:
 
-- [Domain memory decisions to state projection](../backlog/domain-memory-decisions-to-state-projection.md)
 - [Reference-module identity and provenance fields](../backlog/reference-module-identity-and-provenance-fields.md)
 - [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
+
+The resolved projection decision is
+[ADR-0008](../adr/0008-post-memory-domain-state-projection.md).
 
 ## Team review checklist
 
@@ -393,4 +400,3 @@ See the bounded backlog proposals:
 - [ADR-0002 — Static task-typed composition](../adr/0002-static-task-typed-module-composition.md)
 - [ADR-0004 — Deterministic transition identity](../adr/0004-deterministic-transition-identity.md)
 - [ADR-0005 — Pure memory decision application](../adr/0005-pure-memory-decision-application.md)
-

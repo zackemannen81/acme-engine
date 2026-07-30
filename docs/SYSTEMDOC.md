@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, in-memory Unit of Work and model mock
+Status: Approved architecture with pure engines, post-memory projection, in-memory Unit of Work and model mock
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -42,7 +42,12 @@ persistence, scenarios or live provider behavior.
 - rejection of schema coercion or other parsed-value transformations
 - immutable contract and module registries with deterministic lists
 - deterministic contract fingerprints
-- task-typed module authoring and compile-time task input/output inference
+- task-typed module authoring and compile-time task input/output/projection
+  inference
+- explicit interpreted state intent plus required task-owned
+  `projectState()` hooks
+- exact memory-candidate/decision correlation and filtered immutable
+  state-projection input containing only applied decisions
 - state and memory envelopes/policy declarations required by module contracts
 - execution request/policy/result, evaluation evidence and aggregate
   `ExecutionRepository` contracts
@@ -50,6 +55,30 @@ persistence, scenarios or live provider behavior.
 
 ExecutionEngine, durable adapters and reference-domain behavior are not
 implemented.
+
+## Implemented Post-Memory State Projection
+
+`@acme/core` now defines the bridge between pure memory resolution and pure
+state preparation:
+
+- `ModuleResult.stateIntent` is typed interpreted intent rather than a
+  pre-memory final delta
+- every task owns a synchronous pure `projectState()` hook
+- `buildStateProjectionInput()` requires an exact one-to-one candidate and
+  prepared-decision key set
+- applied create, reinforce, merge, contest and supersede decisions retain
+  their correlated candidates, identities and affected memory IDs
+- ignore and reject-candidate remain repository audit evidence but are absent
+  from memory-derived projection input
+- prepared decision order is preserved and returned input is canonical-JSON
+  cloned, detached and deeply frozen
+- projected deltas remain untrusted until StateEngine schema, reducer and
+  invariant validation succeeds
+
+This boundary adds no persistence or orchestration behavior. The future
+ExecutionEngine must run it after evaluators allow the interpreted result and
+MemoryEngine prepares decisions, then pass its output to StateEngine before
+one aggregate commit.
 
 ## Implemented Deterministic Model Mock
 
@@ -244,8 +273,10 @@ Raw provider response
   → semantic validation
   → ContractOutput
   → DomainModule interpretation
-  → ModuleResult candidates
-  → domain policies and invariants
+  → ModuleResult candidates and state intent
+  → MemoryEngine decisions
+  → filtered task-owned state projection
+  → StateEngine reducer and invariants
   → committed memory/state/events
 ```
 
@@ -253,13 +284,16 @@ No earlier stage is canonical truth.
 
 The implemented trust path begins with an already normalized model response
 and can produce validated contract output plus a deterministic parsed hash.
-Separately, the StateEngine accepts an interpreted typed delta and prepares a
-validated next-state candidate. The MemoryEngine accepts interpreted memory
-candidates and prepares validated record decisions/mutations. The in-memory
-repository can atomically promote those prepared effects. Provider
+The MemoryEngine accepts interpreted memory candidates and prepares validated
+record decisions/mutations. The implemented projection builder correlates
+those decisions with candidates, excludes ignored/rejected resolutions and
+hands immutable applied evidence to the task-owned hook. StateEngine accepts
+the resulting typed delta and prepares a validated next-state candidate. The
+in-memory repository can atomically promote those prepared effects. Provider
 normalization remains a live-adapter responsibility; the deterministic mock
-accepts only complete validated normalized fixtures. Module interpretation and
-durable persistence remain future work.
+accepts only complete validated normalized fixtures. Execution orchestration,
+module interpretation implementations and durable persistence remain future
+work.
 
 ## Initial Persistence Direction
 
@@ -289,8 +323,9 @@ The team-facing construction and verification plans are:
 These guides translate the approved baseline into proposed package layouts,
 component ownership, ordered build phases, decision gates and layered test
 matrices. They are implementation guidance, not evidence that either module
-exists. Both require the same core path and forbid domain branches in core or
-concrete adapter dependencies in a module.
+exists. Both now use ADR-0008's post-memory state-projection boundary, require
+the same core path and forbid domain branches in core or concrete adapter
+dependencies in a module.
 
 ## Remaining Implementation Baseline
 

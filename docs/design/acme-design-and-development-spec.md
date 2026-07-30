@@ -566,6 +566,10 @@ export interface TaskDefinition<
     output: TContractOutput,
     context: ExecutionReadContext<TState>,
   ): Promise<ModuleResult<TDelta>> | ModuleResult<TDelta>;
+  projectState(
+    input: StateProjectionInput<TDelta>,
+    context: ExecutionReadContext<TState>,
+  ): StateDelta<TDelta> | undefined;
 }
 
 export type AnyTaskDefinition<TState, TDelta> =
@@ -667,14 +671,41 @@ export interface StateDelta<TDelta> {
 export interface ModuleResult<TDelta> {
   readonly documents: readonly CandidateDocument[];
   readonly memories: readonly MemoryCandidate[];
-  readonly stateDelta?: StateDelta<TDelta>;
+  readonly stateIntent?: StateDelta<TDelta>;
   readonly events: readonly CandidateEvent[];
   readonly diagnostics: readonly DiagnosticFact[];
+}
+
+export interface StateProjectionMemoryDecision {
+  readonly candidate: MemoryCandidate;
+  readonly identityKey: string;
+  readonly resolution: AppliedMemoryResolution;
+  readonly affectedMemoryIds: readonly string[];
+}
+
+export interface StateProjectionInput<TDelta> {
+  readonly stateIntent?: StateDelta<TDelta>;
+  readonly memory: readonly StateProjectionMemoryDecision[];
 }
 ```
 
 Keys are unique within one execution result. The engine validates all
-documents, memory candidates, events and delta before evaluation or commit.
+documents, memory candidates, events and state intent before evaluation.
+`stateIntent` is typed interpreted intent, not the final state delta.
+
+After evaluation allows a result, MemoryEngine prepares all candidate
+decisions. Core then verifies exact candidate/decision key correspondence and
+builds a canonical-JSON-cloned, deeply frozen projection input in prepared
+decision order. Create, reinforce, merge, contest and supersede decisions are
+included with their candidates. Ignore and reject-candidate decisions remain
+audit evidence but are excluded from memory-derived state projection.
+
+The task's pure synchronous `projectState()` hook owns domain composition of
+direct intent and applied memory decisions. Its result remains untrusted until
+StateEngine validates the delta, applies the reducer and invariants, and the
+aggregate repository commits every accepted effect atomically. See
+[ADR-0008](../adr/0008-post-memory-domain-state-projection.md).
+
 An empty result is valid for analyzer tasks when explicitly allowed by task
 conformance tests.
 
@@ -1042,7 +1073,8 @@ export interface Evaluator {
 
 Composition semantics:
 
-1. evaluators run after module interpretation and before memory/state prepare
+1. evaluators run after module interpretation and before memory preparation
+   and state projection
 2. all deterministic evaluators run even if one blocks, to preserve evidence
 3. any `block` prevents canonical commit
 4. `revise` may invoke the producer's revision contract if task policy allows
@@ -1178,9 +1210,12 @@ Execution order:
 9. process the response, using bounded repair when allowed
 10. interpret validated output into a module result
 11. evaluate and, if permitted, perform bounded revision
-12. prepare memory operations, state transition, documents and events
-13. commit the prepared result through one Unit of Work
-14. return the persisted terminal projection
+12. prepare memory operations
+13. build the filtered immutable projection input and run the task's
+    domain-owned `projectState()` hook
+14. pass the projected delta through StateEngine and prepare documents/events
+15. commit the complete prepared result through one Unit of Work
+16. return the persisted terminal projection
 
 ### 14.3 Error taxonomy
 

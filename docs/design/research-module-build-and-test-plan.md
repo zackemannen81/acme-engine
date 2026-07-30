@@ -71,7 +71,9 @@ flowchart LR
   pipeline --> interpret["interpret()"]
   interpret --> result["ModuleResult<ResearchDelta>"]
   result --> memory["Research memory policy + MemoryEngine"]
-  result --> state["Research reducer/invariants + StateEngine"]
+  result --> projection["projectState()"]
+  memory --> projection
+  projection --> state["Research reducer/invariants + StateEngine"]
   memory --> commit["ExecutionRepository Unit of Work"]
   state --> commit
 ```
@@ -119,7 +121,7 @@ library or application package.
 | --- | --- | --- |
 | `schemas.ts` | Strict schemas for evidence input, contract input/output, source metadata, claims, state and delta | Valid/invalid evidence and closed-shape tests |
 | `contracts/observe-evidence.ts` | Immutable prompt contract and semantic validation | Golden request hash and claim/locator validation |
-| `tasks/observe-evidence.ts` | Project evidence/context and interpret output into auditable candidates | Deterministic source/claim/question result fixtures |
+| `tasks/observe-evidence.ts` | Project evidence/context, interpret auditable candidates/state intent and project applied decisions into the final delta | Deterministic contract/state projection and source/claim/question fixtures |
 | `memory-policy.ts` | Identity, independence, corroboration, contradiction, retrieval and lifecycle | Multi-source policy matrix |
 | `state.ts` | Initial research state, pure reducer and invariants | Promotion/contest/question tests |
 | `module.ts` | Assemble namespace, versions, task and policy | Registry/conformance and immutable task map |
@@ -294,7 +296,9 @@ clock background behavior.
 2. Golden-test request construction and request hash.
 3. Implement deterministic evidence/context projection.
 4. Interpret validated output into source document, claim/question memories,
-   delta and diagnostics.
+   state intent and diagnostics.
+5. Implement pure `projectState()` from state intent and applied memory
+   decisions into the final delta.
 
 **Exit:** fixed evidence/context/output produces byte-equivalent results.
 
@@ -374,9 +378,10 @@ No fixture may fetch its URI or regenerate expected output automatically.
 
 ## Decision gates before implementation
 
-1. **Memory decisions → state delta.** Promotion/contest decisions arise in
-   `MemoryEngine.prepare()`, after task interpretation currently returns its
-   state delta. Define the domain-owned bridge before reducer implementation.
+1. **Memory decisions → state delta — resolved.** ADR-0008 and
+   `buildStateProjectionInput()` define the post-memory, task-owned bridge.
+   Research promotion/contest projection receives applied decisions only;
+   ignored/rejected candidates remain audit evidence.
 2. **Claim proposition identity.** The approved output contains a statement
    but no stable proposition key. Semantic equivalence cannot rely on a model
    call inside the pure memory policy.
@@ -389,9 +394,11 @@ No fixture may fetch its URI or regenerate expected output automatically.
 
 See the bounded backlog proposals:
 
-- [Domain memory decisions to state projection](../backlog/domain-memory-decisions-to-state-projection.md)
 - [Reference-module identity and provenance fields](../backlog/reference-module-identity-and-provenance-fields.md)
 - [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
+
+The resolved projection decision is
+[ADR-0008](../adr/0008-post-memory-domain-state-projection.md).
 
 ## Team review checklist
 
@@ -411,4 +418,3 @@ See the bounded backlog proposals:
 - [ADR-0002 — Static task-typed composition](../adr/0002-static-task-typed-module-composition.md)
 - [ADR-0004 — Deterministic transition identity](../adr/0004-deterministic-transition-identity.md)
 - [ADR-0005 — Pure memory decision application](../adr/0005-pure-memory-decision-application.md)
-

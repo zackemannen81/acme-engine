@@ -32,10 +32,12 @@ implementation baseline:
 - ADR-0005: Pure memory decision application
 - ADR-0006: Aggregate in-memory Unit of Work
 - ADR-0007: Deterministic model mock and gateway conformance
+- ADR-0008: Post-memory domain state projection
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
-MemoryEngine and deterministic in-memory Unit of Work, but no execution
-orchestration or durable persistence. There is currently:
+MemoryEngine, post-memory state projection and deterministic in-memory Unit of
+Work, but no execution orchestration or durable persistence. There is
+currently:
 
 - common JSON, identity, time, document and diagnostic contracts
 - deterministic `acme-cjson-1` canonical JSON and SHA-256 hashing
@@ -49,6 +51,9 @@ orchestration or durable persistence. There is currently:
 - immutable contract and module registries with deterministic ordering and
   contract fingerprints
 - task-typed module authoring plus state/memory envelope and policy types
+- typed task-owned post-memory state projection with exact
+  candidate/decision correlation, applied-decision filtering and immutable
+  replay-stable projection input
 - a pure StateEngine that validates current state and typed deltas, enforces
   expected revisions, invokes module initialization/reduction/invariants and
   prepares immutable snapshot/transition candidates without persistence
@@ -85,11 +90,12 @@ orchestration or durable persistence. There is currently:
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 85 passing unit/conformance tests across canonicalization, model-request
+- 91 passing unit/conformance tests across canonicalization, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
-  repository digest, repository/gateway conformance, mock matching,
-  immutability, atomic rollback and workspace imports
-- compile-time task-name/input/output inference checks
+  post-memory state projection, repository digest, repository/gateway
+  conformance, mock matching, immutability, atomic rollback and workspace
+  imports
+- compile-time task-name/input/output and state-projection inference checks
 - non-empty passing repository conformance plus empty passing integration and
   scenario gates
 - no ExecutionEngine behavior
@@ -105,10 +111,12 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0010 completed team-ready build and test guides for NarrativeModule and
-ResearchModule. The guides are planning artifacts only; no reference-domain
+ACME-0011 resolved the first reference-module decision gate with a tested
+post-memory state-projection boundary. The NarrativeModule and ResearchModule
+guides now use the same task-owned `projectState()` hook. No reference-domain
 implementation task is active until a maintainer approves a bounded charter
-and the documented decision gates are resolved.
+and the remaining identity/provenance and shared-conformance gates are
+resolved.
 
 ## Persistent Gaps
 
@@ -117,10 +125,11 @@ and the documented decision gates are resolved.
 - A live provider adapter and provider-specific normalization are not
   implemented.
 - Narrative and Research reference modules are not implemented.
-- Reference-module implementation is gated by an explicit
-  memory-decision-to-state projection rule, stable domain identity/provenance
-  fields and a reusable module-conformance boundary. Bounded proposals are in
-  `docs/backlog/`.
+- Reference-module implementation is still gated by stable domain
+  identity/provenance fields and a reusable module-conformance boundary.
+  Bounded proposals are in `docs/backlog/`.
+- ExecutionEngine must orchestrate the implemented post-memory projection
+  boundary and retain the evidence required for replay.
 - The persistence schema remains design-only.
 - Package boundary enforcement covers core, testing, the in-memory adapter and
   CLI substrate; future adapters and modules must extend its rule set.

@@ -314,3 +314,33 @@ Add one dated, signed entry for every meaningful work session or handoff.
   resolved, activate one bounded reference-module implementation task; do not
   add domain branches to core.
 - Signature: Codex
+
+## 2026-07-30 — Post-memory domain state projection completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0011
+- Summary: Activated and completed the first reference-module decision gate.
+  Accepted ADR-0008 and replaced the ambiguous pre-memory
+  `ModuleResult.stateDelta` with typed non-canonical `stateIntent`. Every task
+  now owns a pure `projectState()` hook. Added
+  `buildStateProjectionInput()`, which enforces exact candidate/decision key
+  correspondence, preserves prepared decision order, retains correlated
+  applied create/reinforce/merge/contest/supersede evidence, filters
+  ignore/reject-candidate and returns detached deeply frozen canonical JSON.
+  Corrected the normative execution sequence and both reference-module build
+  guides, then removed the resolved backlog proposal. No ExecutionEngine,
+  reference module, repository/persistence behavior or external effect was
+  added.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries and
+  build passed. Unit execution passed 13 files and 91 tests, including six
+  projection cases. Dedicated repository/gateway conformance passed 2 files
+  and 10 tests. Integration and scenario gates passed empty because those
+  implementations remain outside this charter. Documentation checks covered
+  41 Markdown files after archival and `git diff --check` passed. No required
+  check was skipped; remote CI was not run because no push was authorized.
+- Follow-ups: Explicitly charter the reference-module identity/provenance
+  decision next, then separately activate reusable DomainModule conformance.
+  Do not begin NarrativeModule or ResearchModule implementation until both
+  remaining gates are resolved.
+- Signature: Codex

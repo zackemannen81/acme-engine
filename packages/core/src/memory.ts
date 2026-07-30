@@ -89,7 +89,13 @@ export type MemoryResolution =
       readonly candidateKey: string;
       readonly action: 'contradict';
       readonly memoryIds: readonly string[];
-      readonly disposition: 'contest' | 'reject-candidate';
+      readonly disposition: 'contest';
+    }
+  | {
+      readonly candidateKey: string;
+      readonly action: 'contradict';
+      readonly memoryIds: readonly string[];
+      readonly disposition: 'reject-candidate';
     }
   | {
       readonly candidateKey: string;
@@ -106,6 +112,12 @@ export type MemoryResolution =
       readonly action: 'ignore';
       readonly reason: string;
     };
+
+export type AppliedMemoryResolution = Exclude<
+  MemoryResolution,
+  | { readonly action: 'ignore' }
+  | { readonly action: 'contradict'; readonly disposition: 'reject-candidate' }
+>;
 
 export interface MemoryPrepareContext {
   readonly namespace: Namespace;

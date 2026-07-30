@@ -56,6 +56,7 @@ acme-engine/
 │   │   │   ├── repository-model-call.ts
 │   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
+│   │   │   ├── state-projection.ts
 │   │   │   └── state.ts
 │   │   ├── test/
 │   │   │   ├── hashing.test.ts
@@ -64,7 +65,8 @@ acme-engine/
 │   │   │   ├── repository-digest.test.ts
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
-│   │   │   └── state-engine.test.ts
+│   │   │   ├── state-engine.test.ts
+│   │   │   └── state-projection.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
 │   └── testing/
@@ -96,10 +98,12 @@ acme-engine/
 │   │   ├── 0003-sqlite-revisioned-unit-of-work.md
 │   │   ├── 0004-deterministic-transition-identity.md
 │   │   ├── 0005-pure-memory-decision-application.md
+│   │   ├── 0006-aggregate-in-memory-unit-of-work.md
+│   │   ├── 0007-deterministic-model-mock-and-gateway-conformance.md
+│   │   ├── 0008-post-memory-domain-state-projection.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
-│   │   ├── domain-memory-decisions-to-state-projection.md
 │   │   ├── reference-module-identity-and-provenance-fields.md
 │   │   └── reusable-domain-module-conformance-kit.md
 │   ├── design/
@@ -142,8 +146,8 @@ acme-engine/
 
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
   response validation, static registries, pure revisioned state/memory
-  preparation and the aggregate repository port/digest. Zod is its only
-  external runtime dependency.
+  preparation, filtered post-memory state projection and the aggregate
+  repository port/digest. Zod is its only external runtime dependency.
 - `@acme/adapter-memory`: deterministic aggregate repository with immutable
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
@@ -166,6 +170,7 @@ files and directories must be added only by explicitly activated tasks.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
-support team review. The three `docs/backlog/` proposals record decisions that
-must be chartered separately rather than absorbed into reference-module
+support team review. ADR-0008 resolves their post-memory state-projection gate.
+The two remaining `docs/backlog/` proposals record decisions that must be
+chartered separately rather than absorbed into reference-module
 implementation.
