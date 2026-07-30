@@ -125,6 +125,13 @@ ownership with reproducible golden vectors. No reference-module implementation
 task is active until the reusable DomainModule-conformance gate is separately
 approved and completed.
 
+ACME-0014 added the proposed
+[`Domain Test UI — Specification`](design/domain-test-ui-specification.md) as
+documentation only. It defines a human surface for configuring, executing,
+inspecting, validating and measuring domain tests strictly over existing
+ports, ledger evidence and reports. Nothing in it is implemented or chartered,
+and its readiness prerequisites do not exist yet. No task is active.
+
 ## Persistent Gaps
 
 - ExecutionEngine behavior is not implemented.
@@ -143,5 +150,9 @@ approved and completed.
 - Integration and scenario commands are established but have no behavioral
   suites yet.
 - No deterministic scenario or live evaluation harness exists.
+- No human surface exists for configuring or inspecting domain tests. The
+  proposed interface is specification-only, blocked on ExecutionEngine,
+  ScenarioRunner, a reference module and durable persistence, and its bounded
+  activation proposal is in `docs/backlog/`.
 - Live provider call reconciliation, encrypted retention and privacy deletion
   intentionally require future ADRs before implementation.

@@ -106,9 +106,12 @@ acme-engine/
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
+│   │   ├── domain-test-ui-implementation.md
 │   │   └── reusable-domain-module-conformance-kit.md
 │   ├── design/
+│   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
+│   │   ├── domain-test-ui-specification.md
 │   │   ├── narrative-module-build-and-test-plan.md
 │   │   └── research-module-build-and-test-plan.md
 │   ├── finished/
@@ -175,6 +178,12 @@ normative implementation guides. Their `docs/presentations/` DOCX renditions
 are ACME-0010 review snapshots; the Markdown guides remain normative after
 later architecture decisions. ADR-0008 resolves their post-memory
 state-projection gate, and ADR-0009 resolves their identity/provenance gate.
-The remaining `docs/backlog/` proposal records the reusable
-DomainModule-conformance work that must be chartered separately rather than
-absorbed into reference-module implementation.
+`docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
+composition-root application for configuring, executing, inspecting,
+validating and measuring domain tests. No such package exists; the file is a
+specification awaiting review, and its readiness prerequisites are
+unimplemented.
+
+The two `docs/backlog/` proposals record the reusable DomainModule-conformance
+work and the domain-test-UI implementation. Both must be chartered separately
+rather than absorbed into reference-module implementation.

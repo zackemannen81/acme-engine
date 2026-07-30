@@ -419,3 +419,41 @@ Add one dated, signed entry for every meaningful work session or handoff.
   After it passes, activate one bounded reference-module implementation task;
   keep domain vocabulary out of core.
 - Signature: Codex
+
+## 2026-07-30 — Domain test UI specification completed
+
+- Date: 2026-07-30
+- Author: Claude
+- Task: ACME-0014
+- Summary: Packaged the proposed domain-test user interface as a reviewable
+  specification. `docs/design/domain-test-ui-specification.md` defines the
+  interface's ownership boundaries, its position as a composition-root app
+  under the approved dependency direction, its readiness prerequisites, a
+  vocabulary mapped onto approved terms, ten surfaces with their exact
+  evidence sources, a recommended `acme-test-plan/1` configuration model that
+  compiles only into `acme-scenario/1` and `ExecutionRequest`, an explicit
+  read/write contract that forbids every canonical write, a measurement
+  catalog derived from specification sections 19 and 20, determinism/
+  redaction/retention/budget rules from section 21, a five-phase build order,
+  the interface's own verification matrix and seven decision gates. The
+  interface never computes a verdict, never becomes a second source of truth
+  and exposes no scripting, credential or destructive surface. Recorded the
+  bounded activation proposal in `docs/backlog/` and updated the design index,
+  system documentation, status and file structure. No package, source file,
+  contract or ADR was added.
+- Verification: The branch was first rebased onto merge commit `99e5928`,
+  where `pnpm docs:check` failed with 10 pre-existing broken links to the then
+  uncommitted ADR-0009 and ADR-0010 files. The maintainer merged those ADRs and
+  the missing ACME-0012 and ACME-0013 archives as `719f46c`; the branch was
+  rebased again, the specification was sharpened against the now-readable ADR
+  text, and `node tooling/docs/check-docs.mjs` then passed cleanly for 47
+  Markdown files. Every link and section anchor added by this task was resolved
+  individually. The specification contains all required sections and four
+  balanced fenced blocks, one of them a readable Mermaid diagram.
+  `git diff --check` passed. No typecheck, lint, boundary, build or test gate
+  applies because this task adds no source file; none was skipped.
+- Follow-ups: Review the specification's decision gates, starting with whether
+  a domain-test interface belongs in version 1 at all. Do not charter
+  implementation before ExecutionEngine, ScenarioRunner, a reference module and
+  durable persistence exist.
+- Signature: Claude
