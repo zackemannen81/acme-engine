@@ -599,3 +599,35 @@ Add one dated, signed entry for every meaningful work session or handoff.
   persistence as separate, explicitly approved tasks. The Domain Test UI
   remains in backlog.
 - Signature: Codex
+
+## 2026-07-31 — Single-task ExecutionEngine charter drafted
+
+- Date: 2026-07-31
+- Author: Codex
+- Task: ACME-0018
+- Summary: Activated a bounded Draft charter for the domain-neutral Milestone
+  1 ExecutionEngine needed by Narrative Phase 5. The proposed task coordinates
+  one primary model call through the existing registries, response pipeline,
+  Narrative task, MemoryEngine, post-memory state projection, StateEngine and
+  aggregate in-memory repository. Its required offline acceptance proves a
+  revision-zero Narrative commit with one source document, exactly three
+  memory decisions, revision one, request-key idempotency and gateway-free
+  replay verification. The Draft explicitly leaves SQLite durability, resume,
+  repair/revision, retries, evaluators, ScenarioRunner, ResearchModule and live
+  providers outside scope.
+- Decisions: Identified four pre-freeze contract gaps. A reviewed ADR must
+  version effective-policy/request fingerprint and operation identity, define
+  deterministic memory retrieval, define portable replay read-set/prepared
+  evidence plus replay digest semantics and fix the staged Milestone 1 public
+  surface to execute plus replay-verify.
+  Existing `acme-operation-digest-1` must not be changed silently. No runtime
+  source, public contract or adapter behavior changed in this session.
+- Verification: The Draft was traced against the Project Brief First Proof
+  Milestone, specification sections 5 and 8–16, Milestone 1, Narrative Phase
+  5 and ADR-0002 through ADR-0011. `pnpm docs:check` passed for 50 Markdown
+  files, including internal links and balanced fences, and
+  `git diff --check` passed.
+- Follow-ups: Review the four Draft decisions. If approved, freeze ACME-0018
+  at `Ready`, accept the execution identity/replay ADR and implement only the
+  frozen Milestone 1 path.
+- Signature: Codex
