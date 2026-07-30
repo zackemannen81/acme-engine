@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, in-memory Unit of Work and model mock
+Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, in-memory Unit of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -374,6 +374,33 @@ exists. Both now use ADR-0008's post-memory state-projection boundary, require
 ADR-0009's explicit domain identity/evidence contracts, follow the same core
 path and forbid domain branches in core or concrete adapter dependencies in a
 module.
+
+## Proposed Domain Test Surface
+
+[`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
+describes a proposed human surface for configuring, executing, inspecting,
+validating and measuring domain tests. It is a reviewed specification only. No
+interface, package or view contract exists, and no implementation is
+chartered.
+
+The specification constrains any future implementation to the existing
+boundaries:
+
+- the interface is a composition-root application under `apps/`, subject to the
+  approved `apps → adapters → core` and `apps → modules → core` direction
+- it reads execution, attempt, model-call, read-set, prepared-commit and
+  terminal evidence through the aggregate `ExecutionRepository` port, plus
+  engine and runner reports
+- it launches runs and stores its own disposable artifacts, but never commits,
+  marks terminal, mutates canonical records or computes a verdict itself
+- it compiles configuration into the approved `acme-scenario/1` format and
+  `ExecutionRequest` rather than becoming a second source of truth
+- it enforces the section 21 data classes, retention modes and environment
+  gating at the presentation boundary, and exposes no scripting, shell,
+  credential or destructive surface
+
+Its unresolved decisions, including whether the interface belongs in version 1
+at all, remain decision gates inside the specification.
 
 ## Remaining Implementation Baseline
 
