@@ -35,6 +35,7 @@ implementation baseline:
 - ADR-0008: Post-memory domain state projection
 - ADR-0009: Reference-domain identity and provenance
 - ADR-0010: Input-bound validation and interpretation
+- ADR-0011: Narrative knowledge and context ownership
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection and deterministic in-memory Unit of
@@ -144,9 +145,13 @@ behavior or historical records.
 
 ACME-0017 is active as a `Draft` charter for
 `@acme/module-narrative` and `narrative.observe-document@1.0.0`, bounded to
-module-level build phases 1–4. No Narrative source exists and implementation
-must not begin until the contract-version, narrative-window and ownership
-questions are reviewed and the charter is explicitly frozen at `Ready`.
+module-level build phases 1–4. ADR-0011 now fixes memory as the sole owner of
+Narrative facts/relationships/world rules, state as the revisioned
+entity/alias and working-position owner, a two-summary
+`narrative-window-1`, and source-backed `previous-document-tail-1`. No
+Narrative source exists and implementation must not begin until the remaining
+prompt-contract semantics are reviewed and the charter is explicitly frozen
+at `Ready`.
 
 ## Persistent Gaps
 

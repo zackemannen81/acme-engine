@@ -27,6 +27,7 @@ Charter frozen at:
 - `docs/adr/0008-post-memory-domain-state-projection.md`
 - `docs/adr/0009-reference-domain-identity-and-provenance.md`
 - `docs/adr/0010-input-bound-validation-and-interpretation.md`
+- `docs/adr/0011-narrative-knowledge-and-context-ownership.md`
 - `docs/finished/ACME-0015_reusable-domain-module-conformance.md`
 - `packages/core/src/`
 - `packages/testing/src/domain-module-conformance.ts`
@@ -73,15 +74,26 @@ conformance suite.
 - Implement ADR-0009 `reference-text-normalization-1`,
   `narrative-entity-key-1` and its golden vector, with canonical
   `NarrativeState.entityAliases` as the sole alias authority.
+- Implement ADR-0011's ownership boundary: memory exclusively owns character
+  facts, relationships, world rules, contradictions and evidence; state owns
+  the entity/alias registry, scene, fixed narrative window and outline
+  progress without character attributes or relationship/world-rule caches.
+- Implement literal `narrative-window-1` with at most two summaries ordered
+  oldest to newest, reducer trimming, invariant enforcement and no runtime
+  configuration.
+- Implement source-backed `previous-document-tail-1` in projected contract
+  input with exact document key/content-hash provenance, deterministic
+  whitespace/sentence/suffix behavior, a 320-code-point bound and no summary
+  fallback.
 - Implement deterministic `project()`, input-bound `interpret()` and
   post-memory `projectState()` with applied-decision filtering semantics from
   ADR-0008.
 - Produce the source candidate document, narrative memory candidates, direct
   scene/window/outline state intent and diagnostics with non-empty unique
   keys; emit no domain event until an event schema is separately approved.
-- Implement pure initial state, reducer and invariants for characters,
-  aliases, relationships, world rules, scene, bounded narrative window and
-  monotonic outline progress.
+- Implement pure initial state, reducer and invariants for entity/display-name
+  registration, aliases, scene, fixed narrative window and monotonic outline
+  progress.
 - Implement pure narrative memory validation, identity, retrieval, resolution
   and lifecycle behavior for create, reinforce, merge, contest, explicit
   evidence-backed supersession and ignore.
@@ -124,6 +136,10 @@ conformance suite.
   semantic validation enforces the v1 observation and correction protocol.
 - Narrative identity/alias/correction behavior matches ADR-0009 and its golden
   vector.
+- Narrative knowledge/state ownership, `narrative-window-1` and
+  `previous-document-tail-1` match ADR-0011 and golden fixtures, including
+  deterministic failure when required previous-source evidence is absent or
+  mismatched.
 - Fixed input/context/output produces byte-equivalent detached deeply frozen
   contract input, module result and projected delta.
 - Memory policy and state reducer/invariants are pure, deterministic and
@@ -158,7 +174,7 @@ conformance suite.
 
 - `docs/design/narrative-module-build-and-test-plan.md`
 - `docs/design/acme-design-and-development-spec.md`
-- ADR-0002, ADR-0004, ADR-0005 and ADR-0008 through ADR-0010
+- ADR-0002, ADR-0004, ADR-0005 and ADR-0008 through ADR-0011
 - `packages/core/src/contracts.ts`
 - `packages/core/src/modules.ts`
 - `packages/core/src/memory.ts`
@@ -168,9 +184,11 @@ conformance suite.
 ## Checklist
 
 - [x] Activate ACME-0017 as a bounded NarrativeModule Draft.
-- [ ] Review the Draft's domain boundaries and unresolved team questions.
-- [ ] Resolve or explicitly scope the contract-version and narrative-window
-      questions before `Ready`.
+- [x] Review the Draft's state/memory and context boundaries.
+- [x] Resolve and document state/memory ownership plus the fixed Narrative v1
+      window and previous-document-tail policies.
+- [ ] Review and freeze the remaining prompt-contract semantics under
+      `narrative.observe-document@1.0.0`.
 - [ ] Freeze the approved charter and set status to `Ready`.
 - [ ] Implement package, schemas and deterministic fixtures.
 - [ ] Implement pure state, reducer, invariants and memory policy.
@@ -188,6 +206,12 @@ conformance suite.
   ExecutionEngine.
 - Phase 5 offline acceptance remains a separate future task after
   ExecutionEngine exists.
+- The maintainer approved ADR-0011 on 2026-07-30. Memory is the sole canonical
+  owner of Narrative knowledge that can be reinforced, merged, contested or
+  superseded. State owns the current revisioned working position.
+- `narrative-window-1` is fixed at two oldest-to-newest summaries.
+  `previous-document-tail-1` derives the bounded exact handoff from the loaded
+  previous source document and permits no summary fallback.
 - This Draft does not authorize implementation until its charter is reviewed
   and frozen at `Ready`.
 - The Domain Test UI implementation remains in backlog.
@@ -201,6 +225,9 @@ conformance suite.
 
 - [ ] Define exact schema and semantic negative matrices.
 - [ ] Define contract request-hash and narrative-entity golden evidence.
+- [ ] Define and reproduce ADR-0011 window/tail golden fixtures, including
+      Unicode whitespace, sentence closers, unterminated fragments, suffix
+      truncation and missing/mismatched source evidence.
 - [ ] Define policy resolution/retrieval/lifecycle matrix.
 - [ ] Define reducer and invariant matrix.
 - [ ] Confirm shared conformance fixture coverage.
@@ -208,6 +235,7 @@ conformance suite.
 
 ## Documentation Updates
 
+- [ ] `docs/adr/0011-narrative-knowledge-and-context-ownership.md`
 - [ ] `docs/design/narrative-module-build-and-test-plan.md`
 - [ ] `docs/design/acme-design-and-development-spec.md`
 - [ ] `docs/CURRENT_STATUS.md`
@@ -217,20 +245,16 @@ conformance suite.
 
 ## Handoff and Follow-ups
 
-- Current state: Draft charter activated; no NarrativeModule source exists.
-- Next recommended step: Review the open contract-version and
-  narrative-window questions, then freeze or revise the Draft before
-  implementation.
+- Current state: Draft charter with state/memory ownership and v1 context
+  policy resolved; no NarrativeModule source exists.
+- Next recommended step: Review the remaining immutable prompt-contract
+  semantics, then freeze or revise the Draft before implementation.
 - Blockers: None for Draft review.
 - Child tasks: None.
 - Resume condition: Not applicable.
 - Open questions:
   - Are all proposed prompt-contract semantics ready to freeze under
     `narrative.observe-document@1.0.0`?
-  - What explicit versioned narrative-window limit belongs in the v1 state and
-    contract fingerprint?
-  - Are the documented state/memory ownership boundaries approved for the
-    first reference implementation?
 
 ## Finalize When Complete
 

@@ -146,19 +146,47 @@ The input schema should require non-empty `documentKey` and `text`, reject
 unknown fields and place an explicit size limit on text once the
 ExecutionEngine budget contract is available.
 
-### Recommended contract input
+### Approved contract input
 
 `project()` should produce a purpose-built value rather than pass the whole
 execution context:
 
 - source document key, optional title and text
 - current scene and outline progress
-- the bounded narrative window
+- `windowPolicyVersion: "narrative-window-1"`
+- the bounded two-summary narrative window in oldest-to-newest order
+- a `PreviousDocumentTail` derived with `previous-document-tail-1`
 - relevant active/contested narrative memories already selected by core
 - explicit contract/schema versions
 
 Ordering must be stable. Do not pass repository records, state envelopes or
 provider details into the prompt.
+
+`PreviousDocumentTail` is a discriminated union:
+
+```ts
+type PreviousDocumentTail =
+  | {
+      algorithm: "previous-document-tail-1";
+      source: "initial";
+      text: "";
+    }
+  | {
+      algorithm: "previous-document-tail-1";
+      source: "document-content";
+      documentKey: string;
+      sourceContentHash: string;
+      text: string;
+      truncated: boolean;
+    };
+```
+
+For a non-initial document, `project()` resolves the newest window entry to
+the corresponding loaded `narrative.source` document. It normalizes only
+Unicode whitespace, applies ADR-0011's fixed sentence splitter, selects the
+last at most two sentences and retains the last at most 320 Unicode code
+points. Missing or mismatched source evidence fails projection. A summary is
+never substituted for the source tail.
 
 ### Approved contract output
 
@@ -184,12 +212,14 @@ cannot set that validation fact.
 | --- | --- | --- |
 | Source text | Document kind `narrative.source` | Stored as a candidate document with deterministic content hash |
 | Character fact | Memory candidate `narrative.character-fact` | Never copied raw into canonical state |
-| Relationship | Memory candidate `narrative.relationship` | Direction and endpoint identity are explicit |
-| World rule | Memory candidate `narrative.world-rule` | Contradictions remain auditable |
+| Relationship | Memory candidate/record `narrative.relationship` | Memory is the sole canonical owner; direction and endpoint identity are explicit |
+| World rule | Memory candidate/record `narrative.world-rule` | Memory is the sole canonical owner; contradictions remain auditable |
+| Entity registry | `NarrativeState.characters` | Stable entity key and display name only; no character-fact attributes |
 | Alias authority | `NarrativeState.entityAliases` | Sole normalized-alias → entity-key authority |
 | Correction evidence | Character-fact candidate/record value plus generic provenance | Retain target, prior value, quote, locator and source document link |
 | Scene | `NarrativeDelta.scene` | Reducer replaces the current scene after validation |
-| Window entry | `NarrativeDelta.appendWindow` | Reducer appends and enforces configured maximum length |
+| Window entry | `NarrativeDelta.appendWindow` | `narrative-window-1` appends and retains the last two summaries |
+| Previous document tail | Projected contract input only | Derived from the immutable source document; never stored as state or memory |
 | Outline progress | `NarrativeDelta.outlineProgress` | Progress may advance but never regress |
 | Events | Not fixed by the baseline | Add only through a separately reviewed event schema |
 
@@ -197,28 +227,33 @@ cannot set that validation fact.
 
 The approved state contains:
 
-- `characters`
+- `windowPolicyVersion: "narrative-window-1"`
+- `characters` as entity key and display name only
 - `entityAliases`
-- `relationships`
-- `worldRules`
 - current `scene`
-- bounded `narrativeWindow`
+- `narrativeWindow` with at most two summaries ordered oldest to newest
 - `outlineProgress`
+
+Character facts, relationships, world rules, contradictions and evidence
+exist only in memory. The v1 state has no read-optimized relationship or
+world-rule memory-ID projection.
 
 ### Initial state
 
 `initialState({ entityId, now })` returns empty collections and `scene: null`.
-It may validate inputs but must not read a store, provider, clock or random
-source. The supplied `now` must not be replaced with current time.
+It sets `windowPolicyVersion: "narrative-window-1"`. It may validate inputs but
+must not read a store, provider, clock or random source. The supplied `now`
+must not be replaced with current time.
 
 ### Reducer responsibilities
 
 - create a new state value without mutating inputs
 - apply only the validated `NarrativeDelta`
+- add entity assignments only from applied memory decisions
 - add normalized alias assignments only when post-memory projection received
   an applied create, reinforce or merge decision
 - replace the scene
-- append one window summary and retain the configured maximum
+- append one window summary and retain the last two
 - advance outline beats monotonically
 - apply accepted resolved memory decisions through the ADR-0008
   `projectState()` boundary
@@ -229,12 +264,13 @@ At minimum, reject:
 
 - empty scene summaries
 - normalized alias collisions or aliases targeting unknown character keys
-- duplicate normalized relationships
-- relationship endpoints that cannot resolve to narrative identities
-- duplicate world-rule identity keys
 - unknown outline beats when an outline is configured
 - outline regressions such as `resolved → advanced`
-- a narrative window exceeding its configured maximum
+- a narrative window exceeding two entries
+
+Relationship endpoint, duplicate identity and world-rule contradiction checks
+belong to candidate validation and the Narrative memory policy, not state
+invariants.
 
 ## Narrative memory policy
 
@@ -339,15 +375,15 @@ After ExecutionEngine exists:
 | Area | Required cases |
 | --- | --- |
 | Input/output schemas | valid minimal/full values; missing text; extra keys; invalid confidence; empty scene |
-| Contract request | stable message ordering; exact schema; capability declaration; request-hash golden |
+| Contract request | stable message ordering; exact schema; capability declaration; request-hash golden; fixed context policy |
 | Semantic validation | empty identifiers; self/duplicate relationship policy; invalid outline status |
-| Projection | revision zero; populated state; bounded memories/documents; stable ordering; no mutation |
+| Projection | revision zero; populated state; bounded memories/documents; stable ordering; previous-tail golden vectors; no summary fallback; no mutation |
 | Interpretation | exact document kind/hash; three candidate kinds; correction quote validation; provenance; optional progress; diagnostics |
 | Identity | ADR-0009 golden vector; aliases; collision/unknown target; case/spacing; directional relationships; stable world-rule key |
 | Resolution | create, reinforce, merge, contest; reject wrong identity/prior value/quote; accepted supersede; ignore |
 | Retrieval/lifecycle | relevance, contested handling, ties, limit, retain/update/forget |
-| Reducer | initial state, scene replacement, window trimming, outline monotonicity, purity |
-| Invariants | duplicate relationships/rules, unresolved identities, empty scene, outline regression |
+| Reducer | initial state, entity/alias assignment, scene replacement, two-summary window trimming, outline monotonicity, purity |
+| Invariants | alias ownership, unknown entity targets, empty scene, window policy/limit, outline regression |
 
 ### Type and conformance tests
 
@@ -400,18 +436,26 @@ Fixture updates require human review and a before/after digest rationale.
    is the public-core-only executable suite. Narrative must run it unchanged
    with Narrative-owned fixtures in addition to its policy-specific unit
    tests.
+5. **Knowledge/state ownership — resolved.** ADR-0011 makes memory the sole
+   canonical owner of character facts, relationships, world rules,
+   contradictions and evidence. State owns entity/alias authority and the
+   revisioned working position; v1 adds no relationship/world-rule cache.
+6. **Short-range context — resolved.** ADR-0011 fixes
+   `narrative-window-1` at two summaries and defines the source-backed,
+   bounded `previous-document-tail-1` handoff without summary fallback.
 
 The resolved projection, identity/provenance and conformance decisions are
 [ADR-0008](../adr/0008-post-memory-domain-state-projection.md) and
 [ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md), plus the
-ACME-0015 conformance implementation.
+[ADR-0011](../adr/0011-narrative-knowledge-and-context-ownership.md) context
+decision and the ACME-0015 conformance implementation.
 
 ## Team review checklist
 
-- [ ] Do the state and memory ownership boundaries match the intended product?
+- [x] Do the state and memory ownership boundaries match the intended product?
 - [x] Is the v1 alias/correction policy precise enough to golden-test?
 - [ ] Are all prompt-contract semantics immutable under version `1.0.0`?
-- [ ] Is the narrative window limit versioned and fingerprinted?
+- [x] Is the narrative window limit versioned and fingerprinted?
 - [ ] Does every contradiction remain visible in audit evidence?
 - [ ] Can the full acceptance scenario run with no network or wall clock?
 - [ ] Can ResearchModule use the same engine path with no core branch?
@@ -425,3 +469,4 @@ ACME-0015 conformance implementation.
 - [ADR-0004 — Deterministic transition identity](../adr/0004-deterministic-transition-identity.md)
 - [ADR-0005 — Pure memory decision application](../adr/0005-pure-memory-decision-application.md)
 - [ADR-0009 — Reference-domain identity and provenance](../adr/0009-reference-domain-identity-and-provenance.md)
+- [ADR-0011 — Narrative knowledge and context ownership](../adr/0011-narrative-knowledge-and-context-ownership.md)

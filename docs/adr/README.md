@@ -45,3 +45,4 @@ current architecture.
 - [`0008-post-memory-domain-state-projection.md`](0008-post-memory-domain-state-projection.md)
 - [`0009-reference-domain-identity-and-provenance.md`](0009-reference-domain-identity-and-provenance.md)
 - [`0010-input-bound-validation-and-interpretation.md`](0010-input-bound-validation-and-interpretation.md)
+- [`0011-narrative-knowledge-and-context-ownership.md`](0011-narrative-knowledge-and-context-ownership.md)

@@ -540,3 +540,30 @@ Add one dated, signed entry for every meaningful work session or handoff.
   versioned narrative-window limit and confirm state/memory ownership. Revise
   the Draft if needed; freeze it only after those questions are resolved.
 - Signature: Codex
+
+## 2026-07-30 — Narrative knowledge and context ownership accepted
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0017
+- Summary: Accepted ADR-0011 before the NarrativeModule Draft is frozen.
+  Memory is now the sole canonical owner of character facts, relationships,
+  world rules, contradictions and evidence; Narrative state owns only the
+  entity/display-name and alias authority plus the current scene, fixed
+  short-range window and outline progress. Fixed `narrative-window-1` at two
+  oldest-to-newest summaries. Defined source-backed
+  `previous-document-tail-1` as deterministic Unicode-whitespace
+  normalization, the last at most two sentences and last at most 320 Unicode
+  code points, with document key/content-hash provenance and no summary
+  fallback. Corrected the normative specification, implementation guide,
+  project brief, system/status documentation, repository map and active Draft.
+  No Narrative source or runtime behavior was added, and ACME-0017 remains
+  `Draft`.
+- Verification: `pnpm docs:check` passed for 49 Markdown files,
+  `pnpm format:check` passed and `git diff --check` passed. No runtime gate
+  applies to this Draft-decision documentation session.
+- Follow-ups: Review the remaining immutable
+  `narrative.observe-document@1.0.0` prompt-contract semantics. Freeze
+  ACME-0017 at `Ready` only after that review; implementation remains
+  unauthorized while the task is `Draft`.
+- Signature: Codex

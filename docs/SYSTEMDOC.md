@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, shared module conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with pure engines, post-memory projection, reference identity/context contracts, shared module conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 end-to-end execution orchestration or durable runtime persistence exists.
@@ -101,6 +101,25 @@ adding domain vocabulary to core:
 All four identifiers use `acme-cjson-1`, SHA-256, immutable algorithm names
 and documented golden vectors. They are module contracts, not implemented
 reference-module behavior.
+
+## Approved Narrative Knowledge and Context Ownership
+
+ADR-0011 fixes the pre-implementation Narrative v1 ownership and short-range
+context boundary:
+
+- memory is the sole canonical owner of character facts, relationships, world
+  rules, contradictions and evidence
+- state owns the entity/display-name registry, canonical aliases, current
+  scene, fixed narrative window and outline progress
+- state characters contain no fact attributes, and v1 state contains no
+  relationship/world-rule values or memory-ID cache
+- `narrative-window-1` retains at most two summaries ordered oldest to newest
+- `previous-document-tail-1` deterministically derives the last at most two
+  sentences and 320 Unicode code points from the previous immutable source
+  document, with key/hash provenance and no summary fallback
+
+The previous tail is projected contract context, not state or memory. These
+are accepted module contracts awaiting ACME-0017 implementation.
 
 ## Implemented DomainModule Conformance
 
@@ -398,7 +417,8 @@ matrices. They are implementation guidance, not evidence that either module
 exists. Both now use ADR-0008's post-memory state-projection boundary, require
 ADR-0009's explicit domain identity/evidence contracts, follow the same core
 path and forbid domain branches in core or concrete adapter dependencies in a
-module.
+module. Narrative additionally follows ADR-0011's exclusive knowledge
+ownership and fixed source-backed context policy.
 
 ## Proposed Domain Test Surface
 

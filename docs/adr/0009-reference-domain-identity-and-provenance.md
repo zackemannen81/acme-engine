@@ -6,6 +6,11 @@ Date: 2026-07-30
 
 Decision owners: ACME maintainers
 
+Refinement: [ADR-0011](0011-narrative-knowledge-and-context-ownership.md)
+removes fact attributes, relationships and world rules from canonical
+Narrative state while preserving this ADR's entity/alias authority, observed
+label, correction-evidence and identity decisions.
+
 ## Context
 
 The Narrative and Research reference modules cannot implement their approved

@@ -59,7 +59,8 @@ Narrative is a reference module. It is not the engine.
 
 - Documents: outline and chapter
 - Memory: character facts, relationships and world rules
-- State: characters, scene, narrative window and outline progress
+- State: entity/display-name registry, canonical aliases, current scene,
+  fixed short-range narrative window and outline progress
 
 ### ResearchModule
 

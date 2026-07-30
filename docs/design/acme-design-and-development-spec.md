@@ -1800,6 +1800,21 @@ interface NarrativeCorrectionEvidence {
   sourceLocator?: string;
 }
 
+type PreviousDocumentTail =
+  | {
+      algorithm: "previous-document-tail-1";
+      source: "initial";
+      text: "";
+    }
+  | {
+      algorithm: "previous-document-tail-1";
+      source: "document-content";
+      documentKey: string;
+      sourceContentHash: string;
+      text: string;
+      truncated: boolean;
+    };
+
 interface NarrativeContractOutput {
   observations: Array<
     | {
@@ -1818,22 +1833,16 @@ interface NarrativeContractOutput {
 }
 
 interface NarrativeState {
-  characters: Record<string, { displayName: string; attributes: Record<string, string> }>;
+  windowPolicyVersion: "narrative-window-1";
+  characters: Record<string, { displayName: string }>;
   entityAliases: Record<string, string>;
-  relationships: Array<{ subjectId: string; relation: string; objectId: string }>;
-  worldRules: Array<{ identityKey: string; rule: string }>;
   scene: { location?: string; time?: string; summary: string } | null;
   narrativeWindow: Array<{ documentKey: string; summary: string }>;
   outlineProgress: Record<string, "introduced" | "advanced" | "resolved">;
 }
 
 type NarrativeDelta = {
-  memoryEffects: Array<{
-    identityKey: string;
-    memoryIds: string[];
-    action: "apply" | "contest" | "supersede";
-    observation: NarrativeContractOutput["observations"][number];
-  }>;
+  entityAssignments: Array<{ entityKey: string; displayName: string }>;
   aliasAssignments: Array<{ normalizedAlias: string; entityKey: string }>;
   scene: NarrativeContractOutput["scene"];
   outlineProgress?: NarrativeContractOutput["outlineProgress"];
@@ -1844,7 +1853,10 @@ type NarrativeDelta = {
 ### 16.2 Behavior
 
 - The document is stored as kind `narrative.source`.
-- Observations become memory candidates; they are never copied raw into state.
+- Character facts, relationships, world rules, contradictions and evidence
+  are owned canonically by memory. They become memory candidates and are
+  never copied into state as competing facts. State characters retain only
+  stable entity identity and display name, not character-fact attributes.
 - Canonical `NarrativeState.entityAliases` is the sole alias authority.
   `narrative-entity-key-1` derives a stable key only when no authoritative
   normalized alias exists. Contract output may refer to labels but cannot
@@ -1853,13 +1865,23 @@ type NarrativeDelta = {
   supplies the target identity, prior value and exact source quote required by
   ADR-0009. Interpretation checks the quote against the supplied document;
   policy rechecks identity and prior value before supersession.
-- The reducer applies resolved memory operations projected into the delta,
-  adds alias assignments only from applied decisions,
-  advances outline beats monotonically and keeps the last configurable
-  `narrativeWindow` entries.
+- Post-memory projection adds entity and alias assignments only from applied
+  decisions. The v1 state has no relationship/world-rule collections or
+  read-optimized memory-ID projection.
+- `narrative-window-1` fixes the state window at most two summaries ordered
+  oldest to newest. The reducer preserves append order then retains the last
+  two; invariants reject an oversized window. The limit is not runtime
+  configuration.
+- Contract projection derives `PreviousDocumentTail` from the previous source
+  document using `previous-document-tail-1`: deterministic whitespace
+  normalization, the last at most two sentences and the last at most 320
+  Unicode code points. It includes document key and content hash, has no
+  summary fallback and fails before a model call when required source evidence
+  is unavailable.
 - Invariants reject alias collisions, aliases targeting unknown entities,
-  unknown outline regressions, duplicate normalized relationships and empty
-  scene summaries.
+  unknown outline regressions, an invalid narrative window and empty scene
+  summaries. Relationship and world-rule identity/contradiction validation is
+  memory-policy behavior.
 - A deterministic age/tone evaluator MAY be registered by an application,
   but it is not part of core.
 
@@ -1868,6 +1890,11 @@ golden vector are fixed by
 [ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md). A future
 alias merge/rename is a separate explicit domain task; neither model output
 nor module configuration silently rewrites alias authority.
+
+Knowledge/state ownership, `narrative-window-1` and the exact
+`previous-document-tail-1` derivation are fixed by
+[ADR-0011](../adr/0011-narrative-knowledge-and-context-ownership.md). The
+previous tail is projected source-backed context, not state or memory.
 
 This slice deliberately extracts useful ideas from the reference system:
 typed facts, explicit narrative window, framework/primitive selection as
