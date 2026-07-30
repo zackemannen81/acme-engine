@@ -128,7 +128,7 @@ prerequisites are:
 | `ExecutionEngine` | produces lifecycle stages, attempts, terminal results and replay reports |
 | `ScenarioRunner` in `@acme/testing` | executes a multi-step domain test and emits the JSON report the interface renders |
 | One reference module | gives a domain test something domain-specific to configure and measure |
-| Reusable DomainModule conformance kit | supplies the module-level verdicts the results view aggregates |
+| Reusable DomainModule conformance kit | implemented by ACME-0015; supplies the module-level verdicts the results view aggregates |
 | `@acme/adapter-sqlite` | gives run history a durable home; the in-memory adapter cannot survive the process |
 
 Phases 1 and 2 of the [build plan](#ordered-build-plan) are the only parts that

@@ -8,7 +8,7 @@ Last updated: 2026-07-29
 - Name: ACME
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
-- Phase: Greenfield design
+- Phase: Milestone 1 implementation
 
 ## Problem
 
@@ -160,6 +160,7 @@ The first platform version is successful when:
 
 ## Next Deliverable
 
-The active task is a complete design and development specification that turns
-this brief into implementable contracts, schemas, workflows, tests and
-milestones.
+The next implementation deliverable is one bounded reference module using the
+implemented public contracts, pure engines and shared DomainModule conformance
+kit. End-to-end offline acceptance remains a separate ExecutionEngine-backed
+step.

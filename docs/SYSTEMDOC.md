@@ -1,11 +1,11 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, in-memory Unit of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, shared module conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
-the runtime engines currently exist. Exact contracts, storage schema,
-protocols and milestones are defined in
+end-to-end execution orchestration or durable runtime persistence exists.
+Exact contracts, storage schema, protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
 ## Implemented Substrate
@@ -100,8 +100,33 @@ adding domain vocabulary to core:
 
 All four identifiers use `acme-cjson-1`, SHA-256, immutable algorithm names
 and documented golden vectors. They are module contracts, not implemented
-reference-module behavior. The remaining shared DomainModule conformance gate
-must be resolved before either reference package is activated.
+reference-module behavior.
+
+## Implemented DomainModule Conformance
+
+`@acme/testing` exports a reusable `domainModuleConformance()` suite over
+public `@acme/core` contracts:
+
+- strongly typed task selection retains task input, contract output, state and
+  delta inference
+- module, task, schema-version and registry identities are checked
+- supplied valid/invalid input, state and delta fixtures exercise runtime
+  schemas
+- `project()`, `interpret()` and `projectState()` must be deterministic,
+  detached and deeply frozen
+- initialization, reduction and invariants must be deterministic and
+  mutation-resistant
+- document, memory-candidate and event keys must be non-empty and unique
+- caller-supplied validation, identity, retrieval, resolution and lifecycle
+  outcomes exercise the memory-policy boundary without genericizing domain
+  meaning
+- analyzer tasks may return an explicit empty result
+
+The identical suite passes for testing-owned producer and empty-analyzer
+fixtures. Narrative and Research must run it with their own fixtures; their
+identity, contradiction, merge, promotion and invariant semantics remain
+module-owned unit-test concerns. A dependency rule rejects future
+`packages/module-*` imports of apps, concrete adapters or `@acme/testing`.
 
 ## Implemented Post-Memory State Projection
 

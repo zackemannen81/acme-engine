@@ -39,7 +39,7 @@ cross-package implementation deliverable with its own verification story.
 - `ExecutionEngine` orchestration, which does not exist
 - `ScenarioRunner` and its JSON report in `@acme/testing`, which do not exist
 - at least one reference module, which does not exist
-- the reusable `DomainModule` conformance kit, which is a separate proposal
+- the reusable `DomainModule` conformance kit implemented by ACME-0015
 - `@acme/adapter-sqlite` for durable run history, which does not exist
 - resolution of the seven decision gates in the specification, in particular
   the runtime shape, the `acme-test-plan/1` contract and interface storage

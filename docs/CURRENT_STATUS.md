@@ -94,17 +94,21 @@ currently:
   invocation/unconsumed-call evidence
 - a reusable non-empty provider-neutral `ModelGateway` conformance suite in
   `@acme/testing`
+- a reusable non-empty public-core-only `DomainModule` conformance suite in
+  `@acme/testing`, proven unchanged against testing-owned producer and empty
+  analyzer fixtures
 - a typed `@acme/cli` composition-root skeleton
-- an automated dependency rule, core vocabulary guard and negative boundary
-  fixture
-- 95 passing unit/conformance tests across canonicalization, model-request
+- automated dependency rules, a core vocabulary guard and negative core plus
+  future-module boundary fixtures
+- 107 passing unit/conformance tests across canonicalization, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
-  conformance, mock matching, immutability, atomic rollback and workspace
-  imports
-- compile-time task-name/input/output and state-projection inference checks
-- non-empty passing repository conformance plus empty passing integration and
-  scenario gates
+  plus module conformance, mock matching, immutability, atomic rollback and
+  workspace imports
+- compile-time task-name/input/output, state-projection and conformance-subject
+  inference checks
+- non-empty passing repository, gateway and module conformance plus empty
+  passing integration and scenario gates
 - no ExecutionEngine behavior
 - no database schema
 - no live model provider adapter
@@ -118,19 +122,31 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0012 resolved the reference-domain identity/provenance gate after bounded
-child ACME-0013 added the required input-bound public contracts. ADR-0009 now
-freezes Narrative alias/correction and Research proposition/source/evidence
-ownership with reproducible golden vectors. No reference-module implementation
-task is active until the reusable DomainModule-conformance gate is separately
-approved and completed.
+ACME-0015 completed the final shared pre-reference-module gate. The exported
+`domainModuleConformance()` suite now verifies the public module boundary,
+runtime schemas, deterministic immutable task/state behavior, unique effects
+and caller-supplied memory-policy expectations. It runs unchanged against
+testing-owned producer and empty-analyzer fixtures, and future module source
+is prevented from importing apps, concrete adapters or `@acme/testing`.
+Narrative and Research implementation remain separate tasks.
 
 ACME-0014 added the proposed
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) as
 documentation only. It defines a human surface for configuring, executing,
 inspecting, validating and measuring domain tests strictly over existing
 ports, ledger evidence and reports. Nothing in it is implemented or chartered,
-and its readiness prerequisites do not exist yet. No task is active.
+and its remaining readiness prerequisites do not exist yet.
+
+ACME-0016 synchronized current-facing repository documentation with the
+implemented workspace after ACME-0015. It corrected pre-implementation phase
+claims and audited the canonical repository map without changing runtime
+behavior or historical records.
+
+ACME-0017 is active as a `Draft` charter for
+`@acme/module-narrative` and `narrative.observe-document@1.0.0`, bounded to
+module-level build phases 1–4. No Narrative source exists and implementation
+must not begin until the contract-version, narrative-window and ownership
+questions are reviewed and the charter is explicitly frozen at `Ready`.
 
 ## Persistent Gaps
 
@@ -139,14 +155,14 @@ and its readiness prerequisites do not exist yet. No task is active.
 - A live provider adapter and provider-specific normalization are not
   implemented.
 - Narrative and Research reference modules are not implemented.
-- Reference-module implementation is still gated by a reusable
-  DomainModule-conformance boundary. Its bounded proposal is in
-  `docs/backlog/`.
+- Narrative and Research must run the implemented shared conformance suite
+  with their own fixtures in addition to module-specific policy tests.
 - ExecutionEngine must orchestrate the implemented post-memory projection
   boundary and retain the evidence required for replay.
 - The persistence schema remains design-only.
-- Package boundary enforcement covers core, testing, the in-memory adapter and
-  CLI substrate; future adapters and modules must extend its rule set.
+- Package boundary enforcement covers core, testing, the in-memory/model-mock
+  adapters, CLI substrate and the future `packages/module-*` dependency
+  direction; future adapters must extend its rule set.
 - Integration and scenario commands are established but have no behavioral
   suites yet.
 - No deterministic scenario or live evaluation harness exists.

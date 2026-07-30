@@ -457,3 +457,86 @@ Add one dated, signed entry for every meaningful work session or handoff.
   implementation before ExecutionEngine, ScenarioRunner, a reference module and
   durable persistence exist.
 - Signature: Claude
+
+## 2026-07-30 — Reusable DomainModule conformance completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0015
+- Summary: Completed the final shared pre-reference-module gate. Added the
+  strongly typed public-core-only `domainModuleConformance()` kit to
+  `@acme/testing`, covering module/task/registry identity, valid and invalid
+  runtime schemas, deterministic detached and deeply frozen task projection,
+  interpretation and post-memory state projection, unique effect keys, pure
+  initialization/reduction/invariants and caller-supplied memory-policy
+  outcomes. The identical suite runs against testing-owned producer and empty
+  analyzer fixtures. Added compile-time invalid task/input checks and a
+  dependency rule plus negative fixture rejecting future module imports of
+  apps, concrete adapters or `@acme/testing`. Removed the resolved conformance
+  backlog proposal and updated the normative specification, both reference
+  guides, the Domain Test UI dependency record and long-lived documentation.
+  No reference module, core contract, orchestration, persistence or UI
+  behavior was added.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries and
+  build passed. Unit execution passed 14 files and 107 tests. Dedicated
+  conformance passed 3 files and 22 tests: 5 repository, 5 gateway and 12
+  DomainModule cases. Compile-time valid/invalid examples and the intended
+  module-to-adapter boundary failure passed. Integration and scenario gates
+  passed empty because their implementations remain outside the charter.
+  Documentation checks covered 46 Markdown files and `git diff --check`
+  passed. No required check was skipped.
+- Follow-ups: Execute the separately approved documentation-reality sync, then
+  activate one bounded reference-module task. Keep the Domain Test UI
+  implementation proposal in backlog until its explicit dependencies exist.
+- Signature: Codex
+
+## 2026-07-30 — Current documentation synchronized with repository reality
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0016
+- Summary: Audited current-facing documentation against the actual
+  non-generated workspace after ACME-0015. Updated `AGENTS.md` from the stale
+  design-only claim to the implemented Milestone 1 reality and changed its
+  verification wording from future code to current code tasks. Updated the
+  root README and project brief with the shared DomainModule conformance and
+  next reference-module direction. Corrected system/status wording and
+  repaired `docs/FILESTRUCTURE.md` with the backlog/paused/archive README
+  files, the complete ACME-0001 through ACME-0016 archive, ACME-0015
+  code/type/conformance/boundary fixtures and the tracked `FS.txt`. The latter
+  remains unchanged and is explicitly non-authoritative because it is a stale
+  raw filesystem dump containing generated content. Historical tasks and
+  journal entries were not rewritten. The Domain Test UI implementation
+  remains in backlog.
+- Verification: The non-generated workspace inventory was compared with the
+  canonical map. A current-facing stale-language search returned no obsolete
+  design-only phase, inactive-task, old test-count or unresolved-conformance
+  claims. `pnpm docs:check` passed for 47 Markdown files and
+  `git diff --check` passed. No runtime gate applies to this documentation-only
+  task.
+- Follow-ups: Activate one bounded NarrativeModule implementation task using
+  the shared conformance kit. Do not implement the Domain Test UI until its
+  remaining explicit prerequisites exist.
+- Signature: Codex
+
+## 2026-07-30 — NarrativeModule implementation charter activated as Draft
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0017
+- Summary: Activated a bounded Draft charter for the first reference-domain
+  package, `@acme/module-narrative`, implementing
+  `narrative.observe-document@1.0.0`. The proposed scope covers package and
+  strict schemas, ADR-0009 identity/alias/correction behavior, pure
+  state/reducer/invariants, narrative memory policy, input-bound contract/task
+  behavior, post-memory state projection, deterministic fixtures, type checks
+  and the unchanged shared DomainModule conformance suite. ExecutionEngine,
+  ScenarioRunner, persistence, model invocation and the Phase 5 offline
+  acceptance scenario remain separate.
+- Verification: `pnpm docs:check` and `git diff --check` are required for the
+  Draft. Runtime gates belong to implementation after the charter reaches
+  `Ready`.
+- Follow-ups: Review the v1 prompt-contract semantics, choose an explicit
+  versioned narrative-window limit and confirm state/memory ownership. Revise
+  the Draft if needed; freeze it only after those questions are resolved.
+- Signature: Codex

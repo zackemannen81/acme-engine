@@ -395,16 +395,16 @@ Fixture updates require human review and a before/after digest rationale.
 3. **Alias authority — resolved.** ADR-0009 makes canonical
    `NarrativeState.entityAliases` the sole authority and freezes
    `narrative-entity-key-1`.
-4. **Shared module conformance.** Define the core-port-only suite in
-   `@acme/testing` before claiming module conformance.
+4. **Shared module conformance — resolved.**
+   [`domainModuleConformance()`](../../packages/testing/src/domain-module-conformance.ts)
+   is the public-core-only executable suite. Narrative must run it unchanged
+   with Narrative-owned fixtures in addition to its policy-specific unit
+   tests.
 
-See the bounded backlog proposals:
-
-- [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
-
-The resolved projection and identity/provenance decisions are
+The resolved projection, identity/provenance and conformance decisions are
 [ADR-0008](../adr/0008-post-memory-domain-state-projection.md) and
-[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md).
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md), plus the
+ACME-0015 conformance implementation.
 
 ## Team review checklist
 

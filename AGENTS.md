@@ -8,7 +8,10 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
-- Current phase: Design. No runtime implementation exists yet.
+- Current phase: Milestone 1 implementation. The contract layer, pure
+  StateEngine and MemoryEngine, in-memory repository, deterministic model mock
+  and shared conformance kits exist; ExecutionEngine, durable persistence and
+  reference modules do not.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.
@@ -148,7 +151,7 @@ For documentation-only tasks:
 - validate Mermaid when tooling exists
 - run `git diff --check`
 
-For future code tasks, `docs/CURRENT_TASK.md` must define the required:
+For code tasks, `docs/CURRENT_TASK.md` must define the required:
 
 - typecheck
 - unit tests

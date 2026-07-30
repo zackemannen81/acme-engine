@@ -45,6 +45,18 @@ export default {
         path: '^(?:apps|packages/(?!core(?:/|$)|adapter-model-mock(?:/|$)))',
       },
     },
+    {
+      name: 'domain-modules-do-not-depend-on-apps-adapters-or-testing',
+      severity: 'error',
+      comment:
+        'Domain modules may use public core contracts but not apps, concrete adapters, or test-support packages.',
+      from: {
+        path: '(?:^|/)packages/module-[^/]+/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?:adapter-[^/]+|testing)(?:/|$))',
+      },
+    },
   ],
   options: {
     doNotFollow: {

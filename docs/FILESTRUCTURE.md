@@ -73,20 +73,25 @@ acme-engine/
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── src/
+│       │   ├── domain-module-conformance.ts
 │       │   ├── index.ts
 │       │   ├── model-gateway-conformance.ts
 │       │   └── repository-conformance.ts
-│       └── test/
-│           └── workspace-import.test.ts
+│       ├── test/
+│       │   └── workspace-import.test.ts
+│       └── test-d/
+│           └── domain-module-conformance.test-d.ts
 ├── tests/
 │   └── conformance/
 │       ├── adapter-memory.test.ts
-│       └── adapter-model-mock.test.ts
+│       ├── adapter-model-mock.test.ts
+│       └── domain-module.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
 │   │   └── fixtures/
-│   │       └── packages/core/src/forbidden.ts
+│   │       ├── packages/core/src/forbidden.ts
+│   │       └── packages/module-fixture/src/forbidden.ts
 │   ├── docs/
 │   │   └── check-docs.mjs
 │   └── typescript/
@@ -106,8 +111,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
-│   │   ├── domain-test-ui-implementation.md
-│   │   └── reusable-domain-module-conformance-kit.md
+│   │   ├── README.md
+│   │   └── domain-test-ui-implementation.md
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
@@ -115,7 +120,25 @@ acme-engine/
 │   │   ├── narrative-module-build-and-test-plan.md
 │   │   └── research-module-build-and-test-plan.md
 │   ├── finished/
+│   │   ├── ACME-0001_docs-first-foundation.md
+│   │   ├── ACME-0002_frozen-task-charter-workflow.md
+│   │   ├── ACME-0003_complete-design-and-development-specification.md
+│   │   ├── ACME-0004_repository-bootstrap.md
+│   │   ├── ACME-0005_pure-contracts-and-static-registries.md
+│   │   ├── ACME-0006_pure-state-engine.md
+│   │   ├── ACME-0007_pure-memory-engine.md
+│   │   ├── ACME-0008_aggregate-in-memory-unit-of-work.md
+│   │   ├── ACME-0009_deterministic-model-mock-and-gateway-conformance.md
+│   │   ├── ACME-0010_reference-module-build-and-test-guides.md
+│   │   ├── ACME-0011_post-memory-state-projection.md
+│   │   ├── ACME-0012_reference-domain-identity-and-provenance.md
+│   │   ├── ACME-0013_input-bound-validation-and-interpretation.md
+│   │   ├── ACME-0014_domain-test-ui-specification.md
+│   │   ├── ACME-0015_reusable-domain-module-conformance.md
+│   │   ├── ACME-0016_documentation-reality-sync.md
+│   │   └── README.md
 │   ├── paused/
+│   │   └── README.md
 │   ├── presentations/
 │   │   ├── narrative-module-build-and-test-plan.docx
 │   │   └── research-module-build-and-test-plan.docx
@@ -137,6 +160,7 @@ acme-engine/
 ├── AGENTS.md
 ├── dependency-cruiser.config.mjs
 ├── eslint.config.mjs
+├── FS.txt
 ├── package.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
@@ -145,6 +169,11 @@ acme-engine/
 ├── tsconfig.tests.json
 └── vitest.config.ts
 ```
+
+`FS.txt` is a legacy tracked Windows filesystem dump that includes generated
+directories and stale content. It is non-authoritative; this document is the
+canonical maintained repository map. Generated `node_modules/` and `dist/`
+content remains intentionally omitted here.
 
 ## Implemented Workspace
 
@@ -157,8 +186,8 @@ acme-engine/
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
-- `@acme/testing`: reusable ExecutionRepository and ModelGateway conformance
-  plus typed test support.
+- `@acme/testing`: reusable ExecutionRepository, ModelGateway and
+  DomainModule conformance plus typed test support.
 - `@acme/cli`: behavior-free composition-root skeleton importing
   `@acme/core`.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
@@ -177,13 +206,14 @@ The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
 are ACME-0010 review snapshots; the Markdown guides remain normative after
 later architecture decisions. ADR-0008 resolves their post-memory
-state-projection gate, and ADR-0009 resolves their identity/provenance gate.
+state-projection gate, ADR-0009 resolves their identity/provenance gate and
+ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
 composition-root application for configuring, executing, inspecting,
 validating and measuring domain tests. No such package exists; the file is a
 specification awaiting review, and its readiness prerequisites are
 unimplemented.
 
-The two `docs/backlog/` proposals record the reusable DomainModule-conformance
-work and the domain-test-UI implementation. Both must be chartered separately
-rather than absorbed into reference-module implementation.
+The remaining `docs/backlog/` proposal records the domain-test-UI
+implementation. It must remain separate until its explicit prerequisites
+exist.

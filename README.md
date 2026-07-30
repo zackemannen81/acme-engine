@@ -10,8 +10,9 @@ The complete design baseline, repository bootstrap, pure state/memory engines,
 deterministic in-memory Unit of Work and exact scripted model mock are
 complete. The workspace contains model-output validation, versioned request
 hashing, static composition contracts, revisioned preparation and reusable
-repository/gateway conformance suites; no orchestration engine, durable
-persistence adapter, live model adapter or published package exists yet.
+repository/gateway/module conformance suites; no orchestration engine, durable
+persistence adapter, reference module, live model adapter or published package
+exists yet.
 
 ## Start here
 
@@ -41,11 +42,13 @@ apps/cli/                 CLI composition-root skeleton
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-model-mock/ Exact finite model-call scripts
-packages/testing/         Reusable repository/gateway conformance support
+packages/testing/         Reusable repository/gateway/module conformance support
 tooling/                   Shared configuration and repository checks
 ```
 
 ## Current objective
 
-No implementation task is active. A maintainer must explicitly approve the
-next bounded charter before work begins.
+`docs/CURRENT_TASK.md` is the sole source for active work. The next Milestone 1
+implementation focus is a bounded first reference module using the shared
+DomainModule conformance kit; its full offline acceptance remains dependent on
+the future ExecutionEngine.

@@ -727,6 +727,16 @@ aggregate repository commits every accepted effect atomically. See
 An empty result is valid for analyzer tasks when explicitly allowed by task
 conformance tests.
 
+`@acme/testing` exports `domainModuleConformance()` as the executable shared
+module boundary. The same suite verifies module/task/registry identity,
+runtime input/state/delta schemas, deterministic detached task projection and
+interpretation, post-memory state projection, unique effect keys, pure
+state/reducer/invariant behavior and caller-supplied memory-policy outcomes.
+Testing-owned producer and empty-analyzer fixtures prove the portable suite
+without introducing reference-domain semantics. Narrative and Research MUST
+run the same suite with their own fixtures in addition to domain-specific unit
+tests.
+
 ## 11. State model
 
 ```ts
@@ -2117,6 +2127,15 @@ consumption, deterministic invocation order, unconsumed scripts and absence
 of nondeterministic fallbacks. Future provider adapters run the same portable
 kit with injected fixture transports plus provider-specific normalization
 tests.
+
+The reusable `DomainModule` conformance kit MUST run only through public core
+contracts. It covers module/task/registry identity, runtime schemas,
+deterministic immutable `project()`, `interpret()` and `projectState()`,
+unique effect keys, state initialization/reduction/invariants and supplied
+memory-policy expectations. Module-specific identity, contradiction, merge,
+promotion and invariant meaning remains in each module's unit tests. A
+dependency fixture MUST reject module imports of apps, concrete adapters or
+runtime test-support packages.
 
 ### 19.3 Live evaluation
 

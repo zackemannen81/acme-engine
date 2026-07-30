@@ -12,9 +12,13 @@ const dependencyCruiserCli = path.join(
   repoRoot,
   'node_modules/dependency-cruiser/bin/dependency-cruise.mjs',
 );
-const fixturePath = path.join(
+const coreFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/core/src/forbidden.ts',
+);
+const moduleFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden.ts',
 );
 const coreSourcePath = path.join(repoRoot, 'packages/core/src');
 const forbiddenTerms = [
@@ -96,18 +100,23 @@ if (workspaceResult.status !== 0) {
 
 await verifyCoreVocabulary();
 
-const fixtureResult = runDependencyCruiser([fixturePath]);
-const fixtureOutput = `${fixtureResult.stdout}${fixtureResult.stderr}`;
-if (
-  fixtureResult.status === 0 ||
-  !fixtureOutput.includes('core-is-domain-neutral')
-) {
-  process.stderr.write(fixtureOutput);
-  throw new Error(
-    'The forbidden-boundary fixture did not fail for core-is-domain-neutral.',
-  );
+function verifyForbiddenFixture(fixturePath, expectedRule) {
+  const fixtureResult = runDependencyCruiser([fixturePath]);
+  const fixtureOutput = `${fixtureResult.stdout}${fixtureResult.stderr}`;
+  if (fixtureResult.status === 0 || !fixtureOutput.includes(expectedRule)) {
+    process.stderr.write(fixtureOutput);
+    throw new Error(
+      `The forbidden-boundary fixture did not fail for ${expectedRule}.`,
+    );
+  }
 }
 
+verifyForbiddenFixture(coreFixturePath, 'core-is-domain-neutral');
+verifyForbiddenFixture(
+  moduleFixturePath,
+  'domain-modules-do-not-depend-on-apps-adapters-or-testing',
+);
+
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/module fixture checks passed.\n',
 );

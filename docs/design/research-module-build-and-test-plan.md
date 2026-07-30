@@ -413,16 +413,16 @@ No fixture may fetch its URI or regenerate expected output automatically.
    source/locator/quote/independence evidence in the claim memory value,
    generic traceability in `ProvenanceRef` and sorted memory references in
    state.
-5. **Shared module conformance.** Define the same core-port-only suite used by
-   NarrativeModule.
+5. **Shared module conformance — resolved.**
+   [`domainModuleConformance()`](../../packages/testing/src/domain-module-conformance.ts)
+   is the public-core-only executable suite. Research must run it unchanged
+   with Research-owned fixtures in addition to its policy-specific unit
+   tests.
 
-See the bounded backlog proposals:
-
-- [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
-
-The resolved projection and identity/provenance decisions are
+The resolved projection, identity/provenance and conformance decisions are
 [ADR-0008](../adr/0008-post-memory-domain-state-projection.md) and
-[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md).
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md), plus the
+ACME-0015 conformance implementation.
 
 ## Team review checklist
 
