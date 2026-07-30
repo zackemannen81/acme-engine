@@ -284,3 +284,33 @@ Add one dated, signed entry for every meaningful work session or handoff.
   bounded Milestone 1 task. Durable ledger reuse, live provider adapters and
   the Narrative acceptance slice remain separate future work.
 - Signature: Codex
+
+## 2026-07-30 — Reference-module build and test guides completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0010
+- Summary: Produced normative build and test guides for NarrativeModule and
+  ResearchModule plus matching presentation-ready DOCX renditions. Each guide
+  defines module ownership, proposed package and component structure, domain
+  contracts, document/memory/state mapping, pure reducer and memory-policy
+  responsibilities, five ordered implementation phases, layered unit/type/
+  conformance/negative/scenario verification and a team decision checklist.
+  The plans deliberately use the same domain-neutral core path while keeping
+  Narrative continuity policy and Research evidence policy domain-owned. No
+  module or runtime behavior was implemented.
+- Verification: `pnpm docs:check` passed for 39 Markdown files and
+  `git diff --check` passed. Both guides contained every required section,
+  balanced fences and one readable Mermaid block. DOCX structural, preset,
+  table-geometry and accessibility audits passed. Microsoft Word opened both
+  files read-only as 12-page, three-table documents with all required
+  sections. Every page was exported to PDF, rasterized to PNG and visually
+  inspected at original resolution with no clipping, overlap, overflow or
+  unreadable table. LibreOffice was unavailable, so Word COM provided the
+  page-rendering fallback; no visual check was skipped.
+- Follow-ups: Team-review and separately charter the three bounded proposals:
+  memory decisions to state projection, reference-module identity/provenance
+  fields and reusable DomainModule conformance. After those gates are
+  resolved, activate one bounded reference-module implementation task; do not
+  add domain branches to core.
+- Signature: Codex

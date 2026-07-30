@@ -99,9 +99,18 @@ acme-engine/
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
+│   │   ├── domain-memory-decisions-to-state-projection.md
+│   │   ├── reference-module-identity-and-provenance-fields.md
+│   │   └── reusable-domain-module-conformance-kit.md
 │   ├── design/
+│   │   ├── acme-design-and-development-spec.md
+│   │   ├── narrative-module-build-and-test-plan.md
+│   │   └── research-module-build-and-test-plan.md
 │   ├── finished/
 │   ├── paused/
+│   ├── presentations/
+│   │   ├── narrative-module-build-and-test-plan.docx
+│   │   └── research-module-build-and-test-plan.docx
 │   ├── CONTRIBUTING.md
 │   ├── CURRENT_STATUS.md
 │   ├── CURRENT_TASK.md
@@ -154,3 +163,9 @@ acme-engine/
 The design specification retains the future package map for engine behavior,
 SQLite/model adapters, Narrative and Research modules and scenarios. Those
 files and directories must be added only by explicitly activated tasks.
+
+The two reference-module build and test plans under `docs/design/` are the
+normative implementation guides. Their `docs/presentations/` DOCX renditions
+support team review. The three `docs/backlog/` proposals record decisions that
+must be chartered separately rather than absorbed into reference-module
+implementation.

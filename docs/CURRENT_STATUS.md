@@ -105,9 +105,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0009 implemented the deterministic model mock, versioned request identity
-and provider-neutral gateway conformance. No next implementation task is
-active until a maintainer approves a new bounded charter.
+ACME-0010 completed team-ready build and test guides for NarrativeModule and
+ResearchModule. The guides are planning artifacts only; no reference-domain
+implementation task is active until a maintainer approves a bounded charter
+and the documented decision gates are resolved.
 
 ## Persistent Gaps
 
@@ -116,6 +117,10 @@ active until a maintainer approves a new bounded charter.
 - A live provider adapter and provider-specific normalization are not
   implemented.
 - Narrative and Research reference modules are not implemented.
+- Reference-module implementation is gated by an explicit
+  memory-decision-to-state projection rule, stable domain identity/provenance
+  fields and a reusable module-conformance boundary. Bounded proposals are in
+  `docs/backlog/`.
 - The persistence schema remains design-only.
 - Package boundary enforcement covers core, testing, the in-memory adapter and
   CLI substrate; future adapters and modules must extend its rule set.

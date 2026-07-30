@@ -1,0 +1,3939 @@
+﻿Folder PATH listing for volume Boot
+Volume serial number is 00000067 C4B3:FDC3
+C:.
++---.github
+�   +---workflows
++---apps
+�   +---cli
+�       +---dist
+�       +---node_modules
+�       �   +---@acme
+�       �       +---core
+�       �           +---dist
+�       �           +---node_modules
+�       �           �   +---zod
+�       �           �       +---locales
+�       �           �       +---mini
+�       �           �       +---src
+�       �           �       �   +---locales
+�       �           �       �   +---mini
+�       �           �       �   +---v3
+�       �           �       �   �   +---benchmarks
+�       �           �       �   �   +---helpers
+�       �           �       �   �   +---locales
+�       �           �       �   �   +---tests
+�       �           �       �   +---v4
+�       �           �       �   �   +---classic
+�       �           �       �   �   �   +---tests
+�       �           �       �   �   +---core
+�       �           �       �   �   �   +---tests
+�       �           �       �   �   �       +---locales
+�       �           �       �   �   +---locales
+�       �           �       �   �   +---mini
+�       �           �       �   �       +---tests
+�       �           �       �   +---v4-mini
+�       �           �       +---v3
+�       �           �       �   +---helpers
+�       �           �       �   +---locales
+�       �           �       +---v4
+�       �           �       �   +---classic
+�       �           �       �   +---core
+�       �           �       �   +---locales
+�       �           �       �   +---mini
+�       �           �       +---v4-mini
+�       �           +---src
+�       �           +---test
+�       �           +---test-d
+�       +---src
++---docs
+�   +---adr
+�   +---backlog
+�   +---design
+�   +---finished
+�   +---paused
++---node_modules
+�   +---.bin
+�   +---.pnpm
+�   �   +---@esbuild+aix-ppc64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---aix-ppc64
+�   �   �               +---bin
+�   �   +---@esbuild+android-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---android-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+android-arm@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---android-arm
+�   �   �               +---bin
+�   �   +---@esbuild+android-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---android-x64
+�   �   �               +---bin
+�   �   +---@esbuild+darwin-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---darwin-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+darwin-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---darwin-x64
+�   �   �               +---bin
+�   �   +---@esbuild+freebsd-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---freebsd-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+freebsd-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---freebsd-x64
+�   �   �               +---bin
+�   �   +---@esbuild+linux-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+linux-arm@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-arm
+�   �   �               +---bin
+�   �   +---@esbuild+linux-ia32@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-ia32
+�   �   �               +---bin
+�   �   +---@esbuild+linux-loong64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-loong64
+�   �   �               +---bin
+�   �   +---@esbuild+linux-mips64el@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-mips64el
+�   �   �               +---bin
+�   �   +---@esbuild+linux-ppc64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-ppc64
+�   �   �               +---bin
+�   �   +---@esbuild+linux-riscv64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-riscv64
+�   �   �               +---bin
+�   �   +---@esbuild+linux-s390x@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-s390x
+�   �   �               +---bin
+�   �   +---@esbuild+linux-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---linux-x64
+�   �   �               +---bin
+�   �   +---@esbuild+netbsd-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---netbsd-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+netbsd-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---netbsd-x64
+�   �   �               +---bin
+�   �   +---@esbuild+openbsd-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---openbsd-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+openbsd-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---openbsd-x64
+�   �   �               +---bin
+�   �   +---@esbuild+openharmony-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---openharmony-arm64
+�   �   �               +---bin
+�   �   +---@esbuild+sunos-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---sunos-x64
+�   �   �               +---bin
+�   �   +---@esbuild+win32-arm64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---win32-arm64
+�   �   +---@esbuild+win32-ia32@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---win32-ia32
+�   �   +---@esbuild+win32-x64@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �           +---win32-x64
+�   �   +---@eslint+config-array@0.23.5
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �       �   +---config-array
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---cjs
+�   �   �       �   �       �   +---std__path
+�   �   �       �   �       +---esm
+�   �   �       �   �           +---std__path
+�   �   �       �   +---object-schema
+�   �   �       �       +---dist
+�   �   �       �           +---cjs
+�   �   �       �           +---esm
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---minimatch
+�   �   �           +---dist
+�   �   �               +---commonjs
+�   �   �               +---esm
+�   �   +---@eslint+config-helpers@0.7.0
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �           +---config-helpers
+�   �   �           �   +---dist
+�   �   �           �       +---cjs
+�   �   �           �       +---esm
+�   �   �           +---core
+�   �   �               +---dist
+�   �   �                   +---cjs
+�   �   �                   +---esm
+�   �   +---@eslint+core@1.2.1
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �       �   +---core
+�   �   �       �       +---dist
+�   �   �       �           +---cjs
+�   �   �       �           +---esm
+�   �   �       +---@types
+�   �   �           +---json-schema
+�   �   +---@eslint+js@10.0.1_eslint@10.8.0
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �       �   +---js
+�   �   �       �       +---node_modules
+�   �   �       �       �   +---.bin
+�   �   �       �       +---src
+�   �   �       �       �   +---configs
+�   �   �       �       +---types
+�   �   �       +---eslint
+�   �   �           +---bin
+�   �   �           +---conf
+�   �   �           +---lib
+�   �   �           �   +---cli-engine
+�   �   �           �   �   +---formatters
+�   �   �           �   +---config
+�   �   �           �   +---eslint
+�   �   �           �   +---languages
+�   �   �           �   �   +---js
+�   �   �           �   �       +---source-code
+�   �   �           �   �           +---token-store
+�   �   �           �   +---linter
+�   �   �           �   �   +---code-path-analysis
+�   �   �           �   +---rule-tester
+�   �   �           �   +---rules
+�   �   �           �   �   +---utils
+�   �   �           �   �       +---unicode
+�   �   �           �   +---services
+�   �   �           �   +---shared
+�   �   �           �   +---types
+�   �   �           +---messages
+�   �   +---@eslint+object-schema@3.0.5
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �           +---object-schema
+�   �   �               +---dist
+�   �   �                   +---cjs
+�   �   �                   +---esm
+�   �   +---@eslint+plugin-kit@0.7.2
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �       �   +---core
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---cjs
+�   �   �       �   �       +---esm
+�   �   �       �   +---plugin-kit
+�   �   �       �       +---dist
+�   �   �       �           +---cjs
+�   �   �       �           +---esm
+�   �   �       +---levn
+�   �   �           +---lib
+�   �   +---@eslint-community+eslint-utils@4.10.1_eslint@10.8.0
+�   �   �   +---node_modules
+�   �   �       +---@eslint-community
+�   �   �       �   +---eslint-utils
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---eslint-visitor-keys
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   +---@eslint-community+regexpp@4.12.2
+�   �   �   +---node_modules
+�   �   �       +---@eslint-community
+�   �   �           +---regexpp
+�   �   +---@humanfs+core@0.19.2
+�   �   �   +---node_modules
+�   �   �       +---@humanfs
+�   �   �           +---core
+�   �   �           �   +---dist
+�   �   �           �   +---src
+�   �   �           +---types
+�   �   �               +---src
+�   �   +---@humanfs+node@0.16.8
+�   �   �   +---node_modules
+�   �   �       +---@humanfs
+�   �   �       �   +---core
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---src
+�   �   �       �   +---node
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---src
+�   �   �       �   +---types
+�   �   �       �       +---src
+�   �   �       +---@humanwhocodes
+�   �   �           +---retry
+�   �   �               +---dist
+�   �   +---@humanfs+types@0.15.0
+�   �   �   +---node_modules
+�   �   �       +---@humanfs
+�   �   �           +---types
+�   �   �               +---src
+�   �   +---@humanwhocodes+module-importer@1.0.1
+�   �   �   +---node_modules
+�   �   �       +---@humanwhocodes
+�   �   �           +---module-importer
+�   �   �               +---dist
+�   �   �               +---src
+�   �   +---@humanwhocodes+retry@0.4.3
+�   �   �   +---node_modules
+�   �   �       +---@humanwhocodes
+�   �   �           +---retry
+�   �   �               +---dist
+�   �   +---@jridgewell+sourcemap-codec@1.5.5
+�   �   �   +---node_modules
+�   �   �       +---@jridgewell
+�   �   �           +---sourcemap-codec
+�   �   �               +---dist
+�   �   �               +---src
+�   �   �               +---types
+�   �   +---@oxc-project+types@0.139.0
+�   �   �   +---node_modules
+�   �   �       +---@oxc-project
+�   �   �           +---types
+�   �   +---@rolldown+binding-win32-x64-msvc@1.1.5
+�   �   �   +---node_modules
+�   �   �       +---@rolldown
+�   �   �           +---binding-win32-x64-msvc
+�   �   +---@rolldown+pluginutils@1.0.1
+�   �   �   +---node_modules
+�   �   �       +---@rolldown
+�   �   �           +---pluginutils
+�   �   �               +---dist
+�   �   �                   +---filter
+�   �   +---@rollup+rollup-android-arm-eabi@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-android-arm-eabi
+�   �   +---@rollup+rollup-android-arm64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-android-arm64
+�   �   +---@rollup+rollup-darwin-arm64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-darwin-arm64
+�   �   +---@rollup+rollup-darwin-x64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-darwin-x64
+�   �   +---@rollup+rollup-freebsd-arm64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-freebsd-arm64
+�   �   +---@rollup+rollup-freebsd-x64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-freebsd-x64
+�   �   +---@rollup+rollup-linux-arm-gnueabihf@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-arm-gnueabihf
+�   �   +---@rollup+rollup-linux-arm-musleabihf@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-arm-musleabihf
+�   �   +---@rollup+rollup-linux-arm64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-arm64-gnu
+�   �   +---@rollup+rollup-linux-arm64-musl@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-arm64-musl
+�   �   +---@rollup+rollup-linux-loong64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-loong64-gnu
+�   �   +---@rollup+rollup-linux-loong64-musl@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-loong64-musl
+�   �   +---@rollup+rollup-linux-ppc64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-ppc64-gnu
+�   �   +---@rollup+rollup-linux-ppc64-musl@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-ppc64-musl
+�   �   +---@rollup+rollup-linux-riscv64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-riscv64-gnu
+�   �   +---@rollup+rollup-linux-riscv64-musl@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-riscv64-musl
+�   �   +---@rollup+rollup-linux-s390x-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-s390x-gnu
+�   �   +---@rollup+rollup-linux-x64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-x64-gnu
+�   �   +---@rollup+rollup-linux-x64-musl@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-linux-x64-musl
+�   �   +---@rollup+rollup-openbsd-x64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-openbsd-x64
+�   �   +---@rollup+rollup-openharmony-arm64@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-openharmony-arm64
+�   �   +---@rollup+rollup-win32-arm64-msvc@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-win32-arm64-msvc
+�   �   +---@rollup+rollup-win32-ia32-msvc@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-win32-ia32-msvc
+�   �   +---@rollup+rollup-win32-x64-gnu@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-win32-x64-gnu
+�   �   +---@rollup+rollup-win32-x64-msvc@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �           +---rollup-win32-x64-msvc
+�   �   +---@standard-schema+spec@1.1.0
+�   �   �   +---node_modules
+�   �   �       +---@standard-schema
+�   �   �           +---spec
+�   �   �               +---dist
+�   �   +---@types+chai@5.2.3
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---chai
+�   �   �       �   +---deep-eql
+�   �   �       +---assertion-error
+�   �   +---@types+deep-eql@4.0.2
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �           +---deep-eql
+�   �   +---@types+esrecurse@4.3.1
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �           +---esrecurse
+�   �   +---@types+estree@1.0.9
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �           +---estree
+�   �   +---@types+json-schema@7.0.15
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �           +---json-schema
+�   �   +---@types+node@24.13.3
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---node
+�   �   �       �       +---assert
+�   �   �       �       +---compatibility
+�   �   �       �       +---dns
+�   �   �       �       +---fs
+�   �   �       �       +---readline
+�   �   �       �       +---stream
+�   �   �       �       +---timers
+�   �   �       �       +---ts5.6
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---ts5.7
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---web-globals
+�   �   �       +---undici-types
+�   �   +---@typescript-eslint+eslint-p_bf3cedcded8a64b3ac54f36ad5ece25b
+�   �   �   +---node_modules
+�   �   �       +---@eslint-community
+�   �   �       �   +---regexpp
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---eslint-plugin
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---configs
+�   �   �       �   �   �   �   +---eslintrc
+�   �   �       �   �   �   �   +---flat
+�   �   �       �   �   �   +---rules
+�   �   �       �   �   �   �   +---enum-utils
+�   �   �       �   �   �   �   +---naming-convention-utils
+�   �   �       �   �   �   �   +---prefer-optional-chain-utils
+�   �   �       �   �   �   +---util
+�   �   �       �   �   �       +---class-scope-analyzer
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---parser
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---scope-manager
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---definition
+�   �   �       �   �       +---lib
+�   �   �       �   �       +---referencer
+�   �   �       �   �       +---scope
+�   �   �       �   �       +---variable
+�   �   �       �   +---type-utils
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---typeOrValueSpecifiers
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---utils
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---ast-utils
+�   �   �       �   �   �   �   +---eslint-utils
+�   �   �       �   �   �   +---eslint-utils
+�   �   �       �   �   �   +---ts-eslint
+�   �   �       �   �   �   �   +---eslint
+�   �   �       �   �   �   +---ts-utils
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---visitor-keys
+�   �   �       �       +---dist
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---ignore
+�   �   �       +---natural-compare
+�   �   �       +---ts-api-utils
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+parser@8_256d19845c524ca08866bc55c90d9382
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---parser
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---scope-manager
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---definition
+�   �   �       �   �       +---lib
+�   �   �       �   �       +---referencer
+�   �   �       �   �       +---scope
+�   �   �       �   �       +---variable
+�   �   �       �   +---types
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---generated
+�   �   �       �   +---typescript-estree
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---create-program
+�   �   �       �   �   �   +---jsx
+�   �   �       �   �   �   +---parseSettings
+�   �   �       �   �   �   +---ts-estree
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---visitor-keys
+�   �   �       �       +---dist
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+project-service@8.65.0_typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---project-service
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---tsconfig-utils
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---types
+�   �   �       �       +---dist
+�   �   �       �           +---generated
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+scope-manager@8.65.0
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �           +---scope-manager
+�   �   �           �   +---dist
+�   �   �           �       +---definition
+�   �   �           �       +---lib
+�   �   �           �       +---referencer
+�   �   �           �       +---scope
+�   �   �           �       +---variable
+�   �   �           +---types
+�   �   �           �   +---dist
+�   �   �           �       +---generated
+�   �   �           +---visitor-keys
+�   �   �               +---dist
+�   �   +---@typescript-eslint+tsconfig-utils@8.65.0_typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---tsconfig-utils
+�   �   �       �       +---dist
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+type-uti_89226a68380db002a1b17a74ca5d2801
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---type-utils
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---typeOrValueSpecifiers
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---types
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---generated
+�   �   �       �   +---typescript-estree
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---create-program
+�   �   �       �   �   �   +---jsx
+�   �   �       �   �   �   +---parseSettings
+�   �   �       �   �   �   +---ts-estree
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �       �   +---ast-utils
+�   �   �       �       �   �   +---eslint-utils
+�   �   �       �       �   +---eslint-utils
+�   �   �       �       �   +---ts-eslint
+�   �   �       �       �   �   +---eslint
+�   �   �       �       �   +---ts-utils
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---ts-api-utils
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+types@8.65.0
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �           +---types
+�   �   �               +---dist
+�   �   �                   +---generated
+�   �   +---@typescript-eslint+typescript-estree@8.65.0_typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---project-service
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---tsconfig-utils
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---types
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---generated
+�   �   �       �   +---typescript-estree
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---create-program
+�   �   �       �   �   �   +---jsx
+�   �   �       �   �   �   +---parseSettings
+�   �   �       �   �   �   +---ts-estree
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---visitor-keys
+�   �   �       �       +---dist
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---minimatch
+�   �   �       �   +---dist
+�   �   �       �       +---commonjs
+�   �   �       �       +---esm
+�   �   �       +---semver
+�   �   �       �   +---bin
+�   �   �       �   +---classes
+�   �   �       �   +---functions
+�   �   �       �   +---internal
+�   �   �       �   +---ranges
+�   �   �       +---tinyglobby
+�   �   �       �   +---dist
+�   �   �       +---ts-api-utils
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+utils@8._0b86a9adfe416f4d8be3cfe47efafc92
+�   �   �   +---node_modules
+�   �   �       +---@eslint-community
+�   �   �       �   +---eslint-utils
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---scope-manager
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---definition
+�   �   �       �   �       +---lib
+�   �   �       �   �       +---referencer
+�   �   �       �   �       +---scope
+�   �   �       �   �       +---variable
+�   �   �       �   +---types
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---generated
+�   �   �       �   +---typescript-estree
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---create-program
+�   �   �       �   �   �   +---jsx
+�   �   �       �   �   �   +---parseSettings
+�   �   �       �   �   �   +---ts-estree
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �       �   +---ast-utils
+�   �   �       �       �   �   +---eslint-utils
+�   �   �       �       �   +---eslint-utils
+�   �   �       �       �   +---ts-eslint
+�   �   �       �       �   �   +---eslint
+�   �   �       �       �   +---ts-utils
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---@typescript-eslint+visitor-keys@8.65.0
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---types
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---generated
+�   �   �       �   +---visitor-keys
+�   �   �       �       +---dist
+�   �   �       +---eslint-visitor-keys
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   +---@vitest+expect@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@standard-schema
+�   �   �       �   +---spec
+�   �   �       �       +---dist
+�   �   �       +---@types
+�   �   �       �   +---chai
+�   �   �       +---@vitest
+�   �   �       �   +---expect
+�   �   �       �   �   +---dist
+�   �   �       �   +---spy
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       +---chai
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---@vitest+expect@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@standard-schema
+�   �   �       �   +---spec
+�   �   �       �       +---dist
+�   �   �       +---@types
+�   �   �       �   +---chai
+�   �   �       +---@vitest
+�   �   �       �   +---expect
+�   �   �       �   �   +---dist
+�   �   �       �   +---spy
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �           +---source-map
+�   �   �       +---chai
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---@vitest+mocker@4.0.18_vite@_05a7ace1767efc837d8d9f0f87e6d27b
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---mocker
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---spy
+�   �   �       �       +---dist
+�   �   �       +---estree-walker
+�   �   �       �   +---src
+�   �   �       �   +---types
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---vite
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �           �   +---client
+�   �   �           �   +---node
+�   �   �           �       +---chunks
+�   �   �           +---misc
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---types
+�   �   �               +---internal
+�   �   +---@vitest+mocker@4.1.10_vite@_fbf344c81044158bf815342d754c4190
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---mocker
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---spy
+�   �   �       �       +---dist
+�   �   �       +---estree-walker
+�   �   �       �   +---src
+�   �   �       �   +---types
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---vite
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �           �   +---client
+�   �   �           �   +---node
+�   �   �           �       +---chunks
+�   �   �           +---misc
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---types
+�   �   �               +---internal
+�   �   +---@vitest+pretty-format@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �       +---dist
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---@vitest+pretty-format@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �       +---dist
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---@vitest+runner@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---runner
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       +---pathe
+�   �   �           +---dist
+�   �   �               +---shared
+�   �   +---@vitest+runner@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---runner
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �           +---source-map
+�   �   �       +---pathe
+�   �   �           +---dist
+�   �   �               +---shared
+�   �   +---@vitest+snapshot@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---snapshot
+�   �   �       �       +---dist
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---pathe
+�   �   �           +---dist
+�   �   �               +---shared
+�   �   +---@vitest+snapshot@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---snapshot
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �           +---source-map
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---pathe
+�   �   �           +---dist
+�   �   �               +---shared
+�   �   +---@vitest+spy@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �           +---spy
+�   �   �               +---dist
+�   �   +---@vitest+spy@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �           +---spy
+�   �   �               +---dist
+�   �   +---@vitest+utils@4.0.18
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---@vitest+utils@4.1.10
+�   �   �   +---node_modules
+�   �   �       +---@vitest
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �           +---source-map
+�   �   �       +---convert-source-map
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---acorn-jsx-walk@2.0.0
+�   �   �   +---node_modules
+�   �   �       +---acorn-jsx-walk
+�   �   �           +---dist
+�   �   +---acorn-jsx@5.3.2_acorn@8.17.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-jsx
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---acorn-jsx@5.3.2_acorn@8.18.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-jsx
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---acorn-loose@8.5.2
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-loose
+�   �   �           +---dist
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---acorn-walk@8.3.5
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-walk
+�   �   �           +---dist
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---acorn@8.17.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   +---acorn@8.18.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   +---ajv@6.15.0
+�   �   �   +---node_modules
+�   �   �       +---ajv
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       �   �   +---compile
+�   �   �       �   �   +---dot
+�   �   �       �   �   +---dotjs
+�   �   �       �   �   +---refs
+�   �   �       �   +---scripts
+�   �   �       +---fast-deep-equal
+�   �   �       �   +---es6
+�   �   �       +---fast-json-stable-stringify
+�   �   �       �   +---.github
+�   �   �       �   +---benchmark
+�   �   �       �   +---example
+�   �   �       �   +---test
+�   �   �       +---json-schema-traverse
+�   �   �       �   +---spec
+�   �   �       �       +---fixtures
+�   �   �       +---uri-js
+�   �   �           +---dist
+�   �   �               +---es5
+�   �   �               +---esnext
+�   �   �                   +---schemes
+�   �   +---ansi-styles@4.3.0
+�   �   �   +---node_modules
+�   �   �       +---ansi-styles
+�   �   �       +---color-convert
+�   �   +---assertion-error@2.0.1
+�   �   �   +---node_modules
+�   �   �       +---assertion-error
+�   �   +---balanced-match@4.0.4
+�   �   �   +---node_modules
+�   �   �       +---balanced-match
+�   �   �           +---dist
+�   �   �               +---commonjs
+�   �   �               +---esm
+�   �   +---brace-expansion@5.0.8
+�   �   �   +---node_modules
+�   �   �       +---balanced-match
+�   �   �       �   +---dist
+�   �   �       �       +---commonjs
+�   �   �       �       +---esm
+�   �   �       +---brace-expansion
+�   �   �           +---dist
+�   �   �               +---commonjs
+�   �   �               +---esm
+�   �   +---chai@6.2.2
+�   �   �   +---node_modules
+�   �   �       +---chai
+�   �   +---chalk@4.1.2
+�   �   �   +---node_modules
+�   �   �       +---ansi-styles
+�   �   �       +---chalk
+�   �   �       �   +---source
+�   �   �       +---supports-color
+�   �   +---color-convert@2.0.1
+�   �   �   +---node_modules
+�   �   �       +---color-convert
+�   �   �       +---color-name
+�   �   +---color-name@1.1.4
+�   �   �   +---node_modules
+�   �   �       +---color-name
+�   �   +---commander@15.0.0
+�   �   �   +---node_modules
+�   �   �       +---commander
+�   �   �           +---lib
+�   �   �           +---typings
+�   �   +---convert-source-map@2.0.0
+�   �   �   +---node_modules
+�   �   �       +---convert-source-map
+�   �   +---cross-spawn@7.0.6
+�   �   �   +---node_modules
+�   �   �       +---cross-spawn
+�   �   �       �   +---lib
+�   �   �       �   �   +---util
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---path-key
+�   �   �       +---shebang-command
+�   �   �       +---which
+�   �   �           +---bin
+�   �   +---debug@4.4.3
+�   �   �   +---node_modules
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---ms
+�   �   +---deep-is@0.1.4
+�   �   �   +---node_modules
+�   �   �       +---deep-is
+�   �   �           +---example
+�   �   �           +---test
+�   �   +---dependency-cruiser@18.1.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-jsx
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---acorn-jsx-walk
+�   �   �       �   +---dist
+�   �   �       +---acorn-loose
+�   �   �       �   +---dist
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---acorn-walk
+�   �   �       �   +---dist
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---commander
+�   �   �       �   +---lib
+�   �   �       �   +---typings
+�   �   �       +---dependency-cruiser
+�   �   �       �   +---bin
+�   �   �       �   +---configs
+�   �   �       �   �   +---plugins
+�   �   �       �   �   +---rules
+�   �   �       �   +---node_modules
+�   �   �       �   �   +---.bin
+�   �   �       �   +---src
+�   �   �       �   �   +---analyze
+�   �   �       �   �   �   +---derive
+�   �   �       �   �   �   �   +---folders
+�   �   �       �   �   �   �   +---metrics
+�   �   �       �   �   �   �   +---orphan
+�   �   �       �   �   �   +---summarize
+�   �   �       �   �   +---cache
+�   �   �       �   �   +---cli
+�   �   �       �   �   �   +---init-config
+�   �   �       �   �   �   +---listeners
+�   �   �       �   �   �   �   +---performance-log
+�   �   �       �   �   �   +---tools
+�   �   �       �   �   �   +---utl
+�   �   �       �   �   +---config-utl
+�   �   �       �   �   �   +---extract-depcruise-config
+�   �   �       �   �   +---extract
+�   �   �       �   �   �   +---acorn
+�   �   �       �   �   �   +---resolve
+�   �   �       �   �   �   +---swc
+�   �   �       �   �   �   +---transpile
+�   �   �       �   �   �   +---tsc
+�   �   �       �   �   +---graph-utl
+�   �   �       �   �   +---main
+�   �   �       �   �   �   +---files-and-dirs
+�   �   �       �   �   �   +---options
+�   �   �       �   �   �   +---resolve-options
+�   �   �       �   �   �   +---rule-set
+�   �   �       �   �   +---report
+�   �   �       �   �   �   +---anon
+�   �   �       �   �   �   +---dot
+�   �   �       �   �   �   +---dot-webpage
+�   �   �       �   �   �   �   +---svg-in-html-snippets
+�   �   �       �   �   �   +---error-html
+�   �   �       �   �   �   +---html
+�   �   �       �   �   �   +---utl
+�   �   �       �   �   +---schema
+�   �   �       �   �   +---utl
+�   �   �       �   �   +---validate
+�   �   �       �   +---types
+�   �   �       �       +---config-utl
+�   �   �       �       +---plugins
+�   �   �       +---enhanced-resolve
+�   �   �       �   +---lib
+�   �   �       �       +---util
+�   �   �       +---ignore
+�   �   �       +---interpret
+�   �   �       +---is-installed-globally
+�   �   �       +---json5
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---prompts
+�   �   �       �   +---dist
+�   �   �       �   �   +---dateparts
+�   �   �       �   �   +---elements
+�   �   �       �   �   +---util
+�   �   �       �   +---lib
+�   �   �       �       +---dateparts
+�   �   �       �       +---elements
+�   �   �       �       +---util
+�   �   �       +---rechoir
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---safe-regex
+�   �   �       �   +---bin
+�   �   �       �   +---example
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �   �   +---.bin
+�   �   �       �   +---test
+�   �   �       +---semver
+�   �   �       �   +---bin
+�   �   �       �   +---classes
+�   �   �       �   +---functions
+�   �   �       �   +---internal
+�   �   �       �   +---ranges
+�   �   �       +---tsconfig-paths-webpack-plugin
+�   �   �       �   +---.github
+�   �   �       �   �   +---workflows
+�   �   �       �   +---.husky
+�   �   �       �   +---coverage
+�   �   �       �   �   +---lcov-report
+�   �   �       �   +---examples
+�   �   �       �   �   +---referenceExample
+�   �   �       �   +---lib
+�   �   �       �   �   +---__tests__
+�   �   �       �   +---temp
+�   �   �       +---watskeburt
+�   �   �           +---dist
+�   �   �           �   +---format
+�   �   �           +---types
+�   �   +---detect-libc@2.1.2
+�   �   �   +---node_modules
+�   �   �       +---detect-libc
+�   �   �           +---lib
+�   �   +---enhanced-resolve@5.24.2
+�   �   �   +---node_modules
+�   �   �       +---enhanced-resolve
+�   �   �       �   +---lib
+�   �   �       �       +---util
+�   �   �       +---graceful-fs
+�   �   �       +---tapable
+�   �   �           +---lib
+�   �   +---es-errors@1.3.0
+�   �   �   +---node_modules
+�   �   �       +---es-errors
+�   �   �           +---.github
+�   �   �           +---test
+�   �   +---es-module-lexer@1.7.0
+�   �   �   +---node_modules
+�   �   �       +---es-module-lexer
+�   �   �           +---dist
+�   �   �           +---types
+�   �   +---es-module-lexer@2.3.1
+�   �   �   +---node_modules
+�   �   �       +---es-module-lexer
+�   �   �           +---dist
+�   �   �           +---types
+�   �   +---esbuild@0.28.1
+�   �   �   +---node_modules
+�   �   �       +---@esbuild
+�   �   �       �   +---aix-ppc64
+�   �   �       �   �   +---bin
+�   �   �       �   +---android-arm
+�   �   �       �   �   +---bin
+�   �   �       �   +---android-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---android-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---darwin-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---darwin-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---freebsd-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---freebsd-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-arm
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-ia32
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-loong64
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-mips64el
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-ppc64
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-riscv64
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-s390x
+�   �   �       �   �   +---bin
+�   �   �       �   +---linux-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---netbsd-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---netbsd-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---openbsd-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---openbsd-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---openharmony-arm64
+�   �   �       �   �   +---bin
+�   �   �       �   +---sunos-x64
+�   �   �       �   �   +---bin
+�   �   �       �   +---win32-arm64
+�   �   �       �   +---win32-ia32
+�   �   �       �   +---win32-x64
+�   �   �       +---esbuild
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   +---escape-string-regexp@4.0.0
+�   �   �   +---node_modules
+�   �   �       +---escape-string-regexp
+�   �   +---eslint-scope@9.1.2
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---esrecurse
+�   �   �       �   +---estree
+�   �   �       +---eslint-scope
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---esrecurse
+�   �   �       +---estraverse
+�   �   +---eslint-visitor-keys@3.4.3
+�   �   �   +---node_modules
+�   �   �       +---eslint-visitor-keys
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   +---eslint-visitor-keys@5.0.1
+�   �   �   +---node_modules
+�   �   �       +---eslint-visitor-keys
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   +---eslint@10.8.0
+�   �   �   +---node_modules
+�   �   �       +---@eslint
+�   �   �       �   +---config-array
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---cjs
+�   �   �       �   �       �   +---std__path
+�   �   �       �   �       +---esm
+�   �   �       �   �           +---std__path
+�   �   �       �   +---config-helpers
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---cjs
+�   �   �       �   �       +---esm
+�   �   �       �   +---core
+�   �   �       �   �   +---dist
+�   �   �       �   �       +---cjs
+�   �   �       �   �       +---esm
+�   �   �       �   +---plugin-kit
+�   �   �       �       +---dist
+�   �   �       �           +---cjs
+�   �   �       �           +---esm
+�   �   �       +---@eslint-community
+�   �   �       �   +---eslint-utils
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---regexpp
+�   �   �       +---@humanfs
+�   �   �       �   +---node
+�   �   �       �       +---dist
+�   �   �       �       +---src
+�   �   �       +---@humanwhocodes
+�   �   �       �   +---module-importer
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---src
+�   �   �       �   +---retry
+�   �   �       �       +---dist
+�   �   �       +---@types
+�   �   �       �   +---estree
+�   �   �       +---ajv
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       �   �   +---compile
+�   �   �       �   �   +---dot
+�   �   �       �   �   +---dotjs
+�   �   �       �   �   +---refs
+�   �   �       �   +---scripts
+�   �   �       +---cross-spawn
+�   �   �       �   +---lib
+�   �   �       �   �   +---util
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---debug
+�   �   �       �   +---src
+�   �   �       +---escape-string-regexp
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---eslint-scope
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---eslint-visitor-keys
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---espree
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---esquery
+�   �   �       �   +---dist
+�   �   �       +---esutils
+�   �   �       �   +---lib
+�   �   �       +---fast-deep-equal
+�   �   �       �   +---es6
+�   �   �       +---file-entry-cache
+�   �   �       +---find-up
+�   �   �       +---glob-parent
+�   �   �       +---ignore
+�   �   �       +---imurmurhash
+�   �   �       +---is-glob
+�   �   �       +---json-stable-stringify-without-jsonify
+�   �   �       �   +---example
+�   �   �       �   +---test
+�   �   �       +---minimatch
+�   �   �       �   +---dist
+�   �   �       �       +---commonjs
+�   �   �       �       +---esm
+�   �   �       +---natural-compare
+�   �   �       +---optionator
+�   �   �           +---lib
+�   �   +---espree@11.2.0
+�   �   �   +---node_modules
+�   �   �       +---acorn
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       +---acorn-jsx
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---eslint-visitor-keys
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---espree
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---esquery@1.7.0
+�   �   �   +---node_modules
+�   �   �       +---esquery
+�   �   �       �   +---dist
+�   �   �       +---estraverse
+�   �   +---esrecurse@4.3.0
+�   �   �   +---node_modules
+�   �   �       +---esrecurse
+�   �   �       +---estraverse
+�   �   +---estraverse@5.3.0
+�   �   �   +---node_modules
+�   �   �       +---estraverse
+�   �   +---estree-walker@3.0.3
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---estree
+�   �   �       +---estree-walker
+�   �   �           +---src
+�   �   �           +---types
+�   �   +---esutils@2.0.3
+�   �   �   +---node_modules
+�   �   �       +---esutils
+�   �   �           +---lib
+�   �   +---expect-type@1.4.0
+�   �   �   +---node_modules
+�   �   �       +---expect-type
+�   �   �           +---dist
+�   �   +---fast-deep-equal@3.1.3
+�   �   �   +---node_modules
+�   �   �       +---fast-deep-equal
+�   �   �           +---es6
+�   �   +---fast-json-stable-stringify@2.1.0
+�   �   �   +---node_modules
+�   �   �       +---fast-json-stable-stringify
+�   �   �           +---.github
+�   �   �           +---benchmark
+�   �   �           +---example
+�   �   �           +---test
+�   �   +---fast-levenshtein@2.0.6
+�   �   �   +---node_modules
+�   �   �       +---fast-levenshtein
+�   �   +---fdir@6.5.0_picomatch@4.0.5
+�   �   �   +---node_modules
+�   �   �       +---fdir
+�   �   �       �   +---dist
+�   �   �       +---picomatch
+�   �   �           +---lib
+�   �   +---file-entry-cache@8.0.0
+�   �   �   +---node_modules
+�   �   �       +---file-entry-cache
+�   �   �       +---flat-cache
+�   �   �           +---src
+�   �   +---find-up@5.0.0
+�   �   �   +---node_modules
+�   �   �       +---find-up
+�   �   �       +---locate-path
+�   �   �       +---path-exists
+�   �   +---flat-cache@4.0.1
+�   �   �   +---node_modules
+�   �   �       +---flat-cache
+�   �   �       �   +---src
+�   �   �       +---flatted
+�   �   �       �   +---cjs
+�   �   �       �   +---esm
+�   �   �       �   +---golang
+�   �   �       �   �   +---pkg
+�   �   �       �   �       +---flatted
+�   �   �       �   +---php
+�   �   �       �   +---python
+�   �   �       �   +---types
+�   �   �       +---keyv
+�   �   �           +---src
+�   �   +---flatted@3.4.3
+�   �   �   +---node_modules
+�   �   �       +---flatted
+�   �   �           +---cjs
+�   �   �           +---esm
+�   �   �           +---golang
+�   �   �           �   +---pkg
+�   �   �           �       +---flatted
+�   �   �           +---php
+�   �   �           +---python
+�   �   �           +---types
+�   �   +---fsevents@2.3.3
+�   �   �   +---node_modules
+�   �   �       +---fsevents
+�   �   +---function-bind@1.1.2
+�   �   �   +---node_modules
+�   �   �       +---function-bind
+�   �   �           +---.github
+�   �   �           +---test
+�   �   +---glob-parent@6.0.2
+�   �   �   +---node_modules
+�   �   �       +---glob-parent
+�   �   �       +---is-glob
+�   �   +---global-directory@4.0.1
+�   �   �   +---node_modules
+�   �   �       +---global-directory
+�   �   �       +---ini
+�   �   �           +---lib
+�   �   +---globals@17.8.0
+�   �   �   +---node_modules
+�   �   �       +---globals
+�   �   +---graceful-fs@4.2.11
+�   �   �   +---node_modules
+�   �   �       +---graceful-fs
+�   �   +---has-flag@4.0.0
+�   �   �   +---node_modules
+�   �   �       +---has-flag
+�   �   +---hasown@2.0.4
+�   �   �   +---node_modules
+�   �   �       +---function-bind
+�   �   �       �   +---.github
+�   �   �       �   +---test
+�   �   �       +---hasown
+�   �   �           +---.github
+�   �   +---ignore@5.3.2
+�   �   �   +---node_modules
+�   �   �       +---ignore
+�   �   +---ignore@7.0.6
+�   �   �   +---node_modules
+�   �   �       +---ignore
+�   �   +---imurmurhash@0.1.4
+�   �   �   +---node_modules
+�   �   �       +---imurmurhash
+�   �   +---ini@4.1.1
+�   �   �   +---node_modules
+�   �   �       +---ini
+�   �   �           +---lib
+�   �   +---interpret@3.1.1
+�   �   �   +---node_modules
+�   �   �       +---interpret
+�   �   +---is-core-module@2.16.2
+�   �   �   +---node_modules
+�   �   �       +---hasown
+�   �   �       �   +---.github
+�   �   �       +---is-core-module
+�   �   �           +---test
+�   �   +---is-extglob@2.1.1
+�   �   �   +---node_modules
+�   �   �       +---is-extglob
+�   �   +---is-glob@4.0.3
+�   �   �   +---node_modules
+�   �   �       +---is-extglob
+�   �   �       +---is-glob
+�   �   +---is-installed-globally@1.0.0
+�   �   �   +---node_modules
+�   �   �       +---global-directory
+�   �   �       +---is-installed-globally
+�   �   �       +---is-path-inside
+�   �   +---is-path-inside@4.0.0
+�   �   �   +---node_modules
+�   �   �       +---is-path-inside
+�   �   +---isexe@2.0.0
+�   �   �   +---node_modules
+�   �   �       +---isexe
+�   �   �           +---test
+�   �   +---json-buffer@3.0.1
+�   �   �   +---node_modules
+�   �   �       +---json-buffer
+�   �   �           +---test
+�   �   +---json-schema-traverse@0.4.1
+�   �   �   +---node_modules
+�   �   �       +---json-schema-traverse
+�   �   �           +---spec
+�   �   �               +---fixtures
+�   �   +---json-stable-stringify-without-jsonify@1.0.1
+�   �   �   +---node_modules
+�   �   �       +---json-stable-stringify-without-jsonify
+�   �   �           +---example
+�   �   �           +---test
+�   �   +---json5@2.2.3
+�   �   �   +---node_modules
+�   �   �       +---json5
+�   �   �           +---dist
+�   �   �           +---lib
+�   �   +---keyv@4.5.4
+�   �   �   +---node_modules
+�   �   �       +---json-buffer
+�   �   �       �   +---test
+�   �   �       +---keyv
+�   �   �           +---src
+�   �   +---kleur@3.0.3
+�   �   �   +---node_modules
+�   �   �       +---kleur
+�   �   +---levn@0.4.1
+�   �   �   +---node_modules
+�   �   �       +---levn
+�   �   �       �   +---lib
+�   �   �       +---prelude-ls
+�   �   �       �   +---lib
+�   �   �       +---type-check
+�   �   �           +---lib
+�   �   +---lightningcss-win32-x64-msvc@1.33.0
+�   �   �   +---node_modules
+�   �   �       +---lightningcss-win32-x64-msvc
+�   �   +---lightningcss@1.33.0
+�   �   �   +---node_modules
+�   �   �       +---detect-libc
+�   �   �       �   +---lib
+�   �   �       +---lightningcss
+�   �   �       �   +---node
+�   �   �       +---lightningcss-win32-x64-msvc
+�   �   +---locate-path@6.0.0
+�   �   �   +---node_modules
+�   �   �       +---locate-path
+�   �   �       +---p-locate
+�   �   +---magic-string@0.30.21
+�   �   �   +---node_modules
+�   �   �       +---@jridgewell
+�   �   �       �   +---sourcemap-codec
+�   �   �       �       +---dist
+�   �   �       �       +---src
+�   �   �       �       +---types
+�   �   �       +---magic-string
+�   �   �           +---dist
+�   �   +---minimatch@10.2.6
+�   �   �   +---node_modules
+�   �   �       +---brace-expansion
+�   �   �       �   +---dist
+�   �   �       �       +---commonjs
+�   �   �       �       +---esm
+�   �   �       +---minimatch
+�   �   �           +---dist
+�   �   �               +---commonjs
+�   �   �               +---esm
+�   �   +---minimist@1.2.8
+�   �   �   +---node_modules
+�   �   �       +---minimist
+�   �   �           +---.github
+�   �   �           +---example
+�   �   �           +---test
+�   �   +---ms@2.1.3
+�   �   �   +---node_modules
+�   �   �       +---ms
+�   �   +---nanoid@3.3.16
+�   �   �   +---node_modules
+�   �   �       +---nanoid
+�   �   �           +---async
+�   �   �           +---bin
+�   �   �           +---non-secure
+�   �   �           +---url-alphabet
+�   �   +---natural-compare@1.4.0
+�   �   �   +---node_modules
+�   �   �       +---natural-compare
+�   �   +---node_modules
+�   �   �   +---.bin
+�   �   �   +---@acme
+�   �   �   �   +---adapter-memory
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �   �   +---@acme
+�   �   �   �   �   �       +---core
+�   �   �   �   �   �           +---dist
+�   �   �   �   �   �           +---node_modules
+�   �   �   �   �   �           �   +---zod
+�   �   �   �   �   �           �       +---locales
+�   �   �   �   �   �           �       +---mini
+�   �   �   �   �   �           �       +---src
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       �   +---v3
+�   �   �   �   �   �           �       �   �   +---benchmarks
+�   �   �   �   �   �           �       �   �   +---helpers
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---tests
+�   �   �   �   �   �           �       �   +---v4
+�   �   �   �   �   �           �       �   �   +---classic
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   +---core
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   �       +---locales
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---mini
+�   �   �   �   �   �           �       �   �       +---tests
+�   �   �   �   �   �           �       �   +---v4-mini
+�   �   �   �   �   �           �       +---v3
+�   �   �   �   �   �           �       �   +---helpers
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       +---v4
+�   �   �   �   �   �           �       �   +---classic
+�   �   �   �   �   �           �       �   +---core
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       +---v4-mini
+�   �   �   �   �   �           +---src
+�   �   �   �   �   �           +---test
+�   �   �   �   �   �           +---test-d
+�   �   �   �   �   +---src
+�   �   �   �   �   +---test
+�   �   �   �   +---adapter-model-mock
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �   �   +---@acme
+�   �   �   �   �   �       +---core
+�   �   �   �   �   �           +---dist
+�   �   �   �   �   �           +---node_modules
+�   �   �   �   �   �           �   +---zod
+�   �   �   �   �   �           �       +---locales
+�   �   �   �   �   �           �       +---mini
+�   �   �   �   �   �           �       +---src
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       �   +---v3
+�   �   �   �   �   �           �       �   �   +---benchmarks
+�   �   �   �   �   �           �       �   �   +---helpers
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---tests
+�   �   �   �   �   �           �       �   +---v4
+�   �   �   �   �   �           �       �   �   +---classic
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   +---core
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   �       +---locales
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---mini
+�   �   �   �   �   �           �       �   �       +---tests
+�   �   �   �   �   �           �       �   +---v4-mini
+�   �   �   �   �   �           �       +---v3
+�   �   �   �   �   �           �       �   +---helpers
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       +---v4
+�   �   �   �   �   �           �       �   +---classic
+�   �   �   �   �   �           �       �   +---core
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       +---v4-mini
+�   �   �   �   �   �           +---src
+�   �   �   �   �   �           +---test
+�   �   �   �   �   �           +---test-d
+�   �   �   �   �   +---src
+�   �   �   �   �   +---test
+�   �   �   �   +---cli
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �   �   +---@acme
+�   �   �   �   �   �       +---core
+�   �   �   �   �   �           +---dist
+�   �   �   �   �   �           +---node_modules
+�   �   �   �   �   �           �   +---zod
+�   �   �   �   �   �           �       +---locales
+�   �   �   �   �   �           �       +---mini
+�   �   �   �   �   �           �       +---src
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       �   +---v3
+�   �   �   �   �   �           �       �   �   +---benchmarks
+�   �   �   �   �   �           �       �   �   +---helpers
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---tests
+�   �   �   �   �   �           �       �   +---v4
+�   �   �   �   �   �           �       �   �   +---classic
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   +---core
+�   �   �   �   �   �           �       �   �   �   +---tests
+�   �   �   �   �   �           �       �   �   �       +---locales
+�   �   �   �   �   �           �       �   �   +---locales
+�   �   �   �   �   �           �       �   �   +---mini
+�   �   �   �   �   �           �       �   �       +---tests
+�   �   �   �   �   �           �       �   +---v4-mini
+�   �   �   �   �   �           �       +---v3
+�   �   �   �   �   �           �       �   +---helpers
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       +---v4
+�   �   �   �   �   �           �       �   +---classic
+�   �   �   �   �   �           �       �   +---core
+�   �   �   �   �   �           �       �   +---locales
+�   �   �   �   �   �           �       �   +---mini
+�   �   �   �   �   �           �       +---v4-mini
+�   �   �   �   �   �           +---src
+�   �   �   �   �   �           +---test
+�   �   �   �   �   �           +---test-d
+�   �   �   �   �   +---src
+�   �   �   �   +---core
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �   �   +---zod
+�   �   �   �   �   �       +---locales
+�   �   �   �   �   �       +---mini
+�   �   �   �   �   �       +---src
+�   �   �   �   �   �       �   +---locales
+�   �   �   �   �   �       �   +---mini
+�   �   �   �   �   �       �   +---v3
+�   �   �   �   �   �       �   �   +---benchmarks
+�   �   �   �   �   �       �   �   +---helpers
+�   �   �   �   �   �       �   �   +---locales
+�   �   �   �   �   �       �   �   +---tests
+�   �   �   �   �   �       �   +---v4
+�   �   �   �   �   �       �   �   +---classic
+�   �   �   �   �   �       �   �   �   +---tests
+�   �   �   �   �   �       �   �   +---core
+�   �   �   �   �   �       �   �   �   +---tests
+�   �   �   �   �   �       �   �   �       +---locales
+�   �   �   �   �   �       �   �   +---locales
+�   �   �   �   �   �       �   �   +---mini
+�   �   �   �   �   �       �   �       +---tests
+�   �   �   �   �   �       �   +---v4-mini
+�   �   �   �   �   �       +---v3
+�   �   �   �   �   �       �   +---helpers
+�   �   �   �   �   �       �   +---locales
+�   �   �   �   �   �       +---v4
+�   �   �   �   �   �       �   +---classic
+�   �   �   �   �   �       �   +---core
+�   �   �   �   �   �       �   +---locales
+�   �   �   �   �   �       �   +---mini
+�   �   �   �   �   �       +---v4-mini
+�   �   �   �   �   +---src
+�   �   �   �   �   +---test
+�   �   �   �   �   +---test-d
+�   �   �   �   +---testing
+�   �   �   �       +---dist
+�   �   �   �       +---node_modules
+�   �   �   �       �   +---.bin
+�   �   �   �       �   +---@acme
+�   �   �   �       �   �   +---core
+�   �   �   �       �   �       +---dist
+�   �   �   �       �   �       +---node_modules
+�   �   �   �       �   �       �   +---zod
+�   �   �   �       �   �       �       +---locales
+�   �   �   �       �   �       �       +---mini
+�   �   �   �       �   �       �       +---src
+�   �   �   �       �   �       �       �   +---locales
+�   �   �   �       �   �       �       �   +---mini
+�   �   �   �       �   �       �       �   +---v3
+�   �   �   �       �   �       �       �   �   +---benchmarks
+�   �   �   �       �   �       �       �   �   +---helpers
+�   �   �   �       �   �       �       �   �   +---locales
+�   �   �   �       �   �       �       �   �   +---tests
+�   �   �   �       �   �       �       �   +---v4
+�   �   �   �       �   �       �       �   �   +---classic
+�   �   �   �       �   �       �       �   �   �   +---tests
+�   �   �   �       �   �       �       �   �   +---core
+�   �   �   �       �   �       �       �   �   �   +---tests
+�   �   �   �       �   �       �       �   �   �       +---locales
+�   �   �   �       �   �       �       �   �   +---locales
+�   �   �   �       �   �       �       �   �   +---mini
+�   �   �   �       �   �       �       �   �       +---tests
+�   �   �   �       �   �       �       �   +---v4-mini
+�   �   �   �       �   �       �       +---v3
+�   �   �   �       �   �       �       �   +---helpers
+�   �   �   �       �   �       �       �   +---locales
+�   �   �   �       �   �       �       +---v4
+�   �   �   �       �   �       �       �   +---classic
+�   �   �   �       �   �       �       �   +---core
+�   �   �   �       �   �       �       �   +---locales
+�   �   �   �       �   �       �       �   +---mini
+�   �   �   �       �   �       �       +---v4-mini
+�   �   �   �       �   �       +---src
+�   �   �   �       �   �       +---test
+�   �   �   �       �   �       +---test-d
+�   �   �   �       �   +---vitest
+�   �   �   �       �       +---browser
+�   �   �   �       �       +---dist
+�   �   �   �       �       �   +---chunks
+�   �   �   �       �       �   +---workers
+�   �   �   �       �       +---node_modules
+�   �   �   �       �           +---.bin
+�   �   �   �       +---src
+�   �   �   �       +---test
+�   �   �   +---@esbuild
+�   �   �   �   +---aix-ppc64
+�   �   �   �   �   +---bin
+�   �   �   �   +---android-arm
+�   �   �   �   �   +---bin
+�   �   �   �   +---android-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---android-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---darwin-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---darwin-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---freebsd-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---freebsd-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-arm
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-ia32
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-loong64
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-mips64el
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-ppc64
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-riscv64
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-s390x
+�   �   �   �   �   +---bin
+�   �   �   �   +---linux-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---netbsd-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---netbsd-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---openbsd-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---openbsd-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---openharmony-arm64
+�   �   �   �   �   +---bin
+�   �   �   �   +---sunos-x64
+�   �   �   �   �   +---bin
+�   �   �   �   +---win32-arm64
+�   �   �   �   +---win32-ia32
+�   �   �   �   +---win32-x64
+�   �   �   +---@eslint
+�   �   �   �   +---config-array
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---cjs
+�   �   �   �   �       �   +---std__path
+�   �   �   �   �       +---esm
+�   �   �   �   �           +---std__path
+�   �   �   �   +---config-helpers
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---cjs
+�   �   �   �   �       +---esm
+�   �   �   �   +---core
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---cjs
+�   �   �   �   �       +---esm
+�   �   �   �   +---object-schema
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---cjs
+�   �   �   �   �       +---esm
+�   �   �   �   +---plugin-kit
+�   �   �   �       +---dist
+�   �   �   �           +---cjs
+�   �   �   �           +---esm
+�   �   �   +---@eslint-community
+�   �   �   �   +---eslint-utils
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---regexpp
+�   �   �   +---@humanfs
+�   �   �   �   +---core
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---src
+�   �   �   �   +---node
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---src
+�   �   �   �   +---types
+�   �   �   �       +---src
+�   �   �   +---@humanwhocodes
+�   �   �   �   +---module-importer
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---src
+�   �   �   �   +---retry
+�   �   �   �       +---dist
+�   �   �   +---@jridgewell
+�   �   �   �   +---sourcemap-codec
+�   �   �   �       +---dist
+�   �   �   �       +---src
+�   �   �   �       +---types
+�   �   �   +---@oxc-project
+�   �   �   +---@rolldown
+�   �   �   +---@rollup
+�   �   �   �   +---rollup-android-arm-eabi
+�   �   �   �   +---rollup-android-arm64
+�   �   �   �   +---rollup-darwin-arm64
+�   �   �   �   +---rollup-darwin-x64
+�   �   �   �   +---rollup-freebsd-arm64
+�   �   �   �   +---rollup-freebsd-x64
+�   �   �   �   +---rollup-linux-arm-gnueabihf
+�   �   �   �   +---rollup-linux-arm-musleabihf
+�   �   �   �   +---rollup-linux-arm64-gnu
+�   �   �   �   +---rollup-linux-arm64-musl
+�   �   �   �   +---rollup-linux-loong64-gnu
+�   �   �   �   +---rollup-linux-loong64-musl
+�   �   �   �   +---rollup-linux-ppc64-gnu
+�   �   �   �   +---rollup-linux-ppc64-musl
+�   �   �   �   +---rollup-linux-riscv64-gnu
+�   �   �   �   +---rollup-linux-riscv64-musl
+�   �   �   �   +---rollup-linux-s390x-gnu
+�   �   �   �   +---rollup-linux-x64-gnu
+�   �   �   �   +---rollup-linux-x64-musl
+�   �   �   �   +---rollup-openbsd-x64
+�   �   �   �   +---rollup-openharmony-arm64
+�   �   �   �   +---rollup-win32-arm64-msvc
+�   �   �   �   +---rollup-win32-ia32-msvc
+�   �   �   �   +---rollup-win32-x64-gnu
+�   �   �   �   +---rollup-win32-x64-msvc
+�   �   �   +---@standard-schema
+�   �   �   �   +---spec
+�   �   �   �       +---dist
+�   �   �   +---@types
+�   �   �   �   +---chai
+�   �   �   �   +---deep-eql
+�   �   �   �   +---esrecurse
+�   �   �   �   +---estree
+�   �   �   �   +---json-schema
+�   �   �   +---@typescript-eslint
+�   �   �   �   +---eslint-plugin
+�   �   �   �   �   +---dist
+�   �   �   �   �   �   +---configs
+�   �   �   �   �   �   �   +---eslintrc
+�   �   �   �   �   �   �   +---flat
+�   �   �   �   �   �   +---rules
+�   �   �   �   �   �   �   +---enum-utils
+�   �   �   �   �   �   �   +---naming-convention-utils
+�   �   �   �   �   �   �   +---prefer-optional-chain-utils
+�   �   �   �   �   �   +---util
+�   �   �   �   �   �       +---class-scope-analyzer
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---parser
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---project-service
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---scope-manager
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---definition
+�   �   �   �   �       +---lib
+�   �   �   �   �       +---referencer
+�   �   �   �   �       +---scope
+�   �   �   �   �       +---variable
+�   �   �   �   +---tsconfig-utils
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---type-utils
+�   �   �   �   �   +---dist
+�   �   �   �   �   �   +---typeOrValueSpecifiers
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---types
+�   �   �   �   �   +---dist
+�   �   �   �   �       +---generated
+�   �   �   �   +---typescript-estree
+�   �   �   �   �   +---dist
+�   �   �   �   �   �   +---create-program
+�   �   �   �   �   �   +---jsx
+�   �   �   �   �   �   +---parseSettings
+�   �   �   �   �   �   +---ts-estree
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---utils
+�   �   �   �   �   +---dist
+�   �   �   �   �   �   +---ast-utils
+�   �   �   �   �   �   �   +---eslint-utils
+�   �   �   �   �   �   +---eslint-utils
+�   �   �   �   �   �   +---ts-eslint
+�   �   �   �   �   �   �   +---eslint
+�   �   �   �   �   �   +---ts-utils
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---visitor-keys
+�   �   �   �       +---dist
+�   �   �   +---@vitest
+�   �   �   �   +---expect
+�   �   �   �   �   +---dist
+�   �   �   �   +---mocker
+�   �   �   �   �   +---dist
+�   �   �   �   �   +---node_modules
+�   �   �   �   �       +---.bin
+�   �   �   �   +---pretty-format
+�   �   �   �   �   +---dist
+�   �   �   �   +---runner
+�   �   �   �   �   +---dist
+�   �   �   �   +---snapshot
+�   �   �   �   �   +---dist
+�   �   �   �   +---spy
+�   �   �   �   �   +---dist
+�   �   �   �   +---utils
+�   �   �   �       +---dist
+�   �   �   +---acorn
+�   �   �   �   +---bin
+�   �   �   �   +---dist
+�   �   �   +---acorn-jsx
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---acorn-jsx-walk
+�   �   �   �   +---dist
+�   �   �   +---acorn-loose
+�   �   �   �   +---dist
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---acorn-walk
+�   �   �   �   +---dist
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---ajv
+�   �   �   �   +---dist
+�   �   �   �   +---lib
+�   �   �   �   �   +---compile
+�   �   �   �   �   +---dot
+�   �   �   �   �   +---dotjs
+�   �   �   �   �   +---refs
+�   �   �   �   +---scripts
+�   �   �   +---ansi-styles
+�   �   �   +---assertion-error
+�   �   �   +---balanced-match
+�   �   �   �   +---dist
+�   �   �   �       +---commonjs
+�   �   �   �       +---esm
+�   �   �   +---brace-expansion
+�   �   �   �   +---dist
+�   �   �   �       +---commonjs
+�   �   �   �       +---esm
+�   �   �   +---chai
+�   �   �   +---chalk
+�   �   �   �   +---source
+�   �   �   +---color-convert
+�   �   �   +---color-name
+�   �   �   +---commander
+�   �   �   �   +---lib
+�   �   �   �   +---typings
+�   �   �   +---cross-spawn
+�   �   �   �   +---lib
+�   �   �   �   �   +---util
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---debug
+�   �   �   �   +---src
+�   �   �   +---deep-is
+�   �   �   �   +---example
+�   �   �   �   +---test
+�   �   �   +---enhanced-resolve
+�   �   �   �   +---lib
+�   �   �   �       +---util
+�   �   �   +---es-errors
+�   �   �   �   +---.github
+�   �   �   �   +---test
+�   �   �   +---es-module-lexer
+�   �   �   �   +---dist
+�   �   �   �   +---types
+�   �   �   +---esbuild
+�   �   �   �   +---bin
+�   �   �   �   +---lib
+�   �   �   +---escape-string-regexp
+�   �   �   +---eslint-scope
+�   �   �   �   +---dist
+�   �   �   �   +---lib
+�   �   �   +---eslint-visitor-keys
+�   �   �   �   +---dist
+�   �   �   �   +---lib
+�   �   �   +---espree
+�   �   �   �   +---dist
+�   �   �   �   +---lib
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---esquery
+�   �   �   �   +---dist
+�   �   �   +---esrecurse
+�   �   �   +---estraverse
+�   �   �   +---estree-walker
+�   �   �   �   +---src
+�   �   �   �   +---types
+�   �   �   +---esutils
+�   �   �   �   +---lib
+�   �   �   +---expect-type
+�   �   �   �   +---dist
+�   �   �   +---fast-deep-equal
+�   �   �   �   +---es6
+�   �   �   +---fast-json-stable-stringify
+�   �   �   �   +---.github
+�   �   �   �   +---benchmark
+�   �   �   �   +---example
+�   �   �   �   +---test
+�   �   �   +---fast-levenshtein
+�   �   �   +---fdir
+�   �   �   �   +---dist
+�   �   �   +---file-entry-cache
+�   �   �   +---find-up
+�   �   �   +---flat-cache
+�   �   �   �   +---src
+�   �   �   +---flatted
+�   �   �   �   +---cjs
+�   �   �   �   +---esm
+�   �   �   �   +---golang
+�   �   �   �   �   +---pkg
+�   �   �   �   �       +---flatted
+�   �   �   �   +---php
+�   �   �   �   +---python
+�   �   �   �   +---types
+�   �   �   +---fsevents
+�   �   �   +---function-bind
+�   �   �   �   +---.github
+�   �   �   �   +---test
+�   �   �   +---glob-parent
+�   �   �   +---global-directory
+�   �   �   +---graceful-fs
+�   �   �   +---has-flag
+�   �   �   +---hasown
+�   �   �   �   +---.github
+�   �   �   +---ignore
+�   �   �   +---imurmurhash
+�   �   �   +---ini
+�   �   �   �   +---lib
+�   �   �   +---interpret
+�   �   �   +---is-core-module
+�   �   �   �   +---test
+�   �   �   +---is-extglob
+�   �   �   +---is-glob
+�   �   �   +---is-installed-globally
+�   �   �   +---is-path-inside
+�   �   �   +---isexe
+�   �   �   �   +---test
+�   �   �   +---json-buffer
+�   �   �   �   +---test
+�   �   �   +---json-schema-traverse
+�   �   �   �   +---spec
+�   �   �   �       +---fixtures
+�   �   �   +---json-stable-stringify-without-jsonify
+�   �   �   �   +---example
+�   �   �   �   +---test
+�   �   �   +---json5
+�   �   �   �   +---dist
+�   �   �   �   +---lib
+�   �   �   +---keyv
+�   �   �   �   +---src
+�   �   �   +---kleur
+�   �   �   +---levn
+�   �   �   �   +---lib
+�   �   �   +---locate-path
+�   �   �   +---magic-string
+�   �   �   �   +---dist
+�   �   �   +---minimatch
+�   �   �   �   +---dist
+�   �   �   �       +---commonjs
+�   �   �   �       +---esm
+�   �   �   +---minimist
+�   �   �   �   +---.github
+�   �   �   �   +---example
+�   �   �   �   +---test
+�   �   �   +---ms
+�   �   �   +---nanoid
+�   �   �   �   +---async
+�   �   �   �   +---bin
+�   �   �   �   +---non-secure
+�   �   �   �   +---url-alphabet
+�   �   �   +---natural-compare
+�   �   �   +---obug
+�   �   �   �   +---dist
+�   �   �   +---optionator
+�   �   �   �   +---lib
+�   �   �   +---p-limit
+�   �   �   +---p-locate
+�   �   �   +---path-exists
+�   �   �   +---path-key
+�   �   �   +---path-parse
+�   �   �   +---pathe
+�   �   �   �   +---dist
+�   �   �   �       +---shared
+�   �   �   +---picocolors
+�   �   �   +---picomatch
+�   �   �   �   +---lib
+�   �   �   +---postcss
+�   �   �   �   +---lib
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---prelude-ls
+�   �   �   �   +---lib
+�   �   �   +---prompts
+�   �   �   �   +---dist
+�   �   �   �   �   +---dateparts
+�   �   �   �   �   +---elements
+�   �   �   �   �   +---util
+�   �   �   �   +---lib
+�   �   �   �       +---dateparts
+�   �   �   �       +---elements
+�   �   �   �       +---util
+�   �   �   +---punycode
+�   �   �   +---rechoir
+�   �   �   �   +---lib
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---regexp-tree
+�   �   �   �   +---bin
+�   �   �   �   +---dist
+�   �   �   �       +---bin
+�   �   �   �       +---compat-transpiler
+�   �   �   �       �   +---runtime
+�   �   �   �       �   +---transforms
+�   �   �   �       +---generator
+�   �   �   �       +---interpreter
+�   �   �   �       �   +---finite-automaton
+�   �   �   �       �       +---dfa
+�   �   �   �       �       +---nfa
+�   �   �   �       +---optimizer
+�   �   �   �       �   +---transforms
+�   �   �   �       +---parser
+�   �   �   �       �   +---generated
+�   �   �   �       �   +---unicode
+�   �   �   �       +---transform
+�   �   �   �       +---traverse
+�   �   �   �       +---utils
+�   �   �   +---resolve
+�   �   �   �   +---.claude
+�   �   �   �   +---.github
+�   �   �   �   +---bin
+�   �   �   �   +---example
+�   �   �   �   +---lib
+�   �   �   �   +---test
+�   �   �   �       +---dotdot
+�   �   �   �       �   +---abc
+�   �   �   �       +---module_dir
+�   �   �   �       �   +---xmodules
+�   �   �   �       �   �   +---aaa
+�   �   �   �       �   +---ymodules
+�   �   �   �       �   �   +---aaa
+�   �   �   �       �   +---zmodules
+�   �   �   �       �       +---bbb
+�   �   �   �       +---node_path
+�   �   �   �       �   +---x
+�   �   �   �       �   �   +---aaa
+�   �   �   �       �   �   +---ccc
+�   �   �   �       �   +---y
+�   �   �   �       �       +---bbb
+�   �   �   �       �       +---ccc
+�   �   �   �       +---pathfilter
+�   �   �   �       �   +---deep_ref
+�   �   �   �       +---precedence
+�   �   �   �       �   +---aaa
+�   �   �   �       �   +---bbb
+�   �   �   �       +---resolver
+�   �   �   �       �   +---baz
+�   �   �   �       �   +---browser_field
+�   �   �   �       �   +---dot_main
+�   �   �   �       �   +---dot_slash_main
+�   �   �   �       �   +---false_main
+�   �   �   �       �   +---incorrect_main
+�   �   �   �       �   +---invalid_main
+�   �   �   �       �   +---multirepo
+�   �   �   �       �   �   +---packages
+�   �   �   �       �   �       +---package-a
+�   �   �   �       �   �       +---package-b
+�   �   �   �       �   +---nested_symlinks
+�   �   �   �       �   �   +---mylib
+�   �   �   �       �   +---other_path
+�   �   �   �       �   �   +---lib
+�   �   �   �       �   +---quux
+�   �   �   �       �   �   +---foo
+�   �   �   �       �   +---same_names
+�   �   �   �       �   �   +---foo
+�   �   �   �       �   +---symlinked
+�   �   �   �       �   �   +---package
+�   �   �   �       �   �   +---_
+�   �   �   �       �   �       +---node_modules
+�   �   �   �       �   �       +---symlink_target
+�   �   �   �       �   +---without_basedir
+�   �   �   �       +---shadowed_core
+�   �   �   �           +---node_modules
+�   �   �   �               +---util
+�   �   �   +---rollup
+�   �   �   �   +---dist
+�   �   �   �       +---bin
+�   �   �   �       +---es
+�   �   �   �       �   +---shared
+�   �   �   �       +---shared
+�   �   �   +---safe-regex
+�   �   �   �   +---bin
+�   �   �   �   +---example
+�   �   �   �   +---lib
+�   �   �   �   +---node_modules
+�   �   �   �   �   +---.bin
+�   �   �   �   +---test
+�   �   �   +---semver
+�   �   �   �   +---bin
+�   �   �   �   +---classes
+�   �   �   �   +---functions
+�   �   �   �   +---internal
+�   �   �   �   +---ranges
+�   �   �   +---shebang-command
+�   �   �   +---shebang-regex
+�   �   �   +---siginfo
+�   �   �   +---sisteransi
+�   �   �   �   +---src
+�   �   �   +---source-map-js
+�   �   �   �   +---lib
+�   �   �   +---stackback
+�   �   �   +---std-env
+�   �   �   �   +---dist
+�   �   �   +---strip-bom
+�   �   �   +---supports-color
+�   �   �   +---supports-preserve-symlinks-flag
+�   �   �   �   +---.github
+�   �   �   �   +---test
+�   �   �   +---tapable
+�   �   �   �   +---lib
+�   �   �   +---tinybench
+�   �   �   �   +---dist
+�   �   �   +---tinyexec
+�   �   �   �   +---dist
+�   �   �   +---tinyglobby
+�   �   �   �   +---dist
+�   �   �   +---tinyrainbow
+�   �   �   �   +---dist
+�   �   �   +---ts-api-utils
+�   �   �   �   +---lib
+�   �   �   �   +---node_modules
+�   �   �   �       +---.bin
+�   �   �   +---tsconfig-paths
+�   �   �   �   +---lib
+�   �   �   �   �   +---__tests__
+�   �   �   �   �       +---data
+�   �   �   �   +---node_modules
+�   �   �   �   �   +---.bin
+�   �   �   �   +---src
+�   �   �   �       +---__tests__
+�   �   �   �           +---data
+�   �   �   +---tsconfig-paths-webpack-plugin
+�   �   �   �   +---.github
+�   �   �   �   �   +---workflows
+�   �   �   �   +---.husky
+�   �   �   �   +---coverage
+�   �   �   �   �   +---lcov-report
+�   �   �   �   +---examples
+�   �   �   �   �   +---referenceExample
+�   �   �   �   +---lib
+�   �   �   �   �   +---__tests__
+�   �   �   �   +---temp
+�   �   �   +---type-check
+�   �   �   �   +---lib
+�   �   �   +---undici-types
+�   �   �   +---uri-js
+�   �   �   �   +---dist
+�   �   �   �       +---es5
+�   �   �   �       +---esnext
+�   �   �   �           +---schemes
+�   �   �   +---vite
+�   �   �   �   +---bin
+�   �   �   �   +---dist
+�   �   �   �   �   +---client
+�   �   �   �   �   +---node
+�   �   �   �   �       +---chunks
+�   �   �   �   +---misc
+�   �   �   �   +---node_modules
+�   �   �   �   �   +---.bin
+�   �   �   �   +---types
+�   �   �   �       +---internal
+�   �   �   +---watskeburt
+�   �   �   �   +---dist
+�   �   �   �   �   +---format
+�   �   �   �   +---types
+�   �   �   +---which
+�   �   �   �   +---bin
+�   �   �   +---why-is-node-running
+�   �   �   �   +---.github
+�   �   �   +---word-wrap
+�   �   �   +---yocto-queue
+�   �   �   +---zod
+�   �   �       +---locales
+�   �   �       +---mini
+�   �   �       +---src
+�   �   �       �   +---locales
+�   �   �       �   +---mini
+�   �   �       �   +---v3
+�   �   �       �   �   +---benchmarks
+�   �   �       �   �   +---helpers
+�   �   �       �   �   +---locales
+�   �   �       �   �   +---tests
+�   �   �       �   +---v4
+�   �   �       �   �   +---classic
+�   �   �       �   �   �   +---tests
+�   �   �       �   �   +---core
+�   �   �       �   �   �   +---tests
+�   �   �       �   �   �       +---locales
+�   �   �       �   �   +---locales
+�   �   �       �   �   +---mini
+�   �   �       �   �       +---tests
+�   �   �       �   +---v4-mini
+�   �   �       +---v3
+�   �   �       �   +---helpers
+�   �   �       �   +---locales
+�   �   �       +---v4
+�   �   �       �   +---classic
+�   �   �       �   +---core
+�   �   �       �   +---locales
+�   �   �       �   +---mini
+�   �   �       +---v4-mini
+�   �   +---obug@2.1.4
+�   �   �   +---node_modules
+�   �   �       +---obug
+�   �   �           +---dist
+�   �   +---optionator@0.9.4
+�   �   �   +---node_modules
+�   �   �       +---deep-is
+�   �   �       �   +---example
+�   �   �       �   +---test
+�   �   �       +---fast-levenshtein
+�   �   �       +---levn
+�   �   �       �   +---lib
+�   �   �       +---optionator
+�   �   �       �   +---lib
+�   �   �       +---prelude-ls
+�   �   �       �   +---lib
+�   �   �       +---type-check
+�   �   �       �   +---lib
+�   �   �       +---word-wrap
+�   �   +---p-limit@3.1.0
+�   �   �   +---node_modules
+�   �   �       +---p-limit
+�   �   �       +---yocto-queue
+�   �   +---p-locate@5.0.0
+�   �   �   +---node_modules
+�   �   �       +---p-limit
+�   �   �       +---p-locate
+�   �   +---path-exists@4.0.0
+�   �   �   +---node_modules
+�   �   �       +---path-exists
+�   �   +---path-key@3.1.1
+�   �   �   +---node_modules
+�   �   �       +---path-key
+�   �   +---path-parse@1.0.7
+�   �   �   +---node_modules
+�   �   �       +---path-parse
+�   �   +---pathe@2.0.3
+�   �   �   +---node_modules
+�   �   �       +---pathe
+�   �   �           +---dist
+�   �   �               +---shared
+�   �   +---picocolors@1.1.1
+�   �   �   +---node_modules
+�   �   �       +---picocolors
+�   �   +---picomatch@4.0.5
+�   �   �   +---node_modules
+�   �   �       +---picomatch
+�   �   �           +---lib
+�   �   +---postcss@8.5.25
+�   �   �   +---node_modules
+�   �   �       +---nanoid
+�   �   �       �   +---async
+�   �   �       �   +---bin
+�   �   �       �   +---non-secure
+�   �   �       �   +---url-alphabet
+�   �   �       +---picocolors
+�   �   �       +---postcss
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---source-map-js
+�   �   �           +---lib
+�   �   +---prelude-ls@1.2.1
+�   �   �   +---node_modules
+�   �   �       +---prelude-ls
+�   �   �           +---lib
+�   �   +---prettier@3.9.6
+�   �   �   +---node_modules
+�   �   �       +---prettier
+�   �   �           +---bin
+�   �   �           +---internal
+�   �   �           +---plugins
+�   �   +---prompts@2.4.2
+�   �   �   +---node_modules
+�   �   �       +---kleur
+�   �   �       +---prompts
+�   �   �       �   +---dist
+�   �   �       �   �   +---dateparts
+�   �   �       �   �   +---elements
+�   �   �       �   �   +---util
+�   �   �       �   +---lib
+�   �   �       �       +---dateparts
+�   �   �       �       +---elements
+�   �   �       �       +---util
+�   �   �       +---sisteransi
+�   �   �           +---src
+�   �   +---punycode@2.3.1
+�   �   �   +---node_modules
+�   �   �       +---punycode
+�   �   +---rechoir@0.8.0
+�   �   �   +---node_modules
+�   �   �       +---rechoir
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---resolve
+�   �   �           +---.claude
+�   �   �           +---.github
+�   �   �           +---bin
+�   �   �           +---example
+�   �   �           +---lib
+�   �   �           +---test
+�   �   �               +---dotdot
+�   �   �               �   +---abc
+�   �   �               +---module_dir
+�   �   �               �   +---xmodules
+�   �   �               �   �   +---aaa
+�   �   �               �   +---ymodules
+�   �   �               �   �   +---aaa
+�   �   �               �   +---zmodules
+�   �   �               �       +---bbb
+�   �   �               +---node_path
+�   �   �               �   +---x
+�   �   �               �   �   +---aaa
+�   �   �               �   �   +---ccc
+�   �   �               �   +---y
+�   �   �               �       +---bbb
+�   �   �               �       +---ccc
+�   �   �               +---pathfilter
+�   �   �               �   +---deep_ref
+�   �   �               +---precedence
+�   �   �               �   +---aaa
+�   �   �               �   +---bbb
+�   �   �               +---resolver
+�   �   �               �   +---baz
+�   �   �               �   +---browser_field
+�   �   �               �   +---dot_main
+�   �   �               �   +---dot_slash_main
+�   �   �               �   +---false_main
+�   �   �               �   +---incorrect_main
+�   �   �               �   +---invalid_main
+�   �   �               �   +---multirepo
+�   �   �               �   �   +---packages
+�   �   �               �   �       +---package-a
+�   �   �               �   �       +---package-b
+�   �   �               �   +---nested_symlinks
+�   �   �               �   �   +---mylib
+�   �   �               �   +---other_path
+�   �   �               �   �   +---lib
+�   �   �               �   +---quux
+�   �   �               �   �   +---foo
+�   �   �               �   +---same_names
+�   �   �               �   �   +---foo
+�   �   �               �   +---symlinked
+�   �   �               �   �   +---package
+�   �   �               �   �   +---_
+�   �   �               �   �       +---node_modules
+�   �   �               �   �       +---symlink_target
+�   �   �               �   +---without_basedir
+�   �   �               +---shadowed_core
+�   �   �                   +---node_modules
+�   �   �                       +---util
+�   �   +---regexp-tree@0.1.27
+�   �   �   +---node_modules
+�   �   �       +---regexp-tree
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �               +---bin
+�   �   �               +---compat-transpiler
+�   �   �               �   +---runtime
+�   �   �               �   +---transforms
+�   �   �               +---generator
+�   �   �               +---interpreter
+�   �   �               �   +---finite-automaton
+�   �   �               �       +---dfa
+�   �   �               �       +---nfa
+�   �   �               +---optimizer
+�   �   �               �   +---transforms
+�   �   �               +---parser
+�   �   �               �   +---generated
+�   �   �               �   +---unicode
+�   �   �               +---transform
+�   �   �               +---traverse
+�   �   �               +---utils
+�   �   +---resolve@1.22.12
+�   �   �   +---node_modules
+�   �   �       +---es-errors
+�   �   �       �   +---.github
+�   �   �       �   +---test
+�   �   �       +---is-core-module
+�   �   �       �   +---test
+�   �   �       +---path-parse
+�   �   �       +---resolve
+�   �   �       �   +---.claude
+�   �   �       �   +---.github
+�   �   �       �   +---bin
+�   �   �       �   +---example
+�   �   �       �   +---lib
+�   �   �       �   +---test
+�   �   �       �       +---dotdot
+�   �   �       �       �   +---abc
+�   �   �       �       +---module_dir
+�   �   �       �       �   +---xmodules
+�   �   �       �       �   �   +---aaa
+�   �   �       �       �   +---ymodules
+�   �   �       �       �   �   +---aaa
+�   �   �       �       �   +---zmodules
+�   �   �       �       �       +---bbb
+�   �   �       �       +---node_path
+�   �   �       �       �   +---x
+�   �   �       �       �   �   +---aaa
+�   �   �       �       �   �   +---ccc
+�   �   �       �       �   +---y
+�   �   �       �       �       +---bbb
+�   �   �       �       �       +---ccc
+�   �   �       �       +---pathfilter
+�   �   �       �       �   +---deep_ref
+�   �   �       �       +---precedence
+�   �   �       �       �   +---aaa
+�   �   �       �       �   +---bbb
+�   �   �       �       +---resolver
+�   �   �       �       �   +---baz
+�   �   �       �       �   +---browser_field
+�   �   �       �       �   +---dot_main
+�   �   �       �       �   +---dot_slash_main
+�   �   �       �       �   +---false_main
+�   �   �       �       �   +---incorrect_main
+�   �   �       �       �   +---invalid_main
+�   �   �       �       �   +---multirepo
+�   �   �       �       �   �   +---packages
+�   �   �       �       �   �       +---package-a
+�   �   �       �       �   �       +---package-b
+�   �   �       �       �   +---nested_symlinks
+�   �   �       �       �   �   +---mylib
+�   �   �       �       �   +---other_path
+�   �   �       �       �   �   +---lib
+�   �   �       �       �   +---quux
+�   �   �       �       �   �   +---foo
+�   �   �       �       �   +---same_names
+�   �   �       �       �   �   +---foo
+�   �   �       �       �   +---symlinked
+�   �   �       �       �   �   +---package
+�   �   �       �       �   �   +---_
+�   �   �       �       �   �       +---node_modules
+�   �   �       �       �   �       +---symlink_target
+�   �   �       �       �   +---without_basedir
+�   �   �       �       +---shadowed_core
+�   �   �       �           +---node_modules
+�   �   �       �               +---util
+�   �   �       +---supports-preserve-symlinks-flag
+�   �   �           +---.github
+�   �   �           +---test
+�   �   +---rolldown@1.1.5
+�   �   �   +---node_modules
+�   �   �       +---@oxc-project
+�   �   �       �   +---types
+�   �   �       +---@rolldown
+�   �   �       �   +---binding-win32-x64-msvc
+�   �   �       �   +---pluginutils
+�   �   �       �       +---dist
+�   �   �       �           +---filter
+�   �   �       +---rolldown
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �           �   +---shared
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---rollup@4.62.3
+�   �   �   +---node_modules
+�   �   �       +---@rollup
+�   �   �       �   +---rollup-android-arm-eabi
+�   �   �       �   +---rollup-android-arm64
+�   �   �       �   +---rollup-darwin-arm64
+�   �   �       �   +---rollup-darwin-x64
+�   �   �       �   +---rollup-freebsd-arm64
+�   �   �       �   +---rollup-freebsd-x64
+�   �   �       �   +---rollup-linux-arm-gnueabihf
+�   �   �       �   +---rollup-linux-arm-musleabihf
+�   �   �       �   +---rollup-linux-arm64-gnu
+�   �   �       �   +---rollup-linux-arm64-musl
+�   �   �       �   +---rollup-linux-loong64-gnu
+�   �   �       �   +---rollup-linux-loong64-musl
+�   �   �       �   +---rollup-linux-ppc64-gnu
+�   �   �       �   +---rollup-linux-ppc64-musl
+�   �   �       �   +---rollup-linux-riscv64-gnu
+�   �   �       �   +---rollup-linux-riscv64-musl
+�   �   �       �   +---rollup-linux-s390x-gnu
+�   �   �       �   +---rollup-linux-x64-gnu
+�   �   �       �   +---rollup-linux-x64-musl
+�   �   �       �   +---rollup-openbsd-x64
+�   �   �       �   +---rollup-openharmony-arm64
+�   �   �       �   +---rollup-win32-arm64-msvc
+�   �   �       �   +---rollup-win32-ia32-msvc
+�   �   �       �   +---rollup-win32-x64-gnu
+�   �   �       �   +---rollup-win32-x64-msvc
+�   �   �       +---@types
+�   �   �       �   +---estree
+�   �   �       +---fsevents
+�   �   �       +---rollup
+�   �   �           +---dist
+�   �   �               +---bin
+�   �   �               +---es
+�   �   �               �   +---shared
+�   �   �               +---shared
+�   �   +---safe-regex@2.1.1
+�   �   �   +---node_modules
+�   �   �       +---regexp-tree
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       �       +---bin
+�   �   �       �       +---compat-transpiler
+�   �   �       �       �   +---runtime
+�   �   �       �       �   +---transforms
+�   �   �       �       +---generator
+�   �   �       �       +---interpreter
+�   �   �       �       �   +---finite-automaton
+�   �   �       �       �       +---dfa
+�   �   �       �       �       +---nfa
+�   �   �       �       +---optimizer
+�   �   �       �       �   +---transforms
+�   �   �       �       +---parser
+�   �   �       �       �   +---generated
+�   �   �       �       �   +---unicode
+�   �   �       �       +---transform
+�   �   �       �       +---traverse
+�   �   �       �       +---utils
+�   �   �       +---safe-regex
+�   �   �           +---bin
+�   �   �           +---example
+�   �   �           +---lib
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---test
+�   �   +---semver@7.8.5
+�   �   �   +---node_modules
+�   �   �       +---semver
+�   �   �           +---bin
+�   �   �           +---classes
+�   �   �           +---functions
+�   �   �           +---internal
+�   �   �           +---ranges
+�   �   +---shebang-command@2.0.0
+�   �   �   +---node_modules
+�   �   �       +---shebang-command
+�   �   �       +---shebang-regex
+�   �   +---shebang-regex@3.0.0
+�   �   �   +---node_modules
+�   �   �       +---shebang-regex
+�   �   +---siginfo@2.0.0
+�   �   �   +---node_modules
+�   �   �       +---siginfo
+�   �   +---sisteransi@1.0.5
+�   �   �   +---node_modules
+�   �   �       +---sisteransi
+�   �   �           +---src
+�   �   +---source-map-js@1.2.1
+�   �   �   +---node_modules
+�   �   �       +---source-map-js
+�   �   �           +---lib
+�   �   +---stackback@0.0.2
+�   �   �   +---node_modules
+�   �   �       +---stackback
+�   �   +---std-env@3.10.0
+�   �   �   +---node_modules
+�   �   �       +---std-env
+�   �   �           +---dist
+�   �   +---std-env@4.2.0
+�   �   �   +---node_modules
+�   �   �       +---std-env
+�   �   �           +---dist
+�   �   +---strip-bom@3.0.0
+�   �   �   +---node_modules
+�   �   �       +---strip-bom
+�   �   +---supports-color@7.2.0
+�   �   �   +---node_modules
+�   �   �       +---has-flag
+�   �   �       +---supports-color
+�   �   +---supports-preserve-symlinks-flag@1.0.0
+�   �   �   +---node_modules
+�   �   �       +---supports-preserve-symlinks-flag
+�   �   �           +---.github
+�   �   �           +---test
+�   �   +---tapable@2.3.3
+�   �   �   +---node_modules
+�   �   �       +---tapable
+�   �   �           +---lib
+�   �   +---tinybench@2.9.0
+�   �   �   +---node_modules
+�   �   �       +---tinybench
+�   �   �           +---dist
+�   �   +---tinyexec@1.2.4
+�   �   �   +---node_modules
+�   �   �       +---tinyexec
+�   �   �           +---dist
+�   �   +---tinyglobby@0.2.17
+�   �   �   +---node_modules
+�   �   �       +---fdir
+�   �   �       �   +---dist
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---tinyglobby
+�   �   �           +---dist
+�   �   +---tinyrainbow@3.1.1
+�   �   �   +---node_modules
+�   �   �       +---tinyrainbow
+�   �   �           +---dist
+�   �   +---ts-api-utils@2.5.0_typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---ts-api-utils
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---tsconfig-paths-webpack-plugin@4.2.0
+�   �   �   +---node_modules
+�   �   �       +---chalk
+�   �   �       �   +---source
+�   �   �       +---enhanced-resolve
+�   �   �       �   +---lib
+�   �   �       �       +---util
+�   �   �       +---tapable
+�   �   �       �   +---lib
+�   �   �       +---tsconfig-paths
+�   �   �       �   +---lib
+�   �   �       �   �   +---__tests__
+�   �   �       �   �       +---data
+�   �   �       �   +---node_modules
+�   �   �       �   �   +---.bin
+�   �   �       �   +---src
+�   �   �       �       +---__tests__
+�   �   �       �           +---data
+�   �   �       +---tsconfig-paths-webpack-plugin
+�   �   �           +---.github
+�   �   �           �   +---workflows
+�   �   �           +---.husky
+�   �   �           +---coverage
+�   �   �           �   +---lcov-report
+�   �   �           +---examples
+�   �   �           �   +---referenceExample
+�   �   �           +---lib
+�   �   �           �   +---__tests__
+�   �   �           +---temp
+�   �   +---tsconfig-paths@4.2.0
+�   �   �   +---node_modules
+�   �   �       +---json5
+�   �   �       �   +---dist
+�   �   �       �   +---lib
+�   �   �       +---minimist
+�   �   �       �   +---.github
+�   �   �       �   +---example
+�   �   �       �   +---test
+�   �   �       +---strip-bom
+�   �   �       +---tsconfig-paths
+�   �   �           +---lib
+�   �   �           �   +---__tests__
+�   �   �           �       +---data
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---src
+�   �   �               +---__tests__
+�   �   �                   +---data
+�   �   +---tsx@4.23.1
+�   �   �   +---node_modules
+�   �   �       +---esbuild
+�   �   �       �   +---bin
+�   �   �       �   +---lib
+�   �   �       +---fsevents
+�   �   �       +---tsx
+�   �   �           +---dist
+�   �   �           �   +---cjs
+�   �   �           �   �   +---api
+�   �   �           �   +---esm
+�   �   �           �       +---api
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---type-check@0.4.0
+�   �   �   +---node_modules
+�   �   �       +---prelude-ls
+�   �   �       �   +---lib
+�   �   �       +---type-check
+�   �   �           +---lib
+�   �   +---typescript-eslint@8.65.0_eslint@10.8.0_typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---@typescript-eslint
+�   �   �       �   +---eslint-plugin
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---configs
+�   �   �       �   �   �   �   +---eslintrc
+�   �   �       �   �   �   �   +---flat
+�   �   �       �   �   �   +---rules
+�   �   �       �   �   �   �   +---enum-utils
+�   �   �       �   �   �   �   +---naming-convention-utils
+�   �   �       �   �   �   �   +---prefer-optional-chain-utils
+�   �   �       �   �   �   +---util
+�   �   �       �   �   �       +---class-scope-analyzer
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---parser
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---typescript-estree
+�   �   �       �   �   +---dist
+�   �   �       �   �   �   +---create-program
+�   �   �       �   �   �   +---jsx
+�   �   �       �   �   �   +---parseSettings
+�   �   �       �   �   �   +---ts-estree
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �       �   +---ast-utils
+�   �   �       �       �   �   +---eslint-utils
+�   �   �       �       �   +---eslint-utils
+�   �   �       �       �   +---ts-eslint
+�   �   �       �       �   �   +---eslint
+�   �   �       �       �   +---ts-utils
+�   �   �       �       +---node_modules
+�   �   �       �           +---.bin
+�   �   �       +---eslint
+�   �   �       �   +---bin
+�   �   �       �   +---conf
+�   �   �       �   +---lib
+�   �   �       �   �   +---cli-engine
+�   �   �       �   �   �   +---formatters
+�   �   �       �   �   +---config
+�   �   �       �   �   +---eslint
+�   �   �       �   �   +---languages
+�   �   �       �   �   �   +---js
+�   �   �       �   �   �       +---source-code
+�   �   �       �   �   �           +---token-store
+�   �   �       �   �   +---linter
+�   �   �       �   �   �   +---code-path-analysis
+�   �   �       �   �   +---rule-tester
+�   �   �       �   �   +---rules
+�   �   �       �   �   �   +---utils
+�   �   �       �   �   �       +---unicode
+�   �   �       �   �   +---services
+�   �   �       �   �   +---shared
+�   �   �       �   �   +---types
+�   �   �       �   +---messages
+�   �   �       +---typescript
+�   �   �       �   +---bin
+�   �   �       �   +---lib
+�   �   �       �       +---cs
+�   �   �       �       +---de
+�   �   �       �       +---es
+�   �   �       �       +---fr
+�   �   �       �       +---it
+�   �   �       �       +---ja
+�   �   �       �       +---ko
+�   �   �       �       +---pl
+�   �   �       �       +---pt-br
+�   �   �       �       +---ru
+�   �   �       �       +---tr
+�   �   �       �       +---zh-cn
+�   �   �       �       +---zh-tw
+�   �   �       +---typescript-eslint
+�   �   �           +---dist
+�   �   �           +---node_modules
+�   �   �               +---.bin
+�   �   +---typescript@6.0.3
+�   �   �   +---node_modules
+�   �   �       +---typescript
+�   �   �           +---bin
+�   �   �           +---lib
+�   �   �               +---cs
+�   �   �               +---de
+�   �   �               +---es
+�   �   �               +---fr
+�   �   �               +---it
+�   �   �               +---ja
+�   �   �               +---ko
+�   �   �               +---pl
+�   �   �               +---pt-br
+�   �   �               +---ru
+�   �   �               +---tr
+�   �   �               +---zh-cn
+�   �   �               +---zh-tw
+�   �   +---undici-types@7.18.2
+�   �   �   +---node_modules
+�   �   �       +---undici-types
+�   �   +---uri-js@4.4.1
+�   �   �   +---node_modules
+�   �   �       +---punycode
+�   �   �       +---uri-js
+�   �   �           +---dist
+�   �   �               +---es5
+�   �   �               +---esnext
+�   �   �                   +---schemes
+�   �   +---vite@7.3.6_@types+node@24.13.3_tsx@4.23.1
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---node
+�   �   �       �       +---assert
+�   �   �       �       +---compatibility
+�   �   �       �       +---dns
+�   �   �       �       +---fs
+�   �   �       �       +---readline
+�   �   �       �       +---stream
+�   �   �       �       +---timers
+�   �   �       �       +---ts5.6
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---ts5.7
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---web-globals
+�   �   �       +---esbuild
+�   �   �       �   +---bin
+�   �   �       �   +---lib
+�   �   �       +---fdir
+�   �   �       �   +---dist
+�   �   �       +---fsevents
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---postcss
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---rollup
+�   �   �       �   +---dist
+�   �   �       �       +---bin
+�   �   �       �       +---es
+�   �   �       �       �   +---shared
+�   �   �       �       +---shared
+�   �   �       +---tinyglobby
+�   �   �       �   +---dist
+�   �   �       +---tsx
+�   �   �       �   +---dist
+�   �   �       �   �   +---cjs
+�   �   �       �   �   �   +---api
+�   �   �       �   �   +---esm
+�   �   �       �   �       +---api
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---vite
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �           �   +---client
+�   �   �           �   +---node
+�   �   �           �       +---chunks
+�   �   �           +---misc
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---types
+�   �   �               +---internal
+�   �   +---vite@8.1.5_@types+node@24.13.3_esbuild@0.28.1_tsx@4.23.1
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---node
+�   �   �       �       +---assert
+�   �   �       �       +---compatibility
+�   �   �       �       +---dns
+�   �   �       �       +---fs
+�   �   �       �       +---readline
+�   �   �       �       +---stream
+�   �   �       �       +---timers
+�   �   �       �       +---ts5.6
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---ts5.7
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---web-globals
+�   �   �       +---esbuild
+�   �   �       �   +---bin
+�   �   �       �   +---lib
+�   �   �       +---lightningcss
+�   �   �       �   +---node
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---postcss
+�   �   �       �   +---lib
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---rolldown
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       �   �   +---shared
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---tinyglobby
+�   �   �       �   +---dist
+�   �   �       +---tsx
+�   �   �       �   +---dist
+�   �   �       �   �   +---cjs
+�   �   �       �   �   �   +---api
+�   �   �       �   �   +---esm
+�   �   �       �   �       +---api
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---vite
+�   �   �           +---bin
+�   �   �           +---dist
+�   �   �           �   +---client
+�   �   �           �   +---node
+�   �   �           �       +---chunks
+�   �   �           +---misc
+�   �   �           +---node_modules
+�   �   �           �   +---.bin
+�   �   �           +---types
+�   �   �               +---internal
+�   �   +---vitest@4.0.18_@types+node@24.13.3_tsx@4.23.1
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---node
+�   �   �       �       +---assert
+�   �   �       �       +---compatibility
+�   �   �       �       +---dns
+�   �   �       �       +---fs
+�   �   �       �       +---readline
+�   �   �       �       +---stream
+�   �   �       �       +---timers
+�   �   �       �       +---ts5.6
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---ts5.7
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---web-globals
+�   �   �       +---@vitest
+�   �   �       �   +---expect
+�   �   �       �   �   +---dist
+�   �   �       �   +---mocker
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---runner
+�   �   �       �   �   +---dist
+�   �   �       �   +---snapshot
+�   �   �       �   �   +---dist
+�   �   �       �   +---spy
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       +---es-module-lexer
+�   �   �       �   +---dist
+�   �   �       �   +---types
+�   �   �       +---expect-type
+�   �   �       �   +---dist
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---obug
+�   �   �       �   +---dist
+�   �   �       +---pathe
+�   �   �       �   +---dist
+�   �   �       �       +---shared
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---std-env
+�   �   �       �   +---dist
+�   �   �       +---tinybench
+�   �   �       �   +---dist
+�   �   �       +---tinyexec
+�   �   �       �   +---dist
+�   �   �       +---tinyglobby
+�   �   �       �   +---dist
+�   �   �       +---tinyrainbow
+�   �   �       �   +---dist
+�   �   �       +---vite
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       �   �   +---client
+�   �   �       �   �   +---node
+�   �   �       �   �       +---chunks
+�   �   �       �   +---misc
+�   �   �       �   +---node_modules
+�   �   �       �   �   +---.bin
+�   �   �       �   +---types
+�   �   �       �       +---internal
+�   �   �       +---vitest
+�   �   �       �   +---browser
+�   �   �       �   +---dist
+�   �   �       �   �   +---chunks
+�   �   �       �   �   +---workers
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---why-is-node-running
+�   �   �           +---.github
+�   �   +---vitest@4.1.10_@types+node@24.13.3_esbuild@0.28.1_tsx@4.23.1
+�   �   �   +---node_modules
+�   �   �       +---@types
+�   �   �       �   +---node
+�   �   �       �       +---assert
+�   �   �       �       +---compatibility
+�   �   �       �       +---dns
+�   �   �       �       +---fs
+�   �   �       �       +---readline
+�   �   �       �       +---stream
+�   �   �       �       +---timers
+�   �   �       �       +---ts5.6
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---ts5.7
+�   �   �       �       �   +---compatibility
+�   �   �       �       +---web-globals
+�   �   �       +---@vitest
+�   �   �       �   +---expect
+�   �   �       �   �   +---dist
+�   �   �       �   +---mocker
+�   �   �       �   �   +---dist
+�   �   �       �   �   +---node_modules
+�   �   �       �   �       +---.bin
+�   �   �       �   +---pretty-format
+�   �   �       �   �   +---dist
+�   �   �       �   +---runner
+�   �   �       �   �   +---dist
+�   �   �       �   +---snapshot
+�   �   �       �   �   +---dist
+�   �   �       �   +---spy
+�   �   �       �   �   +---dist
+�   �   �       �   +---utils
+�   �   �       �       +---dist
+�   �   �       �           +---source-map
+�   �   �       +---es-module-lexer
+�   �   �       �   +---dist
+�   �   �       �   +---types
+�   �   �       +---expect-type
+�   �   �       �   +---dist
+�   �   �       +---magic-string
+�   �   �       �   +---dist
+�   �   �       +---obug
+�   �   �       �   +---dist
+�   �   �       +---pathe
+�   �   �       �   +---dist
+�   �   �       �       +---shared
+�   �   �       +---picomatch
+�   �   �       �   +---lib
+�   �   �       +---std-env
+�   �   �       �   +---dist
+�   �   �       +---tinybench
+�   �   �       �   +---dist
+�   �   �       +---tinyexec
+�   �   �       �   +---dist
+�   �   �       +---tinyglobby
+�   �   �       �   +---dist
+�   �   �       +---tinyrainbow
+�   �   �       �   +---dist
+�   �   �       +---vite
+�   �   �       �   +---bin
+�   �   �       �   +---dist
+�   �   �       �   �   +---client
+�   �   �       �   �   +---node
+�   �   �       �   �       +---chunks
+�   �   �       �   +---misc
+�   �   �       �   +---node_modules
+�   �   �       �   �   +---.bin
+�   �   �       �   +---types
+�   �   �       �       +---internal
+�   �   �       +---vitest
+�   �   �       �   +---browser
+�   �   �       �   +---dist
+�   �   �       �   �   +---chunks
+�   �   �       �   �   +---workers
+�   �   �       �   +---node_modules
+�   �   �       �       +---.bin
+�   �   �       +---why-is-node-running
+�   �   �           +---.github
+�   �   +---watskeburt@6.0.0
+�   �   �   +---node_modules
+�   �   �       +---watskeburt
+�   �   �           +---dist
+�   �   �           �   +---format
+�   �   �           +---types
+�   �   +---which@2.0.2
+�   �   �   +---node_modules
+�   �   �       +---isexe
+�   �   �       �   +---test
+�   �   �       +---which
+�   �   �           +---bin
+�   �   +---why-is-node-running@2.3.0
+�   �   �   +---node_modules
+�   �   �       +---siginfo
+�   �   �       +---stackback
+�   �   �       +---why-is-node-running
+�   �   �           +---.github
+�   �   +---word-wrap@1.2.5
+�   �   �   +---node_modules
+�   �   �       +---word-wrap
+�   �   +---yocto-queue@0.1.0
+�   �   �   +---node_modules
+�   �   �       +---yocto-queue
+�   �   +---zod@4.4.3
+�   �       +---node_modules
+�   �           +---zod
+�   �               +---locales
+�   �               +---mini
+�   �               +---src
+�   �               �   +---locales
+�   �               �   +---mini
+�   �               �   +---v3
+�   �               �   �   +---benchmarks
+�   �               �   �   +---helpers
+�   �               �   �   +---locales
+�   �               �   �   +---tests
+�   �               �   +---v4
+�   �               �   �   +---classic
+�   �               �   �   �   +---tests
+�   �               �   �   +---core
+�   �               �   �   �   +---tests
+�   �               �   �   �       +---locales
+�   �               �   �   +---locales
+�   �               �   �   +---mini
+�   �               �   �       +---tests
+�   �               �   +---v4-mini
+�   �               +---v3
+�   �               �   +---helpers
+�   �               �   +---locales
+�   �               +---v4
+�   �               �   +---classic
+�   �               �   +---core
+�   �               �   +---locales
+�   �               �   +---mini
+�   �               +---v4-mini
+�   +---.vite
+�   �   +---vitest
+�   �       +---da39a3ee5e6b4b0d3255bfef95601890afd80709
+�   +---.vite-temp
+�   +---@eslint
+�   �   +---js
+�   �       +---node_modules
+�   �       �   +---.bin
+�   �       +---src
+�   �       �   +---configs
+�   �       +---types
+�   +---@types
+�   �   +---node
+�   �       +---assert
+�   �       +---compatibility
+�   �       +---dns
+�   �       +---fs
+�   �       +---readline
+�   �       +---stream
+�   �       +---timers
+�   �       +---ts5.6
+�   �       �   +---compatibility
+�   �       +---ts5.7
+�   �       �   +---compatibility
+�   �       +---web-globals
+�   +---dependency-cruiser
+�   �   +---bin
+�   �   +---configs
+�   �   �   +---plugins
+�   �   �   +---rules
+�   �   +---node_modules
+�   �   �   +---.bin
+�   �   +---src
+�   �   �   +---analyze
+�   �   �   �   +---derive
+�   �   �   �   �   +---folders
+�   �   �   �   �   +---metrics
+�   �   �   �   �   +---orphan
+�   �   �   �   +---summarize
+�   �   �   +---cache
+�   �   �   +---cli
+�   �   �   �   +---init-config
+�   �   �   �   +---listeners
+�   �   �   �   �   +---performance-log
+�   �   �   �   +---tools
+�   �   �   �   +---utl
+�   �   �   +---config-utl
+�   �   �   �   +---extract-depcruise-config
+�   �   �   +---extract
+�   �   �   �   +---acorn
+�   �   �   �   +---resolve
+�   �   �   �   +---swc
+�   �   �   �   +---transpile
+�   �   �   �   +---tsc
+�   �   �   +---graph-utl
+�   �   �   +---main
+�   �   �   �   +---files-and-dirs
+�   �   �   �   +---options
+�   �   �   �   +---resolve-options
+�   �   �   �   +---rule-set
+�   �   �   +---report
+�   �   �   �   +---anon
+�   �   �   �   +---dot
+�   �   �   �   +---dot-webpage
+�   �   �   �   �   +---svg-in-html-snippets
+�   �   �   �   +---error-html
+�   �   �   �   +---html
+�   �   �   �   +---utl
+�   �   �   +---schema
+�   �   �   +---utl
+�   �   �   +---validate
+�   �   +---types
+�   �       +---config-utl
+�   �       +---plugins
+�   +---eslint
+�   �   +---bin
+�   �   +---conf
+�   �   +---lib
+�   �   �   +---cli-engine
+�   �   �   �   +---formatters
+�   �   �   +---config
+�   �   �   +---eslint
+�   �   �   +---languages
+�   �   �   �   +---js
+�   �   �   �       +---source-code
+�   �   �   �           +---token-store
+�   �   �   +---linter
+�   �   �   �   +---code-path-analysis
+�   �   �   +---rule-tester
+�   �   �   +---rules
+�   �   �   �   +---utils
+�   �   �   �       +---unicode
+�   �   �   +---services
+�   �   �   +---shared
+�   �   �   +---types
+�   �   +---messages
+�   +---globals
+�   +---prettier
+�   �   +---bin
+�   �   +---internal
+�   �   +---plugins
+�   +---tsx
+�   �   +---dist
+�   �   �   +---cjs
+�   �   �   �   +---api
+�   �   �   +---esm
+�   �   �       +---api
+�   �   +---node_modules
+�   �       +---.bin
+�   +---typescript
+�   �   +---bin
+�   �   +---lib
+�   �       +---cs
+�   �       +---de
+�   �       +---es
+�   �       +---fr
+�   �       +---it
+�   �       +---ja
+�   �       +---ko
+�   �       +---pl
+�   �       +---pt-br
+�   �       +---ru
+�   �       +---tr
+�   �       +---zh-cn
+�   �       +---zh-tw
+�   +---typescript-eslint
+�   �   +---dist
+�   �   +---node_modules
+�   �       +---.bin
+�   +---vitest
+�       +---browser
+�       +---dist
+�       �   +---chunks
+�       �   +---workers
+�       +---node_modules
+�           +---.bin
++---packages
+�   +---adapter-memory
+�   �   +---dist
+�   �   +---node_modules
+�   �   �   +---@acme
+�   �   �       +---core
+�   �   �           +---dist
+�   �   �           +---node_modules
+�   �   �           �   +---zod
+�   �   �           �       +---locales
+�   �   �           �       +---mini
+�   �   �           �       +---src
+�   �   �           �       �   +---locales
+�   �   �           �       �   +---mini
+�   �   �           �       �   +---v3
+�   �   �           �       �   �   +---benchmarks
+�   �   �           �       �   �   +---helpers
+�   �   �           �       �   �   +---locales
+�   �   �           �       �   �   +---tests
+�   �   �           �       �   +---v4
+�   �   �           �       �   �   +---classic
+�   �   �           �       �   �   �   +---tests
+�   �   �           �       �   �   +---core
+�   �   �           �       �   �   �   +---tests
+�   �   �           �       �   �   �       +---locales
+�   �   �           �       �   �   +---locales
+�   �   �           �       �   �   +---mini
+�   �   �           �       �   �       +---tests
+�   �   �           �       �   +---v4-mini
+�   �   �           �       +---v3
+�   �   �           �       �   +---helpers
+�   �   �           �       �   +---locales
+�   �   �           �       +---v4
+�   �   �           �       �   +---classic
+�   �   �           �       �   +---core
+�   �   �           �       �   +---locales
+�   �   �           �       �   +---mini
+�   �   �           �       +---v4-mini
+�   �   �           +---src
+�   �   �           +---test
+�   �   �           +---test-d
+�   �   +---src
+�   �   +---test
+�   +---adapter-model-mock
+�   �   +---dist
+�   �   +---node_modules
+�   �   �   +---@acme
+�   �   �       +---core
+�   �   �           +---dist
+�   �   �           +---node_modules
+�   �   �           �   +---zod
+�   �   �           �       +---locales
+�   �   �           �       +---mini
+�   �   �           �       +---src
+�   �   �           �       �   +---locales
+�   �   �           �       �   +---mini
+�   �   �           �       �   +---v3
+�   �   �           �       �   �   +---benchmarks
+�   �   �           �       �   �   +---helpers
+�   �   �           �       �   �   +---locales
+�   �   �           �       �   �   +---tests
+�   �   �           �       �   +---v4
+�   �   �           �       �   �   +---classic
+�   �   �           �       �   �   �   +---tests
+�   �   �           �       �   �   +---core
+�   �   �           �       �   �   �   +---tests
+�   �   �           �       �   �   �       +---locales
+�   �   �           �       �   �   +---locales
+�   �   �           �       �   �   +---mini
+�   �   �           �       �   �       +---tests
+�   �   �           �       �   +---v4-mini
+�   �   �           �       +---v3
+�   �   �           �       �   +---helpers
+�   �   �           �       �   +---locales
+�   �   �           �       +---v4
+�   �   �           �       �   +---classic
+�   �   �           �       �   +---core
+�   �   �           �       �   +---locales
+�   �   �           �       �   +---mini
+�   �   �           �       +---v4-mini
+�   �   �           +---src
+�   �   �           +---test
+�   �   �           +---test-d
+�   �   +---src
+�   �   +---test
+�   +---core
+�   �   +---dist
+�   �   +---node_modules
+�   �   �   +---zod
+�   �   �       +---locales
+�   �   �       +---mini
+�   �   �       +---src
+�   �   �       �   +---locales
+�   �   �       �   +---mini
+�   �   �       �   +---v3
+�   �   �       �   �   +---benchmarks
+�   �   �       �   �   +---helpers
+�   �   �       �   �   +---locales
+�   �   �       �   �   +---tests
+�   �   �       �   +---v4
+�   �   �       �   �   +---classic
+�   �   �       �   �   �   +---tests
+�   �   �       �   �   +---core
+�   �   �       �   �   �   +---tests
+�   �   �       �   �   �       +---locales
+�   �   �       �   �   +---locales
+�   �   �       �   �   +---mini
+�   �   �       �   �       +---tests
+�   �   �       �   +---v4-mini
+�   �   �       +---v3
+�   �   �       �   +---helpers
+�   �   �       �   +---locales
+�   �   �       +---v4
+�   �   �       �   +---classic
+�   �   �       �   +---core
+�   �   �       �   +---locales
+�   �   �       �   +---mini
+�   �   �       +---v4-mini
+�   �   +---src
+�   �   +---test
+�   �   +---test-d
+�   +---testing
+�       +---dist
+�       +---node_modules
+�       �   +---.bin
+�       �   +---@acme
+�       �   �   +---core
+�       �   �       +---dist
+�       �   �       +---node_modules
+�       �   �       �   +---zod
+�       �   �       �       +---locales
+�       �   �       �       +---mini
+�       �   �       �       +---src
+�       �   �       �       �   +---locales
+�       �   �       �       �   +---mini
+�       �   �       �       �   +---v3
+�       �   �       �       �   �   +---benchmarks
+�       �   �       �       �   �   +---helpers
+�       �   �       �       �   �   +---locales
+�       �   �       �       �   �   +---tests
+�       �   �       �       �   +---v4
+�       �   �       �       �   �   +---classic
+�       �   �       �       �   �   �   +---tests
+�       �   �       �       �   �   +---core
+�       �   �       �       �   �   �   +---tests
+�       �   �       �       �   �   �       +---locales
+�       �   �       �       �   �   +---locales
+�       �   �       �       �   �   +---mini
+�       �   �       �       �   �       +---tests
+�       �   �       �       �   +---v4-mini
+�       �   �       �       +---v3
+�       �   �       �       �   +---helpers
+�       �   �       �       �   +---locales
+�       �   �       �       +---v4
+�       �   �       �       �   +---classic
+�       �   �       �       �   +---core
+�       �   �       �       �   +---locales
+�       �   �       �       �   +---mini
+�       �   �       �       +---v4-mini
+�       �   �       +---src
+�       �   �       +---test
+�       �   �       +---test-d
+�       �   +---vitest
+�       �       +---browser
+�       �       +---dist
+�       �       �   +---chunks
+�       �       �   +---workers
+�       �       +---node_modules
+�       �           +---.bin
+�       +---src
+�       +---test
++---tests
+�   +---conformance
++---tooling
+    +---boundaries
+    �   +---fixtures
+    �       +---packages
+    �           +---core
+    �               +---src
+    +---docs
+    +---typescript

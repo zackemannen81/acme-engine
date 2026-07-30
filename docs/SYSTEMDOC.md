@@ -281,6 +281,17 @@ durable persistence remain future work.
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
 
+The team-facing construction and verification plans are:
+
+- [`NarrativeModule — Build and Test Plan`](design/narrative-module-build-and-test-plan.md)
+- [`ResearchModule — Build and Test Plan`](design/research-module-build-and-test-plan.md)
+
+These guides translate the approved baseline into proposed package layouts,
+component ownership, ordered build phases, decision gates and layered test
+matrices. They are implementation guidance, not evidence that either module
+exists. Both require the same core path and forbid domain branches in core or
+concrete adapter dependencies in a module.
+
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
