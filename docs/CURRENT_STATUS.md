@@ -161,6 +161,15 @@ two-summary `narrative-window-1` and source-backed
 `previous-document-tail-1` are executable and golden-tested. Phase 5 remains
 blocked on the absent ExecutionEngine and is not claimed by ACME-0017.
 
+ACME-0018 is the active Draft charter for the bounded Milestone 1
+ExecutionEngine. The proposed task coordinates one primary model call through
+the implemented ports and pure engines, extends portable in-memory replay
+evidence only as required and uses Narrative Phase 5 as its offline acceptance
+gate. No engine behavior is implemented or authorized while the charter
+remains `Draft`; request-fingerprint/policy identity, replay evidence/digest,
+deterministic memory retrieval and the staged public engine surface must be
+reviewed before freeze.
+
 ## Persistent Gaps
 
 - ExecutionEngine behavior is not implemented.
