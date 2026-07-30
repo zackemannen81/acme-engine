@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -24,6 +24,14 @@ acme-engine/
 │   │   │   └── repository.ts
 │   │   └── test/
 │   │       └── repository.test.ts
+│   ├── adapter-model-mock/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   └── scripted-model-gateway.ts
+│   │   └── test/
+│   │       └── scripted-model-gateway.test.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -39,6 +47,8 @@ acme-engine/
 │   │   │   ├── memory.ts
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
+│   │   │   ├── model-request-hash.ts
+│   │   │   ├── model-validation.ts
 │   │   │   ├── modules.ts
 │   │   │   ├── registries.ts
 │   │   │   ├── response-pipeline.ts
@@ -50,6 +60,7 @@ acme-engine/
 │   │   ├── test/
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
+│   │   │   ├── model-request-hash.test.ts
 │   │   │   ├── repository-digest.test.ts
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
@@ -61,12 +72,14 @@ acme-engine/
 │       ├── tsconfig.json
 │       ├── src/
 │       │   ├── index.ts
+│       │   ├── model-gateway-conformance.ts
 │       │   └── repository-conformance.ts
 │       └── test/
 │           └── workspace-import.test.ts
 ├── tests/
 │   └── conformance/
-│       └── adapter-memory.test.ts
+│       ├── adapter-memory.test.ts
+│       └── adapter-model-mock.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -86,9 +99,18 @@ acme-engine/
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
+│   │   ├── domain-memory-decisions-to-state-projection.md
+│   │   ├── reference-module-identity-and-provenance-fields.md
+│   │   └── reusable-domain-module-conformance-kit.md
 │   ├── design/
+│   │   ├── acme-design-and-development-spec.md
+│   │   ├── narrative-module-build-and-test-plan.md
+│   │   └── research-module-build-and-test-plan.md
 │   ├── finished/
 │   ├── paused/
+│   ├── presentations/
+│   │   ├── narrative-module-build-and-test-plan.docx
+│   │   └── research-module-build-and-test-plan.docx
 │   ├── CONTRIBUTING.md
 │   ├── CURRENT_STATUS.md
 │   ├── CURRENT_TASK.md
@@ -124,8 +146,10 @@ acme-engine/
   external runtime dependency.
 - `@acme/adapter-memory`: deterministic aggregate repository with immutable
   copy-on-commit transactions and read-only evidence inspection.
-- `@acme/testing`: reusable ExecutionRepository conformance plus typed test
-  support.
+- `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
+  immutable normalized outcomes and read-only invocation evidence.
+- `@acme/testing`: reusable ExecutionRepository and ModelGateway conformance
+  plus typed test support.
 - `@acme/cli`: behavior-free composition-root skeleton importing
   `@acme/core`.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
@@ -139,3 +163,9 @@ acme-engine/
 The design specification retains the future package map for engine behavior,
 SQLite/model adapters, Narrative and Research modules and scenarios. Those
 files and directories must be added only by explicitly activated tasks.
+
+The two reference-module build and test plans under `docs/design/` are the
+normative implementation guides. Their `docs/presentations/` DOCX renditions
+support team review. The three `docs/backlog/` proposals record decisions that
+must be chartered separately rather than absorbed into reference-module
+implementation.

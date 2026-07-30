@@ -11,6 +11,8 @@ export * from './hashing.js';
 export * from './memory.js';
 export * from './memory-engine.js';
 export * from './model.js';
+export * from './model-request-hash.js';
+export * from './model-validation.js';
 export * from './modules.js';
 export * from './registries.js';
 export * from './response-pipeline.js';

@@ -1,7 +1,7 @@
 # System Documentation
 
-Last updated: 2026-07-29
-Status: Approved architecture with pure state/memory engines and in-memory Unit of Work
+Last updated: 2026-07-30
+Status: Approved architecture with pure engines, in-memory Unit of Work and model mock
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -12,8 +12,9 @@ protocols and milestones are defined in
 
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
-- `@acme/core` contract package, `@acme/adapter-memory`, reusable repository
-  conformance support in `@acme/testing` and the behavior-free `@acme/cli`
+- `@acme/core` contract package, `@acme/adapter-memory`,
+  `@acme/adapter-model-mock`, reusable repository/gateway conformance support
+  in `@acme/testing` and the behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
@@ -22,7 +23,7 @@ protocols and milestones are defined in
   boundaries, tests and builds
 
 This substrate does not implement execution orchestration, durable
-persistence, scenarios or provider behavior.
+persistence, scenarios or live provider behavior.
 
 ## Implemented Contract Layer
 
@@ -30,8 +31,11 @@ persistence, scenarios or provider behavior.
 
 - common JSON, identity, timestamp, document and diagnostic types
 - canonical JSON algorithm `acme-cjson-1` and SHA-256 hashing
+- immutable `acme-model-request-hash-1` over a complete validated request
 - the ACME error-code taxonomy and structured `AcmeError`
 - provider-neutral model request/response and gateway port types
+- closed model selection/request/capability/context/response validation and
+  required-capability semantics
 - versioned prompt-contract types backed by Zod runtime schemas
 - a strict response pipeline with empty, parse, schema and semantic stages
 - explicit warnings for the permitted BOM and Markdown JSON-fence cleanup
@@ -46,6 +50,31 @@ persistence, scenarios or provider behavior.
 
 ExecutionEngine, durable adapters and reference-domain behavior are not
 implemented.
+
+## Implemented Deterministic Model Mock
+
+`@acme/adapter-model-mock` implements the provider-neutral `ModelGateway` for
+offline execution:
+
+- exact immutable `ModelSelection` profiles declare capabilities
+- the full profile/call script validates before use
+- calls are uniquely addressed by `(executionId, callKey)` and additionally
+  require exact selection plus `acme-model-request-hash-1`
+- pre-aborted and unsupported-capability calls do not consume scripts
+- matching normalized successes and structured `TIMEOUT`/`MODEL_*` failures
+  consume once without semantic rewriting
+- unexpected, mismatched, repeated and unconsumed calls are deterministic
+  non-retryable test-harness failures
+- response timestamps, usage, metadata and provider identity are script data;
+  no fallback values are generated
+- inputs, outputs and invocation inspection are detached and deeply frozen
+- runtime source has no provider SDK, network, environment, filesystem, clock
+  or random dependency
+
+`@acme/testing` supplies a reusable gateway conformance kit covering
+capability discovery, required-capability rejection, pre-call cancellation,
+normalized success, structured failure and immutability only through the core
+port. Mock-specific invocation evidence remains outside `ModelGateway`.
 
 ## Implemented StateEngine
 
@@ -228,8 +257,9 @@ Separately, the StateEngine accepts an interpreted typed delta and prepares a
 validated next-state candidate. The MemoryEngine accepts interpreted memory
 candidates and prepares validated record decisions/mutations. The in-memory
 repository can atomically promote those prepared effects. Provider
-normalization, module interpretation and durable persistence remain future
-work.
+normalization remains a live-adapter responsibility; the deterministic mock
+accepts only complete validated normalized fixtures. Module interpretation and
+durable persistence remain future work.
 
 ## Initial Persistence Direction
 
@@ -251,10 +281,21 @@ work.
 Core is not accepted as domain-neutral until both use it without domain
 branches in core.
 
+The team-facing construction and verification plans are:
+
+- [`NarrativeModule — Build and Test Plan`](design/narrative-module-build-and-test-plan.md)
+- [`ResearchModule — Build and Test Plan`](design/research-module-build-and-test-plan.md)
+
+These guides translate the approved baseline into proposed package layouts,
+component ownership, ordered build phases, decision gates and layered test
+matrices. They are implementation guidance, not evidence that either module
+exists. Both require the same core path and forbid domain branches in core or
+concrete adapter dependencies in a module.
+
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- SQLite persistence and a deterministic model mock.
+- SQLite persistence and a future live model adapter.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.

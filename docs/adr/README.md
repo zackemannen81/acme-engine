@@ -41,3 +41,4 @@ current architecture.
 - [`0004-deterministic-transition-identity.md`](0004-deterministic-transition-identity.md)
 - [`0005-pure-memory-decision-application.md`](0005-pure-memory-decision-application.md)
 - [`0006-aggregate-in-memory-unit-of-work.md`](0006-aggregate-in-memory-unit-of-work.md)
+- [`0007-deterministic-model-mock-and-gateway-conformance.md`](0007-deterministic-model-mock-and-gateway-conformance.md)

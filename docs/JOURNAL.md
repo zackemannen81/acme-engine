@@ -233,3 +233,84 @@ Add one dated, signed entry for every meaningful work session or handoff.
   provider-neutral gateway conformance next. ExecutionEngine orchestration and
   the Narrative acceptance slice remain separate bounded Milestone 1 work.
 - Signature: Codex
+
+## 2026-07-30 — Deterministic model-mock charter drafted
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0009
+- Summary: Drafted the bounded deterministic model-mock and gateway
+  conformance charter after confirming merged ACME-0008 on synchronized
+  `main`. The Draft isolates `@acme/adapter-model-mock`, a reusable
+  provider-neutral conformance kit and the missing versioned
+  `acme-model-request-hash-1` contract. It proposes exact
+  `(executionId, callKey)`, selection and request-hash matching; finite
+  single-consumption scripts; fully scripted response timestamps; explicit
+  capability/cancellation behavior; immutable invocation evidence; and no
+  implicit fallback or external effects. ExecutionEngine, ledger/replay,
+  provider SDKs and reference scenarios remain separate tasks.
+- Verification: Local `main` and `origin/main` both resolved to merge commit
+  `7fceac1`. Documentation links, Markdown fences and `git diff --check` are
+  the applicable Draft-charter checks.
+- Follow-ups: Review the Draft proposals for request-hash scope, call identity
+  and consumption semantics. If approved, explicitly move ACME-0009 to
+  `Ready`, record the freeze date and begin implementation.
+- Signature: Codex
+
+## 2026-07-30 — Deterministic model mock and gateway conformance completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0009
+- Summary: Froze the approved charter and implemented immutable
+  `acme-model-request-hash-1`, closed core gateway-boundary validation and the
+  deterministic `@acme/adapter-model-mock`. The adapter validates exact
+  selection profiles and complete finite call scripts before use, matches
+  `(executionId, callKey)`, selection and request hash, consumes matching
+  response/error outcomes once and exposes immutable invocation/unconsumed
+  evidence outside the core port. Added the reusable provider-neutral
+  `ModelGateway` conformance kit and accepted ADR-0007. No live provider,
+  network, clock, filesystem, retry/orchestration or ledger integration was
+  introduced.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries
+  and build passed. Unit execution passed 12 files and 85 tests. The dedicated
+  conformance gate passed 2 files and 10 tests, with non-empty repository and
+  gateway suites. Integration and scenario gates passed empty because those
+  behaviors remain outside this charter. Documentation checks covered 34
+  Markdown files and `git diff --check` passed. No required check was skipped.
+  Local Node was `24.14.1` while the repository/CI pin remains `24.18.0`; pnpm
+  was the pinned `10.34.5`.
+- Follow-ups: Explicitly charter ExecutionEngine orchestration as the next
+  bounded Milestone 1 task. Durable ledger reuse, live provider adapters and
+  the Narrative acceptance slice remain separate future work.
+- Signature: Codex
+
+## 2026-07-30 — Reference-module build and test guides completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0010
+- Summary: Produced normative build and test guides for NarrativeModule and
+  ResearchModule plus matching presentation-ready DOCX renditions. Each guide
+  defines module ownership, proposed package and component structure, domain
+  contracts, document/memory/state mapping, pure reducer and memory-policy
+  responsibilities, five ordered implementation phases, layered unit/type/
+  conformance/negative/scenario verification and a team decision checklist.
+  The plans deliberately use the same domain-neutral core path while keeping
+  Narrative continuity policy and Research evidence policy domain-owned. No
+  module or runtime behavior was implemented.
+- Verification: `pnpm docs:check` passed for 39 Markdown files and
+  `git diff --check` passed. Both guides contained every required section,
+  balanced fences and one readable Mermaid block. DOCX structural, preset,
+  table-geometry and accessibility audits passed. Microsoft Word opened both
+  files read-only as 12-page, three-table documents with all required
+  sections. Every page was exported to PDF, rasterized to PNG and visually
+  inspected at original resolution with no clipping, overlap, overflow or
+  unreadable table. LibreOffice was unavailable, so Word COM provided the
+  page-rendering fallback; no visual check was skipped.
+- Follow-ups: Team-review and separately charter the three bounded proposals:
+  memory decisions to state projection, reference-module identity/provenance
+  fields and reusable DomainModule conformance. After those gates are
+  resolved, activate one bounded reference-module implementation task; do not
+  add domain branches to core.
+- Signature: Codex
