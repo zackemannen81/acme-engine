@@ -344,3 +344,78 @@ Add one dated, signed entry for every meaningful work session or handoff.
   Do not begin NarrativeModule or ResearchModule implementation until both
   remaining gates are resolved.
 - Signature: Codex
+
+## 2026-07-30 — Reference identity task paused for input-bound contracts
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0012
+- Summary: Activated and froze the reference-domain identity/provenance
+  charter, then drafted ADR-0009 and the normative Narrative/Research schema
+  corrections. The draft exposed a blocking public-contract gap:
+  `PromptContract.validateSemantics()`, `ResponsePipeline.process()` and
+  `TaskDefinition.interpret()` do not receive the validated input. A reference
+  module therefore cannot verify a source quote against the supplied document
+  or construct source-backed candidates without hidden state. Paused
+  ACME-0012 unchanged and activated bounded child ACME-0013 to add the missing
+  input binding before the parent decision is finalized.
+- Verification: The partial documentation draft passed `pnpm docs:check` for
+  41 Markdown files and `git diff --check`. Runtime verification belongs to
+  ACME-0013 and has not yet run.
+- Follow-ups: Complete ACME-0013, archive it, restore ACME-0012 from
+  `docs/paused/`, then finish and verify ADR-0009 against the implemented
+  contract boundary.
+- Signature: Codex
+
+## 2026-07-30 — Input-bound validation and interpretation completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0013 (child of ACME-0012)
+- Summary: Accepted ADR-0010 and closed the public input-binding gap.
+  `ResponsePipeline.process()` now validates contract input before response
+  inspection, rejects schema/non-JSON/coercing input non-repairably and passes
+  detached deeply frozen input/output to input-aware semantics.
+  `TaskDefinition.interpret()` now receives original typed task input, with
+  compile-time inference proof. Updated the normative specification,
+  reference guides and long-lived documentation. No ExecutionEngine,
+  reference-domain behavior, repository, provider or persistence behavior was
+  added.
+- Verification: Frozen install, format, lint, strict typecheck, boundaries and
+  build passed. Unit execution passed 13 files and 95 tests, including ten
+  response-pipeline tests. Dedicated repository/gateway conformance passed 2
+  files and 10 tests. Integration and scenario gates passed empty because
+  those layers remain outside the child. Documentation checks covered 43
+  Markdown files and `git diff --check` passed. No required check was skipped.
+- Follow-ups: Restore ACME-0012 from `docs/paused/`, record this completed
+  child and finish its original identity/provenance charter.
+- Signature: Codex
+
+## 2026-07-30 — Reference-domain identity and provenance completed
+
+- Date: 2026-07-30
+- Author: Codex
+- Task: ACME-0012
+- Summary: Resumed the frozen parent after ACME-0013 and accepted ADR-0009.
+  Canonical Narrative state is now the sole alias authority;
+  `narrative-entity-key-1` handles unknown labels, and character-fact
+  supersession requires input-verified correction evidence plus matching
+  identity/prior value. Research now separates canonical proposition identity,
+  exact normalized source identity and caller-declared source independence;
+  complete domain evidence stays in claim memory while state references stable
+  memory IDs and core provenance retains generic execution/document links.
+  Corrected the normative specification and both reference-module guides,
+  removed the resolved backlog proposal and retained shared module conformance
+  as the one remaining implementation gate. No reference module, provider,
+  repository or persistence behavior was added by the parent.
+- Verification: Documentation checks passed for 43 Markdown files. All four
+  `acme-cjson-1`/SHA-256 golden vectors reproduced exactly. Both module guides
+  contain no unresolved identity/provenance gate, the schema-placement matrix
+  covers every activated backlog field and `git diff --check` passed.
+  ACME-0013's separate runtime verification passed 95 unit tests, 10 dedicated
+  conformance tests, typecheck, lint, boundaries and build. No required check
+  was skipped.
+- Follow-ups: Explicitly charter the reusable DomainModule conformance kit.
+  After it passes, activate one bounded reference-module implementation task;
+  keep domain vocabulary out of core.
+- Signature: Codex

@@ -43,3 +43,5 @@ current architecture.
 - [`0006-aggregate-in-memory-unit-of-work.md`](0006-aggregate-in-memory-unit-of-work.md)
 - [`0007-deterministic-model-mock-and-gateway-conformance.md`](0007-deterministic-model-mock-and-gateway-conformance.md)
 - [`0008-post-memory-domain-state-projection.md`](0008-post-memory-domain-state-projection.md)
+- [`0009-reference-domain-identity-and-provenance.md`](0009-reference-domain-identity-and-provenance.md)
+- [`0010-input-bound-validation-and-interpretation.md`](0010-input-bound-validation-and-interpretation.md)

@@ -67,5 +67,11 @@ export type TaskProjectionProof = Assert<
   Equal<FixtureProjectionInput, StateProjectionInput<FixtureDelta>>
 >;
 
+type FixtureInterpretInput = Parameters<FixtureTasks['adjust']['interpret']>[1];
+
+export type TaskInterpretInputProof = Assert<
+  Equal<FixtureInterpretInput, FixtureInput>
+>;
+
 // @ts-expect-error "missing" is not a registered task name.
 export type InvalidTaskNameProof = TaskInput<FixtureModule, 'missing'>;

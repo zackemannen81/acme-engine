@@ -84,6 +84,7 @@ export interface TaskDefinition<
   ): Promise<TContractInput> | TContractInput;
   interpret(
     output: TContractOutput,
+    input: TInput,
     context: ExecutionReadContext<TState>,
   ): Promise<ModuleResult<TDelta>> | ModuleResult<TDelta>;
   projectState(

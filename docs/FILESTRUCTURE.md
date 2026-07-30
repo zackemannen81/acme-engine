@@ -101,10 +101,11 @@ acme-engine/
 │   │   ├── 0006-aggregate-in-memory-unit-of-work.md
 │   │   ├── 0007-deterministic-model-mock-and-gateway-conformance.md
 │   │   ├── 0008-post-memory-domain-state-projection.md
+│   │   ├── 0009-reference-domain-identity-and-provenance.md
+│   │   ├── 0010-input-bound-validation-and-interpretation.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
-│   │   ├── reference-module-identity-and-provenance-fields.md
 │   │   └── reusable-domain-module-conformance-kit.md
 │   ├── design/
 │   │   ├── acme-design-and-development-spec.md
@@ -145,9 +146,10 @@ acme-engine/
 ## Implemented Workspace
 
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
-  response validation, static registries, pure revisioned state/memory
-  preparation, filtered post-memory state projection and the aggregate
-  repository port/digest. Zod is its only external runtime dependency.
+  input-bound response validation, static registries, pure revisioned
+  state/memory preparation, filtered post-memory state projection and the
+  aggregate repository port/digest. Zod is its only external runtime
+  dependency.
 - `@acme/adapter-memory`: deterministic aggregate repository with immutable
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
@@ -170,7 +172,9 @@ files and directories must be added only by explicitly activated tasks.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
-support team review. ADR-0008 resolves their post-memory state-projection gate.
-The two remaining `docs/backlog/` proposals record decisions that must be
-chartered separately rather than absorbed into reference-module
-implementation.
+are ACME-0010 review snapshots; the Markdown guides remain normative after
+later architecture decisions. ADR-0008 resolves their post-memory
+state-projection gate, and ADR-0009 resolves their identity/provenance gate.
+The remaining `docs/backlog/` proposal records the reusable
+DomainModule-conformance work that must be chartered separately rather than
+absorbed into reference-module implementation.

@@ -33,6 +33,8 @@ implementation baseline:
 - ADR-0006: Aggregate in-memory Unit of Work
 - ADR-0007: Deterministic model mock and gateway conformance
 - ADR-0008: Post-memory domain state projection
+- ADR-0009: Reference-domain identity and provenance
+- ADR-0010: Input-bound validation and interpretation
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection and deterministic in-memory Unit of
@@ -48,12 +50,17 @@ currently:
 - closed gateway-boundary validation for selections, requests, capabilities,
   required-capability matching, call contexts and normalized responses
 - a strict response pipeline for empty/parse/schema/semantic validation
+- input-bound response semantics with non-repairable input validation and
+  detached deeply frozen contract input/output
 - immutable contract and module registries with deterministic ordering and
   contract fingerprints
 - task-typed module authoring plus state/memory envelope and policy types
 - typed task-owned post-memory state projection with exact
   candidate/decision correlation, applied-decision filtering and immutable
   replay-stable projection input
+- frozen reference-domain v1 identity/evidence contracts: canonical-state
+  Narrative alias authority and correction checks plus explicit Research
+  proposition, source, independence and retained-evidence keys
 - a pure StateEngine that validates current state and typed deltas, enforces
   expected revisions, invokes module initialization/reduction/invariants and
   prepares immutable snapshot/transition candidates without persistence
@@ -90,7 +97,7 @@ currently:
 - a typed `@acme/cli` composition-root skeleton
 - an automated dependency rule, core vocabulary guard and negative boundary
   fixture
-- 91 passing unit/conformance tests across canonicalization, model-request
+- 95 passing unit/conformance tests across canonicalization, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   conformance, mock matching, immutability, atomic rollback and workspace
@@ -111,12 +118,12 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0011 resolved the first reference-module decision gate with a tested
-post-memory state-projection boundary. The NarrativeModule and ResearchModule
-guides now use the same task-owned `projectState()` hook. No reference-domain
-implementation task is active until a maintainer approves a bounded charter
-and the remaining identity/provenance and shared-conformance gates are
-resolved.
+ACME-0012 resolved the reference-domain identity/provenance gate after bounded
+child ACME-0013 added the required input-bound public contracts. ADR-0009 now
+freezes Narrative alias/correction and Research proposition/source/evidence
+ownership with reproducible golden vectors. No reference-module implementation
+task is active until the reusable DomainModule-conformance gate is separately
+approved and completed.
 
 ## Persistent Gaps
 
@@ -125,9 +132,9 @@ resolved.
 - A live provider adapter and provider-specific normalization are not
   implemented.
 - Narrative and Research reference modules are not implemented.
-- Reference-module implementation is still gated by stable domain
-  identity/provenance fields and a reusable module-conformance boundary.
-  Bounded proposals are in `docs/backlog/`.
+- Reference-module implementation is still gated by a reusable
+  DomainModule-conformance boundary. Its bounded proposal is in
+  `docs/backlog/`.
 - ExecutionEngine must orchestrate the implemented post-memory projection
   boundary and retain the evidence required for replay.
 - The persistence schema remains design-only.

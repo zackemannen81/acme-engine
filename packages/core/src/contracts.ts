@@ -29,7 +29,7 @@ export interface PromptContract<TInput, TOutput> {
   readonly requiredCapabilities: Partial<ModelCapabilities>;
   readonly retention: 'none' | 'hash-only' | 'encrypted-payload';
   buildRequest(input: TInput, context: ContractBuildContext): ModelRequest;
-  validateSemantics(output: TOutput): readonly SemanticIssue[];
+  validateSemantics(output: TOutput, input: TInput): readonly SemanticIssue[];
 }
 
 export interface ContractRegistry {
@@ -48,16 +48,17 @@ export type PipelineResult<T> =
     }
   | {
       readonly ok: false;
-      readonly stage: 'empty' | 'parse' | 'schema' | 'semantic';
+      readonly stage: 'input' | 'empty' | 'parse' | 'schema' | 'semantic';
       readonly issues: readonly SemanticIssue[];
       readonly repairable: boolean;
     };
 
 export interface ResponsePipeline {
-  process<T>(
+  process<TInput, TOutput>(
     response: NormalizedModelResponse,
-    contract: PromptContract<unknown, T>,
-  ): PipelineResult<T>;
+    contract: PromptContract<TInput, TOutput>,
+    input: TInput,
+  ): PipelineResult<TOutput>;
 }
 
 export interface ResponsePipelineOptions {

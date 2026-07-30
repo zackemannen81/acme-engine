@@ -123,7 +123,7 @@ provider SDK, database library or application package.
 | --- | --- | --- |
 | `schemas.ts` | Strict runtime schemas for task input, contract input/output, state, delta and domain values | Accept valid fixtures; reject extra, malformed and non-finite values |
 | `contracts/observe-document.ts` | Immutable prompt contract, required capabilities, request construction and semantic validation | Golden request hash; schema/semantic failure tests |
-| `tasks/observe-document.ts` | `project()` context into contract input, `interpret()` output into candidates/state intent and `projectState()` applied decisions into the final delta | Deterministic contract/state projection and exact result fixtures |
+| `tasks/observe-document.ts` | `project()` context into contract input, `interpret(output, input, context)` into source-backed candidates/state intent and `projectState()` applied decisions into the final delta | Deterministic contract/state projection and exact result fixtures |
 | `memory-policy.ts` | Validate, identify, retrieve, resolve and lifecycle-manage narrative memories | Identity, equivalence, contradiction, merge, ranking and lifecycle tests |
 | `state.ts` | State/delta types, initial state, pure reducer and invariants | Revision-zero initialization, reducer purity and invariant matrix |
 | `module.ts` | Assemble namespace, schema versions, tasks and policy with `defineModule()` | Registry/conformance and immutable task map |
@@ -165,11 +165,18 @@ provider details into the prompt.
 The versioned output contains:
 
 - observations of type `character-fact`, `relationship` or `world-rule`
+- optional correction evidence on a character fact: target identity, exact
+  prior value, exact source quote and optional source locator
 - a non-empty scene summary with optional location/time
 - optional monotonic outline progress
 
 Every confidence is finite and in `[0, 1]`. Semantic validation rejects empty
 subjects, predicates, relationship endpoints, world rules and scene summaries.
+Correction fields are closed and non-empty. Input-bound contract semantics
+verify the quote as an exact code-point substring of the projected source, and
+interpretation binds the validated task input before retaining a
+`correctionEvidenceValidated: true` fact in the candidate value; prompt output
+cannot set that validation fact.
 
 ### Document, memory and state mapping
 
@@ -179,6 +186,8 @@ subjects, predicates, relationship endpoints, world rules and scene summaries.
 | Character fact | Memory candidate `narrative.character-fact` | Never copied raw into canonical state |
 | Relationship | Memory candidate `narrative.relationship` | Direction and endpoint identity are explicit |
 | World rule | Memory candidate `narrative.world-rule` | Contradictions remain auditable |
+| Alias authority | `NarrativeState.entityAliases` | Sole normalized-alias → entity-key authority |
+| Correction evidence | Character-fact candidate/record value plus generic provenance | Retain target, prior value, quote, locator and source document link |
 | Scene | `NarrativeDelta.scene` | Reducer replaces the current scene after validation |
 | Window entry | `NarrativeDelta.appendWindow` | Reducer appends and enforces configured maximum length |
 | Outline progress | `NarrativeDelta.outlineProgress` | Progress may advance but never regress |
@@ -189,6 +198,7 @@ subjects, predicates, relationship endpoints, world rules and scene summaries.
 The approved state contains:
 
 - `characters`
+- `entityAliases`
 - `relationships`
 - `worldRules`
 - current `scene`
@@ -205,6 +215,8 @@ source. The supplied `now` must not be replaced with current time.
 
 - create a new state value without mutating inputs
 - apply only the validated `NarrativeDelta`
+- add normalized alias assignments only when post-memory projection received
+  an applied create, reinforce or merge decision
 - replace the scene
 - append one window summary and retain the configured maximum
 - advance outline beats monotonically
@@ -216,6 +228,7 @@ source. The supplied `now` must not be replaced with current time.
 At minimum, reject:
 
 - empty scene summaries
+- normalized alias collisions or aliases targeting unknown character keys
 - duplicate normalized relationships
 - relationship endpoints that cannot resolve to narrative identities
 - duplicate world-rule identity keys
@@ -234,9 +247,13 @@ At minimum, reject:
 - world rule:
   `world-rule:<canonical-rule-key>`
 
-Canonicalization must be deterministic and versioned. It may use alias
-information projected from state during interpretation, but the memory policy
-must not call a model or store.
+ADR-0009 fixes `reference-text-normalization-1` and
+`narrative-entity-key-1`. `NarrativeState.entityAliases` is the only alias
+authority. Interpretation resolves normalized labels through that state
+projection and derives `narrative_entity_<sha256>` only for an unknown label.
+The candidate retains both observed label and resolved entity key. Prompt
+output and immutable module configuration cannot author a competing alias
+map, and the memory policy must not call a model or store.
 
 ### Resolution behavior
 
@@ -246,6 +263,12 @@ must not call a model or store.
 - contradictory character fact → `contest` by default
 - accepted explicit correction → `supersede-existing`
 - low-value/duplicate noise → `ignore`
+
+Supersession additionally requires the candidate identity to match the
+declared target, an active/contested record to contain the exact declared
+prior value and interpretation to have verified the exact quote against the
+source document. Missing or failed evidence can contest or reject the
+candidate but can never supersede.
 
 The policy supplies the complete resulting value and strength. Core owns IDs,
 timestamps, provenance, versions and mutation mechanics.
@@ -319,9 +342,9 @@ After ExecutionEngine exists:
 | Contract request | stable message ordering; exact schema; capability declaration; request-hash golden |
 | Semantic validation | empty identifiers; self/duplicate relationship policy; invalid outline status |
 | Projection | revision zero; populated state; bounded memories/documents; stable ordering; no mutation |
-| Interpretation | exact document kind/hash; three candidate kinds; provenance; optional progress; diagnostics |
-| Identity | aliases; case/spacing; directional relationships; stable world-rule key |
-| Resolution | create, reinforce, merge, contest, reject correction, accepted supersede, ignore |
+| Interpretation | exact document kind/hash; three candidate kinds; correction quote validation; provenance; optional progress; diagnostics |
+| Identity | ADR-0009 golden vector; aliases; collision/unknown target; case/spacing; directional relationships; stable world-rule key |
+| Resolution | create, reinforce, merge, contest; reject wrong identity/prior value/quote; accepted supersede; ignore |
 | Retrieval/lifecycle | relevance, contested handling, ties, limit, retain/update/forget |
 | Reducer | initial state, scene replacement, window trimming, outline monotonicity, purity |
 | Invariants | duplicate relationships/rules, unresolved identities, empty scene, outline regression |
@@ -365,27 +388,28 @@ Fixture updates require human review and a before/after digest rationale.
    `buildStateProjectionInput()` define the post-memory, task-owned bridge.
    Narrative must project only applied decisions; ignored/rejected candidates
    remain audit evidence and cannot drive memory-derived state.
-2. **Correction provenance.** The approved behavior permits supersession only
-   with explicit accepted correction provenance, but the current
-   `NarrativeContractOutput` does not carry that field.
-3. **Alias authority.** Decide whether alias mapping is canonical state,
-   memory, contract output or deterministic configuration; the policy cannot
-   query a provider or store.
+2. **Correction provenance — resolved.** ADR-0009 adds target identity, exact
+   prior value, exact source quote and optional locator to character-fact
+   output, then requires interpretation and policy checks before
+   supersession.
+3. **Alias authority — resolved.** ADR-0009 makes canonical
+   `NarrativeState.entityAliases` the sole authority and freezes
+   `narrative-entity-key-1`.
 4. **Shared module conformance.** Define the core-port-only suite in
    `@acme/testing` before claiming module conformance.
 
 See the bounded backlog proposals:
 
-- [Reference-module identity and provenance fields](../backlog/reference-module-identity-and-provenance-fields.md)
 - [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
 
-The resolved projection decision is
-[ADR-0008](../adr/0008-post-memory-domain-state-projection.md).
+The resolved projection and identity/provenance decisions are
+[ADR-0008](../adr/0008-post-memory-domain-state-projection.md) and
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md).
 
 ## Team review checklist
 
 - [ ] Do the state and memory ownership boundaries match the intended product?
-- [ ] Is the v1 alias/correction policy precise enough to golden-test?
+- [x] Is the v1 alias/correction policy precise enough to golden-test?
 - [ ] Are all prompt-contract semantics immutable under version `1.0.0`?
 - [ ] Is the narrative window limit versioned and fingerprinted?
 - [ ] Does every contradiction remain visible in audit evidence?
@@ -400,3 +424,4 @@ The resolved projection decision is
 - [ADR-0002 — Static task-typed composition](../adr/0002-static-task-typed-module-composition.md)
 - [ADR-0004 — Deterministic transition identity](../adr/0004-deterministic-transition-identity.md)
 - [ADR-0005 — Pure memory decision application](../adr/0005-pure-memory-decision-application.md)
+- [ADR-0009 — Reference-domain identity and provenance](../adr/0009-reference-domain-identity-and-provenance.md)

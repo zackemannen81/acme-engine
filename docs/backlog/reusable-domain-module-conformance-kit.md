@@ -36,6 +36,8 @@ is a separate cross-package implementation deliverable.
 - current `DomainModule`, `TaskDefinition` and `ModuleResult` contracts
 - `@acme/testing`
 - ADR-0008 post-memory state projection and its filtering invariants
+- ADR-0009 reference-domain identity/evidence contracts and golden vectors
+- ADR-0010 input-bound validation and interpretation contracts
 
 ## Suggested verification
 

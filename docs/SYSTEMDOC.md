@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-30
-Status: Approved architecture with pure engines, post-memory projection, in-memory Unit of Work and model mock
+Status: Approved architecture with pure engines, post-memory projection, reference identity contracts, in-memory Unit of Work and model mock
 
 This document describes long-lived system boundaries. It does not claim that
 the runtime engines currently exist. Exact contracts, storage schema,
@@ -38,6 +38,8 @@ persistence, scenarios or live provider behavior.
   required-capability semantics
 - versioned prompt-contract types backed by Zod runtime schemas
 - a strict response pipeline with empty, parse, schema and semantic stages
+- input schema validation before response inspection plus detached deeply
+  frozen contract input/output for input-bound semantic checks
 - explicit warnings for the permitted BOM and Markdown JSON-fence cleanup
 - rejection of schema coercion or other parsed-value transformations
 - immutable contract and module registries with deterministic lists
@@ -46,6 +48,8 @@ persistence, scenarios or live provider behavior.
   inference
 - explicit interpreted state intent plus required task-owned
   `projectState()` hooks
+- task interpretation explicitly receives the original typed task input;
+  future orchestration must pass the schema-validated immutable value
 - exact memory-candidate/decision correlation and filtered immutable
   state-projection input containing only applied decisions
 - state and memory envelopes/policy declarations required by module contracts
@@ -55,6 +59,49 @@ persistence, scenarios or live provider behavior.
 
 ExecutionEngine, durable adapters and reference-domain behavior are not
 implemented.
+
+## Implemented Input-Bound Contract Surface
+
+ADR-0010 closes the public contract gap discovered by ACME-0012:
+
+- `ResponsePipeline.process(response, contract, input)` validates contract
+  input before reading response text
+- invalid, non-JSON or schema-transforming input fails non-repairably at
+  `input`
+- semantic validation receives detached deeply frozen validated output and
+  contract input
+- `TaskDefinition.interpret(output, input, context)` binds original typed task
+  input to domain interpretation and preserves task inference
+
+The future ExecutionEngine must validate, detach, freeze and retain task input
+before reusing it for projection and interpretation. That orchestration is not
+implemented by ACME-0013.
+
+## Approved Reference-Domain Identity and Evidence
+
+ADR-0009 fixes the pre-implementation v1 identity/provenance boundary without
+adding domain vocabulary to core:
+
+- canonical `NarrativeState.entityAliases` is the only alias authority
+- `narrative-entity-key-1` deterministically derives unknown entity keys
+- Narrative character-fact supersession requires a matching target identity,
+  exact prior value and exact document quote validated during interpretation
+- `research-proposition-key-1` identifies the contract's canonical
+  proposition while explicit polarity distinguishes supporting and
+  contradicting evidence
+- `research-source-key-1` identifies a normalized URI, separately from
+  `research-source-independence-key-1`, which records the caller's declared
+  authority/basis assertion
+- Research claim memory values retain URI, publisher, retrieval time,
+  document key, locator, quote and both source keys; generic core provenance
+  continues to retain execution, contract, model-call and document links
+- verified/contested Research state references stable memory IDs rather than
+  duplicating complete evidence
+
+All four identifiers use `acme-cjson-1`, SHA-256, immutable algorithm names
+and documented golden vectors. They are module contracts, not implemented
+reference-module behavior. The remaining shared DomainModule conformance gate
+must be resolved before either reference package is activated.
 
 ## Implemented Post-Memory State Projection
 
@@ -324,8 +371,9 @@ These guides translate the approved baseline into proposed package layouts,
 component ownership, ordered build phases, decision gates and layered test
 matrices. They are implementation guidance, not evidence that either module
 exists. Both now use ADR-0008's post-memory state-projection boundary, require
-the same core path and forbid domain branches in core or concrete adapter
-dependencies in a module.
+ADR-0009's explicit domain identity/evidence contracts, follow the same core
+path and forbid domain branches in core or concrete adapter dependencies in a
+module.
 
 ## Remaining Implementation Baseline
 

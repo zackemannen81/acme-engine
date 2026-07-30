@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   createResponsePipeline,
@@ -13,13 +13,32 @@ interface Output {
   readonly value: number;
 }
 
+interface Input {
+  readonly minimum: number;
+  readonly evidence: {
+    readonly text: string;
+  };
+}
+
 function contract(options?: {
+  readonly inputSchema?: z.ZodType<Input>;
   readonly outputSchema?: z.ZodType<Output>;
   readonly semanticIssues?: readonly SemanticIssue[];
-}): PromptContract<unknown, Output> {
+  readonly validateSemantics?: (
+    output: Output,
+    input: Input,
+  ) => readonly SemanticIssue[];
+}): PromptContract<Input, Output> {
   return {
     ref: { id: 'example.output', version: '1.0.0' },
-    inputSchema: z.unknown(),
+    inputSchema:
+      options?.inputSchema ??
+      z
+        .object({
+          minimum: z.number(),
+          evidence: z.object({ text: z.string() }).strict(),
+        })
+        .strict(),
     outputSchema:
       options?.outputSchema ?? z.object({ value: z.number() }).strict(),
     requiredCapabilities: { structuredOutput: true },
@@ -32,9 +51,12 @@ function contract(options?: {
         jsonSchema: {},
       },
     }),
-    validateSemantics: () => options?.semanticIssues ?? [],
+    validateSemantics:
+      options?.validateSemantics ?? (() => options?.semanticIssues ?? []),
   };
 }
+
+const input: Input = { minimum: 0, evidence: { text: 'fixture' } };
 
 function response(text: string): NormalizedModelResponse {
   return {
@@ -52,7 +74,7 @@ describe('strict response pipeline', () => {
   const pipeline = createResponsePipeline();
 
   it('distinguishes empty output', () => {
-    const result = pipeline.process(response(' \n '), contract());
+    const result = pipeline.process(response(' \n '), contract(), input);
 
     expect(result).toMatchObject({
       ok: false,
@@ -62,7 +84,11 @@ describe('strict response pipeline', () => {
   });
 
   it('distinguishes strict JSON parse failures', () => {
-    const result = pipeline.process(response('prefix {"value":1}'), contract());
+    const result = pipeline.process(
+      response('prefix {"value":1}'),
+      contract(),
+      input,
+    );
 
     expect(result).toMatchObject({
       ok: false,
@@ -74,6 +100,7 @@ describe('strict response pipeline', () => {
     const result = pipeline.process(
       response('{"value":"not-a-number"}'),
       contract(),
+      input,
     );
 
     expect(result).toMatchObject({
@@ -88,6 +115,7 @@ describe('strict response pipeline', () => {
       contract({
         outputSchema: z.object({ value: z.coerce.number() }).strict(),
       }),
+      input,
     );
 
     expect(result).toMatchObject({
@@ -114,6 +142,7 @@ describe('strict response pipeline', () => {
           },
         ],
       }),
+      input,
     );
 
     expect(result).toMatchObject({
@@ -135,6 +164,7 @@ describe('strict response pipeline', () => {
           },
         ],
       }),
+      input,
     );
 
     expect(result).toEqual({
@@ -161,6 +191,123 @@ describe('strict response pipeline', () => {
         },
       ],
       parsedHash: sha256('{"value":1}'),
+    });
+  });
+
+  it('rejects invalid input before response inspection or semantics', () => {
+    const validateSemantics = vi.fn(() => []);
+    const unreadableResponse = {
+      ...response(''),
+      get text(): string {
+        throw new Error('response text must not be read');
+      },
+    };
+
+    const result = pipeline.process(
+      unreadableResponse,
+      contract({ validateSemantics }),
+      { minimum: Number.NaN, evidence: { text: 'fixture' } },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'input',
+      repairable: false,
+      issues: [{ code: 'CONTRACT_INPUT_SCHEMA' }],
+    });
+    expect(validateSemantics).not.toHaveBeenCalled();
+  });
+
+  it('rejects contract-input schema coercion', () => {
+    const result = pipeline.process(
+      response('{"value":1}'),
+      contract({
+        inputSchema: z
+          .object({
+            minimum: z.coerce.number(),
+            evidence: z.object({ text: z.string() }).strict(),
+          })
+          .strict(),
+      }),
+      {
+        minimum: '0',
+        evidence: { text: 'fixture' },
+      } as unknown as Input,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'input',
+      repairable: false,
+      issues: [{ code: 'CONTRACT_INPUT_SCHEMA_COERCION' }],
+    });
+  });
+
+  it('binds immutable detached input and output to semantic validation', () => {
+    const callerInput: Input = {
+      minimum: 1,
+      evidence: { text: 'exact evidence' },
+    };
+    let observedInput: Input | undefined;
+    let observedOutput: Output | undefined;
+
+    const result = pipeline.process(
+      response('{"value":2}'),
+      contract({
+        validateSemantics: (output, validatedInput) => {
+          observedInput = validatedInput;
+          observedOutput = output;
+          expect(Object.isFrozen(validatedInput)).toBe(true);
+          expect(Object.isFrozen(validatedInput.evidence)).toBe(true);
+          expect(Object.isFrozen(output)).toBe(true);
+          return output.value >= validatedInput.minimum
+            ? []
+            : [
+                {
+                  code: 'VALUE_BELOW_MINIMUM',
+                  path: ['value'],
+                  message: 'Value is below the supplied minimum.',
+                  severity: 'error',
+                },
+              ];
+        },
+      }),
+      callerInput,
+    );
+
+    expect(result).toMatchObject({ ok: true, value: { value: 2 } });
+    expect(observedInput).not.toBe(callerInput);
+    expect(observedInput?.evidence).not.toBe(callerInput.evidence);
+    expect(observedOutput).toEqual({ value: 2 });
+    expect(callerInput).toEqual({
+      minimum: 1,
+      evidence: { text: 'exact evidence' },
+    });
+  });
+
+  it('allows semantic validation to compare output with supplied input', () => {
+    const result = pipeline.process(
+      response('{"value":1}'),
+      contract({
+        validateSemantics: (output, validatedInput) =>
+          output.value >= validatedInput.minimum
+            ? []
+            : [
+                {
+                  code: 'VALUE_BELOW_MINIMUM',
+                  path: ['value'],
+                  message: 'Value is below the supplied minimum.',
+                  severity: 'error',
+                },
+              ],
+      }),
+      { minimum: 2, evidence: { text: 'fixture' } },
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'semantic',
+      issues: [{ code: 'VALUE_BELOW_MINIMUM' }],
     });
   });
 });

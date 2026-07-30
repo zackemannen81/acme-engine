@@ -405,7 +405,10 @@ export interface PromptContract<TInput, TOutput> {
   readonly requiredCapabilities: Partial<ModelCapabilities>;
   readonly retention: "none" | "hash-only" | "encrypted-payload";
   buildRequest(input: TInput, context: ContractBuildContext): ModelRequest;
-  validateSemantics(output: TOutput): readonly SemanticIssue[];
+  validateSemantics(
+    output: TOutput,
+    input: TInput,
+  ): readonly SemanticIssue[];
 }
 ```
 
@@ -509,24 +512,30 @@ export type PipelineResult<T> =
     }
   | {
       readonly ok: false;
-      readonly stage: "empty" | "parse" | "schema" | "semantic";
+      readonly stage: "input" | "empty" | "parse" | "schema" | "semantic";
       readonly issues: readonly SemanticIssue[];
       readonly repairable: boolean;
     };
 
 export interface ResponsePipeline {
-  process<T>(
+  process<TInput, TOutput>(
     response: NormalizedModelResponse,
-    contract: PromptContract<unknown, T>,
-  ): PipelineResult<T>;
+    contract: PromptContract<TInput, TOutput>,
+    input: TInput,
+  ): PipelineResult<TOutput>;
 }
 ```
 
-The pipeline performs, in order: non-empty check, JSON extraction, strict
-parse, output schema parse and semantic validation. It MUST NOT silently
-coerce a semantically different value. Deterministic syntax cleanup MAY
+The pipeline performs, in order: input schema validation, input
+canonical-value preservation, non-empty check, JSON extraction, strict parse,
+output schema parse and input-bound semantic validation. Invalid input fails
+non-repairably at `input` before response text is inspected. Both validated
+input and output are canonical-JSON-cloned, detached and deeply frozen before
+`validateSemantics(output, input)`. The pipeline MUST NOT silently coerce a
+semantically different input or output value. Deterministic syntax cleanup MAY
 remove a single Markdown JSON fence and byte-order mark; every cleanup is
-recorded.
+recorded. See
+[ADR-0010](../adr/0010-input-bound-validation-and-interpretation.md).
 
 Repair is an execution policy, not a parser feature. A repair request is a new
 logged model call with its own deterministic call key and a bounded attempt
@@ -564,6 +573,7 @@ export interface TaskDefinition<
   ): Promise<TContractInput> | TContractInput;
   interpret(
     output: TContractOutput,
+    input: TInput,
     context: ExecutionReadContext<TState>,
   ): Promise<ModuleResult<TDelta>> | ModuleResult<TDelta>;
   projectState(
@@ -644,6 +654,14 @@ export interface ModuleRegistry {
 
 The composition helper MAY retain stronger generics than the erased runtime
 registry. Runtime schemas remain authoritative at process boundaries.
+
+The future ExecutionEngine validates and immutably retains task input before
+both projection and interpretation. `project()` derives typed contract input
+from that task input plus read context. Response semantics receive the
+validated contract input, while `interpret()` receives the original validated
+task input needed to construct exact source documents and domain candidates.
+No mutable task-instance closure participates. See
+[ADR-0010](../adr/0010-input-bound-validation-and-interpretation.md).
 
 ### 10.2 Module result
 
@@ -1765,9 +1783,23 @@ interface NarrativeObserveInput {
   text: string;
 }
 
+interface NarrativeCorrectionEvidence {
+  targetIdentityKey: string;
+  supersedesValue: string;
+  evidenceQuote: string;
+  sourceLocator?: string;
+}
+
 interface NarrativeContractOutput {
   observations: Array<
-    | { type: "character-fact"; subject: string; predicate: string; value: string; confidence: number }
+    | {
+        type: "character-fact";
+        subject: string;
+        predicate: string;
+        value: string;
+        confidence: number;
+        correction?: NarrativeCorrectionEvidence;
+      }
     | { type: "relationship"; subject: string; relation: string; object: string; confidence: number }
     | { type: "world-rule"; rule: string; confidence: number }
   >;
@@ -1777,6 +1809,7 @@ interface NarrativeContractOutput {
 
 interface NarrativeState {
   characters: Record<string, { displayName: string; attributes: Record<string, string> }>;
+  entityAliases: Record<string, string>;
   relationships: Array<{ subjectId: string; relation: string; objectId: string }>;
   worldRules: Array<{ identityKey: string; rule: string }>;
   scene: { location?: string; time?: string; summary: string } | null;
@@ -1785,7 +1818,13 @@ interface NarrativeState {
 }
 
 type NarrativeDelta = {
-  observations: NarrativeContractOutput["observations"];
+  memoryEffects: Array<{
+    identityKey: string;
+    memoryIds: string[];
+    action: "apply" | "contest" | "supersede";
+    observation: NarrativeContractOutput["observations"][number];
+  }>;
+  aliasAssignments: Array<{ normalizedAlias: string; entityKey: string }>;
   scene: NarrativeContractOutput["scene"];
   outlineProgress?: NarrativeContractOutput["outlineProgress"];
   appendWindow: { documentKey: string; summary: string };
@@ -1796,16 +1835,29 @@ type NarrativeDelta = {
 
 - The document is stored as kind `narrative.source`.
 - Observations become memory candidates; they are never copied raw into state.
-- The memory policy normalizes entity aliases and creates stable identity keys.
+- Canonical `NarrativeState.entityAliases` is the sole alias authority.
+  `narrative-entity-key-1` derives a stable key only when no authoritative
+  normalized alias exists. Contract output may refer to labels but cannot
+  declare alias authority.
 - Contradictory character facts become contested unless the output explicitly
-  supplies correction provenance accepted by policy.
+  supplies the target identity, prior value and exact source quote required by
+  ADR-0009. Interpretation checks the quote against the supplied document;
+  policy rechecks identity and prior value before supersession.
 - The reducer applies resolved memory operations projected into the delta,
+  adds alias assignments only from applied decisions,
   advances outline beats monotonically and keeps the last configurable
   `narrativeWindow` entries.
-- Invariants reject unknown outline regressions, duplicate normalized
-  relationships and empty scene summaries.
+- Invariants reject alias collisions, aliases targeting unknown entities,
+  unknown outline regressions, duplicate normalized relationships and empty
+  scene summaries.
 - A deterministic age/tone evaluator MAY be registered by an application,
   but it is not part of core.
+
+Alias normalization, correction placement, identity serialization and the
+golden vector are fixed by
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md). A future
+alias merge/rename is a separate explicit domain task; neither model output
+nor module configuration silently rewrites alias authority.
 
 This slice deliberately extracts useful ideas from the reference system:
 typed facts, explicit narrative window, framework/primitive selection as
@@ -1841,13 +1893,19 @@ interface ResearchEvidenceInput {
     title?: string;
     retrievedAt: string;
     publisher?: string;
+    independence: {
+      authority: string;
+      basis: "publisher" | "editorial-group" | "origin" | "fixture";
+    };
   };
   text: string;
 }
 
 interface ResearchContractOutput {
   claims: Array<{
+    proposition: string;
     statement: string;
+    position: "supports" | "contradicts";
     evidenceQuote?: string;
     confidence: number;
     sourceLocator?: string;
@@ -1856,8 +1914,17 @@ interface ResearchContractOutput {
 }
 
 interface ResearchState {
-  verifiedClaims: Array<{ identityKey: string; statement: string; sourceCount: number }>;
-  contestedClaims: Array<{ identityKey: string; variants: string[] }>;
+  verifiedClaims: Array<{
+    identityKey: string;
+    statement: string;
+    independentSourceCount: number;
+    memoryIds: string[];
+  }>;
+  contestedClaims: Array<{
+    identityKey: string;
+    variants: string[];
+    memoryIds: string[];
+  }>;
   openQuestions: Array<{ identityKey: string; question: string }>;
 }
 
@@ -1866,6 +1933,8 @@ type ResearchDelta = {
     identityKey: string;
     action: "verify" | "contest" | "defer";
     statement: string;
+    independentSourceCount: number;
+    memoryIds: string[];
   }>;
   questions: string[];
 };
@@ -1874,15 +1943,34 @@ type ResearchDelta = {
 ### 17.2 Behavior
 
 - The source document is stored as `research.evidence`.
-- Source metadata and locator are mandatory provenance for every claim memory.
+- `research-source-key-1` identifies a normalized absolute HTTP(S) source URI.
+  `research-source-independence-key-1` separately identifies the caller's
+  explicit authority/basis assertion. Different document IDs, URIs or
+  publisher labels alone do not establish independence.
+- `research-proposition-key-1` derives identity from the contract's canonical
+  proposition. The source-specific statement and its `supports` or
+  `contradicts` position remain retained evidence; the pure policy performs no
+  fuzzy or model-backed equivalence.
+- Source URI, publisher, retrieval time, document key, locator, optional quote
+  and both source keys are mandatory domain evidence for every claim memory,
+  with optional fields retained when supplied. Generic `ProvenanceRef`
+  continues to carry execution, contract, model-call and document links.
 - One source cannot by itself create a `verifiedClaim` under the default
   policy; it creates a candidate/deferred claim.
 - Semantically equivalent independent sources reinforce a claim. A
-  configurable threshold promotes it to verified.
+  configurable threshold promotes it to verified. In v1, equivalent means
+  exact equality under `research-proposition-key-1`; source counts use unique
+  independence keys.
 - A contradiction creates or updates `contestedClaims`; it never overwrites
   an earlier claim silently.
 - The reducer deduplicates questions by policy identity and rejects a claim
-  appearing in both verified and contested collections.
+  appearing in both verified and contested collections. Verified and
+  contested state entries retain stably ordered memory IDs so audit can
+  traverse to complete domain evidence and generic provenance.
+
+The exact schemas, normalization, evidence ordering and golden vectors are
+fixed by
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md).
 
 Acceptance uses the exact same engine and stores as Narrative:
 

@@ -121,7 +121,7 @@ library or application package.
 | --- | --- | --- |
 | `schemas.ts` | Strict schemas for evidence input, contract input/output, source metadata, claims, state and delta | Valid/invalid evidence and closed-shape tests |
 | `contracts/observe-evidence.ts` | Immutable prompt contract and semantic validation | Golden request hash and claim/locator validation |
-| `tasks/observe-evidence.ts` | Project evidence/context, interpret auditable candidates/state intent and project applied decisions into the final delta | Deterministic contract/state projection and source/claim/question fixtures |
+| `tasks/observe-evidence.ts` | Project evidence/context, interpret output with validated task input into auditable source-backed candidates/state intent and project applied decisions into the final delta | Deterministic contract/state projection and source/claim/question fixtures |
 | `memory-policy.ts` | Identity, independence, corroboration, contradiction, retrieval and lifecycle | Multi-source policy matrix |
 | `state.ts` | Initial research state, pure reducer and invariants | Promotion/contest/question tests |
 | `module.ts` | Assemble namespace, versions, task and policy | Registry/conformance and immutable task map |
@@ -140,20 +140,27 @@ interface ResearchEvidenceInput {
     title?: string;
     retrievedAt: string;
     publisher?: string;
+    independence: {
+      authority: string;
+      basis: "publisher" | "editorial-group" | "origin" | "fixture";
+    };
   };
   text: string;
 }
 ```
 
 The schema should require a non-empty document key, absolute supported URI,
-canonical recorded timestamp and non-empty evidence text. Retrieval happens
-before ACME execution; the module must never dereference the URI.
+canonical recorded timestamp, non-empty evidence text and a closed explicit
+independence assertion. Retrieval happens before ACME execution; the module
+must never dereference the URI or infer editorial ownership from external
+data.
 
 ### Recommended contract input
 
 `project()` should provide:
 
 - source document key, immutable source metadata and evidence text
+- explicit source-independence authority and basis
 - relevant active/contested claims and their source summaries
 - open questions relevant to the evidence
 - the verification threshold and identity-policy version as explicit,
@@ -167,21 +174,27 @@ Order claims/sources/questions deterministically.
 
 The output contains:
 
-- claim statements with optional evidence quote and source locator
+- a context-complete canonical proposition, source-specific statement and
+  `supports` or `contradicts` position for each claim
+- optional evidence quote and source locator
 - finite confidence in `[0, 1]`
 - open questions
 
-Semantic validation rejects empty statements/questions, locators without a
-source, quotes not present in the supplied evidence when exact quote checking
-is enabled, and duplicate output entries under the selected normalization.
+Input-bound semantic validation rejects empty statements/questions, locators
+without the supplied source, quotes not present in the projected evidence when
+exact quote checking is enabled, and duplicate
+`(proposition key, position, statement, locator)` entries. The policy treats
+claims as equivalent only when `research-proposition-key-1` matches; it does
+not fuzzy-match paraphrases.
 
 ### Document, memory and state mapping
 
 | Input/output/effect | Domain representation | Rule |
 | --- | --- | --- |
 | Source evidence | Document kind `research.evidence` | Persist exact supplied evidence and metadata |
-| Source identity | Recommended memory `research.source` | Derived from immutable source metadata, never fetched |
-| Claim | Memory candidate `research.claim` | Includes source document/locator evidence |
+| Source identity | Recommended memory `research.source` | `research-source-key-1` from normalized URI; never fetched |
+| Source independence | Claim/source value | `research-source-independence-key-1` from caller-declared authority and basis |
+| Claim | Memory candidate `research.claim` | Includes proposition polarity and complete source/document/locator evidence |
 | Open question | Memory candidate `research.question` | Deduplicated by deterministic question identity |
 | Corroboration | Claim memory resolution | Independent sources reinforce and may promote |
 | Contradiction | Contested claim memories/state | Never overwrites earlier evidence silently |
@@ -208,7 +221,8 @@ randomness, storage or network access.
 - keep claim identity unique within each collection
 - remove or move a verified claim when it becomes contested according to the
   approved transition rule
-- maintain source counts from approved policy decisions
+- maintain independent-source counts and stably sorted memory-ID evidence
+  references from approved post-memory decisions
 - deduplicate open questions by deterministic identity
 - preserve stable ordering for hash/replay behavior
 
@@ -218,7 +232,8 @@ At minimum, reject:
 
 - a claim identity in both verified and contested collections
 - duplicate claim/question identities
-- verified claims below the configured independent-source threshold
+- verified claims below the configured independent-source threshold or
+  without memory evidence references
 - non-positive source counts
 - contested claims without at least two distinct variants/evidence positions
 - empty statements, variants or questions
@@ -228,26 +243,32 @@ At minimum, reject:
 ### Recommended memory value families
 
 - source: normalized URI, publisher/authority key, retrieval timestamp and
-  document key
-- claim: proposition identity, statement variants, evidence references,
-  independent-source keys and domain status
+  document key plus explicit independence assertion
+- claim: proposition identity and polarity, statement variants, complete
+  evidence references, independent-source keys and domain status
 - question: normalized question identity and provenance
 
-Source metadata and source locator must remain attached to every claim memory
-as domain value and/or document-key provenance. Core's generic
-`ProvenanceRef` alone does not contain publisher, URI or locator semantics.
+Source URI, publisher, retrieval time, document key, locator, optional quote,
+source key and independence key remain attached to every claim memory as
+domain value. Core's generic `ProvenanceRef` additionally retains execution,
+contract, model-call and document links; it does not contain publisher, URI,
+locator or independence semantics. State stores sorted memory IDs rather than
+duplicating the evidence payload.
 
 ### Identity and independence
 
-- source identity uses a versioned normalized URI/source key
+- source identity uses ADR-0009's versioned normalized URI key
 - question identity uses deterministic lexical normalization
-- claim identity requires a versioned proposition-key strategy
-- source independence uses an explicit versioned key, not merely different
-  document IDs
+- claim identity uses `research-proposition-key-1` over the contract's
+  normalized context-complete canonical proposition
+- source independence uses
+  `research-source-independence-key-1` over caller-declared authority and
+  basis, not different document IDs, URIs or publisher labels
 
-The policy cannot call a model to decide equivalence. If semantic claim
-identity cannot be derived deterministically from the approved output, the
-contract must be revised before implementation.
+The policy cannot call a model to decide equivalence. Supporting and
+contradicting evidence target the same proposition key through the explicit
+contract `position`. If two outputs normalize to different propositions, v1
+treats them as distinct rather than guessing.
 
 ### Resolution behavior
 
@@ -330,13 +351,13 @@ engine and stores as Narrative.
 
 | Area | Required cases |
 | --- | --- |
-| Input/output schemas | valid minimal/full source; invalid URI/timestamp; empty text/claim/question; confidence bounds; extra keys |
+| Input/output schemas | valid minimal/full source and independence assertion; invalid URI/timestamp/authority/basis; empty text/proposition/statement/question; confidence bounds; extra keys |
 | Contract request | stable ordering; exact evidence/source fields; capability declaration; request-hash golden |
 | Semantic validation | quote/locator validation; duplicate claims/questions; unsupported source metadata |
 | Projection | revision zero; existing verified/contested claims; bounded context; stable order; no mutation |
-| Interpretation | exact document kind/hash; source/claim/question candidates; locator/provenance; diagnostics |
-| Source identity | URI normalization; publisher/source key; duplicate document vs independent source |
-| Claim identity | lexical variants; equivalent proposition key; distinct claims; version sensitivity |
+| Interpretation | exact document kind/hash; source/claim/question candidates; polarity; complete evidence plus generic provenance; diagnostics |
+| Source identity | ADR-0009 golden vectors; URI normalization; same authority across documents/URIs; distinct declared authorities |
+| Claim identity | ADR-0009 golden vector; normalization variants; support/contradiction same key; distinct propositions; version sensitivity |
 | Resolution | first-source defer; same-source duplicate; independent reinforce; threshold verify; contradiction contest; ignore |
 | Retrieval/lifecycle | verified/contested reasons; source diversity; ties/limit; retain/update/forget |
 | Reducer/invariants | verify/contest/defer; source counts; question dedupe; dual-status rejection; purity |
@@ -382,28 +403,31 @@ No fixture may fetch its URI or regenerate expected output automatically.
    `buildStateProjectionInput()` define the post-memory, task-owned bridge.
    Research promotion/contest projection receives applied decisions only;
    ignored/rejected candidates remain audit evidence.
-2. **Claim proposition identity.** The approved output contains a statement
-   but no stable proposition key. Semantic equivalence cannot rely on a model
-   call inside the pure memory policy.
-3. **Source independence.** Define a versioned independence key and how
-   publisher, URI/domain and document identity contribute.
-4. **Evidence/provenance shape.** Decide where source locator, quote and
-   independence metadata live so they remain queryable and auditable.
+2. **Claim proposition identity — resolved.** ADR-0009 adds a canonical
+   proposition and explicit support/contradiction position, then freezes
+   `research-proposition-key-1`.
+3. **Source independence — resolved.** ADR-0009 separates normalized URI
+   source identity from the caller's explicit versioned authority/basis
+   assertion; document and URI differences alone do not count.
+4. **Evidence/provenance shape — resolved.** ADR-0009 retains complete
+   source/locator/quote/independence evidence in the claim memory value,
+   generic traceability in `ProvenanceRef` and sorted memory references in
+   state.
 5. **Shared module conformance.** Define the same core-port-only suite used by
    NarrativeModule.
 
 See the bounded backlog proposals:
 
-- [Reference-module identity and provenance fields](../backlog/reference-module-identity-and-provenance-fields.md)
 - [Reusable DomainModule conformance kit](../backlog/reusable-domain-module-conformance-kit.md)
 
-The resolved projection decision is
-[ADR-0008](../adr/0008-post-memory-domain-state-projection.md).
+The resolved projection and identity/provenance decisions are
+[ADR-0008](../adr/0008-post-memory-domain-state-projection.md) and
+[ADR-0009](../adr/0009-reference-domain-identity-and-provenance.md).
 
 ## Team review checklist
 
-- [ ] What is the v1 proposition identity algorithm?
-- [ ] What makes two sources independent?
+- [x] What is the v1 proposition identity algorithm?
+- [x] What makes two sources independent?
 - [ ] Is the verification threshold immutable and versioned?
 - [ ] Can every verified/contested state entry be traced to source documents?
 - [ ] Does contradictory evidence preserve all earlier variants?
@@ -418,3 +442,4 @@ The resolved projection decision is
 - [ADR-0002 — Static task-typed composition](../adr/0002-static-task-typed-module-composition.md)
 - [ADR-0004 — Deterministic transition identity](../adr/0004-deterministic-transition-identity.md)
 - [ADR-0005 — Pure memory decision application](../adr/0005-pure-memory-decision-application.md)
+- [ADR-0009 — Reference-domain identity and provenance](../adr/0009-reference-domain-identity-and-provenance.md)

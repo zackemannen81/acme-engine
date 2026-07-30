@@ -27,15 +27,26 @@ function schemaIssuePath(
 }
 
 function failed<T>(
-  stage: 'empty' | 'parse' | 'schema' | 'semantic',
+  stage: 'input' | 'empty' | 'parse' | 'schema' | 'semantic',
   issues: readonly SemanticIssue[],
+  repairable = true,
 ): PipelineResult<T> {
   return {
     ok: false,
     stage,
     issues,
-    repairable: true,
+    repairable,
   };
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) {
+      deepFreeze(child);
+    }
+  }
+  return value;
 }
 
 class StrictResponsePipeline implements ResponsePipeline {
@@ -45,10 +56,63 @@ class StrictResponsePipeline implements ResponsePipeline {
     this.#hashing = options.hashing ?? nodeHashing;
   }
 
-  process<T>(
+  process<TInput, TOutput>(
     response: NormalizedModelResponse,
-    contract: PromptContract<unknown, T>,
-  ): PipelineResult<T> {
+    contract: PromptContract<TInput, TOutput>,
+    input: TInput,
+  ): PipelineResult<TOutput> {
+    const inputResult = contract.inputSchema.safeParse(input);
+    if (!inputResult.success) {
+      return failed(
+        'input',
+        inputResult.error.issues.map((schemaIssue) =>
+          issue(
+            'CONTRACT_INPUT_SCHEMA',
+            schemaIssue.message,
+            'error',
+            schemaIssuePath(schemaIssue.path),
+          ),
+        ),
+        false,
+      );
+    }
+
+    let inputCanonical: string;
+    let validatedInputCanonical: string;
+    try {
+      inputCanonical = this.#hashing.canonicalJson(input as JsonValue);
+      validatedInputCanonical = this.#hashing.canonicalJson(
+        inputResult.data as JsonValue,
+      );
+    } catch {
+      return failed(
+        'input',
+        [
+          issue(
+            'CONTRACT_INPUT_NON_JSON_VALUE',
+            'Validated contract input must remain a JSON value.',
+          ),
+        ],
+        false,
+      );
+    }
+
+    if (inputCanonical !== validatedInputCanonical) {
+      return failed(
+        'input',
+        [
+          issue(
+            'CONTRACT_INPUT_SCHEMA_COERCION',
+            'Input schema changed the supplied JSON value.',
+          ),
+        ],
+        false,
+      );
+    }
+
+    const semanticInput = deepFreeze(
+      JSON.parse(validatedInputCanonical) as TInput,
+    );
     const cleanupWarnings: SemanticIssue[] = [];
     let text = response.text;
 
@@ -144,7 +208,13 @@ class StrictResponsePipeline implements ResponsePipeline {
       ]);
     }
 
-    const semanticIssues = contract.validateSemantics(schemaResult.data);
+    const semanticOutput = deepFreeze(
+      JSON.parse(validatedCanonical) as TOutput,
+    );
+    const semanticIssues = contract.validateSemantics(
+      semanticOutput,
+      semanticInput,
+    );
     const semanticErrors = semanticIssues.filter(
       ({ severity }) => severity === 'error',
     );
@@ -154,7 +224,7 @@ class StrictResponsePipeline implements ResponsePipeline {
 
     return {
       ok: true,
-      value: schemaResult.data,
+      value: semanticOutput,
       warnings: Object.freeze([...cleanupWarnings, ...semanticIssues]),
       parsedHash: this.#hashing.sha256(validatedCanonical),
     };
