@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 multi-step orchestration or live provider behavior exists.
@@ -14,13 +14,14 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - strict ESM TypeScript project references
 - `@acme/core` contract package, `@acme/adapter-memory`,
   `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
-  `@acme/module-narrative`, reusable repository/gateway/module conformance
-  support in `@acme/testing` and the behavior-free `@acme/cli`
+  `@acme/module-narrative`, `@acme/module-research`, reusable
+  repository/gateway/module conformance support in `@acme/testing` and the
+  behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
-- negative fixtures proving forbidden core-to-app and core-to-SQLite-driver
-  dependencies fail
+- negative fixtures proving forbidden core-to-app, module-to-adapter,
+  module-to-module and core-to-SQLite-driver dependencies fail
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
@@ -63,7 +64,7 @@ multi-step scenarios or live provider behavior.
 - portable immutable replay read-set and prepared-commit evidence
 - versioned `acme-operation-digest-1` prepared-commit hashing
 
-ResearchModule behavior is not implemented.
+Two reference domains now exercise this contract layer.
 
 ## Implemented Input-Bound Contract Surface
 
@@ -104,8 +105,8 @@ adding domain vocabulary to core:
 
 All four identifiers use `acme-cjson-1`, SHA-256, immutable algorithm names
 and documented golden vectors. Narrative entity identity is implemented by
-`@acme/module-narrative`; Research identity remains a module contract awaiting
-implementation.
+`@acme/module-narrative`; the three Research identifiers are implemented by
+`@acme/module-research`. Every published golden vector is asserted by test.
 
 ## Approved Narrative Knowledge and Context Ownership
 
@@ -148,6 +149,38 @@ The module runs the unchanged shared DomainModule conformance suite and
 contains no concrete adapter, provider, database, app or testing-support
 dependency. It does not invoke a model, write a repository or claim the Phase
 5 acceptance scenario; those remain ExecutionEngine responsibilities.
+
+## Implemented ResearchModule
+
+`@acme/module-research` implements the bounded module-level phases 1–4 and is
+the second reference domain:
+
+- strict evidence-input, contract-input/output, source, claim, question, state
+  and delta schemas, including absolute credential-free source URIs and
+  canonical UTC retrieval timestamps
+- ADR-0009 `research-source-key-1`, `research-source-independence-key-1` and
+  `research-proposition-key-1`, each reproducing its published golden vector
+- immutable `research.observe-evidence@1.0.0` request construction with the
+  verification threshold and identity-policy version as fixed configuration
+  facts, never model-supplied
+- input-bound semantic validation rejecting quotes absent from the supplied
+  evidence, locators without that source, and duplicate claims or questions
+- interpretation into one evidence document plus source, claim and question
+  candidates, each claim retaining complete domain evidence alongside generic
+  core provenance
+- a memory policy where corroboration counts distinct declared independence
+  keys only, duplicate evidence from one authority stays auditable without
+  raising the count, and contradictory evidence contests the claim instead of
+  overwriting the earlier position
+- pure post-memory projection that derives verify, contest and defer decisions
+  from applied decisions and prior records, never from model output
+- pure state initialization, reduction and invariants that reject dual status,
+  sub-threshold verification and evidence-free claims
+
+Supporting and contradicting evidence share one proposition identity, so a
+contradiction contests the same claim rather than creating a rival record. The
+module runs the unchanged shared DomainModule conformance suite. It does not
+invoke a model, write a repository or claim the phase 5 acceptance scenario.
 
 ## Implemented DomainModule Conformance
 
@@ -467,13 +500,16 @@ normalization remains future work.
 - Domain events and outbox rows commit together.
 - No production database decision has been made.
 
-## Initial Domain Proof
+## Domain Proof
 
-- NarrativeModule — implemented at the pure module boundary
-- ResearchModule — not implemented
+- NarrativeModule — implemented, including its offline acceptance scenario
+- ResearchModule — implemented at the pure module boundary; its acceptance
+  scenario is not built
 
-Core is not accepted as domain-neutral until both use it without domain
-branches in core.
+Both domains use the same core, the same shared conformance suite and the same
+memory, state and post-memory projection mechanics, with no domain branch in
+core. The remaining evidence for domain neutrality is the Research acceptance
+scenario through the ExecutionEngine.
 
 The team-facing construction and verification plans are:
 
@@ -483,7 +519,8 @@ The team-facing construction and verification plans are:
 These guides translate the approved baseline into package layouts, component
 ownership, ordered build phases, decision gates and layered test matrices.
 Narrative phases 1–5 are implemented, including its deterministic offline
-acceptance scenario. Research remains implementation guidance only.
+acceptance scenario. Research phases 1–4 are implemented; its phase 5
+acceptance scenario is not.
 Both use ADR-0008's post-memory state-projection boundary, require ADR-0009's
 explicit domain identity/evidence contracts, follow the same core path and
 forbid domain branches in core or concrete adapter dependencies in a module.

@@ -109,6 +109,30 @@ acme-engine/
 │   │   │   └── state.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
+│   ├── module-research/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── contracts/
+│   │   │   │   └── observe-evidence.ts
+│   │   │   ├── tasks/
+│   │   │   │   └── observe-evidence.ts
+│   │   │   ├── identity.ts
+│   │   │   ├── immutable.ts
+│   │   │   ├── index.ts
+│   │   │   ├── memory-policy.ts
+│   │   │   ├── module.ts
+│   │   │   ├── schemas.ts
+│   │   │   └── state.ts
+│   │   ├── test/
+│   │   │   ├── fixtures.ts
+│   │   │   ├── identity.test.ts
+│   │   │   ├── memory-policy.test.ts
+│   │   │   ├── observe-evidence.test.ts
+│   │   │   ├── schemas.test.ts
+│   │   │   └── state.test.ts
+│   │   └── test-d/
+│   │       └── task-inference.test-d.ts
 │   └── testing/
 │       ├── package.json
 │       ├── tsconfig.json
@@ -127,7 +151,8 @@ acme-engine/
 │   │   ├── adapter-model-mock.test.ts
 │   │   ├── adapter-sqlite.test.ts
 │   │   ├── domain-module.test.ts
-│   │   └── module-narrative.test.ts
+│   │   ├── module-narrative.test.ts
+│   │   └── module-research.test.ts
 │   ├── fixtures/
 │   │   └── neutral-execution.ts
 │   ├── integration/
@@ -141,7 +166,8 @@ acme-engine/
 │   │   └── fixtures/
 │   │       ├── packages/core/src/forbidden.ts
 │   │       ├── packages/core/src/forbidden-driver.ts
-│   │       └── packages/module-fixture/src/forbidden.ts
+│   │       ├── packages/module-fixture/src/forbidden.ts
+│   │       └── packages/module-fixture/src/forbidden-module.ts
 │   ├── docs/
 │   │   └── check-docs.mjs
 │   └── typescript/
@@ -194,6 +220,7 @@ acme-engine/
 │   │   ├── ACME-0019_acme-0018-charter-hardening.md
 │   │   ├── ACME-0020_post-merge-execution-documentation-repair.md
 │   │   ├── ACME-0021_durable-sqlite-persistence.md
+│   │   ├── ACME-0022_research-module-observe-evidence.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -251,23 +278,27 @@ content remains intentionally omitted here.
 - `@acme/module-narrative`: strict Narrative v1 schemas, deterministic
   observe-document contract/task, pure state behavior and domain-owned memory
   policy.
+- `@acme/module-research`: strict Research v1 schemas, ADR-0009 proposition,
+  source and independence identity, deterministic observe-evidence
+  contract/task, corroboration and contradiction policy, and a pure reducer.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway and
   DomainModule conformance plus typed test support.
 - `@acme/cli`: behavior-free composition-root skeleton importing
   `@acme/core`.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
-  fixture verification.
+  core, module, cross-module and SQLite-driver fixture verification.
 - `tooling/docs/`: internal Markdown link and fence verification.
 - `.github/workflows/ci.yml`: secret-free mirror of local verification gates.
 
 ## Planned Structure
 
 The design specification retains the future package map for the live-model
-adapter, ResearchModule and general scenarios. Those files and directories must
-be added only by explicitly activated tasks. NarrativeModule phases 1–5, the
-bounded ExecutionEngine and the durable SQLite adapter are implemented in the
-workspace.
+adapter and general scenarios. Those files and directories must be added only
+by explicitly activated tasks. NarrativeModule phases 1–5, ResearchModule
+phases 1–4, the bounded ExecutionEngine and the durable SQLite adapter are
+implemented in the workspace. The Research offline acceptance scenario
+(phase 5) is not.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions

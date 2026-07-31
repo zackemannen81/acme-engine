@@ -20,6 +20,10 @@ const moduleFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden.ts',
 );
+const crossModuleFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden-module.ts',
+);
 const driverFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/core/src/forbidden-driver.ts',
@@ -121,10 +125,14 @@ verifyForbiddenFixture(
   'domain-modules-do-not-depend-on-apps-adapters-or-testing',
 );
 verifyForbiddenFixture(
+  crossModuleFixturePath,
+  'domain-modules-do-not-depend-on-other-modules',
+);
+verifyForbiddenFixture(
   driverFixturePath,
   'sqlite-driver-stays-behind-its-adapter',
 );
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/module/driver fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/driver fixture checks passed.\n',
 );

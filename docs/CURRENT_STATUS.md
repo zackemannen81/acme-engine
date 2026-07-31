@@ -113,6 +113,12 @@ There is currently:
 - a reusable non-empty public-core-only `DomainModule` conformance suite in
   `@acme/testing`, proven unchanged against testing-owned producer and empty
   analyzer fixtures
+- `@acme/module-research` with strict v1 schemas, deterministic
+  `research.observe-evidence@1.0.0`, ADR-0009 proposition/source/independence
+  identity, corroboration and contradiction policy, a pure reducer with
+  invariants and post-memory verification derived only from applied decisions
+- Research-owned execution of the unchanged shared DomainModule conformance
+  suite, proving core stays domain-neutral across two reference domains
 - `@acme/module-narrative` with strict v1 schemas, deterministic
   `narrative.observe-document@1.0.0`, pure state/reducer/invariants and a
   domain-owned memory policy
@@ -133,13 +139,14 @@ There is currently:
   gateway or ID allocation
 - a typed `@acme/cli` composition-root skeleton
 - automated dependency rules, a core vocabulary guard and negative core,
-  future-module and SQLite-driver boundary fixtures
-- 175 passing tests across canonicalization, execution identity, model-request
+  module, cross-module and SQLite-driver boundary fixtures
+- 239 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
   identity, policy and state behavior, mock matching, immutability, atomic
-  rollback, SQLite migrations and workspace imports
+  rollback, SQLite migrations, Research identity, schemas, policy, state,
+  contract and task behavior, and workspace imports
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -199,13 +206,23 @@ committed database in a fresh connection: the recovered evidence, operation
 digest and terminal result are identical, and repeating the same request
 returns the recorded result without a new model call or ID allocation.
 
+ACME-0022 completed ResearchModule build phases 1–4 on 2026-07-31.
+`@acme/module-research` implements `research.observe-evidence@1.0.0` and is the
+second reference domain, so the shared conformance suite, memory mechanics,
+state mechanics and post-memory projection are now proven against two
+independent domains. ADR-0009's proposition, source and source-independence
+identity algorithms are executable and reproduce their published golden
+vectors. Corroboration counts distinct declared independence keys only;
+contradictory evidence contests the claim and preserves every variant. Claim
+verification is derived post-memory from applied decisions and is never
+asserted by the model.
+
 ## Persistent Gaps
 
 - A live provider adapter and provider-specific normalization are not
   implemented.
-- ResearchModule is not implemented.
-- ResearchModule must run the implemented shared conformance suite with its
-  own fixtures in addition to module-specific policy tests.
+- The Research offline acceptance scenario (build-plan phase 5) is not
+  implemented; only NarrativeModule has an executable acceptance scenario.
 - Fault injection at every transaction boundary is Milestone 2 work; durability
   is proven by clean reopen, not by simulated mid-transaction failure.
 - Outbox delivery, background workers and retention encryption are not

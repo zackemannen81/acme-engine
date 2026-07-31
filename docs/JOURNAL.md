@@ -862,3 +862,51 @@ Add one dated, signed entry for every meaningful work session or handoff.
   on Windows only; the Linux CI run has not been observed since the dependency
   was added.
 - Signature: Claude
+
+## 2026-07-31 — ResearchModule implemented as the second reference domain
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0022
+- Summary: Implemented `@acme/module-research` through build-plan phases 1–4,
+  giving ACME the second reference domain its central claim depends on. The
+  package adds strict evidence-input, contract, source, claim, question, state
+  and delta schemas; the three ADR-0009 identity algorithms; the
+  `research.observe-evidence@1.0.0` prompt contract with input-bound semantic
+  validation; deterministic projection and interpretation; a domain-owned
+  memory policy; and a pure reducer with invariants. Two design points are
+  worth recording. First, supporting and contradicting evidence share one
+  proposition identity, so a contradiction contests the existing claim instead
+  of creating a rival record, and the displaced wording survives as a state
+  variant. Second, claim verification is never asserted during interpretation:
+  `projectState()` derives verify, contest and defer from applied memory
+  decisions plus prior records, so model output cannot promote a claim.
+  Corroboration counts distinct declared independence keys only; a second
+  document or URI from the same authority stays auditable without raising the
+  count. Also extended the boundary rules with a module-to-module prohibition
+  and its negative fixture, closing a gap that existed since NarrativeModule.
+- Evidence: The unchanged `domainModuleConformance()` suite passes against
+  Research-owned fixtures exactly as it does for Narrative, which is the
+  executable form of "two different domains use the same execution, memory and
+  state mechanisms". All three ADR-0009 golden vectors are asserted
+  byte-for-byte. The resolution matrix proves all six documented behaviors:
+  first-source defer, same-independence-key duplicate, independent reinforce,
+  threshold verify, contradiction contest and ignore. The reducer and
+  invariants reject dual status, sub-threshold verification, evidence-free
+  claims, single-variant contests, duplicate identities and dropped claims.
+  The `research.observe-evidence` request hash is pinned as a golden.
+- Verification: `pnpm docs:check` passed 56 Markdown files. `pnpm typecheck`,
+  `pnpm lint`, `pnpm format:check` and `pnpm build` passed. `pnpm boundaries`
+  passed dependency, core-vocabulary and the core/module/cross-module/driver
+  fixture checks. `pnpm test:unit` passed 239 tests in 32 files,
+  `pnpm test:conformance` passed 41 tests in 6 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed its one scenario.
+  `git diff --check` passed. No check was skipped.
+- Follow-ups: The Research offline acceptance scenario (build-plan phase 5)
+  through the ExecutionEngine is deliberately out of this task and is the
+  natural next step; until it exists, only Narrative has an executable
+  acceptance scenario. Fixtures live in `packages/module-research/test/` rather
+  than the plan's proposed `fixtures/` directory, matching the ACME-0017
+  precedent and the existing vitest and tsconfig wiring. ScenarioRunner, a live
+  provider adapter and CLI composition remain separate approved work.
+- Signature: Claude

@@ -71,6 +71,18 @@ export default {
       },
     },
     {
+      name: 'domain-modules-do-not-depend-on-other-modules',
+      severity: 'error',
+      comment:
+        'A domain module may depend on public core contracts only; it must never reach another domain module.',
+      from: {
+        path: '(?:^|/)packages/module-([^/]+)/src',
+      },
+      to: {
+        path: '^packages/module-(?!$1(?:/|$))',
+      },
+    },
+    {
       name: 'domain-modules-do-not-depend-on-apps-adapters-or-testing',
       severity: 'error',
       comment:

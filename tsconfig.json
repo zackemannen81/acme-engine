@@ -17,6 +17,9 @@
       "path": "./packages/module-narrative"
     },
     {
+      "path": "./packages/module-research"
+    },
+    {
       "path": "./packages/testing"
     },
     {
