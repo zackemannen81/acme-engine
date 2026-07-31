@@ -631,3 +631,79 @@ Add one dated, signed entry for every meaningful work session or handoff.
   at `Ready`, accept the execution identity/replay ADR and implement only the
   frozen Milestone 1 path.
 - Signature: Codex
+
+## 2026-07-31 — ACME-0018 paused for a bounded charter-hardening child task
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0019 (parent ACME-0018)
+- Summary: A maintainer-requested review of the ACME-0018 Draft charter found
+  its four named pre-freeze decisions — request/policy identity, deterministic
+  memory retrieval, replay evidence/digest and the staged public engine
+  surface — present as topics but unresolved as decisions. Freezing in that
+  state would either freeze a charter whose Primary Deliverable was still
+  unknown, or force a later supersede once the planned ADR discovered the
+  answers. ACME-0018 was therefore set to `Paused`, its blocker, child and
+  resume condition were recorded, and the file was moved to `docs/paused/`.
+  ACME-0019 was activated in `docs/CURRENT_TASK.md` as a bounded
+  documentation-only child with its own frozen charter, covering eleven
+  reviewed findings and explicitly excluding the ADR, the freeze itself and
+  every source change. The maintainer reviewed and accepted the findings before
+  the child charter was frozen, and requested this task wrapper so the
+  repository records why the parent charter changed rather than only that it
+  changed.
+- Decisions: `docs/TASK_WORKFLOW.md` describes pause and resume for a frozen
+  `In Progress` parent. ACME-0018 is `Draft`, so it was paused as `Draft` and
+  resumes as `Draft` rather than `In Progress`. The deviation is recorded
+  rather than silently applied. Because the parent is `Draft` and therefore
+  editable, the findings were applied in place instead of through the
+  `Charter Amendment Log`, which governs post-`Ready` corrections only.
+- Verification: `node tooling/docs/check-docs.mjs` passed for 51 Markdown
+  files and `git diff --check` passed. No runtime gate applies; no source file
+  was touched.
+- Follow-ups: Apply the eleven findings to the paused parent, then restore it
+  as `Draft` for maintainer freeze approval.
+- Signature: Claude
+
+## 2026-07-31 — ACME-0018 charter hardened and resumed
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0019 (parent ACME-0018)
+- Summary: Resolved all eleven reviewed findings inside the ACME-0018 charter
+  and restored it to `docs/CURRENT_TASK.md` as a hardened `Draft`. The charter
+  now states, rather than defers: the ADR records approved decisions instead of
+  discovering them; `acme-request-fingerprint-1` separates outcome-determining
+  identity, including the exact `ModelSelection` and the constant retrieval
+  configuration, from operational budget, which stays evidence-only so a later
+  default change cannot retroactively conflict accepted request keys; effective
+  policy is resolved once at acceptance and rejects repair/revision budgets the
+  bounded path cannot honor; the read set, including each retrieved memory's
+  `memoryId`, `recordVersion`, score and rank, is recorded at execution time so
+  later memory drift cannot alter a replayed projection; the constant versioned
+  retrieval rule `acme-memory-retrieval-1` is engine-owned, part of the
+  fingerprint preimage and never caller-supplied; replay runs under recorded
+  identity and recorded clock with a forbidden `IdGenerator` and compares only
+  `acme-operation-digest-1`, with input-level divergence reported as
+  diagnostics; a retention case makes the `unavailable` branch reachable and
+  tested; the replay-evidence extension is one read-only aggregate method with a
+  recorded split condition; `replayed` semantics for an idempotent repeat are
+  fixed; the unsatisfiable pre-implementation golden-digest gate is corrected to
+  record-then-freeze; and specification section 14.1 is corrected in the same
+  change instead of publishing members that throw. Two maintainer judgment
+  calls were deliberately left open rather than claimed as approved: the
+  retrieval constant, recommended as 50, and whether `execute()` exposes
+  `AbortSignal` at all, recommended as not at all. The parent's Goal and
+  Primary Deliverable are textually unchanged and its Definition of Done
+  describes the same Milestone 1 outcome.
+- Verification: `node tooling/docs/check-docs.mjs` passed for 51 Markdown files
+  before and after the archive and restore moves. `git diff --check` passed.
+  `git status` shows changes only under `docs/`. `docs/paused/` holds no task
+  file. Each finding was traced to explicit charter text, and the parent's Goal,
+  Primary Deliverable and Definition of Done were compared before and after. No
+  check was skipped and no runtime gate applies, because no source file, ADR or
+  specification section was modified.
+- Follow-ups: Confirm the two open judgment calls, freeze ACME-0018 at `Ready`,
+  then write and accept the execution identity/replay ADR before implementing
+  the frozen Milestone 1 path.
+- Signature: Claude
