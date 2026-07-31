@@ -2,11 +2,11 @@
 
 Task ID: ACME-0029
 Parent Task: None
-Status: Draft
+Status: Ready
 Owner: Claude
 Created: 2026-08-01
 Last updated: 2026-08-01
-Charter frozen at:
+Charter frozen at: 2026-08-01
 
 ## Read First
 
@@ -76,11 +76,17 @@ proven by a live success response.
   nested `anyOf`. ACME-0028's second call disproved an assumption of exactly
   this kind, so this task asks the provider rather than trusting a claim.
 - A local preflight that rejects an unlowerable schema before any network call,
-  with a typed error rather than a message.
-- Un-lowering of the provider response, so a lowered `null` becomes the absent
-  optional field the canonical contract expects, without violating ADR-0010's
-  rule that core performs no parsed-value transformation and without doctoring
-  the recorded model-call evidence.
+  raising `UNSUPPORTED_CAPABILITY` with `details` naming the construct that was
+  refused and where it appeared.
+- A canonical contract change from `.optional()` to `.nullish()` on the
+  output-facing schemas, so no un-lowering step is needed and the value that is
+  validated, hashed, persisted and replayed is the value the model actually
+  produced. Scoped so that only the model boundary moves: state, delta and
+  memory schemas keep `.optional()`, because `acme-cjson-1` distinguishes
+  `null` from absent and their identity must not shift.
+- Splitting the two narrative schemas that are shared between the output path
+  and the state path, so the output variant can be nullable without dragging
+  `null` into deltas or memory values.
 - A `providerWireSchemaHash` recorded alongside the canonical
   `acme-model-request-hash-1`, so exactly what was sent stays reproducible
   while canonical contract identity is untouched.
@@ -97,10 +103,10 @@ proven by a live success response.
 - Turning off strict structured output. It moves enforcement to post-hoc
   validation, where a wrong structure costs tokens and, with no repair loop, is
   terminal.
-- Changing the canonical Zod contracts to please a provider, which is the thing
-  this task exists to avoid. The `.optional()` versus `.nullish()` question
-  below is the one possible exception, and it is a domain question if it is
-  raised at all.
+- Changing canonical domain semantics to please a provider. The `.nullish()`
+  change is deliberately not an instance of this: it is adopted as a domain
+  statement, that an output field is "absent or explicitly unknown", and it is
+  kept off the state and memory schemas entirely.
 - Changing `ExecutionEngine`, `ExecutionRepository`, the shared conformance
   suites or the reference domains to accommodate the provider.
 - A repair or retry loop. Milestone 1 permits exactly one model call.
@@ -119,8 +125,15 @@ proven by a live success response.
 - An unlowerable schema is rejected locally with a typed error and no network
   call, proven by test.
 - The lowering is deterministic, proven by test.
-- `acme-model-request-hash-1` is unchanged for every existing contract, proven
-  by the existing pinned goldens still passing untouched.
+- The pinned `acme-model-request-hash-1` values for the two changed contracts
+  move exactly once, as a deliberate consequence of the `.nullish()` change,
+  and each new value is re-pinned in the same commit that changes the schema so
+  the movement is reviewable rather than incidental. The algorithm itself is
+  untouched.
+- `acme-operation-digest-1`, `acme-transition-id-1` and every memory identity
+  key are unchanged, proven by their existing pinned goldens still passing
+  untouched. If any of them moves, `null` has reached state and the scoping
+  failed.
 - Both reference domains still pass the unchanged shared conformance suites.
 - No credential appears in any committed file, fixture, log, ledger or recorded
   evidence.
@@ -155,7 +168,11 @@ proven by a live success response.
 ## Checklist
 
 - [ ] Read the required documents and ACME-0028's recorded evidence.
-- [ ] Settle the two open questions below and freeze the charter.
+- [x] Settle the open questions and freeze the charter.
+- [ ] Split the two shared narrative schemas and apply `.nullish()` to the
+      output-facing schemas only.
+- [ ] Re-pin the two moved request-hash goldens in the same commit, and prove
+      the state and memory goldens did not move.
 - [ ] Implement the lowering and its determinism test.
 - [ ] Implement the local preflight refusal.
 - [ ] Prove the lowered form against the provider, including nested `anyOf`.
@@ -187,6 +204,38 @@ proven by a live success response.
 - Do not assume the provider accepts nested `anyOf`. A claim about a provider's
   supported subset is exactly what the second live call disproved, and the same
   evidence standard applies here.
+- **Decided:** un-lowering is replaced by an explicit contract change to
+  `.nullish()`. ADR-0012 does not forbid adapter normalization, but such a
+  normalization would make a semantic un-lowering part of what ACME claims the
+  model said. An explicit contract change is better than quietly dropping
+  `null` in the adapter, because then the value that is validated, hashed,
+  persisted and replayed is the same value the model actually produced.
+- **Consequence of that decision, measured rather than assumed:** the affected
+  optionals are not confined to the output path. In narrative,
+  `NarrativeSceneSchema` and `NarrativeCorrectionEvidenceSchema` carry internal
+  optionals and are reachable from both `NarrativeContractOutputSchema` and
+  `NarrativeDeltaSchema` / `NarrativeCharacterFactMemoryValueSchema`. Making
+  them nullable wholesale would let `null` into deltas and memory values, and
+  since `acme-cjson-1` distinguishes `null` from absent, that would move
+  `acme-operation-digest-1`, `acme-transition-id-1` and memory identity. The
+  two schemas are therefore split into an output-facing nullable variant and an
+  unchanged state-facing variant. Research needs no split:
+  `ResearchContractClaimSchema` is reachable only from the output schema, and
+  `ResearchClaimEvidenceSchema` is a separate declaration that merely repeats
+  similar fields.
+- The remaining output-only optionals are changed at the use site, where they
+  affect nothing else: `NarrativeContractOutputSchema.outlineProgress`,
+  `NarrativeCharacterFactObservationSchema.correction`, and
+  `ResearchContractClaimSchema.evidenceQuote` and `.sourceLocator`.
+- Where the domain still wants "unknown" not to reach state, the module drops
+  it during interpretation. That is a domain rule applied in the domain layer,
+  not a transport workaround in the adapter, and it is the module's existing
+  job to turn a validated observation into a delta.
+- **Decided:** a local refusal raises the existing `UNSUPPORTED_CAPABILITY`.
+  The condition is exactly what that code already means, the provider cannot
+  express this, and adding a provider-specific code to the core taxonomy would
+  pull provider vocabulary into the kernel, which is the same leakage this task
+  exists to stop. `details` carries which construct was refused.
 - Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
@@ -200,7 +249,9 @@ Only non-semantic corrections are allowed after `Ready`.
 - [ ] Prove the lowering is deterministic byte-for-byte.
 - [ ] Prove an unlowerable schema is refused locally with no network call.
 - [ ] Prove nested `anyOf` is accepted by the provider, empirically.
-- [ ] Prove every existing `acme-model-request-hash-1` golden is unchanged.
+- [ ] Prove the two moved request-hash goldens moved once and only for the
+      contracts whose output schema changed.
+- [ ] Prove no operation digest, transition id or memory identity key moved.
 - [ ] Prove the live execution commits, persists no payload and replays as
       `unavailable`.
 - [ ] Record exact test counts for every gate, and actual spend.
@@ -219,28 +270,19 @@ Only non-semantic corrections are allowed after `Ready`.
 
 ## Handoff and Follow-ups
 
-- Current state: Charter drafted. The two questions below are design decisions
-  worth settling explicitly before the charter is frozen.
-- Next recommended step: Settle the questions, freeze, then build the lowering
-  and probe the provider before spending anything.
-- Blockers: The open questions below.
+- Current state: Charter frozen as `Ready` on 2026-08-01. Both design questions
+  are decided and recorded above: `.nullish()` on the output-facing schemas
+  with its scope measured rather than assumed, and `UNSUPPORTED_CAPABILITY` for
+  a local refusal. Implementation has not started.
+- Next recommended step: Split the two shared narrative schemas and apply
+  `.nullish()`, then confirm the identity tripwire before touching the adapter:
+  the two request-hash goldens should move and nothing else should. Build the
+  lowering and probe the provider's subset before spending anything, since a
+  rejected schema never reaches token generation.
+- Blockers: None.
 - Child tasks: None.
 - Resume condition: Not applicable.
-- Open questions:
-  - Where un-lowering happens. Two existing rules collide. ADR-0010 says core
-    performs no parsed-value transformation, so it cannot live in the response
-    pipeline. `responseHash` covers the recorded model call, so if the adapter
-    rewrites the model's text the evidence no longer matches what the provider
-    sent, and replay would verify against a doctored payload. A third option
-    avoids the transform entirely: let the canonical contracts use `.nullish()`
-    rather than `.optional()`, making `null` domain-legal. That changes the
-    canonical schemas, which this task otherwise refuses to do, but "absent or
-    explicitly unknown" is arguably a more honest domain statement than
-    "absent".
-  - Which error a local refusal raises. `UNSUPPORTED_CAPABILITY` already exists
-    and means the provider cannot express this, which fits and touches no core
-    contract. A new `UNSUPPORTED_PROVIDER_SCHEMA` would be more precise but
-    adds a code to the taxonomy in `packages/core`.
+- Open questions: None.
 
 ## Finalize When Complete
 
