@@ -910,3 +910,45 @@ Add one dated, signed entry for every meaningful work session or handoff.
   precedent and the existing vitest and tsconfig wiring. ScenarioRunner, a live
   provider adapter and CLI composition remain separate approved work.
 - Signature: Claude
+
+## 2026-07-31 — Research offline acceptance scenario completed
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0023
+- Summary: Built the approved Research phase 5 acceptance scenario in
+  `tests/scenario/research-phase-5.test.ts`. Three hand-written offline
+  sources run through the same bounded ExecutionEngine, in-memory repository
+  and replay path Narrative uses. The scenario proves the standing sequence
+  the domain exists to produce: source A retains a deferred claim and cannot
+  verify it despite 0.9 model confidence; independent source B promotes it to
+  verified with an independent-source count of two; contradicting source C
+  contests it, preserves both variants and leaves the earlier record
+  `contested` rather than overwritten. A stale expected revision performs no
+  model call, allocates no ID and writes nothing. Every committed execution
+  replay-verifies offline with an unchanged operation digest. No
+  `packages/core` or `@acme/module-research` source file changed, which is the
+  point: the scenario is acceptance evidence, not an accommodation.
+- Evidence: The scenario needed a harness that reproduces the engine read path
+  — `loadContext`, then `MemoryEngine.retrieve` against the domain policy —
+  because each step's contract input, and therefore its request hash, depends
+  on everything the earlier steps committed. That harness is the honest way to
+  keep the model mock's exact-request-hash matching rather than weakening it.
+  Deterministic execution identity, request fingerprint, model request and
+  response hashes, operation digest and state hash are pinned as goldens for
+  source A.
+- Verification: `pnpm docs:check` passed 57 Markdown files. `pnpm typecheck`,
+  `pnpm lint`, `pnpm format:check` and `pnpm build` passed. `pnpm boundaries`
+  passed dependency, core-vocabulary and the core/module/cross-module/driver
+  fixture checks. `pnpm test:unit` passed 243 tests in 33 files,
+  `pnpm test:conformance` passed 41 tests in 6 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed 5 tests in 2
+  files. `git diff --check` passed. No check was skipped.
+- Follow-ups: Both reference domains now have end-to-end acceptance evidence,
+  so the First Proof Milestone's domain-neutrality claim is executable rather
+  than argued. The scenario stays test-owned exactly as Narrative's does;
+  ScenarioRunner and a general evaluation harness remain unimplemented, and
+  neither scenario runs against the durable SQLite adapter — durability is
+  proven separately by the ACME-0021 reopen test. A live provider adapter and
+  a CLI composition root remain separate approved work.
+- Signature: Claude

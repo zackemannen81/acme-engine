@@ -159,7 +159,8 @@ acme-engine/
 │   │   ├── execution-engine.test.ts
 │   │   └── execution-engine-sqlite.test.ts
 │   └── scenario/
-│       └── narrative-phase-5.test.ts
+│       ├── narrative-phase-5.test.ts
+│       └── research-phase-5.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -221,6 +222,7 @@ acme-engine/
 │   │   ├── ACME-0020_post-merge-execution-documentation-repair.md
 │   │   ├── ACME-0021_durable-sqlite-persistence.md
 │   │   ├── ACME-0022_research-module-observe-evidence.md
+│   │   ├── ACME-0023_research-offline-acceptance-scenario.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -295,10 +297,10 @@ content remains intentionally omitted here.
 
 The design specification retains the future package map for the live-model
 adapter and general scenarios. Those files and directories must be added only
-by explicitly activated tasks. NarrativeModule phases 1–5, ResearchModule
-phases 1–4, the bounded ExecutionEngine and the durable SQLite adapter are
-implemented in the workspace. The Research offline acceptance scenario
-(phase 5) is not.
+by explicitly activated tasks. NarrativeModule and ResearchModule
+phases 1–5, the bounded ExecutionEngine and the durable SQLite adapter are
+implemented in the workspace, each with its own deterministic offline
+acceptance scenario.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions

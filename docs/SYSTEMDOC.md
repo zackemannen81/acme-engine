@@ -26,7 +26,7 @@ Exact contracts, storage schema, protocols and milestones are defined in
   boundaries, tests and builds
 
 This substrate implements bounded single-task execution, durable local
-persistence and one offline acceptance scenario. It does not implement
+persistence and two offline acceptance scenarios. It does not implement
 multi-step scenarios or live provider behavior.
 
 ## Implemented Contract Layer
@@ -180,7 +180,22 @@ the second reference domain:
 Supporting and contradicting evidence share one proposition identity, so a
 contradiction contests the same claim rather than creating a rival record. The
 module runs the unchanged shared DomainModule conformance suite. It does not
-invoke a model, write a repository or claim the phase 5 acceptance scenario.
+invoke a model or write a repository itself; the ExecutionEngine does that in
+the Research phase 5 acceptance scenario.
+
+The scenario drives three hand-written offline sources through the engine and
+proves the standing sequence the domain exists to produce:
+
+- one source retains a deferred claim and cannot verify it, whatever
+  confidence the model reported
+- a second source with a distinct declared independence key promotes the claim
+  to verified with an independent-source count of two
+- a contradicting third source contests the claim, preserves every variant and
+  leaves the earlier record contested rather than overwritten
+- a stale expected revision performs no model call, allocates no ID and writes
+  nothing
+- every committed execution replay-verifies offline with an unchanged
+  operation digest, no gateway call and no clock read
 
 ## Implemented DomainModule Conformance
 
@@ -503,13 +518,12 @@ normalization remains future work.
 ## Domain Proof
 
 - NarrativeModule — implemented, including its offline acceptance scenario
-- ResearchModule — implemented at the pure module boundary; its acceptance
-  scenario is not built
+- ResearchModule — implemented, including its offline acceptance scenario
 
 Both domains use the same core, the same shared conformance suite and the same
 memory, state and post-memory projection mechanics, with no domain branch in
-core. The remaining evidence for domain neutrality is the Research acceptance
-scenario through the ExecutionEngine.
+core. Both reach committed canonical state through the same ExecutionEngine and
+replay offline with matching operation digests.
 
 The team-facing construction and verification plans are:
 
@@ -518,9 +532,8 @@ The team-facing construction and verification plans are:
 
 These guides translate the approved baseline into package layouts, component
 ownership, ordered build phases, decision gates and layered test matrices.
-Narrative phases 1–5 are implemented, including its deterministic offline
-acceptance scenario. Research phases 1–4 are implemented; its phase 5
-acceptance scenario is not.
+Narrative and Research phases 1–5 are both implemented, each with its own
+deterministic offline acceptance scenario.
 Both use ADR-0008's post-memory state-projection boundary, require ADR-0009's
 explicit domain identity/evidence contracts, follow the same core path and
 forbid domain branches in core or concrete adapter dependencies in a module.

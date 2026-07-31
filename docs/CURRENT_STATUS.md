@@ -134,13 +134,13 @@ There is currently:
 - deterministic memory retrieval capped at 50 records and a replay verifier
   that uses only recorded evidence and reports `match`, `different` or
   `unavailable`
-- a non-empty neutral integration suite and the fixed Narrative Phase 5
-  offline scenario, including repeat-without-effects and replay-without-clock,
-  gateway or ID allocation
+- a non-empty neutral integration suite plus the fixed Narrative and Research
+  Phase 5 offline scenarios, including repeat-without-effects and
+  replay-without-clock, gateway or ID allocation
 - a typed `@acme/cli` composition-root skeleton
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 239 passing tests across canonicalization, execution identity, model-request
+- 243 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -217,12 +217,20 @@ contradictory evidence contests the claim and preserves every variant. Claim
 verification is derived post-memory from applied decisions and is never
 asserted by the model.
 
+ACME-0023 completed the Research offline acceptance scenario on 2026-07-31.
+Sources A, B and C run through the same bounded ExecutionEngine, repository and
+replay path as Narrative and reach deferred, verified and contested standing in
+that order. One source cannot verify a claim; a second independent source
+promotes it; a contradiction contests it and preserves every variant. A stale
+expected revision performs no model call, allocates no ID and writes nothing.
+Every committed execution replay-verifies offline with an unchanged operation
+digest. Both reference domains now have executable end-to-end acceptance
+evidence.
+
 ## Persistent Gaps
 
 - A live provider adapter and provider-specific normalization are not
   implemented.
-- The Research offline acceptance scenario (build-plan phase 5) is not
-  implemented; only NarrativeModule has an executable acceptance scenario.
 - Fault injection at every transaction boundary is Milestone 2 work; durability
   is proven by clean reopen, not by simulated mid-transaction failure.
 - Outbox delivery, background workers and retention encryption are not
@@ -235,7 +243,8 @@ asserted by the model.
 - `better-sqlite3` prebuild resolution is verified on Windows only. The Linux
   CI matrix has not been observed since the dependency was added.
 - ScenarioRunner and a general evaluation harness are not implemented; the
-  single fixed Narrative acceptance scenario is test-owned.
+  two fixed acceptance scenarios are test-owned and each drives the engine
+  directly.
 - No human surface exists for configuring or inspecting domain tests. The
   proposed interface is specification-only; ScenarioRunner, durable
   persistence and its unresolved decision gates still block activation, whose
