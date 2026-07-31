@@ -655,7 +655,7 @@ export interface ModuleRegistry {
 The composition helper MAY retain stronger generics than the erased runtime
 registry. Runtime schemas remain authoritative at process boundaries.
 
-The future ExecutionEngine validates and immutably retains task input before
+The ExecutionEngine validates and immutably retains task input before
 both projection and interpretation. `project()` derives typed contract input
 from that task input plus read context. Response semantics receive the
 validated contract input, while `interpret()` receives the original validated
@@ -1171,30 +1171,43 @@ export type ExecutionResult =
     };
 
 export interface ExecutionEngine {
-  execute<TInput>(
-    request: ExecutionRequest<TInput>,
-    options?: { readonly signal?: AbortSignal },
-  ): Promise<ExecutionResult>;
-  resume(executionId: ExecutionId, options?: { readonly signal?: AbortSignal }):
-    Promise<ExecutionResult>;
-  replay(executionId: ExecutionId, mode: ReplayMode): Promise<ReplayReport>;
+  execute<TInput>(request: ExecutionRequest<TInput>): Promise<ExecutionResult>;
+  replayVerify(executionId: ExecutionId): Promise<ReplayReport>;
 }
 
 export interface ReplayReport {
   readonly executionId: ExecutionId;
-  readonly mode: ReplayMode["kind"];
-  readonly status: "match" | "different" | "unavailable" | "forked";
+  readonly mode: "verify";
+  readonly status: "match" | "different" | "unavailable";
   readonly recordedDigest?: string;
   readonly replayDigest?: string;
   readonly differences: readonly DiagnosticFact[];
-  readonly forkExecutionId?: ExecutionId;
 }
 ```
 
-The request fingerprint includes namespace, task, entity, expected revision,
-canonical input, contract fingerprint, module state schema version and
-effective policy. Reusing `(namespace, requestKey)` with a different
+Milestone 1 deliberately publishes only execution and replay verification.
+`AbortSignal`, durable resume, candidate rebuilding and fork are added only
+with their real implementations. The smaller surface is additive and does not
+publish members that throw.
+
+The immutable effective-policy defaults are 30 seconds, one model call, zero
+repair calls, zero revision calls and hash-only retention. Milestone 1 rejects
+an effective policy whose model/repair/revision counts differ from those
+bounds.
+
+`acme-request-fingerprint-1` includes namespace, task, entity, expected
+revision, validated canonical input, contract fingerprint, module state schema
+version, exact model selection and
+`{ algorithm: "acme-memory-retrieval-1", limit: 50 }`. Operational timeout,
+call/token/cost budgets and retention are stored policy evidence but do not
+enter request identity. Reusing `(namespace, requestKey)` with a different
 fingerprint yields `CONFLICT_IDEMPOTENCY_KEY`.
+
+The proposed execution ID uses `acme-execution-id-1` over namespace and
+request key, so repository acceptance and same-key reuse consume no
+speculative execution ID. The single task operation key uses
+`acme-operation-key-1` over execution ID, namespace, task and entity ID. See
+[ADR-0012](../adr/0012-milestone-1-execution-identity-and-replay.md).
 
 ### 14.2 Lifecycle
 
@@ -1227,23 +1240,28 @@ ledger records; the current status is a projection for inspection.
 
 Execution order:
 
-1. validate the request and effective policy
-2. atomically create or resolve the execution by request key
-3. return the stored terminal result if already terminal
-4. resolve module, task and immutable contract
-5. load snapshot, documents and memory in one consistent read
-6. reject unexpected state revision before a model call
-7. project and validate contract input
-8. check budgets and resolve/reuse the deterministic model call
-9. process the response, using bounded repair when allowed
-10. interpret validated output into a module result
-11. evaluate and, if permitted, perform bounded revision
-12. prepare memory operations
-13. build the filtered immutable projection input and run the task's
+1. validate the request and bounded effective policy
+2. resolve module, task and immutable contract and validate immutable task
+   input
+3. compute input, contract, request and deterministic execution identity
+4. atomically create or resolve the execution by request key
+5. return the stored terminal result if already terminal
+6. load snapshot, documents and memory in one consistent read
+7. reject unexpected state revision before a model call
+8. retrieve memory with `acme-memory-retrieval-1` and retain the exact ranked
+   read set
+9. project and validate contract input
+10. build, validate and reserve the complete deterministic model request
+11. invoke one primary call and durably retain normalized response/failure
+12. process the response without repair in Milestone 1
+13. interpret validated output into a module result
+14. retain empty evaluator evidence and prepare memory operations
+15. build the filtered immutable projection input and run the task's
     domain-owned `projectState()` hook
-14. pass the projected delta through StateEngine and prepare documents/events
-15. commit the complete prepared result through one Unit of Work
-16. return the persisted terminal projection
+16. pass the projected delta through StateEngine and prepare documents/events
+17. commit the complete prepared result and replay sidecar through one Unit of
+    Work
+18. return the persisted terminal projection
 
 ### 14.3 Error taxonomy
 
@@ -1338,6 +1356,12 @@ is preserved and significant. Changing any request content changes the
 digest. A future hash change requires a new algorithm identifier and
 compatibility handling.
 
+Normalized response evidence uses `acme-model-response-hash-1` over the
+complete validated response. `none` and `hash-only` retain that hash and omit
+the response payload; `encrypted-payload` retains protected payload evidence.
+The deterministic in-memory adapter retains the normalized response directly
+for full-retention offline replay without making a durable encryption claim.
+
 On resume:
 
 - a succeeded compatible call is reused
@@ -1353,24 +1377,21 @@ before canonical commit. At that point resume MUST make zero gateway calls.
 This precisely states the boundary that a local transaction cannot extend
 across a remote provider.
 
-### 14.6 Replay modes
+### 14.6 Replay verification
 
-```ts
-export type ReplayMode =
-  | { readonly kind: "verify"; readonly compareToCommit: true }
-  | { readonly kind: "rebuild-candidates" }
-  | { readonly kind: "fork"; readonly newRequestKey: string };
-```
+Milestone 1 replay verification re-runs projection, request construction,
+response validation, interpretation, memory policy, post-memory state
+projection and StateEngine from the exact recorded task input, ranked read set,
+normalized response, execution identity and commit time. Recorded memory IDs
+are replayed from prepared evidence; the engine's external `IdGenerator` is
+forbidden.
 
-- `verify` re-runs parsing, interpretation, policies and reducers against
-  recorded inputs and model responses, writes no canonical data, and reports
-  digest differences.
-- `rebuild-candidates` persists a diagnostic candidate set only.
-- `fork` creates a new execution and may commit only with the current expected
-  revision; it never changes the original ledger.
-
-Replay never calls a live provider. Missing retained payloads produce
-`replay-unavailable`, not fabricated data.
+Replay calls no model gateway and writes no canonical data. It compares only
+the recorded and recomputed `acme-operation-digest-1`. Supporting input,
+request/response, retrieval, candidate, memory and state divergence is
+reported as diagnostics. Missing retained payloads return `unavailable`, not a
+failure or fabricated data. Rebuild-candidates and fork remain future additive
+replay modes.
 
 ## 15. Persistence model
 
@@ -1471,6 +1492,25 @@ export interface ExecutionReadSet {
   readonly documents: readonly StoredDocument[];
 }
 
+export interface RecordedRankedMemory {
+  readonly record: MemoryRecord;
+  readonly score: number;
+  readonly reasons: readonly string[];
+  readonly rank: number;
+}
+
+export interface ExecutionReplayReadSet {
+  readonly state: StateSnapshot<JsonValue> | null;
+  readonly loadedMemories: readonly MemoryRecord[];
+  readonly retrievedMemories: readonly RecordedRankedMemory[];
+  readonly documents: readonly StoredDocument[];
+}
+
+export interface PreparedReplayEvidence {
+  readonly taskInput: JsonValue;
+  readonly readSet: ExecutionReplayReadSet;
+}
+
 export interface PreparedCommit {
   readonly executionId: ExecutionId;
   readonly expectedRevision: number;
@@ -1488,6 +1528,7 @@ export interface PreparedCommit {
   }[];
   readonly events: readonly CandidateEvent[];
   readonly committedAt: IsoTimestamp;
+  readonly replayEvidence?: PreparedReplayEvidence;
 }
 
 export interface CommittedExecution {
@@ -1505,6 +1546,20 @@ export interface NonCommitTerminalRecord {
   readonly terminalAt: IsoTimestamp;
 }
 
+export interface ExecutionReplayEvidence {
+  readonly executionId: ExecutionId;
+  readonly request: ExecutionRequest<JsonValue>;
+  readonly requestFingerprint: string;
+  readonly inputHash: string;
+  readonly contract: ContractRef;
+  readonly contractFingerprint: string;
+  readonly effectivePolicy: ExecutionPolicy;
+  readonly taskInput: JsonValue;
+  readonly readSet: ExecutionReplayReadSet;
+  readonly modelCalls: readonly ModelCallRecord[];
+  readonly preparedCommit: PreparedCommit;
+}
+
 export interface ExecutionRepository {
   accept(request: AcceptedExecution): Promise<AcceptResult>;
   get(executionId: ExecutionId): Promise<ExecutionRecord | null>;
@@ -1515,6 +1570,9 @@ export interface ExecutionRepository {
   loadContext(query: ContextQuery): Promise<ExecutionReadSet>;
   commit(prepared: PreparedCommit): Promise<CommittedExecution>;
   markTerminal(terminal: NonCommitTerminalRecord): Promise<void>;
+  loadReplayEvidence(
+    executionId: ExecutionId,
+  ): Promise<ExecutionReplayEvidence | null>;
 }
 ```
 
@@ -1543,7 +1601,10 @@ The digest field itself is excluded. Documents, memory candidates and events
 are sorted by `key`; evaluator runs are sorted by `(evaluatorId, attempt)`.
 Memory decisions and mutations retain their prepared order because sequential
 mutation order is semantic. Adapters MUST recompute and verify the digest
-before commit.
+before commit. `PreparedCommit.replayEvidence` is an atomic evidence sidecar
+and is also excluded from the immutable digest preimage. The portable replay
+read returns detached immutable evidence and opens no transaction. See
+[ADR-0012](../adr/0012-milestone-1-execution-identity-and-replay.md).
 
 ### 15.2 SQLite schema
 
@@ -1786,8 +1847,8 @@ Contract: `narrative.observe-document@1.0.0`
 
 Implementation status: ACME-0017 implements the pure package, schemas,
 contract/task, state behavior, memory policy and shared conformance boundary.
-The acceptance scenario in section 16.2 remains pending because
-ExecutionEngine does not yet exist.
+ACME-0018 implements the section 16.2 offline acceptance scenario through the
+bounded single-task ExecutionEngine.
 
 ### 16.1 Input, output and state
 

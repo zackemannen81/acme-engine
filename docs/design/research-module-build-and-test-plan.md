@@ -78,7 +78,7 @@ flowchart LR
   state --> commit
 ```
 
-The module supplies the domain-owned boxes. The same future ExecutionEngine,
+The module supplies the domain-owned boxes. The same ExecutionEngine,
 gateway and repository used by NarrativeModule coordinate the full flow.
 
 ## Proposed package structure

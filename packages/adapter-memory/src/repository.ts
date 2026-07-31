@@ -11,6 +11,7 @@ import {
   type ExecutionAttempt,
   type ExecutionReadSet,
   type ExecutionRecord,
+  type ExecutionReplayEvidence,
   type ExecutionRepository,
   type FailedModelCall,
   type Hashing,
@@ -60,6 +61,7 @@ interface Store {
   readonly eventKeys: Map<string, string>;
   readonly outbox: Map<string, OutboxRecord>;
   readonly committed: Map<string, CommittedExecution>;
+  readonly preparedCommits: Map<string, PreparedCommit>;
 }
 
 function emptyStore(): Store {
@@ -83,6 +85,7 @@ function emptyStore(): Store {
     eventKeys: new Map(),
     outbox: new Map(),
     committed: new Map(),
+    preparedCommits: new Map(),
   };
 }
 
@@ -107,6 +110,7 @@ function stageStore(source: Store): Store {
     eventKeys: new Map(source.eventKeys),
     outbox: new Map(source.outbox),
     committed: new Map(source.committed),
+    preparedCommits: new Map(source.preparedCommits),
   };
 }
 
@@ -431,7 +435,6 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
     }
     if (existing.status === 'succeeded') {
       if (
-        existing.response === undefined ||
         existing.responseHash === undefined ||
         existing.completedAt === undefined
       ) {
@@ -441,7 +444,7 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       }
       const prior: CompletedModelCall = {
         modelCallId: existing.modelCallId,
-        response: existing.response,
+        response: completed.response,
         responseHash: existing.responseHash,
         ...(existing.protectedResponse === undefined
           ? {}
@@ -460,8 +463,19 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
         modelCallId: completed.modelCallId,
       });
     }
+    const execution = assertKnownExecution(this.#store, existing.executionId);
+    const retainPayload = execution.policy.retention === 'encrypted-payload';
     const record: ModelCallRecord = clone(
-      { ...existing, ...completed, status: 'succeeded' },
+      {
+        ...existing,
+        status: 'succeeded',
+        ...(retainPayload ? { response: completed.response } : {}),
+        responseHash: completed.responseHash,
+        ...(retainPayload && completed.protectedResponse !== undefined
+          ? { protectedResponse: completed.protectedResponse }
+          : {}),
+        completedAt: completed.completedAt,
+      },
       this.#hashing,
     );
     const staged = stageStore(this.#store);
@@ -613,6 +627,7 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
     assertUniqueKeys(prepared.memoryCandidates, 'memory candidate');
     assertUniqueKeys(prepared.events, 'event');
     this.#validateEvidence(prepared);
+    this.#validateReplayEvidence(prepared, execution);
     this.#validateState(prepared, execution, head, scope);
 
     const staged = stageStore(this.#store);
@@ -771,6 +786,7 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       this.#hashing,
     );
     staged.committed.set(prepared.executionId, committed);
+    staged.preparedCommits.set(prepared.executionId, prepared);
     staged.executions.set(
       prepared.executionId,
       clone(
@@ -793,6 +809,43 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
     );
     this.#store = staged;
     return clone(committed, this.#hashing);
+  }
+
+  async loadReplayEvidence(
+    executionId: string,
+  ): Promise<ExecutionReplayEvidence | null> {
+    const execution = this.#store.executions.get(executionId);
+    const prepared = this.#store.preparedCommits.get(executionId);
+    if (
+      execution === undefined ||
+      prepared === undefined ||
+      prepared.replayEvidence === undefined
+    ) {
+      return null;
+    }
+    const modelCalls = [...this.#store.modelCalls.values()]
+      .filter((call) => call.executionId === executionId)
+      .sort(
+        (left, right) =>
+          compareText(left.callKey, right.callKey) ||
+          left.attempt - right.attempt,
+      );
+    return clone(
+      {
+        executionId,
+        request: execution.request,
+        requestFingerprint: execution.requestFingerprint,
+        inputHash: execution.inputHash,
+        contract: execution.contract,
+        contractFingerprint: execution.contractFingerprint,
+        effectivePolicy: execution.policy,
+        taskInput: prepared.replayEvidence.taskInput,
+        readSet: prepared.replayEvidence.readSet,
+        modelCalls,
+        preparedCommit: prepared,
+      },
+      this.#hashing,
+    );
   }
 
   async markTerminal(input: NonCommitTerminalRecord): Promise<void> {
@@ -937,6 +990,48 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
         invalid('Duplicate evaluator run identity.', { key });
       }
       evaluators.add(key);
+    }
+  }
+
+  #validateReplayEvidence(
+    prepared: PreparedCommit,
+    execution: ExecutionRecord,
+  ): void {
+    const replay = prepared.replayEvidence;
+    if (replay === undefined) {
+      return;
+    }
+    if (!equivalent(replay.taskInput, execution.request.input, this.#hashing)) {
+      invalid('Replay task input differs from the accepted request input.');
+    }
+    const { readSet } = replay;
+    const stateRevision = readSet.state?.revision ?? 0;
+    if (stateRevision !== prepared.expectedRevision) {
+      invalid('Replay read-set state revision is inconsistent.', {
+        expectedRevision: prepared.expectedRevision,
+        stateRevision,
+      });
+    }
+    const loadedById = new Map(
+      readSet.loadedMemories.map((record) => [record.memoryId, record]),
+    );
+    for (const [index, ranked] of readSet.retrievedMemories.entries()) {
+      if (ranked.rank !== index + 1) {
+        invalid('Replay ranked memory evidence has an invalid rank.', {
+          memoryId: ranked.record.memoryId,
+          rank: ranked.rank,
+        });
+      }
+      const loaded = loadedById.get(ranked.record.memoryId);
+      if (
+        loaded === undefined ||
+        !equivalent(loaded, ranked.record, this.#hashing)
+      ) {
+        invalid(
+          'Replay ranked memory evidence is absent from the loaded read set.',
+          { memoryId: ranked.record.memoryId },
+        );
+      }
     }
   }
 

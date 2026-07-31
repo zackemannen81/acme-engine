@@ -22,6 +22,7 @@ import type {
   MemoryRecord,
   PreparedMemory,
   PreparedMemoryDecision,
+  RankedMemory,
 } from './memory.js';
 import type {
   CompletedModelCall,
@@ -88,6 +89,22 @@ export interface ExecutionReadSet {
   readonly documents: readonly StoredDocument[];
 }
 
+export interface RecordedRankedMemory extends RankedMemory {
+  readonly rank: number;
+}
+
+export interface ExecutionReplayReadSet {
+  readonly state: StateSnapshot<JsonValue> | null;
+  readonly loadedMemories: readonly MemoryRecord[];
+  readonly retrievedMemories: readonly RecordedRankedMemory[];
+  readonly documents: readonly StoredDocument[];
+}
+
+export interface PreparedReplayEvidence {
+  readonly taskInput: JsonValue;
+  readonly readSet: ExecutionReplayReadSet;
+}
+
 export interface PreparedEvaluatorRun {
   readonly evaluatorId: string;
   readonly evaluatorVersion: string;
@@ -107,6 +124,7 @@ export interface PreparedCommit {
   readonly evaluatorRuns: readonly PreparedEvaluatorRun[];
   readonly events: readonly CandidateEvent[];
   readonly committedAt: IsoTimestamp;
+  readonly replayEvidence?: PreparedReplayEvidence;
 }
 
 export type PreparedCommitContent = Omit<PreparedCommit, 'operationDigest'>;
@@ -124,6 +142,20 @@ export interface NonCommitTerminalRecord {
   readonly status: 'blocked' | 'conflicted' | 'cancelled' | 'failed';
   readonly error: AcmeErrorData;
   readonly terminalAt: IsoTimestamp;
+}
+
+export interface ExecutionReplayEvidence {
+  readonly executionId: ExecutionId;
+  readonly request: ExecutionRequest<JsonValue>;
+  readonly requestFingerprint: string;
+  readonly inputHash: string;
+  readonly contract: ContractRef;
+  readonly contractFingerprint: string;
+  readonly effectivePolicy: ExecutionPolicy;
+  readonly taskInput: JsonValue;
+  readonly readSet: ExecutionReplayReadSet;
+  readonly modelCalls: readonly ModelCallRecord[];
+  readonly preparedCommit: PreparedCommit;
 }
 
 export interface StoredMemoryCandidate {
@@ -170,6 +202,9 @@ export interface ExecutionRepository {
   loadContext(query: ContextQuery): Promise<ExecutionReadSet>;
   commit(prepared: PreparedCommit): Promise<CommittedExecution>;
   markTerminal(terminal: NonCommitTerminalRecord): Promise<void>;
+  loadReplayEvidence(
+    executionId: ExecutionId,
+  ): Promise<ExecutionReplayEvidence | null>;
 }
 
 export interface RepositoryStateEvidence {

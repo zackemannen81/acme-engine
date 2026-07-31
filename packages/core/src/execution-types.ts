@@ -1,4 +1,11 @@
-import type { EntityId, JsonValue, Namespace, RequestKey } from './common.js';
+import type {
+  DiagnosticFact,
+  EntityId,
+  ExecutionId,
+  JsonValue,
+  Namespace,
+  RequestKey,
+} from './common.js';
 import type { AcmeErrorData } from './errors.js';
 import type { ModelSelection } from './model.js';
 
@@ -40,3 +47,12 @@ export type ExecutionResult =
       readonly executionId: string;
       readonly error: AcmeErrorData;
     };
+
+export interface ReplayReport {
+  readonly executionId: ExecutionId;
+  readonly mode: 'verify';
+  readonly status: 'match' | 'different' | 'unavailable';
+  readonly recordedDigest?: string;
+  readonly replayDigest?: string;
+  readonly differences: readonly DiagnosticFact[];
+}
