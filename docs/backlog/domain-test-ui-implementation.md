@@ -36,9 +36,9 @@ cross-package implementation deliverable with its own verification story.
 
 ## Dependencies
 
-- `ExecutionEngine` orchestration, which does not exist
+- the implemented bounded `ExecutionEngine` orchestration
 - `ScenarioRunner` and its JSON report in `@acme/testing`, which do not exist
-- at least one reference module, which does not exist
+- the implemented Narrative reference module and offline acceptance scenario
 - the reusable `DomainModule` conformance kit implemented by ACME-0015
 - `@acme/adapter-sqlite` for durable run history, which does not exist
 - resolution of the seven decision gates in the specification, in particular

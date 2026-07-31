@@ -7,13 +7,14 @@ replayable AI execution engine. Narrative is the first reference module, not
 the engine itself.
 
 The complete design baseline, repository bootstrap, pure state/memory engines,
-deterministic in-memory Unit of Work and exact scripted model mock are
-complete. The workspace contains model-output validation, versioned request
-hashing, static composition contracts, revisioned preparation and reusable
-repository/gateway/module conformance suites; no orchestration engine, durable
-persistence adapter, Research reference module, live model adapter or
-published package exists yet. The pure `@acme/module-narrative` package now
-implements the first bounded reference-domain behavior.
+deterministic in-memory Unit of Work, exact scripted model mock and bounded
+single-task ExecutionEngine are complete. The workspace contains model-output
+validation, versioned request and execution identity, static composition
+contracts, revisioned preparation, replay verification and reusable
+repository/gateway/module conformance suites; no durable persistence adapter,
+Research reference module, live model adapter or published package exists
+yet. The pure `@acme/module-narrative` package and its offline acceptance
+scenario implement the first bounded reference-domain behavior.
 
 ## Start here
 
@@ -51,6 +52,5 @@ tooling/                   Shared configuration and repository checks
 ## Current objective
 
 `docs/CURRENT_TASK.md` is the sole source for active work. NarrativeModule
-phases 1–4 are implemented; its full offline acceptance remains dependent on
-the future ExecutionEngine. The next task must be explicitly approved before
-activation.
+phases 1–5 and the bounded Milestone 1 single-task ExecutionEngine are
+implemented. The next task must be explicitly approved before activation.

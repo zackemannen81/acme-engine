@@ -1,10 +1,11 @@
 # System Documentation
 
-Last updated: 2026-07-30
-Status: Approved architecture with pure engines, NarrativeModule, post-memory projection, shared conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
+Last updated: 2026-07-31
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule, replay verification, shared conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
-end-to-end execution orchestration or durable runtime persistence exists.
+durable runtime persistence, multi-step orchestration or live provider
+behavior exists.
 Exact contracts, storage schema, protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
@@ -23,8 +24,9 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
-This substrate does not implement execution orchestration, durable
-persistence, scenarios or live provider behavior.
+This substrate implements bounded single-task execution and one offline
+acceptance scenario. It does not implement durable persistence, multi-step
+scenarios or live provider behavior.
 
 ## Implemented Contract Layer
 
@@ -58,8 +60,7 @@ persistence, scenarios or live provider behavior.
   `ExecutionRepository` contracts
 - versioned `acme-operation-digest-1` prepared-commit hashing
 
-ExecutionEngine, durable adapters and ResearchModule behavior are not
-implemented.
+Durable adapters and ResearchModule behavior are not implemented.
 
 ## Implemented Input-Bound Contract Surface
 
@@ -74,9 +75,8 @@ ADR-0010 closes the public contract gap discovered by ACME-0012:
 - `TaskDefinition.interpret(output, input, context)` binds original typed task
   input to domain interpretation and preserves task inference
 
-The future ExecutionEngine must validate, detach, freeze and retain task input
-before reusing it for projection and interpretation. That orchestration is not
-implemented by ACME-0013.
+The ExecutionEngine validates, detaches, freezes and retains task input before
+reusing the exact value for projection, interpretation and replay evidence.
 
 ## Approved Reference-Domain Identity and Evidence
 
@@ -303,16 +303,24 @@ separate.
 
 ### ExecutionEngine
 
-- Accept one typed task request.
-- Resolve the module and task definition.
-- Load the expected state revision and relevant memory.
-- Build and execute a model request when required.
-- Validate and interpret the response.
-- Coordinate memory and state processing.
-- Commit results through persistence ports.
-- Return a structured execution result.
+- Accepts one validated typed task request and resolves static module,
+  task and contract registrations before repository acceptance.
+- Derives deterministic execution, request-fingerprint and operation
+  identities using the algorithms fixed by ADR-0012.
+- Loads the expected state revision, immutable context and at most 50
+  deterministically ranked memory records.
+- Runs one reserved primary model call through the provider-neutral gateway,
+  records its request/response hashes and honors the frozen retention mode.
+- Validates and interprets the response, then coordinates MemoryEngine,
+  post-memory projection and StateEngine.
+- Commits prepared evidence and canonical effects atomically through the
+  aggregate repository.
+- Replays committed evidence without a gateway, clock or ID generator and
+  reports `match`, `different` or `unavailable`.
 
-It does not own domain vocabulary or multi-step workflow definitions.
+Its public Milestone 1 surface is `execute()` and `replayVerify()`. It does not
+own domain vocabulary, multi-step workflow definitions, repair/revision calls,
+resume/fork or caller cancellation.
 
 ### Contract System
 
@@ -407,9 +415,9 @@ hands immutable applied evidence to the task-owned hook. StateEngine accepts
 the resulting typed delta and prepares a validated next-state candidate. The
 in-memory repository can atomically promote those prepared effects. Provider
 normalization remains a live-adapter responsibility; the deterministic mock
-accepts only complete validated normalized fixtures. Execution orchestration,
-module interpretation implementations and durable persistence remain future
-work.
+accepts only complete validated normalized fixtures. The bounded
+ExecutionEngine orchestrates this path; live normalization and durable
+persistence remain future work.
 
 ## Initial Persistence Direction
 
@@ -438,8 +446,8 @@ The team-facing construction and verification plans are:
 
 These guides translate the approved baseline into package layouts, component
 ownership, ordered build phases, decision gates and layered test matrices.
-Narrative phases 1–4 are implemented; its Phase 5 acceptance remains
-ExecutionEngine-dependent. Research remains implementation guidance only.
+Narrative phases 1–5 are implemented, including its deterministic offline
+acceptance scenario. Research remains implementation guidance only.
 Both use ADR-0008's post-memory state-projection boundary, require ADR-0009's
 explicit domain identity/evidence contracts, follow the same core path and
 forbid domain branches in core or concrete adapter dependencies in a module.

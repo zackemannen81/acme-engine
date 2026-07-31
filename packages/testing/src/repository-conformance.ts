@@ -230,5 +230,83 @@ export function executionRepositoryConformance(
       });
       await expectCode(repository.commit(divergent), 'PERSISTENCE_CORRUPTION');
     });
+
+    it('loads immutable aggregate replay evidence and honors hash-only retention', async () => {
+      const repository = options.createRepository();
+      await repository.accept(accepted('execution-replay'));
+      await expect(
+        repository.loadReplayEvidence('execution-replay'),
+      ).resolves.toBeNull();
+
+      await repository.reserveModelCall({
+        modelCallId: 'call-replay',
+        executionId: 'execution-replay',
+        callKey: 'model:0',
+        attempt: 1,
+        purpose: 'primary',
+        selection: { profile: 'fixture' },
+        requestHash: 'request-hash',
+        startedAt: timestamp,
+      });
+      await repository.completeModelCall({
+        modelCallId: 'call-replay',
+        response: {
+          provider: 'fixture',
+          model: 'fixture',
+          receivedAt: timestamp,
+          finishReason: 'stop',
+          text: '{}',
+          usage: {},
+          metadata: {},
+        },
+        responseHash: 'response-hash',
+        completedAt: timestamp,
+      });
+      await repository.commit(
+        prepared('execution-replay', {
+          replayEvidence: {
+            taskInput: { executionId: 'execution-replay' },
+            readSet: {
+              state: null,
+              loadedMemories: [],
+              retrievedMemories: [],
+              documents: [],
+            },
+          },
+        }),
+      );
+
+      const evidence = await repository.loadReplayEvidence('execution-replay');
+      expect(evidence).toMatchObject({
+        executionId: 'execution-replay',
+        effectivePolicy: { retention: 'hash-only' },
+        taskInput: { executionId: 'execution-replay' },
+        readSet: {
+          state: null,
+          loadedMemories: [],
+          retrievedMemories: [],
+          documents: [],
+        },
+        modelCalls: [
+          {
+            callKey: 'model:0',
+            status: 'succeeded',
+            responseHash: 'response-hash',
+          },
+        ],
+        preparedCommit: {
+          executionId: 'execution-replay',
+          replayEvidence: {
+            taskInput: { executionId: 'execution-replay' },
+          },
+        },
+      });
+      expect(evidence?.modelCalls[0]?.response).toBeUndefined();
+      expect(Object.isFrozen(evidence)).toBe(true);
+      expect(Object.isFrozen(evidence?.preparedCommit)).toBe(true);
+      await expect(
+        repository.loadReplayEvidence('execution-replay'),
+      ).resolves.toEqual(evidence);
+    });
   });
 }

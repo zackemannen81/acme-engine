@@ -1,6 +1,6 @@
 # NarrativeModule — Build and Test Plan
 
-Status: Phases 1–4 implemented; Phase 5 awaits ExecutionEngine
+Status: Phases 1–5 implemented
 Audience: ACME maintainers, domain engineers and test engineers  
 Prepared: 2026-07-30
 
@@ -20,8 +20,8 @@ The first implementation target is:
 - package: `@acme/module-narrative`
 
 ACME-0017 implements this target through module assembly and shared
-conformance. The offline acceptance flow remains deliberately deferred until
-ExecutionEngine exists.
+conformance. ACME-0018 implements the offline acceptance flow through the
+bounded ExecutionEngine.
 
 The module proves that story continuity can be implemented entirely through
 the shared `PromptContract`, `DomainModule`, `MemoryEngine`, `StateEngine` and
@@ -84,7 +84,7 @@ flowchart LR
   state --> commit
 ```
 
-The module supplies the domain-owned boxes. The future ExecutionEngine
+The module supplies the domain-owned boxes. The ExecutionEngine
 coordinates the arrows and commits all accepted effects atomically.
 
 ## Proposed package structure
@@ -367,14 +367,14 @@ ACME-0017 with the unchanged shared conformance suite.
 
 ### Phase 5 — Offline acceptance
 
-After ExecutionEngine exists:
-
 1. run revision-zero fixture chapter through the model mock
 2. commit source document, three memory decisions and revision one
 3. repeat the request key and prove zero additional effects
 4. replay-verify equal candidate/state hashes
 
 **Exit:** the approved Narrative acceptance scenario passes entirely offline.
+Implemented by ACME-0018 with fixed execution, request, response, operation and
+state-hash vectors.
 
 ## Test strategy
 
@@ -465,7 +465,7 @@ decision and the ACME-0015 conformance implementation.
 - [x] Are all prompt-contract semantics immutable under version `1.0.0`?
 - [x] Is the narrative window limit versioned and fingerprinted?
 - [x] Does every contradiction remain visible in audit evidence?
-- [ ] Can the full acceptance scenario run with no network or wall clock?
+- [x] Can the full acceptance scenario run with no network or wall clock?
 - [ ] Can ResearchModule use the same engine path with no core branch?
 
 ## References

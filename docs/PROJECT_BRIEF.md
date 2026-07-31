@@ -1,7 +1,7 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-07-29
+Last updated: 2026-07-31
 
 ## Identity
 
@@ -161,9 +161,7 @@ The first platform version is successful when:
 
 ## Next Deliverable
 
-The first bounded reference module now implements the public contracts, pure
-engines and shared DomainModule conformance boundary. The recommended next
-implementation deliverable is the single-task ExecutionEngine required to run
-its offline acceptance scenario. That work remains unactivated until an
-explicitly approved task charter exists; ResearchModule and durable
-persistence remain separate deliverables.
+The bounded single-task ExecutionEngine and NarrativeModule offline acceptance
+scenario now implement the first in-memory vertical slice. The next
+deliverable must be explicitly approved from the remaining Milestone 1 scope;
+ResearchModule and durable SQLite persistence remain separate deliverables.

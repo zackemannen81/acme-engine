@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -40,6 +40,8 @@ acme-engine/
 │   │   │   ├── contracts.ts
 │   │   │   ├── errors.ts
 │   │   │   ├── evaluation.ts
+│   │   │   ├── execution-engine.ts
+│   │   │   ├── execution-identity.ts
 │   │   │   ├── execution-status.ts
 │   │   │   ├── execution-types.ts
 │   │   │   ├── hashing.ts
@@ -48,6 +50,7 @@ acme-engine/
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
 │   │   │   ├── model-request-hash.ts
+│   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
 │   │   │   ├── modules.ts
 │   │   │   ├── registries.ts
@@ -59,6 +62,7 @@ acme-engine/
 │   │   │   ├── state-projection.ts
 │   │   │   └── state.ts
 │   │   ├── test/
+│   │   │   ├── execution-identity.test.ts
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
 │   │   │   ├── model-request-hash.test.ts
@@ -107,11 +111,17 @@ acme-engine/
 │       └── test-d/
 │           └── domain-module-conformance.test-d.ts
 ├── tests/
-│   └── conformance/
-│       ├── adapter-memory.test.ts
-│       ├── adapter-model-mock.test.ts
-│       ├── domain-module.test.ts
-│       └── module-narrative.test.ts
+│   ├── conformance/
+│   │   ├── adapter-memory.test.ts
+│   │   ├── adapter-model-mock.test.ts
+│   │   ├── domain-module.test.ts
+│   │   └── module-narrative.test.ts
+│   ├── fixtures/
+│   │   └── neutral-execution.ts
+│   ├── integration/
+│   │   └── execution-engine.test.ts
+│   └── scenario/
+│       └── narrative-phase-5.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -135,6 +145,7 @@ acme-engine/
 │   │   ├── 0009-reference-domain-identity-and-provenance.md
 │   │   ├── 0010-input-bound-validation-and-interpretation.md
 │   │   ├── 0011-narrative-knowledge-and-context-ownership.md
+│   │   ├── 0012-milestone-1-execution-identity-and-replay.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
@@ -208,7 +219,8 @@ content remains intentionally omitted here.
 - `@acme/core`: pure domain-neutral contracts, deterministic primitives,
   input-bound response validation, static registries, pure revisioned
   state/memory preparation, filtered post-memory state projection and the
-  aggregate repository port/digest. Zod is its only external runtime
+  aggregate repository port/digest plus the bounded single-task
+  ExecutionEngine and replay verifier. Zod is its only external runtime
   dependency.
 - `@acme/adapter-memory`: deterministic aggregate repository with immutable
   copy-on-commit transactions and read-only evidence inspection.
@@ -229,10 +241,11 @@ content remains intentionally omitted here.
 
 ## Planned Structure
 
-The design specification retains the future package map for engine behavior,
-SQLite/live-model adapters, ResearchModule and scenarios. Those files and
-directories must be added only by explicitly activated tasks. NarrativeModule
-phases 1–4 are implemented in the workspace.
+The design specification retains the future package map for
+SQLite/live-model adapters, ResearchModule and general scenarios. Those files
+and directories must be added only by explicitly activated tasks.
+NarrativeModule phases 1–5 and the bounded ExecutionEngine are implemented in
+the workspace.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
