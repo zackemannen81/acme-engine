@@ -145,10 +145,14 @@ There is currently:
 - a non-empty neutral integration suite plus the fixed Narrative and Research
   Phase 5 offline scenarios, including repeat-without-effects and
   replay-without-clock, gateway or ID allocation
-- a typed `@acme/cli` composition-root skeleton
+- an `@acme/cli` composition root that selects the in-memory or durable
+  SQLite repository and exposes `execute`, `execution replay`,
+  `execution inspect`, `state inspect` and `memory inspect`, with versioned
+  JSON on stdout, diagnostics on stderr, payload redaction by default and exit
+  codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 281 passing tests across canonicalization, execution identity, model-request
+- 299 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -245,8 +249,9 @@ evidence.
   is proven by clean reopen, not by simulated mid-transaction failure.
 - Outbox delivery, background workers and retention encryption are not
   implemented; the outbox is written atomically but never drained.
-- No composition root selects the durable adapter. `@acme/cli` has no
-  `--adapter sqlite` flag, so SQLite is currently reachable only from tests.
+- The CLI can only drive the deterministic model mock from a script file,
+  because no network transport exists. The gateway flag is shaped so a provider
+  gateway is additive.
 - Package boundary enforcement covers core, testing, the in-memory, model-mock
   and SQLite adapters, CLI substrate and the future `packages/module-*`
   dependency direction; future adapters must extend its rule set.

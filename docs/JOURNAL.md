@@ -1049,3 +1049,45 @@ Add one dated, signed entry for every meaningful work session or handoff.
   terminal and never automatically retried. Reconciling ambiguous calls
   against provider history needs its own decision.
 - Signature: Claude
+
+## 2026-07-31 — CLI composition root
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0026
+- Summary: Turned `@acme/cli` from a behavior-free skeleton into the
+  composition root. It is now the only place in the workspace that selects a
+  concrete repository adapter, and it exposes `execute`, `execution replay`,
+  `execution inspect`, `state inspect` and `memory inspect` over both the
+  in-memory and durable SQLite repositories. Versioned JSON goes to stdout,
+  diagnostics to stderr, payloads are redacted unless `--show-payloads` is
+  supplied, and exit codes separate success, a terminal outcome that did not
+  commit or verify, and a usage error. This closes the gap
+  `docs/CURRENT_STATUS.md` had recorded in its own words: nothing outside the
+  test suite could select the durable adapter.
+- Evidence: The load-bearing test executes a request against a SQLite file and
+  then replays and inspects that same file through the CLI, each run opening
+  and closing its own connection. Redaction is asserted as the default for the
+  recorded request input, document values, state values and memory values, and
+  `--show-payloads` is asserted to reveal them. Ten argument shapes are
+  asserted to fail as usage errors rather than stack traces, including unknown
+  commands, unknown flags, missing positionals and contradictory adapter
+  flags. No file under `packages/` changed, which the unchanged package test
+  counts confirm.
+- Verification: `pnpm docs:check` passed 63 Markdown files after archival.
+  `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm build` passed.
+  `pnpm boundaries` passed. `pnpm test:unit` passed 299 tests in 36 files,
+  `pnpm test:conformance` passed 46 tests in 7 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed 5 tests in 2
+  files. `git diff --check` passed. No check was skipped. `vitest.config.ts`
+  and `tsconfig.tests.json` were extended to include `apps/**/test`, which had
+  never been needed before because no app had tests.
+- Follow-ups: Commands that cannot work are absent rather than present and
+  failing. There is no `scenario run` without a ScenarioRunner, no
+  `execution resume` without resume behavior, and no provider gateway without
+  a network transport, so `execute` drives the deterministic mock from a
+  script file. The mock requires an exact `expectedRequestHash`, which a
+  human cannot compute by hand; that is the mock's contract working as
+  intended, and it is why the CLI passes the script file through unchanged
+  and surfaces the mismatch on stderr.
+- Signature: Claude

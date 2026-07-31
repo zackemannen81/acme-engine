@@ -1,0 +1,365 @@
+import { readFile } from 'node:fs/promises';
+
+import {
+  AcmeError,
+  type ExecutionRequest,
+  type JsonValue,
+  type ModelGateway,
+} from '@acme/core';
+import { createScriptedModelGateway } from '@acme/adapter-model-mock';
+
+import { parseCommand, UsageError, USAGE, type Command } from './args.js';
+import {
+  createComposition,
+  type CompositionOverrides,
+  type InspectableRepository,
+} from './composition.js';
+import { emit, payload, type CliIo } from './output.js';
+
+/**
+ * 0 succeeded, 1 a terminal outcome that did not commit or verify, 2 usage.
+ */
+export const EXIT_OK = 0;
+export const EXIT_OUTCOME = 1;
+export const EXIT_USAGE = 2;
+
+export interface RunOptions extends CompositionOverrides {
+  readonly io: CliIo;
+}
+
+async function readJson(path: string, label: string): Promise<JsonValue> {
+  let text: string;
+  try {
+    text = await readFile(path, 'utf8');
+  } catch {
+    throw new UsageError(`Could not read the ${label} file: ${path}`);
+  }
+  try {
+    return JSON.parse(text) as JsonValue;
+  } catch {
+    throw new UsageError(`The ${label} file is not valid JSON: ${path}`);
+  }
+}
+
+async function gatewayFromScript(path: string): Promise<ModelGateway> {
+  const script = await readJson(path, 'script');
+  try {
+    return createScriptedModelGateway(
+      script as unknown as Parameters<typeof createScriptedModelGateway>[0],
+    );
+  } catch (error: unknown) {
+    throw new UsageError(
+      error instanceof Error
+        ? `The script file was rejected: ${error.message}`
+        : 'The script file was rejected.',
+    );
+  }
+}
+
+function executionEvidence(
+  repository: InspectableRepository,
+  executionId: string,
+  showPayloads: boolean,
+): Readonly<Record<string, JsonValue>> {
+  const evidence = repository.snapshot();
+  const execution = evidence.executions.find(
+    (entry) => entry.executionId === executionId,
+  );
+  if (execution === undefined) {
+    throw new UsageError(`No execution found for ${executionId}.`);
+  }
+  return {
+    execution: {
+      executionId: execution.executionId,
+      namespace: execution.request.namespace,
+      task: execution.request.task,
+      entityId: execution.request.entityId,
+      status: execution.status,
+      currentStage: execution.currentStage,
+      createdAt: execution.createdAt,
+      updatedAt: execution.updatedAt,
+      input: payload(execution.request.input, showPayloads),
+      ...(execution.result === undefined
+        ? {}
+        : { result: execution.result as unknown as JsonValue }),
+    },
+    attempts: evidence.attempts
+      .filter((entry) => entry.executionId === executionId)
+      .map((entry) => ({
+        attemptNumber: entry.attemptNumber,
+        stage: entry.stage,
+        outcome: entry.outcome,
+        occurredAt: entry.occurredAt,
+      })),
+    modelCalls: evidence.modelCalls
+      .filter((entry) => entry.executionId === executionId)
+      .map((entry) => ({
+        modelCallId: entry.modelCallId,
+        callKey: entry.callKey,
+        attempt: entry.attempt,
+        status: entry.status,
+        requestHash: entry.requestHash,
+        ...(entry.responseHash === undefined
+          ? {}
+          : { responseHash: entry.responseHash }),
+        ...(entry.response === undefined
+          ? {}
+          : {
+              response: payload(
+                entry.response as unknown as JsonValue,
+                showPayloads,
+              ),
+            }),
+      })),
+    documents: evidence.documents
+      .filter((entry) => entry.executionId === executionId)
+      .map((entry) => ({
+        documentId: entry.documentId,
+        key: entry.key,
+        kind: entry.kind,
+        contentHash: entry.contentHash,
+        value: payload(entry.value, showPayloads),
+      })),
+  };
+}
+
+async function execute(
+  command: Extract<Command, { kind: 'execute' }>,
+  options: RunOptions,
+): Promise<number> {
+  const request = (await readJson(
+    command.request,
+    'request',
+  )) as unknown as ExecutionRequest;
+  const gateway = await gatewayFromScript(command.script);
+  const composition = createComposition(
+    command.common.adapter,
+    command.common.database,
+    options,
+  );
+  try {
+    const result = await composition.engine(gateway).execute(request);
+    const committed = result.status === 'committed';
+    emit(
+      options.io,
+      'execute',
+      { result: result as unknown as JsonValue },
+      command.common.json,
+      committed
+        ? [
+            `committed ${result.executionId}`,
+            `revision ${String(result.revision)}`,
+            `documents ${result.documentKeys.join(', ') || '(none)'}`,
+          ]
+        : [`${result.status} ${result.executionId}`, result.error.message],
+    );
+    return committed ? EXIT_OK : EXIT_OUTCOME;
+  } finally {
+    composition.close();
+  }
+}
+
+async function replay(
+  command: Extract<Command, { kind: 'execution-replay' }>,
+  options: RunOptions,
+): Promise<number> {
+  const composition = createComposition(
+    command.common.adapter,
+    command.common.database,
+    options,
+  );
+  try {
+    const report = await composition
+      .engine({
+        async capabilities() {
+          throw new Error('Replay must not call a gateway.');
+        },
+        async generate() {
+          throw new Error('Replay must not call a gateway.');
+        },
+      })
+      .replayVerify(command.executionId);
+    emit(
+      options.io,
+      'execution replay',
+      { report: report as unknown as JsonValue },
+      command.common.json,
+      [
+        `replay ${report.status} ${report.executionId}`,
+        ...(report.recordedDigest === undefined
+          ? []
+          : [`recorded ${report.recordedDigest}`]),
+        ...(report.replayDigest === undefined
+          ? []
+          : [`replay   ${report.replayDigest}`]),
+        ...report.differences.map((entry) => `difference ${entry.code}`),
+      ],
+    );
+    return report.status === 'match' ? EXIT_OK : EXIT_OUTCOME;
+  } finally {
+    composition.close();
+  }
+}
+
+function inspectExecution(
+  command: Extract<Command, { kind: 'execution-inspect' }>,
+  options: RunOptions,
+): number {
+  const composition = createComposition(
+    command.common.adapter,
+    command.common.database,
+    options,
+  );
+  try {
+    const body = executionEvidence(
+      composition.repository,
+      command.executionId,
+      command.common.showPayloads,
+    );
+    const execution = body['execution'] as Record<string, JsonValue>;
+    emit(options.io, 'execution inspect', body, command.common.json, [
+      `execution ${String(execution['executionId'])}`,
+      `status ${String(execution['status'])}`,
+      `documents ${String((body['documents'] as JsonValue[]).length)}`,
+      `model calls ${String((body['modelCalls'] as JsonValue[]).length)}`,
+    ]);
+    return EXIT_OK;
+  } finally {
+    composition.close();
+  }
+}
+
+function inspectState(
+  command: Extract<Command, { kind: 'state-inspect' }>,
+  options: RunOptions,
+): number {
+  const composition = createComposition(
+    command.common.adapter,
+    command.common.database,
+    options,
+  );
+  try {
+    const snapshots = composition.repository
+      .snapshot()
+      .state.snapshots.filter(
+        (entry) =>
+          entry.namespace === command.namespace &&
+          entry.entityId === command.entityId &&
+          (command.revision === undefined ||
+            entry.revision === command.revision),
+      );
+    const body = {
+      namespace: command.namespace,
+      entityId: command.entityId,
+      snapshots: snapshots.map((entry) => ({
+        revision: entry.revision,
+        schemaVersion: entry.schemaVersion,
+        valueHash: entry.valueHash,
+        createdAt: entry.createdAt,
+        executionId: entry.executionId,
+        value: payload(entry.value, command.common.showPayloads),
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'state inspect',
+      body,
+      command.common.json,
+      snapshots.length === 0
+        ? ['no state snapshots found']
+        : snapshots.map(
+            (entry) => `revision ${String(entry.revision)} ${entry.valueHash}`,
+          ),
+    );
+    return snapshots.length === 0 ? EXIT_OUTCOME : EXIT_OK;
+  } finally {
+    composition.close();
+  }
+}
+
+function inspectMemory(
+  command: Extract<Command, { kind: 'memory-inspect' }>,
+  options: RunOptions,
+): number {
+  const composition = createComposition(
+    command.common.adapter,
+    command.common.database,
+    options,
+  );
+  try {
+    const records = composition.repository
+      .snapshot()
+      .memoryRecords.filter(
+        (entry) =>
+          entry.namespace === command.namespace &&
+          entry.entityId === command.entityId &&
+          (command.status === undefined || entry.status === command.status),
+      );
+    const body = {
+      namespace: command.namespace,
+      entityId: command.entityId,
+      records: records.map((entry) => ({
+        memoryId: entry.memoryId,
+        identityKey: entry.identityKey,
+        kind: entry.kind,
+        status: entry.status,
+        strength: entry.strength,
+        recordVersion: entry.recordVersion,
+        value: payload(entry.value, command.common.showPayloads),
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'memory inspect',
+      body,
+      command.common.json,
+      records.length === 0
+        ? ['no memory records found']
+        : records.map(
+            (entry) => `${entry.memoryId} ${entry.status} ${entry.identityKey}`,
+          ),
+    );
+    return records.length === 0 ? EXIT_OUTCOME : EXIT_OK;
+  } finally {
+    composition.close();
+  }
+}
+
+export async function run(
+  argv: readonly string[],
+  options: RunOptions,
+): Promise<number> {
+  try {
+    const command = parseCommand(argv);
+    switch (command.kind) {
+      case 'help':
+        options.io.stdout(USAGE);
+        return EXIT_OK;
+      case 'execute':
+        return await execute(command, options);
+      case 'execution-replay':
+        return await replay(command, options);
+      case 'execution-inspect':
+        return inspectExecution(command, options);
+      case 'state-inspect':
+        return inspectState(command, options);
+      case 'memory-inspect':
+        return inspectMemory(command, options);
+    }
+  } catch (error: unknown) {
+    if (error instanceof UsageError) {
+      options.io.stderr(error.message);
+      options.io.stderr(USAGE);
+      return EXIT_USAGE;
+    }
+    if (error instanceof AcmeError) {
+      // Structured engine and adapter failures stay legible on stderr.
+      options.io.stderr(`${error.data.code}: ${error.data.message}`);
+      return EXIT_OUTCOME;
+    }
+    options.io.stderr(
+      error instanceof Error ? error.message : 'Unexpected failure.',
+    );
+    return EXIT_OUTCOME;
+  }
+}

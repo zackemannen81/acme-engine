@@ -17,6 +17,14 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*"
+    "@acme/adapter-memory": "workspace:*",
+    "@acme/adapter-model-mock": "workspace:*",
+    "@acme/adapter-sqlite": "workspace:*",
+    "@acme/core": "workspace:*",
+    "@acme/module-narrative": "workspace:*",
+    "@acme/module-research": "workspace:*"
+  },
+  "bin": {
+    "acme": "./dist/main.js"
   }
 }

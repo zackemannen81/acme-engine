@@ -13,8 +13,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   deterministic model mock, shared conformance kits, NarrativeModule,
   ResearchModule and the bounded single-task ExecutionEngine exist. Both
   reference domains have offline acceptance scenarios. The OpenAI Responses
-  mapping exists behind a transport port, but no network transport,
-  ScenarioRunner or CLI composition root does.
+  mapping exists behind a transport port and `@acme/cli` is a working
+  composition root over both repositories. No network transport or
+  ScenarioRunner exists.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.
@@ -45,6 +46,8 @@ architecture boundary.
 - `docs/adr/`: Architecture decisions and their consequences.
 - `docs/paused/`: Frozen parent tasks waiting on a resume condition.
 - `docs/backlog/`: Non-activated proposals outside the active charter.
+- `docs/concepts_sandbox/`: Explicitly excluded concept work, ideas and future
+  visions. Never decided architecture, roadmap or current scope.
 - `docs/finished/`: Archived completed task specifications.
 - When a task is complete, archive `docs/CURRENT_TASK.md` into `docs/finished/` with a descriptive dated filename, then restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
 

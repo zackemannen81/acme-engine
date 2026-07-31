@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping, a CLI composition root and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 multi-step orchestration or live provider behavior exists.
@@ -17,7 +17,7 @@ Exact contracts, storage schema, protocols and milestones are defined in
   `@acme/adapter-model-openai`, `@acme/module-narrative`,
   `@acme/module-research`, reusable
   repository/gateway/module conformance support in `@acme/testing` and the
-  behavior-free `@acme/cli`
+  `@acme/cli` composition root
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
@@ -349,6 +349,27 @@ compare-and-swap and promotes mutations atomically.
 The adapter is deterministic test persistence only. It does not survive
 process termination and makes no crash-durability claim. The same core port is
 covered by a reusable non-empty conformance suite in `@acme/testing`.
+
+## Implemented Composition Root
+
+`@acme/cli` is the only place in the workspace that selects a concrete
+repository adapter. Everything else works through core ports.
+
+- `execute` runs one task through the bounded ExecutionEngine
+- `execution replay --mode verify` reports the ADR-0012 verdict
+- `execution inspect`, `state inspect` and `memory inspect` read recorded
+  evidence
+- `--adapter memory|sqlite` selects the repository; `--database` is required
+  for SQLite and rejected for memory
+- versioned JSON goes to stdout and diagnostics to stderr
+- payloads are redacted unless `--show-payloads` is supplied
+- exit codes separate success, a terminal outcome that did not commit or
+  verify, and a usage error
+
+The gateway is limited to the deterministic mock driven by a script file,
+because no network transport exists. Commands that cannot work are absent
+rather than present and failing: there is no `scenario run` without a
+ScenarioRunner and no `execution resume` without resume behavior.
 
 ## Implemented Provider Boundary
 

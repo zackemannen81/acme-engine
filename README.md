@@ -16,8 +16,9 @@ pure `@acme/module-narrative` and `@acme/module-research` packages implement
 two reference domains over that same core, each with its own offline
 acceptance scenario, which is the executable evidence that core is
 domain-neutral. The OpenAI Responses mapping exists behind an injected
-transport port and is proven offline against fixtures; no network transport,
-ScenarioRunner, CLI composition root or published package exists yet.
+transport port and is proven offline against fixtures, and `@acme/cli`
+selects either repository from outside the test suite; no network transport,
+ScenarioRunner or published package exists yet.
 
 ## Start here
 
@@ -43,7 +44,7 @@ docs/design/              Design specifications
 docs/paused/              Paused parent tasks
 docs/backlog/             Non-activated work proposals
 docs/finished/            Completed task archive
-apps/cli/                 CLI composition-root skeleton
+apps/cli/                 Composition root: execute, replay, inspect
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository

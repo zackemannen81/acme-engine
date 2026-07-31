@@ -13,8 +13,15 @@ acme-engine/
 │   └── cli/
 │       ├── package.json
 │       ├── tsconfig.json
-│       └── src/
-│           └── index.ts
+│       ├── src/
+│       │   ├── args.ts
+│       │   ├── composition.ts
+│       │   ├── index.ts
+│       │   ├── main.ts
+│       │   ├── output.ts
+│       │   └── run.ts
+│       └── test/
+│           └── cli.test.ts
 ├── packages/
 │   ├── adapter-memory/
 │   │   ├── package.json
@@ -206,6 +213,9 @@ acme-engine/
 │   │   ├── 0014-live-provider-boundary-and-transport-port.md
 │   │   ├── README.md
 │   │   └── template.md
+│   ├── concepts_sandbox/
+│   │   ├── README.md
+│   │   └── POC_interfacing.md
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
@@ -242,6 +252,7 @@ acme-engine/
 │   │   ├── ACME-0023_research-offline-acceptance-scenario.md
 │   │   ├── ACME-0024_governing-document-sync.md
 │   │   ├── ACME-0025_openai-responses-provider-boundary.md
+│   │   ├── ACME-0026_cli-composition-root.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -307,8 +318,10 @@ content remains intentionally omitted here.
   contract/task, corroboration and contradiction policy, and a pure reducer.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway and
   DomainModule conformance plus typed test support.
-- `@acme/cli`: behavior-free composition-root skeleton importing
-  `@acme/core`.
+- `@acme/cli`: the composition root. It is the only place that selects a
+  concrete repository adapter, and it exposes `execute`, `execution replay`,
+  `execution inspect`, `state inspect` and `memory inspect` over both the
+  in-memory and durable SQLite repositories.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -335,6 +348,10 @@ composition-root application for configuring, executing, inspecting,
 validating and measuring domain tests. No such package exists; the file is a
 specification awaiting review. Its durable-persistence prerequisite now
 exists, but ScenarioRunner and its JSON report do not.
+
+`docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
+is decided architecture, roadmap or current scope, and no task may cite it as
+authority.
 
 The `docs/backlog/` proposals record the domain-test-UI implementation and the
 `encrypted-payload` retention gap. The first must remain separate until its

@@ -10,6 +10,7 @@
     "types": ["node", "vitest/globals"]
   },
   "include": [
+    "apps/**/test/**/*.ts",
     "packages/**/test/**/*.ts",
     "packages/**/test-d/**/*.ts",
     "tests/**/*.ts",
