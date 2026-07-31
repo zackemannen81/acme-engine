@@ -179,6 +179,22 @@ Phase 5 on 2026-07-31. ADR-0012 fixes its default policy, retrieval limit,
 identity algorithms and portable replay-evidence boundary. The implementation
 coordinates exactly one primary call through the existing ports and pure
 engines, commits atomically and verifies replay without external effects.
+`previous-document-tail-1` are executable and golden-tested. Phase 5 remains
+blocked on the absent ExecutionEngine and is not claimed by ACME-0017.
+
+ACME-0018 is the active Draft charter for the bounded Milestone 1
+ExecutionEngine. The proposed task coordinates one primary model call through
+the implemented ports and pure engines, extends portable in-memory replay
+evidence only as required and uses Narrative Phase 5 as its offline acceptance
+gate. No engine behavior is implemented or authorized while the charter
+remains `Draft`.
+
+ACME-0019 hardened that charter on 2026-07-31 as a bounded documentation-only
+child task. Request-fingerprint/policy identity, deterministic memory
+retrieval, replay evidence/digest and the staged public engine surface are now
+decided inside the charter rather than deferred to the planned ADR. Two
+maintainer judgment calls remain before the freeze: the constant retrieval
+limit and whether `execute()` exposes `AbortSignal` in Milestone 1.
 
 ## Persistent Gaps
 
