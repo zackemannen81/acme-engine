@@ -51,13 +51,16 @@ scenarios or live provider behavior.
   inference
 - explicit interpreted state intent plus required task-owned
   `projectState()` hooks
-- task interpretation explicitly receives the original typed task input;
-  future orchestration must pass the schema-validated immutable value
+- task interpretation receives the exact schema-validated immutable task
+  input retained by ExecutionEngine
 - exact memory-candidate/decision correlation and filtered immutable
   state-projection input containing only applied decisions
 - state and memory envelopes/policy declarations required by module contracts
 - execution request/policy/result, evaluation evidence and aggregate
   `ExecutionRepository` contracts
+- versioned execution ID, operation key, request fingerprint, deterministic
+  retrieval and model-response hash algorithms
+- portable immutable replay read-set and prepared-commit evidence
 - versioned `acme-operation-digest-1` prepared-commit hashing
 
 Durable adapters and ResearchModule behavior are not implemented.
@@ -191,10 +194,10 @@ state preparation:
 - projected deltas remain untrusted until StateEngine schema, reducer and
   invariant validation succeeds
 
-This boundary adds no persistence or orchestration behavior. The future
-ExecutionEngine must run it after evaluators allow the interpreted result and
-MemoryEngine prepares decisions, then pass its output to StateEngine before
-one aggregate commit.
+This pure boundary itself adds no persistence or orchestration behavior. The
+ExecutionEngine runs it after interpretation and MemoryEngine preparation,
+then passes its output to StateEngine before one aggregate commit. Milestone 1
+records an empty evaluator list because evaluator execution remains deferred.
 
 ## Implemented Deterministic Model Mock
 
@@ -287,6 +290,10 @@ compare-and-swap and promotes mutations atomically.
   terminal execution promotion
 - identical committed retry without new writes or IDs; divergent retry as
   `PERSISTENCE_CORRUPTION`
+- atomic retention of the exact prepared commit and portable replay sidecar
+- response-payload retention according to the stored execution policy while
+  preserving response-hash evidence
+- detached immutable `loadReplayEvidence()` projections for verification
 - detached, deeply frozen read results and deterministic evidence snapshots
 
 The adapter is deterministic test persistence only. It does not survive

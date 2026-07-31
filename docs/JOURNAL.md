@@ -707,3 +707,87 @@ Add one dated, signed entry for every meaningful work session or handoff.
   then write and accept the execution identity/replay ADR before implementing
   the frozen Milestone 1 path.
 - Signature: Claude
+
+## 2026-07-31 — ACME-0018 bounded ExecutionEngine completed
+
+- Date: 2026-07-31
+- Author: Codex
+- Task: ACME-0018
+- Summary: Froze and implemented the bounded Milestone 1 single-task
+  ExecutionEngine. `@acme/core` now validates and immutably retains typed
+  requests, derives versioned execution/request/operation identities, resolves
+  static modules and contracts before acceptance, loads deterministic context
+  with a 50-record memory limit, performs one ledgered primary model call,
+  validates and interprets its response, coordinates MemoryEngine,
+  post-memory state projection and StateEngine, and atomically commits through
+  `ExecutionRepository`. The in-memory adapter now retains exact portable
+  replay evidence and applies the selected response-retention mode. Replay
+  verification recomputes from recorded input, clock, reads and normalized
+  response without invoking the gateway, external ID generator or clock, and
+  reports `match`, `different` or `unavailable`.
+- Decisions: Accepted ADR-0012 with `acme-execution-id-1`,
+  `acme-request-fingerprint-1`, `acme-operation-key-1`,
+  `acme-memory-retrieval-1` and `acme-model-response-hash-1`. The frozen
+  default policy is 30 seconds, one primary call, zero repair/revision calls
+  and hash-only retention. The public Milestone 1 surface is only `execute()`
+  and `replayVerify()`; caller cancellation, resume, fork, repair, revision,
+  evaluators and multi-step flows remain outside this task.
+- Acceptance: Added a neutral integration fixture and ten execution tests,
+  extended repository conformance for immutable replay evidence and retention,
+  and implemented Narrative Phase 5 as one fixed offline scenario. The
+  scenario commits revision zero to one with one source document and exactly
+  three memory records, repeats the request with no new effects and
+  replay-verifies the frozen operation digest. Its execution ID, request
+  fingerprint, request/response hashes, operation digest and state hash are
+  frozen in the scenario and archived task charter.
+- Verification: `pnpm install --frozen-lockfile`, `pnpm format:check`,
+  `pnpm lint`, `pnpm typecheck`, `pnpm boundaries`, `pnpm build` and
+  `git diff --check` passed. The full unit command passed 162 tests in 23
+  files; the focused conformance gate passed 29 tests, integration passed 10
+  tests and Narrative scenario passed one test. `pnpm docs:check` passed 52
+  Markdown files for internal links and balanced fences. Boundary verification
+  included the core-vocabulary scan and forbidden dependency fixtures. No
+  check was skipped.
+- Documentation: Updated the normative specification, Narrative plan, project
+  brief, current status, system documentation, repository map, README,
+  contributor project identity and the Domain Test UI prerequisite record.
+  ACME-0018 is archived as
+  `docs/finished/ACME-0018_single-task-execution-engine.md`, and
+  `docs/CURRENT_TASK.md` is restored to the inactive template.
+- Follow-ups: Durable SQLite persistence/crash recovery, ResearchModule,
+  ScenarioRunner, live provider normalization, evaluators and general
+  repair/revision/resume behavior remain separate explicitly approved tasks.
+  The final post-archive documentation check passed all 53 Markdown files, and
+  the restored current-task file is byte-equivalent to its template.
+- Signature: Codex
+
+## 2026-07-31 — Post-merge execution documentation repaired
+
+- Date: 2026-07-31
+- Author: Codex
+- Task: ACME-0020
+- Summary: Reconciled `docs/JOURNAL.md`, `docs/CURRENT_STATUS.md` and
+  `docs/SYSTEMDOC.md` after merge commit `6c3d002` retained a mixture of
+  pre- and post-ACME-0018 documentation. Restored the missing signed ACME-0018
+  completion entry without rewriting earlier history. Updated current status
+  from the pre-engine snapshot to the merged bounded ExecutionEngine, portable
+  replay evidence, 50-record deterministic retrieval, non-empty integration
+  coverage and Narrative Phase 5 reality. Corrected the remaining
+  future-engine wording in system documentation and documented the
+  in-memory adapter's replay sidecar, retention and `loadReplayEvidence()`
+  behavior.
+- Evidence: The repair was traced to accepted ADR-0012, archived task
+  `docs/finished/ACME-0018_single-task-execution-engine.md`, completed commit
+  `4ad440f`, merged runtime source and the neutral/Narrative execution tests.
+  Historical journal claims that gates were empty before ACME-0018 remain
+  unchanged because they were accurate for those sessions.
+- Verification: `pnpm docs:check` passed 53 Markdown files, typecheck passed,
+  and dependency/core-vocabulary boundaries passed. The full unit command
+  passed 162 tests in 23 files; the focused integration gate passed 10 tests
+  and Narrative Phase 5 passed its one scenario. Targeted conflict-marker and
+  current-facing stale-claim scans passed, as did `git diff --check`. No check
+  was skipped.
+- Follow-ups: Durable SQLite persistence, ResearchModule, ScenarioRunner, live
+  provider normalization and evaluator/repair/resume behavior remain separate
+  explicitly approved work. No runtime behavior changed in this repair.
+- Signature: Codex
