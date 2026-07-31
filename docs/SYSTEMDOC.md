@@ -1,11 +1,10 @@
 # System Documentation
 
 Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule, replay verification, shared conformance, in-memory Unit of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
-durable runtime persistence, multi-step orchestration or live provider
-behavior exists.
+multi-step orchestration or live provider behavior exists.
 Exact contracts, storage schema, protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
@@ -14,19 +13,20 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
 - `@acme/core` contract package, `@acme/adapter-memory`,
-  `@acme/adapter-model-mock`, `@acme/module-narrative`, reusable
-  repository/gateway/module conformance support in `@acme/testing` and the
-  behavior-free `@acme/cli`
+  `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
+  `@acme/module-narrative`, reusable repository/gateway/module conformance
+  support in `@acme/testing` and the behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
-- negative fixture proving forbidden core-to-app dependencies fail
+- negative fixtures proving forbidden core-to-app and core-to-SQLite-driver
+  dependencies fail
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
-This substrate implements bounded single-task execution and one offline
-acceptance scenario. It does not implement durable persistence, multi-step
-scenarios or live provider behavior.
+This substrate implements bounded single-task execution, durable local
+persistence and one offline acceptance scenario. It does not implement
+multi-step scenarios or live provider behavior.
 
 ## Implemented Contract Layer
 
@@ -63,7 +63,7 @@ scenarios or live provider behavior.
 - portable immutable replay read-set and prepared-commit evidence
 - versioned `acme-operation-digest-1` prepared-commit hashing
 
-Durable adapters and ResearchModule behavior are not implemented.
+ResearchModule behavior is not implemented.
 
 ## Implemented Input-Bound Contract Surface
 
@@ -300,6 +300,34 @@ The adapter is deterministic test persistence only. It does not survive
 process termination and makes no crash-durability claim. The same core port is
 covered by a reusable non-empty conformance suite in `@acme/testing`.
 
+## Implemented Durable Unit of Work
+
+`@acme/adapter-sqlite` implements the same aggregate `ExecutionRepository` over
+a local SQLite database. ADR-0003 fixes its shape; ADR-0013 fixes its driver
+and first migration.
+
+- WAL journaling, enforced foreign keys and full synchronous writes
+- ordered migrations whose checksum is `sha256` over the canonical migration
+  source; a tampered checksum or an unknown recorded version refuses to open
+  the database as `PERSISTENCE_CORRUPTION`
+- one `BEGIN IMMEDIATE` transaction per mutating operation, so digest
+  verification, compare-and-swap and every canonical write commit or roll back
+  together
+- the specification section 15.2 columns as the queryable, indexed and
+  constraint-bearing projection, plus canonical `acme-cjson-1` columns where
+  the core contract is richer than those columns can express
+- an `execution_commits` row holding the operation digest, committed
+  projection and exact prepared commit, including the ADR-0012 replay sidecar
+- reads for `get()`, `loadContext()` and `loadReplayEvidence()` that return
+  detached, deeply frozen values and open no transaction
+
+Observable behavior is identical to `@acme/adapter-memory`. Both adapters run
+the same unchanged conformance suite, and the same neutral execution produces
+equal repository evidence in both. A committed database reopened in a new
+connection returns identical replay evidence and the recorded terminal result
+without a new model call or ID allocation. Fault injection at arbitrary
+transaction boundaries remains Milestone 2 work.
+
 ## System Purpose
 
 ACME coordinates typed, model-backed tasks while keeping model communication,
@@ -420,16 +448,17 @@ record decisions/mutations. The implemented projection builder correlates
 those decisions with candidates, excludes ignored/rejected resolutions and
 hands immutable applied evidence to the task-owned hook. StateEngine accepts
 the resulting typed delta and prepares a validated next-state candidate. The
-in-memory repository can atomically promote those prepared effects. Provider
-normalization remains a live-adapter responsibility; the deterministic mock
-accepts only complete validated normalized fixtures. The bounded
-ExecutionEngine orchestrates this path; live normalization and durable
-persistence remain future work.
+in-memory and durable SQLite repositories can atomically promote those
+prepared effects. Provider normalization remains a live-adapter
+responsibility; the deterministic mock accepts only complete validated
+normalized fixtures. The bounded ExecutionEngine orchestrates this path; live
+normalization remains future work.
 
-## Initial Persistence Direction
+## Persistence Direction
 
 - The in-memory adapter is implemented for deterministic tests.
-- SQLite in WAL mode for the first durable local implementation.
+- The SQLite adapter is implemented in WAL mode as the first durable local
+  implementation.
 - One aggregate repository owns the atomic Unit of Work.
 - State uses complete snapshots, explicit transitions and revision
   compare-and-swap.
@@ -491,7 +520,7 @@ at all, remain decision gates inside the specification.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- SQLite persistence and a future live model adapter.
+- A future live model adapter.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.

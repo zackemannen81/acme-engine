@@ -1,0 +1,26 @@
+{
+  "name": "@acme/adapter-sqlite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/core": "workspace:*",
+    "better-sqlite3": "12.4.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13"
+  }
+}

@@ -34,6 +34,31 @@ export default {
       },
     },
     {
+      name: 'sqlite-adapter-depends-only-on-core',
+      severity: 'error',
+      comment:
+        'The SQLite adapter may depend on itself and core, not apps, modules, or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-sqlite/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-sqlite(?:/|$)))',
+      },
+    },
+    {
+      name: 'sqlite-driver-stays-behind-its-adapter',
+      severity: 'error',
+      comment:
+        'Only @acme/adapter-sqlite may reach the SQLite driver; core, modules, and other adapters must use the ExecutionRepository port.',
+      from: {
+        path: '(?:^|/)(?:packages|apps)/[^/]+/src',
+        pathNot: '(?:^|/)packages/adapter-sqlite/src',
+      },
+      to: {
+        path: '(?:^|/)better-sqlite3(?:/|$)',
+      },
+    },
+    {
       name: 'model-mock-adapter-depends-only-on-core',
       severity: 'error',
       comment:

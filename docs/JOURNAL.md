@@ -791,3 +791,74 @@ Add one dated, signed entry for every meaningful work session or handoff.
   provider normalization and evaluator/repair/resume behavior remain separate
   explicitly approved work. No runtime behavior changed in this repair.
 - Signature: Codex
+
+## 2026-07-31 — ACME-0020 archived and current task reset
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0020
+- Summary: Completed the outstanding lifecycle step for ACME-0020. The
+  finished charter was archived as
+  `docs/finished/ACME-0020_post-merge-execution-documentation-repair.md`,
+  `docs/CURRENT_TASK.md` was restored byte-equivalent to
+  `docs/template_CURRENT_TASK.md`, and the `docs/finished/` listing in
+  `docs/FILESTRUCTURE.md` was corrected to include the ACME-0018, ACME-0019
+  and ACME-0020 archives it was missing. No runtime, contract, test or adapter
+  behavior changed.
+- Verification: `pnpm docs:check` and `git diff --check` pass. The restored
+  current-task file was confirmed byte-equivalent to its template. Code gates
+  were not re-run because this change touches documentation only; the ACME-0020
+  entry above records the last full gate run.
+- Follow-ups: No task is active. The next explicitly approved task must be
+  drafted into `docs/CURRENT_TASK.md` with a new `ACME-0021` Task ID. Durable
+  SQLite persistence, ResearchModule, ScenarioRunner and a live provider
+  adapter remain the open Milestone gaps.
+- Signature: Claude
+
+## 2026-07-31 — Durable SQLite persistence implemented
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0021
+- Summary: Implemented `@acme/adapter-sqlite`, the first durable
+  `ExecutionRepository`, closing the largest Milestone 1 gap. The package
+  contains one ordered checksum-verified migration creating the specification
+  section 15.2 schema plus its four required indexes, a WAL-mode connection
+  with enforced foreign keys, and a `BEGIN IMMEDIATE` Unit of Work covering
+  every mutating operation. Observable semantics were ported from
+  `@acme/adapter-memory` rather than reinvented: request idempotency,
+  divergent-reuse rejection as `PERSISTENCE_CORRUPTION`, stale revisions as
+  `CONFLICT_STATE_REVISION`, digest recomputation before commit, sequential
+  memory compare-and-swap and the ADR-0012 replay sidecar. Added ADR-0013 for
+  the two decisions the task forced: `better-sqlite3` over the experimental
+  built-in `node:sqlite`, and the exact points where the persisted schema must
+  extend section 15.2 because that column set is lossy for `ExecutionRequest`,
+  `ModelCallRecord`, `MemoryCandidate` and prepared-commit evidence. Extended
+  the dependency and boundary rules so the driver cannot be reached from core,
+  modules or any other adapter, proven by a new negative fixture.
+- Evidence: The unchanged `executionRepositoryConformance()` suite passes
+  against SQLite exactly as it does against the in-memory adapter. A durable
+  integration test commits through the bounded ExecutionEngine, closes the
+  connection, reopens the file and asserts identical execution record, replay
+  evidence and repository snapshot; repeating the request returns the recorded
+  result with no new model call and no new ID allocation; `replayVerify()`
+  returns `match` with a throwing clock, ID generator and gateway. A third test
+  asserts durable and in-memory evidence are equal for the same execution.
+  Migration tests prove ordered application, idempotent reopen, tampered-
+  checksum rejection and unknown-version rejection.
+- Verification: `pnpm docs:check` passed 55 Markdown files. `pnpm typecheck`,
+  `pnpm lint`, `pnpm format:check` and `pnpm build` passed. `pnpm boundaries`
+  passed dependency, core-vocabulary and the core/module/driver fixture checks.
+  `pnpm test:unit` passed 175 tests in 26 files, `pnpm test:conformance` passed
+  35 tests in 5 files, `pnpm test:integration` passed 13 tests in 2 files and
+  `pnpm test:scenario` passed its one scenario. `git diff --check` passed. One
+  defect was found and fixed during verification: `openDatabase()` leaked an
+  open file handle when migration verification rejected the database.
+- Follow-ups: No composition root selects the durable adapter yet; `@acme/cli`
+  has no `--adapter sqlite` flag, so SQLite is reachable only from tests.
+  Milestone 2 fault injection, outbox delivery, retention encryption,
+  ResearchModule, ScenarioRunner and a live provider adapter remain separate
+  explicitly approved work. `better-sqlite3` prebuild resolution was verified
+  on Windows only; the Linux CI run has not been observed since the dependency
+  was added.
+- Signature: Claude

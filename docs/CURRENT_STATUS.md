@@ -37,10 +37,11 @@ implementation baseline:
 - ADR-0010: Input-bound validation and interpretation
 - ADR-0011: Narrative knowledge and context ownership
 - ADR-0012: Milestone 1 execution identity and replay
+- ADR-0013: Durable SQLite schema and driver
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
-MemoryEngine, post-memory state projection, deterministic in-memory Unit of
-Work and a bounded single-task ExecutionEngine, but no durable persistence.
+MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
+Work, a bounded single-task ExecutionEngine and a durable SQLite adapter.
 There is currently:
 
 - common JSON, identity, time, document and diagnostic contracts
@@ -91,7 +92,16 @@ There is currently:
 - state-head and memory-record compare-and-swap with explicit conflict codes
 - identical commit replay without new writes or IDs, with divergent identity
   reuse rejected as persistence corruption
-- a reusable non-empty repository conformance suite in `@acme/testing`
+- a reusable non-empty repository conformance suite in `@acme/testing` that the
+  in-memory and SQLite adapters both pass unchanged
+- a durable `@acme/adapter-sqlite` in WAL mode with enforced foreign keys,
+  ordered checksum-verified migrations that refuse a tampered or unknown
+  recorded version, and the ADR-0003 `BEGIN IMMEDIATE` Unit of Work
+- durable crash recovery proven by reopening a committed database in a new
+  connection with identical replay evidence, identical operation digest, no
+  new model call and no new ID allocation
+- durable and in-memory repository evidence proven equal for the same neutral
+  execution
 - a deterministic `@acme/adapter-model-mock` with immutable exact-selection
   profiles, finite exact-call scripts and no provider, network, environment,
   filesystem, clock or random dependency
@@ -122,19 +132,18 @@ There is currently:
   offline scenario, including repeat-without-effects and replay-without-clock,
   gateway or ID allocation
 - a typed `@acme/cli` composition-root skeleton
-- automated dependency rules, a core vocabulary guard and negative core plus
-  future-module boundary fixtures
-- 162 passing tests across canonicalization, execution identity, model-request
+- automated dependency rules, a core vocabulary guard and negative core,
+  future-module and SQLite-driver boundary fixtures
+- 175 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
   identity, policy and state behavior, mock matching, immutability, atomic
-  rollback and workspace imports
+  rollback, SQLite migrations and workspace imports
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
   and scenario gates
-- no database schema
 - no live model provider adapter
 - no published package
 - no deployment
@@ -180,18 +189,34 @@ identity algorithms and portable replay-evidence boundary. The implementation
 coordinates exactly one primary call through the existing ports and pure
 engines, commits atomically and verifies replay without external effects.
 
+ACME-0021 completed durable SQLite persistence on 2026-07-31.
+`@acme/adapter-sqlite` implements the aggregate `ExecutionRepository` over the
+ADR-0003 revisioned Unit of Work and passes the unchanged shared conformance
+suite. ADR-0013 fixes the `better-sqlite3` driver, the first ordered
+checksum-verified migration and the exact points where the persisted schema
+extends specification section 15.2. Durability is proven by reopening a
+committed database in a fresh connection: the recovered evidence, operation
+digest and terminal result are identical, and repeating the same request
+returns the recorded result without a new model call or ID allocation.
+
 ## Persistent Gaps
 
-- Durable SQLite persistence and crash recovery are not implemented.
 - A live provider adapter and provider-specific normalization are not
   implemented.
 - ResearchModule is not implemented.
 - ResearchModule must run the implemented shared conformance suite with its
   own fixtures in addition to module-specific policy tests.
-- The persistence schema remains design-only.
-- Package boundary enforcement covers core, testing, the in-memory/model-mock
-  adapters, CLI substrate and the future `packages/module-*` dependency
-  direction; future adapters must extend its rule set.
+- Fault injection at every transaction boundary is Milestone 2 work; durability
+  is proven by clean reopen, not by simulated mid-transaction failure.
+- Outbox delivery, background workers and retention encryption are not
+  implemented; the outbox is written atomically but never drained.
+- No composition root selects the durable adapter. `@acme/cli` has no
+  `--adapter sqlite` flag, so SQLite is currently reachable only from tests.
+- Package boundary enforcement covers core, testing, the in-memory, model-mock
+  and SQLite adapters, CLI substrate and the future `packages/module-*`
+  dependency direction; future adapters must extend its rule set.
+- `better-sqlite3` prebuild resolution is verified on Windows only. The Linux
+  CI matrix has not been observed since the dependency was added.
 - ScenarioRunner and a general evaluation harness are not implemented; the
   single fixed Narrative acceptance scenario is test-owned.
 - No human surface exists for configuring or inspecting domain tests. The

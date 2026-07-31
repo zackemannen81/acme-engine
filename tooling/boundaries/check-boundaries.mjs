@@ -20,6 +20,10 @@ const moduleFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden.ts',
 );
+const driverFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/core/src/forbidden-driver.ts',
+);
 const coreSourcePath = path.join(repoRoot, 'packages/core/src');
 const forbiddenTerms = [
   'narrative',
@@ -116,7 +120,11 @@ verifyForbiddenFixture(
   moduleFixturePath,
   'domain-modules-do-not-depend-on-apps-adapters-or-testing',
 );
+verifyForbiddenFixture(
+  driverFixturePath,
+  'sqlite-driver-stays-behind-its-adapter',
+);
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/module fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/module/driver fixture checks passed.\n',
 );

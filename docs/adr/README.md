@@ -46,3 +46,5 @@ current architecture.
 - [`0009-reference-domain-identity-and-provenance.md`](0009-reference-domain-identity-and-provenance.md)
 - [`0010-input-bound-validation-and-interpretation.md`](0010-input-bound-validation-and-interpretation.md)
 - [`0011-narrative-knowledge-and-context-ownership.md`](0011-narrative-knowledge-and-context-ownership.md)
+- [`0012-milestone-1-execution-identity-and-replay.md`](0012-milestone-1-execution-identity-and-replay.md)
+- [`0013-durable-sqlite-schema-and-driver.md`](0013-durable-sqlite-schema-and-driver.md)

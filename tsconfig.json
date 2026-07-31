@@ -8,6 +8,9 @@
       "path": "./packages/adapter-memory"
     },
     {
+      "path": "./packages/adapter-sqlite"
+    },
+    {
       "path": "./packages/core"
     },
     {

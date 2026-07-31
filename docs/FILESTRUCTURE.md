@@ -32,6 +32,17 @@ acme-engine/
 │   │   │   └── scripted-model-gateway.ts
 │   │   └── test/
 │   │       └── scripted-model-gateway.test.ts
+│   ├── adapter-sqlite/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── database.ts
+│   │   │   ├── index.ts
+│   │   │   ├── migrations.ts
+│   │   │   ├── repository.ts
+│   │   │   └── rows.ts
+│   │   └── test/
+│   │       └── migrations.test.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -114,12 +125,14 @@ acme-engine/
 │   ├── conformance/
 │   │   ├── adapter-memory.test.ts
 │   │   ├── adapter-model-mock.test.ts
+│   │   ├── adapter-sqlite.test.ts
 │   │   ├── domain-module.test.ts
 │   │   └── module-narrative.test.ts
 │   ├── fixtures/
 │   │   └── neutral-execution.ts
 │   ├── integration/
-│   │   └── execution-engine.test.ts
+│   │   ├── execution-engine.test.ts
+│   │   └── execution-engine-sqlite.test.ts
 │   └── scenario/
 │       └── narrative-phase-5.test.ts
 ├── tooling/
@@ -127,6 +140,7 @@ acme-engine/
 │   │   ├── check-boundaries.mjs
 │   │   └── fixtures/
 │   │       ├── packages/core/src/forbidden.ts
+│   │       ├── packages/core/src/forbidden-driver.ts
 │   │       └── packages/module-fixture/src/forbidden.ts
 │   ├── docs/
 │   │   └── check-docs.mjs
@@ -146,6 +160,7 @@ acme-engine/
 │   │   ├── 0010-input-bound-validation-and-interpretation.md
 │   │   ├── 0011-narrative-knowledge-and-context-ownership.md
 │   │   ├── 0012-milestone-1-execution-identity-and-replay.md
+│   │   ├── 0013-durable-sqlite-schema-and-driver.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
@@ -175,6 +190,10 @@ acme-engine/
 │   │   ├── ACME-0015_reusable-domain-module-conformance.md
 │   │   ├── ACME-0016_documentation-reality-sync.md
 │   │   ├── ACME-0017_narrative-module-observe-document.md
+│   │   ├── ACME-0018_single-task-execution-engine.md
+│   │   ├── ACME-0019_acme-0018-charter-hardening.md
+│   │   ├── ACME-0020_post-merge-execution-documentation-repair.md
+│   │   ├── ACME-0021_durable-sqlite-persistence.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -226,6 +245,9 @@ content remains intentionally omitted here.
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
+- `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
+  checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
+  `better-sqlite3` is its only external runtime dependency.
 - `@acme/module-narrative`: strict Narrative v1 schemas, deterministic
   observe-document contract/task, pure state behavior and domain-owned memory
   policy.
@@ -241,11 +263,11 @@ content remains intentionally omitted here.
 
 ## Planned Structure
 
-The design specification retains the future package map for
-SQLite/live-model adapters, ResearchModule and general scenarios. Those files
-and directories must be added only by explicitly activated tasks.
-NarrativeModule phases 1–5 and the bounded ExecutionEngine are implemented in
-the workspace.
+The design specification retains the future package map for the live-model
+adapter, ResearchModule and general scenarios. Those files and directories must
+be added only by explicitly activated tasks. NarrativeModule phases 1–5, the
+bounded ExecutionEngine and the durable SQLite adapter are implemented in the
+workspace.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
