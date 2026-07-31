@@ -166,9 +166,14 @@ ExecutionEngine. The proposed task coordinates one primary model call through
 the implemented ports and pure engines, extends portable in-memory replay
 evidence only as required and uses Narrative Phase 5 as its offline acceptance
 gate. No engine behavior is implemented or authorized while the charter
-remains `Draft`; request-fingerprint/policy identity, replay evidence/digest,
-deterministic memory retrieval and the staged public engine surface must be
-reviewed before freeze.
+remains `Draft`.
+
+ACME-0019 hardened that charter on 2026-07-31 as a bounded documentation-only
+child task. Request-fingerprint/policy identity, deterministic memory
+retrieval, replay evidence/digest and the staged public engine surface are now
+decided inside the charter rather than deferred to the planned ADR. Two
+maintainer judgment calls remain before the freeze: the constant retrieval
+limit and whether `execute()` exposes `AbortSignal` in Milestone 1.
 
 ## Persistent Gaps
 
