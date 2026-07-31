@@ -13,6 +13,7 @@ export {
   type InspectableRepository,
 } from './composition.js';
 export { CLI_OUTPUT_VERSION, REDACTED, type CliIo } from './output.js';
+export { resolveFixturePath, runScenarioFile } from './scenario.js';
 export {
   EXIT_OK,
   EXIT_OUTCOME,

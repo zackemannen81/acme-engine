@@ -1091,3 +1091,43 @@ Add one dated, signed entry for every meaningful work session or handoff.
   intended, and it is why the CLI passes the script file through unchanged
   and surfaces the mismatch on stderr.
 - Signature: Claude
+
+## 2026-07-31 — ScenarioRunner over acme-scenario/1
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0027
+- Summary: Implemented the ScenarioRunner the `AGENTS.md` guardrail has always
+  named, over the `acme-scenario/1` format the specification already defined.
+  It sequences `execute`, `assert`, `replay` and `assertDigest` steps against
+  the existing bounded ExecutionEngine, resolves aliases, halts at the first
+  failed assertion and emits a versioned `acme-scenario-report/1`. A scenario
+  is data, not a program: there is no branching, retry, loop, include or way
+  to run arbitrary code. `acme scenario run` exposes it from the CLI.
+- Evidence: The Narrative Phase 5 acceptance scenario now exists in two
+  independent expressions, hand-written TypeScript and a declarative file, and
+  both reach operation digest
+  `15f143ba7991e04065ad1ed6bc9f2df6942e05372d18f5d4469b2eba4ae5c94f` through
+  the same engine. Both remain in the suite, because the agreement is only
+  evidence while both exist. Fixture-path escape is rejected for `..`, nested
+  traversal and absolute paths. A malformed document, an unknown step kind, a
+  step naming two kinds and an unresolved alias each produce a structured
+  failure rather than a stack trace.
+- Verification: `pnpm docs:check` passed 66 Markdown files after archival.
+  `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm build` passed.
+  `pnpm boundaries` passed, and `@acme/testing` still depends on `@acme/core`
+  alone. `pnpm test:unit` passed 313 tests in 37 files,
+  `pnpm test:conformance` passed 46 tests in 7 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed 19 tests in 3
+  files. `git diff --check` passed. No file under `packages/core`, the
+  adapters or the modules changed. No check was skipped.
+- Follow-ups: Two design points are worth carrying forward. First, memory
+  record IDs are part of the operation-digest preimage, so a scenario that
+  pins a digest must also pin its ID scheme; specification 18.1 names
+  `ids: sequential` without defining what it emits, so the shape is defined in
+  the runner and `idPrefix` and `idPadding` make it expressible. Second, the
+  deterministic mock requires an exact `expectedRequestHash` while the
+  specification's step shape carries none, so a scenario may pin the hash and
+  otherwise the report records the observed hash and marks the call unpinned.
+  The runner never computes a hash and then asserts it against itself.
+- Signature: Claude

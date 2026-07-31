@@ -24,6 +24,9 @@
     },
     {
       "path": "../../packages/module-research"
+    },
+    {
+      "path": "../../packages/testing"
     }
   ]
 }

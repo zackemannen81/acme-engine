@@ -14,8 +14,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   ResearchModule and the bounded single-task ExecutionEngine exist. Both
   reference domains have offline acceptance scenarios. The OpenAI Responses
   mapping exists behind a transport port and `@acme/cli` is a working
-  composition root over both repositories. No network transport or
-  ScenarioRunner exists.
+  composition root over both repositories, with a ScenarioRunner over
+  `acme-scenario/1`. No network transport exists.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

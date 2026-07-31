@@ -1,0 +1,18 @@
+{
+  "selection": {
+    "profile": "offline-json",
+    "providerHint": "fixture",
+    "modelHint": "fixture-json-1"
+  },
+  "capabilities": { "structuredOutput": true, "tools": false, "vision": false },
+  "response": {
+    "provider": "fixture",
+    "model": "fixture-json-1",
+    "providerResponseId": "fixture-response-narrative-phase-5",
+    "receivedAt": "2026-07-31T12:00:01.000Z",
+    "finishReason": "stop",
+    "text": "{\"observations\":[{\"type\":\"character-fact\",\"subject\":\"Mira\",\"predicate\":\"eye color\",\"value\":\"green\",\"confidence\":0.9},{\"type\":\"relationship\",\"subject\":\"Mira\",\"relation\":\"mentors\",\"object\":\"Ion\",\"confidence\":0.8},{\"type\":\"world-rule\",\"rule\":\"The northern light reveals hidden paths.\",\"confidence\":0.75}],\"scene\":{\"location\":\"Observatory\",\"time\":\"Night\",\"summary\":\"Mira shares the northern-light rule with Ion.\"}}",
+    "usage": { "inputTokens": 120, "outputTokens": 90, "totalTokens": 210 },
+    "metadata": { "fixture": "narrative-phase-5" }
+  }
+}

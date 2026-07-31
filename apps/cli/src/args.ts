@@ -20,6 +20,11 @@ export type Command =
       readonly common: CommonOptions;
     }
   | {
+      readonly kind: 'scenario-run';
+      readonly scenario: string;
+      readonly common: CommonOptions;
+    }
+  | {
       readonly kind: 'execution-replay';
       readonly executionId: string;
       readonly common: CommonOptions;
@@ -48,6 +53,7 @@ export const USAGE = `acme — ACME composition root
 
   acme execute --request <file> --script <file> [--adapter memory|sqlite]
                [--database <path>] [--json]
+  acme scenario run <file> [--adapter memory|sqlite] [--database <path>] [--json]
   acme execution replay <execution-id> --mode verify [--adapter ...] [--database <path>] [--json]
   acme execution inspect <execution-id> [--show-payloads] [--adapter ...] [--database <path>] [--json]
   acme state inspect <namespace> <entity-id> [--revision <n>] [--adapter ...] [--database <path>] [--json]
@@ -142,6 +148,14 @@ export function parseCommand(argv: readonly string[]): Command {
       );
     }
     return { kind: 'execute', request, script, common: options };
+  }
+
+  if (group === 'scenario') {
+    if (positionals[1] !== 'run') {
+      throw new UsageError('Unknown scenario action; expected run.');
+    }
+    const scenario = requirePositional(positionals, 2, 'file');
+    return { kind: 'scenario-run', scenario, common: options };
   }
 
   if (group === 'execution') {

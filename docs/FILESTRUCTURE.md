@@ -19,7 +19,8 @@ acme-engine/
 │       │   ├── index.ts
 │       │   ├── main.ts
 │       │   ├── output.ts
-│       │   └── run.ts
+│       │   ├── run.ts
+│       │   └── scenario.ts
 │       └── test/
 │           └── cli.test.ts
 ├── packages/
@@ -160,7 +161,8 @@ acme-engine/
 │       │   ├── domain-module-conformance.ts
 │       │   ├── index.ts
 │       │   ├── model-gateway-conformance.ts
-│       │   └── repository-conformance.ts
+│       │   ├── repository-conformance.ts
+│       │   └── scenario.ts
 │       ├── test/
 │       │   └── workspace-import.test.ts
 │       └── test-d/
@@ -180,8 +182,14 @@ acme-engine/
 │   │   ├── execution-engine.test.ts
 │   │   └── execution-engine-sqlite.test.ts
 │   └── scenario/
+│       ├── files/
+│       │   ├── digests/narrative-phase-5.json
+│       │   ├── inputs/chapter-1.json
+│       │   ├── responses/chapter-1.json
+│       │   └── narrative-phase-5.yaml
 │       ├── narrative-phase-5.test.ts
-│       └── research-phase-5.test.ts
+│       ├── research-phase-5.test.ts
+│       └── scenario-runner.test.ts
 ├── tooling/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
@@ -253,6 +261,7 @@ acme-engine/
 │   │   ├── ACME-0024_governing-document-sync.md
 │   │   ├── ACME-0025_openai-responses-provider-boundary.md
 │   │   ├── ACME-0026_cli-composition-root.md
+│   │   ├── ACME-0027_scenario-runner.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -317,7 +326,9 @@ content remains intentionally omitted here.
   source and independence identity, deterministic observe-evidence
   contract/task, corroboration and contradiction policy, and a pure reducer.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway and
-  DomainModule conformance plus typed test support.
+  DomainModule conformance, typed test support and the ScenarioRunner over
+  `acme-scenario/1`. It depends on `@acme/core` alone; the caller injects the
+  composition and the fixture loader.
 - `@acme/cli`: the composition root. It is the only place that selects a
   concrete repository adapter, and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the

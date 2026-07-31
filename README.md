@@ -17,8 +17,8 @@ two reference domains over that same core, each with its own offline
 acceptance scenario, which is the executable evidence that core is
 domain-neutral. The OpenAI Responses mapping exists behind an injected
 transport port and is proven offline against fixtures, and `@acme/cli`
-selects either repository from outside the test suite; no network transport,
-ScenarioRunner or published package exists yet.
+selects either repository from outside the test suite and runs declarative
+`acme-scenario/1` files; no network transport or published package exists yet.
 
 ## Start here
 

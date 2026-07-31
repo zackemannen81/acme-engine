@@ -1,0 +1,35 @@
+schemaVersion: acme-scenario/1
+name: narrative-phase-5
+seed:
+  clock: '2026-07-31T12:00:00.000Z'
+  ids: sequential
+  idPrefix: narrative-phase-5
+  idPadding: 3
+composition:
+  repository: memory
+  gateway: mock
+steps:
+  - execute:
+      as: first
+      requestKey: narrative-phase-5-request-1
+      namespace: narrative
+      task: observe-document
+      entityId: story-phase-5
+      expectedRevision: 0
+      fixture: inputs/chapter-1.json
+      mockResponse: responses/chapter-1.json
+      policy:
+        retention: encrypted-payload
+  - assert:
+      execution: first
+      status: committed
+      revision: 1
+      documentKeys:
+        - chapter-phase-5
+  - replay:
+      execution: first
+      mode: verify
+      expect: match
+  - assertDigest:
+      execution: first
+      fixture: digests/narrative-phase-5.json

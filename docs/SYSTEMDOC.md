@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping, a CLI composition root and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping, a ScenarioRunner, a CLI composition root and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 multi-step orchestration or live provider behavior exists.
@@ -28,8 +28,8 @@ Exact contracts, storage schema, protocols and milestones are defined in
   boundaries, tests and builds
 
 This substrate implements bounded single-task execution, durable local
-persistence and two offline acceptance scenarios. It does not implement
-multi-step scenarios or live provider behavior.
+persistence, two offline acceptance scenarios and declarative multi-step
+scenarios. It does not implement live provider behavior.
 
 ## Implemented Contract Layer
 
@@ -350,11 +350,43 @@ The adapter is deterministic test persistence only. It does not survive
 process termination and makes no crash-durability claim. The same core port is
 covered by a reusable non-empty conformance suite in `@acme/testing`.
 
+## Implemented ScenarioRunner
+
+`AGENTS.md` fixes the boundary: the ExecutionEngine runs one task and
+multi-step flows belong to a separate runner. `@acme/testing` implements that
+runner over the `acme-scenario/1` format named in specification section 18.1.
+
+- `execute`, `assert`, `replay` and `assertDigest` steps run serially, with
+  later steps naming an earlier execution by alias
+- a run halts at the first failed assertion and reports every step already
+  run, because later steps depend on earlier state and a cascade of derived
+  failures hides the first real one
+- the report is a versioned `acme-scenario-report/1` document
+- there is no branching, retry, loop, include or way to run arbitrary code; a
+  scenario is data, not a program
+- the runner never reads a file and never imports a concrete adapter. The
+  caller injects the fixture loader and builds the composition, so
+  `@acme/testing` keeps depending on `@acme/core` alone
+- the composition is built from the scenario's own `seed`, so the declared
+  clock and ID allocation are the ones the run uses
+
+Because memory record IDs are part of the operation-digest preimage, a
+scenario that pins a digest must also pin its ID scheme. Specification 18.1
+names `ids: sequential` without defining what it emits, so the shape is fixed
+here and `idPrefix` and `idPadding` make it expressible.
+
+The Narrative Phase 5 acceptance scenario exists in both forms, hand-written
+and declarative, and reaches the same operation digest through the same
+engine. The agreement is only evidence while both expressions exist.
+
 ## Implemented Composition Root
 
 `@acme/cli` is the only place in the workspace that selects a concrete
 repository adapter. Everything else works through core ports.
 
+- `scenario run` executes an `acme-scenario/1` file, owning YAML parsing,
+  path resolution and the rule that a fixture path may not escape the
+  scenario root
 - `execute` runs one task through the bounded ExecutionEngine
 - `execution replay --mode verify` reports the ADR-0012 verdict
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
@@ -366,10 +398,9 @@ repository adapter. Everything else works through core ports.
 - exit codes separate success, a terminal outcome that did not commit or
   verify, and a usage error
 
-The gateway is limited to the deterministic mock driven by a script file,
-because no network transport exists. Commands that cannot work are absent
-rather than present and failing: there is no `scenario run` without a
-ScenarioRunner and no `execution resume` without resume behavior.
+The gateway is limited to the deterministic mock, because no network
+transport exists. Commands that cannot work are absent rather than present and
+failing: there is no `execution resume` without resume behavior.
 
 ## Implemented Provider Boundary
 

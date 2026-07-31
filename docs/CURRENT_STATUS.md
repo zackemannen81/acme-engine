@@ -145,14 +145,21 @@ There is currently:
 - a non-empty neutral integration suite plus the fixed Narrative and Research
   Phase 5 offline scenarios, including repeat-without-effects and
   replay-without-clock, gateway or ID allocation
+- a ScenarioRunner in `@acme/testing` that validates an `acme-scenario/1`
+  document, resolves aliases, executes `execute`, `assert`, `replay` and
+  `assertDigest` steps serially and emits a versioned
+  `acme-scenario-report/1`, with no branching, retry, loop or arbitrary code
+- proof that the runner drives the real engine: the Narrative Phase 5
+  acceptance scenario expressed as a scenario file reaches the same operation
+  digest as the hand-written test, and both remain in the suite
 - an `@acme/cli` composition root that selects the in-memory or durable
-  SQLite repository and exposes `execute`, `execution replay`,
+  SQLite repository and exposes `scenario run`, `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect`, with versioned
   JSON on stdout, diagnostics on stderr, payload redaction by default and exit
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 299 passing tests across canonicalization, execution identity, model-request
+- 313 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -257,9 +264,8 @@ evidence.
   dependency direction; future adapters must extend its rule set.
 - `better-sqlite3` prebuild resolution is verified on Windows only. The Linux
   CI matrix has not been observed since the dependency was added.
-- ScenarioRunner and a general evaluation harness are not implemented; the
-  two fixed acceptance scenarios are test-owned and each drives the engine
-  directly.
+- A general evaluation harness is not implemented. ScenarioRunner sequences
+  executions and asserts recorded evidence; it does not score output quality.
 - No human surface exists for configuring or inspecting domain tests. The
   proposed interface is specification-only; ScenarioRunner, durable
   persistence and its unresolved decision gates still block activation, whose

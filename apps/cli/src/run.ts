@@ -15,6 +15,7 @@ import {
   type InspectableRepository,
 } from './composition.js';
 import { emit, payload, type CliIo } from './output.js';
+import { runScenarioFile } from './scenario.js';
 
 /**
  * 0 succeeded, 1 a terminal outcome that did not commit or verify, 2 usage.
@@ -156,6 +157,41 @@ async function execute(
     return committed ? EXIT_OK : EXIT_OUTCOME;
   } finally {
     composition.close();
+  }
+}
+
+async function scenario(
+  command: Extract<Command, { kind: 'scenario-run' }>,
+  options: RunOptions,
+): Promise<number> {
+  // The composition is built from the scenario's own seed, so it cannot exist
+  // until the document has been parsed.
+  const { report, close } = await runScenarioFile(
+    command.scenario,
+    (overrides) =>
+      createComposition(
+        command.common.adapter,
+        command.common.database,
+        overrides,
+      ),
+  );
+  try {
+    emit(
+      options.io,
+      'scenario run',
+      { report: report as unknown as JsonValue },
+      command.common.json,
+      [
+        `scenario ${report.status} ${report.name}`,
+        ...report.steps.map(
+          (step) => `  ${String(step.index)} ${step.kind} ${step.status}`,
+        ),
+        ...(report.failure === undefined ? [] : [report.failure.message]),
+      ],
+    );
+    return report.status === 'passed' ? EXIT_OK : EXIT_OUTCOME;
+  } finally {
+    close();
   }
 }
 
@@ -337,6 +373,8 @@ export async function run(
         return EXIT_OK;
       case 'execute':
         return await execute(command, options);
+      case 'scenario-run':
+        return await scenario(command, options);
       case 'execution-replay':
         return await replay(command, options);
       case 'execution-inspect':

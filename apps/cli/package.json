@@ -22,7 +22,9 @@
     "@acme/adapter-sqlite": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/module-narrative": "workspace:*",
-    "@acme/module-research": "workspace:*"
+    "@acme/module-research": "workspace:*",
+    "@acme/testing": "workspace:*",
+    "yaml": "2.8.1"
   },
   "bin": {
     "acme": "./dist/main.js"
