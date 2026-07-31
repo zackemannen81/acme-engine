@@ -1131,3 +1131,61 @@ Add one dated, signed entry for every meaningful work session or handoff.
   otherwise the report records the observed hash and marks the call unpinned.
   The runner never computes a hash and then asserts it against itself.
 - Signature: Claude
+
+## 2026-08-01 — First live provider calls: a successful falsification
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0028
+- Summary: Built the `fetch` transport, the opt-in live gate, and made ACME's
+  first two real provider calls. Neither reached a success response, and that
+  is the useful outcome. Both were rejected at schema validation before token
+  generation, so both were effectively free, and together they falsified an
+  assumption the entire offline stack was built on.
+- Evidence: Confirmed against real provider data. The transport completes a
+  real HTTP round trip. ADR-0014's classification table held twice: HTTP 400
+  mapped to `INVALID_REQUEST`, non-retryable, at stage `calling-model`, and
+  neither call was ambiguous because a status line arrived, which is exactly
+  the first question the ADR tells the adapter to ask. The engine terminated
+  cleanly with a classified error both times. `OpenAiErrorBodySchema` extracted
+  `providerMessage` correctly from a real error body. The request shape reached
+  provider-side validation of `text.format.schema`, so model, instructions,
+  input and the structured-output envelope were structurally accepted.
+- Finding: No ACME prompt contract satisfies OpenAI's strict structured-output
+  subset. Two independent rules are broken. `oneOf` is not permitted, which
+  `narrative.observe-document` violates because `z.toJSONSchema` compiles a
+  discriminated union to `oneOf`. Every key in `properties` must appear in
+  `required`, which forbids optional fields and which both contracts violate,
+  measured at four places in Narrative and one in Research. The root cause is
+  narrower than either symptom: `buildResponsesBody` passes the canonical JSON
+  Schema to the provider verbatim while translating every other request field.
+  The adapter does not translate the one thing that most needs translating.
+  Recorded in `docs/backlog/strict-structured-output-schema-subset.md`.
+- Not established: the success path. `OpenAiResponseSchema`, the `hash-only`
+  retention behavior and the `unavailable` replay verdict have never run
+  against real provider data, because no call reached a `200`. Two Definition
+  of Done conditions are therefore unmet and are stated as unmet rather than
+  quietly checked off. They transfer to the schema-lowering task, which needs a
+  live success response as its own acceptance criterion and will use the gate
+  this task built.
+- Verification: `pnpm docs:check` passed 68 Markdown files after archival.
+  `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm build` passed.
+  `pnpm boundaries` passed. `pnpm test:unit` passed 320 tests in 38 files,
+  `pnpm test:conformance` passed 46 tests in 7 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed 19 tests in 3
+  files. The default suite cannot reach `tests/live`, which is excluded in
+  `vitest.config.ts` rather than merely uncalled, and the live gate refuses
+  with a clear message when the opt-in is absent instead of skipping quietly.
+  `git diff --check` passed. No credential appears in any committed file.
+- Spend: two calls, both rejected before token generation, against a 30 SEK
+  ceiling. Actual spend is effectively zero. Note that a currency ceiling is
+  not machine-enforceable today, because the adapter never populates
+  `estimatedCostMinor`; what bounded these calls was the Milestone 1 limit of
+  one model call per execution and the account's own hard stop.
+- Follow-ups: The charter was amended once, from `narrative.observe-document`
+  to `research.observe-evidence`, on the assumption that avoiding `oneOf` would
+  reach a success response. The second call disproved that assumption, which is
+  worth recording: avoiding one rule of a subset does not mean satisfying the
+  subset. The next task must prove nested `anyOf` support against the provider
+  rather than assume it, for the same reason.
+- Signature: Claude

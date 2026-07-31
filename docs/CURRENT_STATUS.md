@@ -118,6 +118,15 @@ There is currently:
 - the first producer of the `ambiguous` model-call status: any transport
   outcome without a status line is ambiguous unless the transport can prove
   the request never left
+- a `fetch` transport on a separate entry point, whose delivery
+  classification is proven offline against an injected `fetch`. It reports
+  `unknown` for every post-dispatch failure, because `fetch` cannot prove
+  non-delivery, and claims `not-sent` only for cancellation before dispatch
+- an opt-in `pnpm test:live` gate that is structurally excluded from
+  `vitest.config.ts`, so no default run and no CI step can reach it, and that
+  refuses rather than skips when the opt-in or credential is absent
+- real-provider confirmation of the ADR-0014 failure classification and of the
+  provider error-body schema, obtained from two live calls
 - a reusable non-empty public-core-only `DomainModule` conformance suite in
   `@acme/testing`, proven unchanged against testing-owned producer and empty
   analyzer fixtures
@@ -159,7 +168,7 @@ There is currently:
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 313 passing tests across canonicalization, execution identity, model-request
+- 320 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -279,12 +288,20 @@ evidence.
   `unavailable`. Retaining a live provider response and replaying it are
   therefore not simultaneously available under an honest reading, which the
   live-provider ADR must resolve before any real payload is stored.
-- No network transport exists. `@acme/adapter-model-openai` ships the mapping
-  only, so nothing in the workspace can reach a provider and CI stays
-  secret-free. The provider fixtures are hand-written from our understanding
-  of the Responses wire format rather than captured from a live call, so they
-  prove the adapter is internally consistent, not that the understanding is
-  correct. Only a live call can confirm that.
+- No ACME prompt contract satisfies OpenAI's strict structured-output schema
+  subset, so no live call has yet reached a `200`. Two independent rules are
+  broken: `oneOf` is not permitted, and every key in `properties` must appear
+  in `required`, which forbids optional fields. The root cause is that the
+  adapter passes the canonical JSON Schema to the provider verbatim while
+  translating every other request field. A provider-specific schema lowering
+  is proposed in
+  `docs/backlog/strict-structured-output-schema-subset.md`.
+- The success-path provider fixtures remain unconfirmed. Two live calls
+  confirmed the failure classification and the provider error-body schema, but
+  both were rejected at schema validation before token generation, so
+  `OpenAiResponseSchema`, the `hash-only` retention behavior and the
+  `unavailable` replay verdict have never been exercised against real
+  provider data.
 - Reconciling an ambiguous model call against provider-side history is not
   implemented. ADR-0014 makes such a call terminal and never automatically
   retried.

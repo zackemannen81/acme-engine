@@ -18,7 +18,8 @@ acceptance scenario, which is the executable evidence that core is
 domain-neutral. The OpenAI Responses mapping exists behind an injected
 transport port and is proven offline against fixtures, and `@acme/cli`
 selects either repository from outside the test suite and runs declarative
-`acme-scenario/1` files; no network transport or published package exists yet.
+`acme-scenario/1` files. A `fetch` transport and an opt-in live gate exist; no
+live call has yet reached a success response, and no published package exists.
 
 ## Start here
 

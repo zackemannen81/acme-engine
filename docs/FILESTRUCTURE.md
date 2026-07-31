@@ -49,10 +49,12 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   ├── request.ts
 │   │   │   ├── transport.ts
+│   │   │   ├── transport-fetch.ts
 │   │   │   └── wire.ts
 │   │   └── test/
 │   │       ├── fixtures.ts
-│   │       └── gateway.test.ts
+│   │       ├── gateway.test.ts
+│   │       └── transport-fetch.test.ts
 │   ├── adapter-sqlite/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -178,6 +180,8 @@ acme-engine/
 │   │   └── module-research.test.ts
 │   ├── fixtures/
 │   │   └── neutral-execution.ts
+│   ├── live/
+│   │   └── openai-responses.test.ts
 │   ├── integration/
 │   │   ├── execution-engine.test.ts
 │   │   └── execution-engine-sqlite.test.ts
@@ -227,6 +231,7 @@ acme-engine/
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
+│   │   ├── strict-structured-output-schema-subset.md
 │   │   └── encrypted-payload-retention.md
 │   ├── design/
 │   │   ├── README.md
@@ -262,6 +267,7 @@ acme-engine/
 │   │   ├── ACME-0025_openai-responses-provider-boundary.md
 │   │   ├── ACME-0026_cli-composition-root.md
 │   │   ├── ACME-0027_scenario-runner.md
+│   │   ├── ACME-0028_first-live-provider-calls.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -293,7 +299,8 @@ acme-engine/
 ├── README.md
 ├── tsconfig.json
 ├── tsconfig.tests.json
-└── vitest.config.ts
+├── vitest.config.ts
+└── vitest.live.config.ts
 ```
 
 `FS.txt` is a legacy tracked Windows filesystem dump that includes generated
@@ -315,7 +322,9 @@ content remains intentionally omitted here.
   immutable normalized outcomes and read-only invocation evidence.
 - `@acme/adapter-model-openai`: the OpenAI Responses mapping behind an
   injected transport port, so request construction, normalization and failure
-  classification are exercised offline. It ships no network transport.
+  classification are exercised offline. A `fetch` transport is published from
+  the separate `./transport-fetch` entry point, so the default surface stays
+  network-free.
 - `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
   checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
   `better-sqlite3` is its only external runtime dependency.

@@ -20,6 +20,7 @@
     "test": "pnpm test:unit && pnpm test:conformance && pnpm test:integration && pnpm test:scenario",
     "test:conformance": "vitest run tests/conformance",
     "test:integration": "vitest run --passWithNoTests tests/integration",
+    "test:live": "node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.live.config.ts",
     "test:scenario": "vitest run --passWithNoTests tests/scenario",
     "test:unit": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --noEmit --pretty false"

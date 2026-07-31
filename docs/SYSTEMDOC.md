@@ -418,7 +418,12 @@ never parses a body, never classifies a failure and never sees an ACME type.
   missing status line is ambiguous unless the transport proves non-delivery
 - `capabilities()` resolves from static configuration and never probes
 - credentials are supplied by the composition root; the package reads no
-  environment and ships no network transport
+  environment
+- a `fetch` transport lives on the separate `./transport-fetch` entry point,
+  so the default surface stays network-free. It reports `delivery: 'unknown'`
+  for every post-dispatch failure, because `fetch` cannot distinguish a
+  request that never left from one that was answered and lost, and ADR-0014
+  treats `unknown` as ambiguous
 
 The adapter passes the unchanged shared `ModelGateway` conformance suite, so
 the scripted mock and a real provider mapping satisfy one contract. Boundary
