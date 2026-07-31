@@ -10,6 +10,7 @@ import {
   RESEARCH_EVIDENCE_KIND,
   RESEARCH_MEMORY_SCHEMA_VERSION,
   type ResearchContractInput,
+  type ResearchContractOutput,
 } from '../src/schemas.js';
 import { reduceResearchState } from '../src/state.js';
 import {
@@ -151,7 +152,7 @@ describe('research.observe-evidence contract', () => {
     // Pinned golden. A change here means the prompt, schema or projected
     // contract input moved and needs a contract version decision.
     expect(computeModelRequestHash(request)).toBe(
-      '00b4033275abc0a9f05c88b1838b7d6e2131df85e139a6c7864d305da9a3523c',
+      'ec45e26705df4049e11c0677cb6675b9df6f207de107448442d7769742ed4a8d',
     );
   });
 
@@ -294,6 +295,67 @@ describe('research.observe-evidence interpretation', () => {
     expect(result.stateIntent?.value.questions).toEqual([
       'Does altitude change the measurement?',
     ]);
+  });
+
+  it('treats an explicitly null value as the same claim as an omitted one', async () => {
+    // Claim identity folds sourceLocator into its preimage, so an unknown
+    // locator must reduce to one form whether the model omitted it or said
+    // null. Otherwise the same assertion would fail to deduplicate, and state
+    // would carry two canonical forms of one claim.
+    const withNulls: ResearchContractOutput = {
+      claims: [
+        {
+          proposition: PROPOSITION,
+          statement: SUPPORTING,
+          position: 'supports',
+          evidenceQuote: null,
+          sourceLocator: null,
+          confidence: 0.9,
+        },
+      ],
+      openQuestions: [],
+    };
+    const withOmissions: ResearchContractOutput = {
+      claims: [
+        {
+          proposition: PROPOSITION,
+          statement: SUPPORTING,
+          position: 'supports',
+          confidence: 0.9,
+        },
+      ],
+      openQuestions: [],
+    };
+
+    const fromNulls = await researchObserveEvidenceTask.interpret(
+      withNulls,
+      sourceA,
+      readContext(),
+    );
+    const fromOmissions = await researchObserveEvidenceTask.interpret(
+      withOmissions,
+      sourceA,
+      readContext(),
+    );
+
+    expect(fromNulls).toEqual(fromOmissions);
+    expect(JSON.stringify(fromNulls)).not.toContain('null');
+
+    // The same reduction must hold for the semantic gate, or a null-reported
+    // duplicate would slip past the check that an omitted one is caught by.
+    const input = await project();
+    const duplicateWithNulls: ResearchContractOutput = {
+      claims: [
+        ...withNulls.claims,
+        ...withOmissions.claims.map((claim) => ({ ...claim })),
+      ],
+      openQuestions: [],
+    };
+    expect(
+      researchObserveEvidenceContract
+        .validateSemantics(duplicateWithNulls, input)
+        .map(({ code }) => code),
+    ).toEqual(['RESEARCH_DUPLICATE_CLAIM']);
   });
 
   it('is deterministic for the same evidence and context', async () => {

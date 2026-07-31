@@ -13,6 +13,7 @@ import {
   narrativeObserveDocumentContract,
   narrativeObserveDocumentTask,
   narrativeSourceContentHash,
+  type NarrativeContractOutput,
   type NarrativeDelta,
 } from '../src/index.js';
 import {
@@ -76,13 +77,13 @@ describe('narrative.observe-document@1.0.0', () => {
 
     expect(second).toEqual(first);
     expect(computeModelRequestHash(first)).toBe(
-      '7fea4173061e19c49eeb848eb235a050d32df423afc990c1d2b6e7e0e7f0e445',
+      'd907eb0d237c03fedeccb842b100378d75d6f66ec448bfe37a88e663dc62d5da',
     );
     expect(
       createContractRegistry([narrativeObserveDocumentContract]).fingerprint(
         narrativeObserveDocumentContract.ref,
       ),
-    ).toBe('443ad89aeebaae72c6356106abf9a110d35234ad6243f0a2091dc7a97d43b2ad');
+    ).toBe('291987c02472e577b2accb7ad0dcee67c2112463c51e594a69562d9c55d71844');
     expect(first.temperature).toBe(0);
     expect(first.output.mode).toBe('json');
     expect(Object.isFrozen(first)).toBe(true);
@@ -225,6 +226,58 @@ describe('narrative.observe-document@1.0.0', () => {
     });
     expect(result.events).toEqual([]);
     expect(Object.isFrozen(result)).toBe(true);
+  });
+
+  it('treats an explicitly null value as the same claim as an omitted one', async () => {
+    // A provider under strict structured output must emit every property, so
+    // "unknown" arrives as null. State must not be able to tell the two apart,
+    // because acme-cjson-1 distinguishes null from an absent key and one claim
+    // must not have two canonical forms.
+    const reportedWithNulls: NarrativeContractOutput = {
+      observations: [
+        {
+          type: 'character-fact',
+          subject: 'Mira',
+          predicate: 'eye color',
+          value: 'green',
+          confidence: 0.9,
+          correction: null,
+        },
+      ],
+      scene: { location: null, time: null, summary: 'A quiet observatory.' },
+      outlineProgress: null,
+    };
+    const reportedWithOmissions: NarrativeContractOutput = {
+      observations: [
+        {
+          type: 'character-fact',
+          subject: 'Mira',
+          predicate: 'eye color',
+          value: 'green',
+          confidence: 0.9,
+        },
+      ],
+      scene: { summary: 'A quiet observatory.' },
+    };
+
+    const fromNulls = await narrativeObserveDocumentTask.interpret(
+      reportedWithNulls,
+      narrativeInput,
+      narrativeContext,
+    );
+    const fromOmissions = await narrativeObserveDocumentTask.interpret(
+      reportedWithOmissions,
+      narrativeInput,
+      narrativeContext,
+    );
+
+    expect(fromNulls).toEqual(fromOmissions);
+    expect(JSON.stringify(fromNulls)).not.toContain('null');
+    expect(fromNulls.stateIntent?.value.scene).toEqual({
+      summary: 'A quiet observatory.',
+    });
+    expect(fromNulls.stateIntent?.value).not.toHaveProperty('outlineProgress');
+    expect(fromNulls.memories[0]?.value).not.toHaveProperty('correction');
   });
 
   it('projects entity and alias state only from applied memory decisions', async () => {

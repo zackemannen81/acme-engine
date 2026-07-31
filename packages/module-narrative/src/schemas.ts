@@ -40,10 +40,36 @@ export const NarrativeSourceDocumentSchema = z
   })
   .strict();
 
+/**
+ * The scene as it is held in state, in a delta and in contract input.
+ *
+ * An absent `location` means the scene simply does not carry one. `null` is
+ * deliberately not accepted here: `acme-cjson-1` distinguishes `null` from an
+ * absent key, so admitting both would give one scene two canonical forms and
+ * two identities.
+ */
 export const NarrativeSceneSchema = z
   .object({
     location: nonBlankString.optional(),
     time: nonBlankString.optional(),
+    summary: nonBlankString,
+  })
+  .strict();
+
+/**
+ * The scene as the model reports it.
+ *
+ * Same domain shape, one widening: an unknown `location` may arrive as `null`
+ * rather than as an absent key. That is what a provider produces under strict
+ * structured output, where every property must be present, and saying so in
+ * the contract is what lets the recorded model call stay byte-identical to
+ * what the model actually produced. The task narrows it back before anything
+ * reaches state.
+ */
+export const NarrativeObservedSceneSchema = z
+  .object({
+    location: nonBlankString.nullish(),
+    time: nonBlankString.nullish(),
     summary: nonBlankString,
   })
   .strict();
@@ -61,12 +87,23 @@ export const NarrativeOutlineProgressSchema = z
   })
   .strict();
 
+/** Correction evidence as it is persisted in a memory value. */
 export const NarrativeCorrectionEvidenceSchema = z
   .object({
     targetIdentityKey: nonBlankString,
     supersedesValue: nonBlankString,
     evidenceQuote: nonBlankString,
     sourceLocator: nonBlankString.optional(),
+  })
+  .strict();
+
+/** Correction evidence as the model reports it. See the scene pair above. */
+export const NarrativeObservedCorrectionEvidenceSchema = z
+  .object({
+    targetIdentityKey: nonBlankString,
+    supersedesValue: nonBlankString,
+    evidenceQuote: nonBlankString,
+    sourceLocator: nonBlankString.nullish(),
   })
   .strict();
 
@@ -77,7 +114,7 @@ export const NarrativeCharacterFactObservationSchema = z
     predicate: nonBlankString,
     value: nonBlankString,
     confidence,
-    correction: NarrativeCorrectionEvidenceSchema.optional(),
+    correction: NarrativeObservedCorrectionEvidenceSchema.nullish(),
   })
   .strict();
 
@@ -108,8 +145,8 @@ export const NarrativeObservationSchema = z.discriminatedUnion('type', [
 export const NarrativeContractOutputSchema = z
   .object({
     observations: z.array(NarrativeObservationSchema),
-    scene: NarrativeSceneSchema,
-    outlineProgress: NarrativeOutlineProgressSchema.optional(),
+    scene: NarrativeObservedSceneSchema,
+    outlineProgress: NarrativeOutlineProgressSchema.nullish(),
   })
   .strict();
 
@@ -262,6 +299,9 @@ export type NarrativeSourceDocument = z.infer<
   typeof NarrativeSourceDocumentSchema
 >;
 export type NarrativeScene = z.infer<typeof NarrativeSceneSchema>;
+export type NarrativeObservedScene = z.infer<
+  typeof NarrativeObservedSceneSchema
+>;
 export type NarrativeOutlineStatus = z.infer<
   typeof NarrativeOutlineStatusSchema
 >;
@@ -270,6 +310,9 @@ export type NarrativeOutlineProgress = z.infer<
 >;
 export type NarrativeCorrectionEvidence = z.infer<
   typeof NarrativeCorrectionEvidenceSchema
+>;
+export type NarrativeObservedCorrectionEvidence = z.infer<
+  typeof NarrativeObservedCorrectionEvidenceSchema
 >;
 export type NarrativeObservation = z.infer<typeof NarrativeObservationSchema>;
 export type NarrativeContractOutput = z.infer<

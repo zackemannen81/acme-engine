@@ -169,9 +169,9 @@ proven by a live success response.
 
 - [ ] Read the required documents and ACME-0028's recorded evidence.
 - [x] Settle the open questions and freeze the charter.
-- [ ] Split the two shared narrative schemas and apply `.nullish()` to the
+- [x] Split the two shared narrative schemas and apply `.nullish()` to the
       output-facing schemas only.
-- [ ] Re-pin the two moved request-hash goldens in the same commit, and prove
+- [x] Re-pin the moved request-derived goldens in the same commit, and prove
       the state and memory goldens did not move.
 - [ ] Implement the lowering and its determinism test.
 - [ ] Implement the local preflight refusal.
@@ -231,6 +231,20 @@ proven by a live success response.
   it during interpretation. That is a domain rule applied in the domain layer,
   not a transport workaround in the adapter, and it is the module's existing
   job to turn a validated observation into a delta.
+- **Measured on 2026-08-01, after the schema split.** The scenario tests pin
+  six identities side by side, which made the tripwire readable directly.
+  Moved: `modelRequestHash` and `requestFingerprint` in both domains, plus the
+  narrative contract fingerprint. Unchanged: `executionId`,
+  `modelResponseHash`, `operationDigest` and `stateHash` in both domains, and
+  every memory identity key. `null` therefore never reached state, which is
+  what the split was for.
+- The narrowing is proven behaviorally, not just by the goldens standing
+  still. Both domains now have a test asserting that an output reporting
+  `null` and an output omitting the field produce an identical interpretation,
+  and that the result contains no `null` anywhere. Research additionally
+  asserts that a null-reported claim still trips `RESEARCH_DUPLICATE_CLAIM`
+  against an omitted one, because claim identity folds `sourceLocator` into
+  its preimage and the two forms must reduce to one.
 - **Decided:** a local refusal raises the existing `UNSUPPORTED_CAPABILITY`.
   The condition is exactly what that code already means, the provider cannot
   express this, and adding a provider-specific code to the core taxonomy would
@@ -242,16 +256,22 @@ proven by a live success response.
 
 Only non-semantic corrections are allowed after `Ready`.
 
--none
+- 2026-08-01, non-semantic. The Definition of Done says "the two changed
+  contracts' pinned hashes". Seven pinned values actually moved, not two: a
+  request hash and a contract fingerprint in the narrative contract test, a
+  request hash in the research contract test, and a model-request hash plus a
+  request fingerprint in each of the two scenario tests. The intent is
+  unchanged and was met: every value that moved is derived from the request,
+  and nothing derived from state moved. Only the count was wrong.
 
 ## Verification
 
 - [ ] Prove the lowering is deterministic byte-for-byte.
 - [ ] Prove an unlowerable schema is refused locally with no network call.
 - [ ] Prove nested `anyOf` is accepted by the provider, empirically.
-- [ ] Prove the two moved request-hash goldens moved once and only for the
-      contracts whose output schema changed.
-- [ ] Prove no operation digest, transition id or memory identity key moved.
+- [x] Prove the moved goldens moved once and only for the contracts whose
+      output schema changed.
+- [x] Prove no operation digest, transition id or memory identity key moved.
 - [ ] Prove the live execution commits, persists no payload and replays as
       `unavailable`.
 - [ ] Record exact test counts for every gate, and actual spend.
@@ -271,14 +291,15 @@ Only non-semantic corrections are allowed after `Ready`.
 ## Handoff and Follow-ups
 
 - Current state: Charter frozen as `Ready` on 2026-08-01. Both design questions
-  are decided and recorded above: `.nullish()` on the output-facing schemas
-  with its scope measured rather than assumed, and `UNSUPPORTED_CAPABILITY` for
-  a local refusal. Implementation has not started.
-- Next recommended step: Split the two shared narrative schemas and apply
-  `.nullish()`, then confirm the identity tripwire before touching the adapter:
-  the two request-hash goldens should move and nothing else should. Build the
-  lowering and probe the provider's subset before spending anything, since a
-  rejected schema never reaches token generation.
+  are decided and recorded above. The canonical contracts now carry the
+  `.nullish()` output shapes, the two shared narrative schemas are split, the
+  narrowing is implemented in both modules and proven behaviorally, and the
+  identity tripwire has been read: only request-derived values moved. The
+  adapter is untouched, so the provider still receives the canonical schema
+  verbatim and a live call would still be rejected.
+- Next recommended step: Build the lowering and the preflight refusal, then
+  probe the provider's subset, including nested `anyOf`, before spending
+  anything. A rejected schema never reaches token generation.
 - Blockers: None.
 - Child tasks: None.
 - Resume condition: Not applicable.

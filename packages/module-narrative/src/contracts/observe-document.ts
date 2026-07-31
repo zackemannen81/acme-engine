@@ -10,6 +10,7 @@ import {
 
 import { normalizeReferenceText } from '../identity.js';
 import { immutableJson } from '../immutable.js';
+import { omitAbsent } from '../observed.js';
 import {
   NarrativeCharacterFactMemoryValueSchema,
   NarrativeContractInputSchema,
@@ -141,11 +142,13 @@ const contract: PromptContract<
         );
       }
 
-      if (
-        observation.type === 'character-fact' &&
-        observation.correction !== undefined
-      ) {
-        const correction = observation.correction;
+      // A reported `null` means the model had no correction to offer, which is
+      // the same claim as omitting the field.
+      const correction =
+        observation.type === 'character-fact'
+          ? omitAbsent(observation.correction)
+          : undefined;
+      if (observation.type === 'character-fact' && correction !== undefined) {
         if (observation.value === correction.supersedesValue) {
           issues.push(
             semanticIssue(

@@ -92,13 +92,24 @@ export const ResearchEvidenceDocumentSchema = z
 
 export const ResearchClaimPositionSchema = z.enum(['supports', 'contradicts']);
 
+/**
+ * A claim as the model reports it.
+ *
+ * `evidenceQuote` and `sourceLocator` are nullish rather than optional: under
+ * strict structured output every property must be present, so an unknown value
+ * arrives as `null`. Accepting that here keeps the recorded model call
+ * identical to what the model produced. This schema is reachable only from
+ * `ResearchContractOutputSchema`; the persisted shape is
+ * `ResearchClaimEvidenceSchema`, which keeps `.optional()` so `null` never
+ * reaches state and memory identity does not move.
+ */
 export const ResearchContractClaimSchema = z
   .object({
     proposition: nonBlankString,
     statement: nonBlankString,
     position: ResearchClaimPositionSchema,
-    evidenceQuote: nonBlankString.optional(),
-    sourceLocator: nonBlankString.optional(),
+    evidenceQuote: nonBlankString.nullish(),
+    sourceLocator: nonBlankString.nullish(),
     confidence,
   })
   .strict();

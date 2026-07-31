@@ -168,7 +168,7 @@ There is currently:
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 320 passing tests across canonicalization, execution identity, model-request
+- 322 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -257,6 +257,25 @@ Every committed execution replay-verifies offline with an unchanged operation
 digest. Both reference domains now have executable end-to-end acceptance
 evidence.
 
+ACME-0029 is chartered and its first step has landed. The model-facing output
+schemas of both reference domains now express an unknown value as `null`
+rather than as an absent key, because a provider under strict structured
+output must emit every property. State does not follow: `acme-cjson-1`
+distinguishes `null` from an absent key, so one value would otherwise have two
+canonical forms and two identities. The two narrative schemas that were
+reachable from both paths are therefore split, and each module narrows the
+reported value before anything reaches a delta or a memory record. The
+narrowing is a domain rule applied in the module, not a transport fix in the
+adapter, which keeps the recorded model call identical to what the model
+produced.
+
+The change moved exactly the identities derived from the request: a model
+request hash and a request fingerprint in each domain, plus the narrative
+contract fingerprint. Every identity derived from state stood still, including
+each `acme-operation-digest-1`, each state hash and every memory identity key.
+Both domains carry a test asserting that a reported `null` and an omitted
+field interpret identically and that no `null` survives into the result.
+
 ## Persistent Gaps
 
 - A live provider adapter and provider-specific normalization are not
@@ -293,9 +312,11 @@ evidence.
   broken: `oneOf` is not permitted, and every key in `properties` must appear
   in `required`, which forbids optional fields. The root cause is that the
   adapter passes the canonical JSON Schema to the provider verbatim while
-  translating every other request field. A provider-specific schema lowering
-  is proposed in
-  `docs/backlog/strict-structured-output-schema-subset.md`.
+  translating every other request field. ACME-0029 owns the fix. Its first
+  step has landed: the output-facing schemas now accept `null` for an unknown
+  value, so the optional-field rule is satisfiable, but the adapter still
+  performs no lowering, so `oneOf` still breaks and a live call would still be
+  rejected.
 - The success-path provider fixtures remain unconfirmed. Two live calls
   confirmed the failure classification and the provider error-body schema, but
   both were rejected at schema validation before token generation, so

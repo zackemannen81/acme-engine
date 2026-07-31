@@ -16,6 +16,8 @@ import {
   narrativeSourceContentHash,
   type NarrativeContractOutput,
   type NarrativeObserveInput,
+  type NarrativeOutlineProgress,
+  type NarrativeScene,
   type NarrativeState,
 } from '../src/index.js';
 
@@ -119,6 +121,27 @@ export const existingCharacterRecord: MemoryRecord = frozen({
   recordVersion: 1,
 });
 
+/**
+ * What the delta must contain given `narrativeOutput` below.
+ *
+ * These are typed as the state-facing shapes, which no longer coincide with
+ * the output shapes: the output contract accepts `null` for an unknown value
+ * and state does not. This fixture reports every value, so narrowing changes
+ * nothing here, and declaring the constants once keeps the two sides from
+ * drifting apart.
+ */
+export const narrativeExpectedScene: NarrativeScene = frozen({
+  location: 'Observatory',
+  time: 'Night',
+  summary: 'Mira shares the rule of the northern light with Ion.',
+});
+
+export const narrativeExpectedOutlineProgress: NarrativeOutlineProgress =
+  frozen({
+    beatId: 'arrival',
+    status: 'advanced',
+  });
+
 export const narrativeOutput: NarrativeContractOutput = frozen({
   observations: [
     {
@@ -141,15 +164,8 @@ export const narrativeOutput: NarrativeContractOutput = frozen({
       confidence: 0.75,
     },
   ],
-  scene: {
-    location: 'Observatory',
-    time: 'Night',
-    summary: 'Mira shares the rule of the northern light with Ion.',
-  },
-  outlineProgress: {
-    beatId: 'arrival',
-    status: 'advanced',
-  },
+  scene: narrativeExpectedScene,
+  outlineProgress: narrativeExpectedOutlineProgress,
 });
 
 export const narrativeContext: ExecutionReadContext<NarrativeState> = frozen({

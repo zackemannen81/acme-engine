@@ -22,6 +22,7 @@ import {
   researchMemoryIdentity,
 } from '../identity.js';
 import { immutableJson } from '../immutable.js';
+import { omitAbsent } from '../observed.js';
 import { independentSourceCount, mergeEvidence } from '../memory-policy.js';
 import {
   RESEARCH_CONTRACT_INPUT_VERSION,
@@ -269,8 +270,8 @@ function interpretOutput(
               validatedInput,
               sourceKey,
               independenceKey,
-              claim.sourceLocator,
-              claim.evidenceQuote,
+              omitAbsent(claim.sourceLocator),
+              omitAbsent(claim.evidenceQuote),
             ),
           ],
         },

@@ -120,6 +120,7 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   ├── memory-policy.ts
 │   │   │   ├── module.ts
+│   │   │   ├── observed.ts
 │   │   │   ├── previous-document-tail.ts
 │   │   │   ├── schemas.ts
 │   │   │   └── state.ts
@@ -145,6 +146,7 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   ├── memory-policy.ts
 │   │   │   ├── module.ts
+│   │   │   ├── observed.ts
 │   │   │   ├── schemas.ts
 │   │   │   └── state.ts
 │   │   ├── test/

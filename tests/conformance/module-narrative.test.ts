@@ -25,6 +25,8 @@ import {
   ionEntityKey,
   miraEntityKey,
   narrativeContext,
+  narrativeExpectedOutlineProgress,
+  narrativeExpectedScene,
   narrativeInput,
   narrativeOutput,
   narrativeState,
@@ -114,11 +116,11 @@ const expectedMemories: MemoryCandidate[] = expectedMemoryValues.map(
 const directDelta: NarrativeDelta = {
   entityAssignments: [],
   aliasAssignments: [],
-  scene: narrativeOutput.scene,
-  outlineProgress: narrativeOutput.outlineProgress,
+  scene: narrativeExpectedScene,
+  outlineProgress: narrativeExpectedOutlineProgress,
   appendWindow: {
     documentKey: narrativeInput.documentKey,
-    summary: narrativeOutput.scene.summary,
+    summary: narrativeExpectedScene.summary,
   },
 };
 
@@ -185,11 +187,11 @@ const expectedStateDelta: StateDelta<NarrativeDelta> = {
 const stateDelta: NarrativeDelta = {
   entityAssignments: [{ entityKey: ionEntityKey, displayName: 'Ion' }],
   aliasAssignments: [{ normalizedAlias: 'ion', entityKey: ionEntityKey }],
-  scene: narrativeOutput.scene,
+  scene: narrativeExpectedScene,
   outlineProgress: { beatId: 'arrival', status: 'advanced' },
   appendWindow: {
     documentKey: narrativeInput.documentKey,
-    summary: narrativeOutput.scene.summary,
+    summary: narrativeExpectedScene.summary,
   },
 };
 
@@ -203,7 +205,7 @@ const expectedReducedState: NarrativeState = {
     ...narrativeState.entityAliases,
     ion: ionEntityKey,
   },
-  scene: narrativeOutput.scene,
+  scene: narrativeExpectedScene,
   narrativeWindow: [
     requiredValue(
       narrativeState.narrativeWindow[0],
@@ -211,7 +213,7 @@ const expectedReducedState: NarrativeState = {
     ),
     {
       documentKey: narrativeInput.documentKey,
-      summary: narrativeOutput.scene.summary,
+      summary: narrativeExpectedScene.summary,
     },
   ],
   outlineProgress: { arrival: 'advanced' as const },

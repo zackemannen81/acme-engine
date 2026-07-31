@@ -17,6 +17,7 @@ import {
   resolveNarrativeEntity,
 } from '../identity.js';
 import { immutableJson } from '../immutable.js';
+import { narrowCorrection, narrowScene, omitAbsent } from '../observed.js';
 import { buildPreviousDocumentTail } from '../previous-document-tail.js';
 import {
   NARRATIVE_CONTRACT_INPUT_VERSION,
@@ -131,6 +132,9 @@ function interpretOutput(
   const validatedOutput = NarrativeContractOutputSchema.parse(output);
   const state = readState(context);
   const document = sourceDocument(validatedInput);
+  // An explicitly unknown outline progress is not worth recording, so it is
+  // narrowed to the same absence the delta schema already expects.
+  const outlineProgress = omitAbsent(validatedOutput.outlineProgress);
 
   const memories = validatedOutput.observations.map(
     (observation, index): MemoryCandidate => {
@@ -138,7 +142,9 @@ function interpretOutput(
       switch (observation.type) {
         case 'character-fact': {
           const subject = resolveNarrativeEntity(observation.subject, state);
-          const correction = observation.correction;
+          const reported = omitAbsent(observation.correction);
+          const correction =
+            reported === undefined ? undefined : narrowCorrection(reported);
           const value: NarrativeMemoryValue = {
             kind: 'narrative.character-fact',
             entityKey: subject.entityKey,
@@ -217,10 +223,8 @@ function interpretOutput(
       value: {
         entityAssignments: [],
         aliasAssignments: [],
-        scene: validatedOutput.scene,
-        ...(validatedOutput.outlineProgress === undefined
-          ? {}
-          : { outlineProgress: validatedOutput.outlineProgress }),
+        scene: narrowScene(validatedOutput.scene),
+        ...(outlineProgress === undefined ? {} : { outlineProgress }),
         appendWindow: {
           documentKey: validatedInput.documentKey,
           summary: validatedOutput.scene.summary,

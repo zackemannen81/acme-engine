@@ -13,6 +13,7 @@ import {
   normalizeReferenceText,
 } from '../identity.js';
 import { immutableJson } from '../immutable.js';
+import { omitAbsent } from '../observed.js';
 import {
   ResearchContractInputSchema,
   ResearchContractOutputSchema,
@@ -111,13 +112,17 @@ const contract: PromptContract<ResearchContractInput, ResearchContractOutput> =
           return;
         }
 
+        // An unknown locator must reduce to one form whether the model omitted
+        // it or reported `null`, or the same claim would fail to deduplicate.
+        const sourceLocator = omitAbsent(claim.sourceLocator);
+        const evidenceQuote = omitAbsent(claim.evidenceQuote);
         const identity = [
           propositionKey,
           claim.position,
           normalizeReferenceText(claim.statement),
-          claim.sourceLocator === undefined
+          sourceLocator === undefined
             ? ''
-            : normalizeReferenceText(claim.sourceLocator),
+            : normalizeReferenceText(sourceLocator),
         ].join('|');
         const previous = seen.get(identity);
         if (previous !== undefined) {
@@ -133,8 +138,8 @@ const contract: PromptContract<ResearchContractInput, ResearchContractOutput> =
         }
 
         if (
-          claim.evidenceQuote !== undefined &&
-          !input.document.text.includes(claim.evidenceQuote)
+          evidenceQuote !== undefined &&
+          !input.document.text.includes(evidenceQuote)
         ) {
           issues.push(
             semanticIssue(
