@@ -11,6 +11,9 @@
       "path": "./packages/adapter-sqlite"
     },
     {
+      "path": "./packages/adapter-model-openai"
+    },
+    {
       "path": "./packages/core"
     },
     {

@@ -32,6 +32,19 @@ acme-engine/
 │   │   │   └── scripted-model-gateway.ts
 │   │   └── test/
 │   │       └── scripted-model-gateway.test.ts
+│   ├── adapter-model-openai/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── gateway.ts
+│   │   │   ├── immutable.ts
+│   │   │   ├── index.ts
+│   │   │   ├── request.ts
+│   │   │   ├── transport.ts
+│   │   │   └── wire.ts
+│   │   └── test/
+│   │       ├── fixtures.ts
+│   │       └── gateway.test.ts
 │   ├── adapter-sqlite/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -149,6 +162,7 @@ acme-engine/
 │   ├── conformance/
 │   │   ├── adapter-memory.test.ts
 │   │   ├── adapter-model-mock.test.ts
+│   │   ├── adapter-model-openai.test.ts
 │   │   ├── adapter-sqlite.test.ts
 │   │   ├── domain-module.test.ts
 │   │   ├── module-narrative.test.ts
@@ -167,6 +181,7 @@ acme-engine/
 │   │   └── fixtures/
 │   │       ├── packages/core/src/forbidden.ts
 │   │       ├── packages/core/src/forbidden-driver.ts
+│   │       ├── packages/core/src/forbidden-provider.ts
 │   │       ├── packages/module-fixture/src/forbidden.ts
 │   │       └── packages/module-fixture/src/forbidden-module.ts
 │   ├── docs/
@@ -188,6 +203,7 @@ acme-engine/
 │   │   ├── 0011-narrative-knowledge-and-context-ownership.md
 │   │   ├── 0012-milestone-1-execution-identity-and-replay.md
 │   │   ├── 0013-durable-sqlite-schema-and-driver.md
+│   │   ├── 0014-live-provider-boundary-and-transport-port.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── backlog/
@@ -225,6 +241,7 @@ acme-engine/
 │   │   ├── ACME-0022_research-module-observe-evidence.md
 │   │   ├── ACME-0023_research-offline-acceptance-scenario.md
 │   │   ├── ACME-0024_governing-document-sync.md
+│   │   ├── ACME-0025_openai-responses-provider-boundary.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -276,6 +293,9 @@ content remains intentionally omitted here.
   copy-on-commit transactions and read-only evidence inspection.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
+- `@acme/adapter-model-openai`: the OpenAI Responses mapping behind an
+  injected transport port, so request construction, normalization and failure
+  classification are exercised offline. It ships no network transport.
 - `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
   checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
   `better-sqlite3` is its only external runtime dependency.

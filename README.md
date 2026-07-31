@@ -15,8 +15,9 @@ verification and reusable repository/gateway/module conformance suites. The
 pure `@acme/module-narrative` and `@acme/module-research` packages implement
 two reference domains over that same core, each with its own offline
 acceptance scenario, which is the executable evidence that core is
-domain-neutral. No live model adapter, ScenarioRunner, CLI composition root or
-published package exists yet.
+domain-neutral. The OpenAI Responses mapping exists behind an injected
+transport port and is proven offline against fixtures; no network transport,
+ScenarioRunner, CLI composition root or published package exists yet.
 
 ## Start here
 
@@ -47,6 +48,7 @@ packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
 packages/adapter-model-mock/ Exact finite model-call scripts
+packages/adapter-model-openai/ OpenAI Responses mapping behind a transport port
 packages/module-narrative/ Narrative observe-document reference module
 packages/module-research/ Research observe-evidence reference module
 packages/testing/         Reusable repository/gateway/module conformance support

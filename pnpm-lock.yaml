@@ -60,6 +60,15 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/adapter-model-openai:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/adapter-sqlite:
     dependencies:
       '@acme/core':

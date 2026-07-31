@@ -71,6 +71,31 @@ export default {
       },
     },
     {
+      name: 'openai-adapter-depends-only-on-core',
+      severity: 'error',
+      comment:
+        'The OpenAI adapter may depend on itself and core, not apps, modules, or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-model-openai/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-model-openai(?:/|$)))',
+      },
+    },
+    {
+      name: 'provider-wire-shapes-stay-behind-their-adapter',
+      severity: 'error',
+      comment:
+        'Only @acme/adapter-model-openai may reach provider wire shapes; everything else uses the ModelGateway port.',
+      from: {
+        path: '(?:^|/)(?:packages|apps)/[^/]+/src',
+        pathNot: '(?:^|/)packages/adapter-model-openai/src',
+      },
+      to: {
+        path: '(?:^|/)packages/adapter-model-openai/src/(?:wire|request|transport)',
+      },
+    },
+    {
       name: 'domain-modules-do-not-depend-on-other-modules',
       severity: 'error',
       comment:

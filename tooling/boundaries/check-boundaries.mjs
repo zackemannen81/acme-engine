@@ -29,6 +29,10 @@ const driverFixturePath = path.join(
   'tooling/boundaries/fixtures/packages/core/src/forbidden-driver.ts',
 );
 const coreSourcePath = path.join(repoRoot, 'packages/core/src');
+const providerFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/core/src/forbidden-provider.ts',
+);
 const forbiddenTerms = [
   'narrative',
   'research',
@@ -38,6 +42,9 @@ const forbiddenTerms = [
   'outline',
   'scene',
   'story',
+  'openai',
+  'anthropic',
+  'gemini',
 ];
 
 function runDependencyCruiser(inputs) {
@@ -129,10 +136,14 @@ verifyForbiddenFixture(
   'domain-modules-do-not-depend-on-other-modules',
 );
 verifyForbiddenFixture(
+  providerFixturePath,
+  'provider-wire-shapes-stay-behind-their-adapter',
+);
+verifyForbiddenFixture(
   driverFixturePath,
   'sqlite-driver-stays-behind-its-adapter',
 );
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/driver fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/provider/driver fixture checks passed.\n',
 );

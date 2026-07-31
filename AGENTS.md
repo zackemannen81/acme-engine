@@ -12,8 +12,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   StateEngine and MemoryEngine, in-memory and durable SQLite repositories,
   deterministic model mock, shared conformance kits, NarrativeModule,
   ResearchModule and the bounded single-task ExecutionEngine exist. Both
-  reference domains have offline acceptance scenarios. A live provider
-  adapter, ScenarioRunner and a CLI composition root do not exist.
+  reference domains have offline acceptance scenarios. The OpenAI Responses
+  mapping exists behind a transport port, but no network transport,
+  ScenarioRunner or CLI composition root does.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

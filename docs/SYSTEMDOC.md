@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping and a proposed domain-test surface
 
 This document describes long-lived system boundaries. It does not claim that
 multi-step orchestration or live provider behavior exists.
@@ -14,14 +14,16 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - strict ESM TypeScript project references
 - `@acme/core` contract package, `@acme/adapter-memory`,
   `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
-  `@acme/module-narrative`, `@acme/module-research`, reusable
+  `@acme/adapter-model-openai`, `@acme/module-narrative`,
+  `@acme/module-research`, reusable
   repository/gateway/module conformance support in `@acme/testing` and the
   behavior-free `@acme/cli`
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
 - negative fixtures proving forbidden core-to-app, module-to-adapter,
-  module-to-module and core-to-SQLite-driver dependencies fail
+  module-to-module, core-to-provider-wire and core-to-SQLite-driver
+  dependencies fail
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
@@ -348,6 +350,30 @@ The adapter is deterministic test persistence only. It does not survive
 process termination and makes no crash-durability claim. The same core port is
 covered by a reusable non-empty conformance suite in `@acme/testing`.
 
+## Implemented Provider Boundary
+
+ADR-0014 fixes how ACME reaches a real provider. `@acme/adapter-model-openai`
+implements `ModelGateway` against the OpenAI Responses API and depends on a
+transport port that carries only an opaque request and result. The transport
+never parses a body, never classifies a failure and never sees an ACME type.
+
+- request mapping turns system messages into instructions and preserves the
+  supplied order, so the stable part of a call stays ahead of the changing part
+- content the adapter cannot honor is rejected rather than silently dropped,
+  including stop sequences and non-text parts
+- classification asks first whether the provider responded at all: a received
+  status line is never ambiguous and maps through a fixed table, while a
+  missing status line is ambiguous unless the transport proves non-delivery
+- `capabilities()` resolves from static configuration and never probes
+- credentials are supplied by the composition root; the package reads no
+  environment and ships no network transport
+
+The adapter passes the unchanged shared `ModelGateway` conformance suite, so
+the scripted mock and a real provider mapping satisfy one contract. Boundary
+rules and a negative fixture prove provider wire shapes are unreachable from
+core, modules, apps and other adapters, and the core vocabulary guard now
+rejects provider names outright.
+
 ## Implemented Durable Unit of Work
 
 `@acme/adapter-sqlite` implements the same aggregate `ExecutionRepository` over
@@ -570,7 +596,7 @@ at all, remain decision gates inside the specification.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- A future live model adapter.
+- A network transport for the implemented provider mapping.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.

@@ -38,6 +38,7 @@ implementation baseline:
 - ADR-0011: Narrative knowledge and context ownership
 - ADR-0012: Milestone 1 execution identity and replay
 - ADR-0013: Durable SQLite schema and driver
+- ADR-0014: Live provider boundary and transport port
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
@@ -109,7 +110,14 @@ There is currently:
   single consumption, scripted response/error outcomes and immutable
   invocation/unconsumed-call evidence
 - a reusable non-empty provider-neutral `ModelGateway` conformance suite in
-  `@acme/testing`
+  `@acme/testing` that the scripted mock and the OpenAI adapter both pass
+  unchanged
+- an `@acme/adapter-model-openai` targeting the OpenAI Responses API behind an
+  injected transport port, with request mapping, response normalization and
+  the ADR-0014 failure classification proven against hand-written fixtures
+- the first producer of the `ambiguous` model-call status: any transport
+  outcome without a status line is ambiguous unless the transport can prove
+  the request never left
 - a reusable non-empty public-core-only `DomainModule` conformance suite in
   `@acme/testing`, proven unchanged against testing-owned producer and empty
   analyzer fixtures
@@ -140,7 +148,7 @@ There is currently:
 - a typed `@acme/cli` composition-root skeleton
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 243 passing tests across canonicalization, execution identity, model-request
+- 281 passing tests across canonicalization, execution identity, model-request
   hashing, response/gateway validation, registries, state/memory preparation,
   post-memory state projection, repository digest, repository/gateway
   plus neutral and Narrative module conformance, Narrative schemas, context,
@@ -260,5 +268,15 @@ evidence.
   `unavailable`. Retaining a live provider response and replaying it are
   therefore not simultaneously available under an honest reading, which the
   live-provider ADR must resolve before any real payload is stored.
-- Live provider call reconciliation, encrypted retention and privacy deletion
-  intentionally require future ADRs before implementation.
+- No network transport exists. `@acme/adapter-model-openai` ships the mapping
+  only, so nothing in the workspace can reach a provider and CI stays
+  secret-free. The provider fixtures are hand-written from our understanding
+  of the Responses wire format rather than captured from a live call, so they
+  prove the adapter is internally consistent, not that the understanding is
+  correct. Only a live call can confirm that.
+- Reconciling an ambiguous model call against provider-side history is not
+  implemented. ADR-0014 makes such a call terminal and never automatically
+  retried.
+- Encrypted retention and privacy deletion still require future ADRs before
+  implementation. ADR-0014 mandates `hash-only` for live executions until
+  then, which means those executions cannot be replayed.

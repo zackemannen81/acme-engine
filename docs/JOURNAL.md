@@ -999,3 +999,53 @@ Add one dated, signed entry for every meaningful work session or handoff.
   model-call status that core and both adapters already handle but nothing
   currently emits.
 - Signature: Claude
+
+## 2026-07-31 — Live provider boundary and OpenAI Responses mapping
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0025
+- Summary: Added ADR-0014 and `@acme/adapter-model-openai`, the first
+  implementation of `ModelGateway` against a real provider's wire format. The
+  adapter targets the OpenAI Responses API only; Chat Completions is excluded
+  outright rather than kept as a fallback, because choosing it for portability
+  would mean testing ACME against the less expressive boundary. Portability is
+  the port's job to prove. The adapter depends on a transport port that
+  carries only an opaque request and result, so request mapping, response
+  normalization and failure classification are all exercised offline against
+  hand-written fixtures. No network transport ships in this task, which is why
+  CI stays secret-free and why the later live task is small rather than a
+  rewrite.
+- Evidence: The unchanged `modelGatewayConformance()` suite now passes for both
+  the scripted mock and a real provider mapping, so one contract covers both.
+  The adapter is the first thing in the workspace to produce the `ambiguous`
+  model-call status that core and both repository adapters have implemented
+  since ACME-0018 but nothing exercised. Classification asks one question
+  first: did a status line arrive. If it did, the outcome maps through a fixed
+  table and is never ambiguous. If it did not, the call is ambiguous unless the
+  transport can prove the request never left, because a call that ran and was
+  billed must never be recorded as though it never happened. Content the
+  adapter cannot honor is rejected rather than silently dropped: stop sequences
+  and non-text parts both fail as `INVALID_REQUEST`.
+- Verification: `pnpm docs:check` passed 62 Markdown files after archival.
+  `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm build` passed.
+  `pnpm boundaries` passed dependency, core-vocabulary and the
+  core/module/cross-module/provider/driver fixture checks; the vocabulary guard
+  now rejects provider names in `packages/core/src` and a new negative fixture
+  proves provider wire shapes are unreachable from core. `pnpm test:unit`
+  passed 281 tests in 35 files, `pnpm test:conformance` passed 46 tests in 7
+  files, `pnpm test:integration` passed 13 tests in 2 files and
+  `pnpm test:scenario` passed 5 tests in 2 files. `git diff --check` passed. No
+  check was skipped. One defect was found by the shared suite and fixed in the
+  adapter rather than in the suite: `AcmeError` freezes its data shallowly, so
+  nested error details must arrive already deeply frozen.
+- Follow-ups: The fixtures are hand-written from our understanding of the
+  Responses wire format, not captured from a live call. They prove the adapter
+  is internally consistent; they cannot prove the understanding is correct.
+  Confirming or correcting them is part of the live-transport task's purpose,
+  not an incidental risk. ADR-0014 also fixes that live executions use
+  `hash-only` until encrypted retention exists, so those executions return
+  `unavailable` on replay rather than `failed`, and that an ambiguous call is
+  terminal and never automatically retried. Reconciling ambiguous calls
+  against provider history needs its own decision.
+- Signature: Claude
