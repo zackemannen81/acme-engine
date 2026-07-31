@@ -631,3 +631,36 @@ Add one dated, signed entry for every meaningful work session or handoff.
   at `Ready`, accept the execution identity/replay ADR and implement only the
   frozen Milestone 1 path.
 - Signature: Codex
+
+## 2026-07-31 — ACME-0018 paused for a bounded charter-hardening child task
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0019 (parent ACME-0018)
+- Summary: A maintainer-requested review of the ACME-0018 Draft charter found
+  its four named pre-freeze decisions — request/policy identity, deterministic
+  memory retrieval, replay evidence/digest and the staged public engine
+  surface — present as topics but unresolved as decisions. Freezing in that
+  state would either freeze a charter whose Primary Deliverable was still
+  unknown, or force a later supersede once the planned ADR discovered the
+  answers. ACME-0018 was therefore set to `Paused`, its blocker, child and
+  resume condition were recorded, and the file was moved to `docs/paused/`.
+  ACME-0019 was activated in `docs/CURRENT_TASK.md` as a bounded
+  documentation-only child with its own frozen charter, covering eleven
+  reviewed findings and explicitly excluding the ADR, the freeze itself and
+  every source change. The maintainer reviewed and accepted the findings before
+  the child charter was frozen, and requested this task wrapper so the
+  repository records why the parent charter changed rather than only that it
+  changed.
+- Decisions: `docs/TASK_WORKFLOW.md` describes pause and resume for a frozen
+  `In Progress` parent. ACME-0018 is `Draft`, so it was paused as `Draft` and
+  resumes as `Draft` rather than `In Progress`. The deviation is recorded
+  rather than silently applied. Because the parent is `Draft` and therefore
+  editable, the findings were applied in place instead of through the
+  `Charter Amendment Log`, which governs post-`Ready` corrections only.
+- Verification: `node tooling/docs/check-docs.mjs` passed for 51 Markdown
+  files and `git diff --check` passed. No runtime gate applies; no source file
+  was touched.
+- Follow-ups: Apply the eleven findings to the paused parent, then restore it
+  as `Draft` for maintainer freeze approval.
+- Signature: Claude

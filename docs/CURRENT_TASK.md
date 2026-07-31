@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0018
-Parent Task: None
-Status: Draft
-Owner: Codex
+Task ID: ACME-0019
+Parent Task: ACME-0018
+Status: Ready
+Owner: Claude
 Created: 2026-07-31
 Last updated: 2026-07-31
-Charter frozen at:
+Charter frozen at: 2026-07-31
 
 ## Read First
 
@@ -18,39 +18,35 @@ Charter frozen at:
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/design/acme-design-and-development-spec.md`, sections 5, 8–16, 19
-  and Milestone 1
-- `docs/design/narrative-module-build-and-test-plan.md`, especially Phase 5
-- `docs/adr/0002-static-task-typed-module-composition.md`
-- `docs/adr/0003-sqlite-revisioned-unit-of-work.md`
+- `docs/paused/ACME-0018_single-task-execution-engine.md`
+- `docs/design/acme-design-and-development-spec.md`, sections 12, 14 and
+  Milestone 1
+- `docs/design/narrative-module-build-and-test-plan.md`, Phase 5
 - `docs/adr/0004-deterministic-transition-identity.md`
 - `docs/adr/0005-pure-memory-decision-application.md`
 - `docs/adr/0006-aggregate-in-memory-unit-of-work.md`
-- `docs/adr/0007-deterministic-model-mock-and-gateway-conformance.md`
-- `docs/adr/0008-post-memory-domain-state-projection.md`
-- `docs/adr/0009-reference-domain-identity-and-provenance.md`
-- `docs/adr/0010-input-bound-validation-and-interpretation.md`
-- `docs/adr/0011-narrative-knowledge-and-context-ownership.md`
-- `docs/finished/ACME-0008_aggregate-in-memory-unit-of-work.md`
-- `docs/finished/ACME-0009_deterministic-model-mock-and-gateway-conformance.md`
-- `docs/finished/ACME-0017_narrative-module-observe-document.md`
-- `packages/core/src/`
+- `packages/core/src/repository.ts`
+- `packages/core/src/repository-digest.ts`
+- `packages/core/src/memory-engine.ts`
 - `packages/adapter-memory/src/repository.ts`
-- `packages/adapter-model-mock/src/scripted-model-gateway.ts`
-- `packages/module-narrative/src/`
 
 ## Task Summary
 
-Implement the bounded Milestone 1 `ExecutionEngine` path that coordinates one
-registered task through the existing contract, gateway, response, module,
-memory, state and aggregate repository boundaries. Prove the path with
-NarrativeModule Phase 5 entirely offline: revision-zero execution, atomic
-commit, request-key idempotency and replay verification.
+A maintainer-requested review of the ACME-0018 Draft charter on 2026-07-31
+found that its four pre-freeze decisions — request/policy identity,
+deterministic memory retrieval, replay evidence/digest and the staged public
+engine surface — are named but not resolved inside the charter. Freezing
+ACME-0018 in that state would either freeze a charter whose Primary Deliverable
+is still unknown, or force a later supersede when the planned ADR discovers the
+answers.
 
-The Draft deliberately excludes the later durability, recovery, evaluator,
-repair/revision and workflow layers. Before the charter reaches `Ready`, it
-must close the currently unspecified execution-request identity, effective
-policy defaults and replay-evidence boundary through one reviewed ADR.
+This bounded child task resolves those decisions inside the parent's `Draft`
+charter so the parent can be frozen honestly. It changes documentation only and
+implements no ExecutionEngine behavior.
+
+The task exists as its own Task ID rather than as an in-place Draft edit so the
+repository history records why the parent charter changed, not only that it
+changed.
 
 ## Task Charter
 
@@ -59,325 +55,183 @@ The charter is editable while status is `Draft` and immutable once status is
 
 ### Goal
 
-Implement a domain-neutral, deterministic single-task ExecutionEngine that
-can run and replay-verify the approved Narrative offline acceptance flow
-without network access, wall-clock access or domain branches in core.
+Make the ACME-0018 Draft charter freezable by resolving its four named
+pre-freeze decisions into explicit, reviewable charter text.
 
 ### Primary Deliverable
 
-A tested `@acme/core` ExecutionEngine implementation, the minimum aggregate
-repository evidence extensions required for deterministic in-memory replay
-verification and a non-empty Narrative Phase 5 scenario proving the complete
-Milestone 1 execution path.
+A hardened ACME-0018 `Draft` charter in which request/policy identity,
+deterministic memory retrieval, replay evidence/digest and the bounded
+Milestone 1 engine surface are stated as decisions rather than open questions.
 
 ### In Scope
 
-- Add and accept one ADR before implementation that fixes the Milestone 1
-  execution identity and replay boundary:
-  - immutable effective-policy defaults and validation;
-  - a versioned deterministic execution-request fingerprint over the approved
-    request, contract and module identity;
-  - the deterministic memory-query/retrieval limit and how its effective
-    configuration participates in request identity and replay;
-  - a deterministic operation-key rule for one task execution;
-  - exact read-set/model-call/prepared-result evidence required to replay
-    without a gateway call;
-  - the replay digest and `match`, `different` and `unavailable` semantics;
-  - the bounded public Milestone 1 engine surface for `execute` and
-    replay-verify, leaving durable resume and other replay modes for later.
-- Implement ExecutionEngine orchestration in `@acme/core` using injected
-  `Clock`, `IdGenerator`, registries, `ResponsePipeline`, `ModelGateway`,
-  `MemoryEngine`, `StateEngine` and `ExecutionRepository` ports only.
-- Define strict runtime validation for `ExecutionRequest` and the effective
-  policy. Validate and canonical-JSON-clone the task input without coercion,
-  detach it from caller ownership and deeply freeze the value reused by
-  `project()` and `interpret()`.
-- Resolve module, task and immutable contract before accepting an execution;
-  produce deterministic `NOT_FOUND_*` or `INVALID_REQUEST` failures without a
-  model call or repository write.
-- Compute and retain input hash, contract fingerprint, effective policy and
-  the versioned request fingerprint before idempotent repository acceptance.
-- Map same-fingerprint request-key reuse to the stored terminal projection
-  without another model call, ID allocation or canonical effect. Map changed
-  fingerprint reuse to `CONFLICT_IDEMPOTENCY_KEY`.
-- Load the exact expected-revision context before a model call and retain the
-  immutable read set needed for replay. Treat missing required Narrative
-  source evidence and stale state revision as deterministic pre-call
-  failures.
-- Apply one documented deterministic memory-retrieval rule to the loaded
-  records, use `MemoryEngine.retrieve()` and pass only the resulting records
-  in `ExecutionReadContext`.
-- Run task `project()`, validate the projected contract input without
-  transformation, build and validate the complete provider-neutral
-  `ModelRequest` and compute `acme-model-request-hash-1`.
-- Reserve deterministic primary call `model:0`, invoke the exact supplied
-  `ModelGateway` selection, retain normalized success or structured failure
-  evidence and never interpret an unrecorded response.
-- Process the response through the input-bound `ResponsePipeline`. For this
-  bounded task, invalid output terminates without repair and leaves no
-  canonical document, memory, state, event or outbox effect.
-- Pass the same validated immutable task input and read context to module
-  interpretation. Validate the interpreted documents, candidates, state
-  intent, events and unique keys before preparing canonical effects.
-- Prepare memory through the module-owned policy and `MemoryEngine`, build the
-  exact filtered post-memory projection input, run task-owned
-  `projectState()` and pass its untrusted delta through `StateEngine`.
-- Build `PreparedCommit`, compute `acme-operation-digest-1` and atomically
-  commit documents, memory candidate/decision evidence, memory mutations,
-  optional state, evaluator evidence fixed to an empty list, events/outbox and
-  the terminal execution projection through `ExecutionRepository`.
-- Map expected state/memory conflicts, cancellation and structured failures to
-  one immutable terminal result without partial canonical effects.
-- Extend `ExecutionRepository`, `@acme/adapter-memory` and the reusable
-  repository conformance suite only as required to retain and load exact
-  replay evidence. Preserve aggregate transaction ownership and existing
-  `acme-operation-digest-1` semantics unless the ADR proves a versioned change
-  is unavoidable.
-- Implement replay verification from recorded task input, exact read context,
-  normalized model response, timestamps and deterministic prepared evidence.
-  Replay verification must call no model gateway, write no canonical data and
-  report matching, different or unavailable evidence explicitly.
-- Add unit tests for request/policy validation, fingerprints, terminal mapping,
-  immutable input reuse, context/retrieval, primary call durability,
-  pipeline/interpretation ordering, memory/state preparation, commit assembly,
-  idempotency and replay verification.
-- Add non-empty integration coverage using only `@acme/core`,
-  `@acme/adapter-memory`, `@acme/adapter-model-mock` and a testing-owned neutral
-  module fixture.
-- Add the non-empty Narrative Phase 5 scenario:
-  1. start at Narrative revision zero;
-  2. observe one fixture chapter through the exact scripted model mock;
-  3. commit one source document, exactly three memory decisions and revision
-     one;
-  4. repeat the same request key and prove zero additional effects and zero
-     additional gateway calls;
-  5. replay-verify equal recorded/rebuilt candidate and state evidence with
-     zero gateway calls.
-- Add negative-path execution tests proving invalid request and stale revision
-  perform no model call or canonical write, invalid model output commits no
-  domain effects, changed request fingerprint conflicts and memory/state
-  conflict exposes no partial Unit of Work.
-- Update dependency rules and the core vocabulary guard so orchestration
-  remains domain-neutral and no concrete adapter or module enters core.
-- Update the normative specification, Narrative build plan and all affected
-  long-lived documentation to implemented reality.
+- Resolve the reviewed pre-freeze findings inside
+  `docs/paused/ACME-0018_single-task-execution-engine.md`:
+  1. state that the planned ADR records decisions already approved in the
+     `Draft` instead of discovering them after the freeze;
+  2. fix `ModelSelection` participation in the request fingerprint and separate
+     identity-determining content from operational budget;
+  3. require effective-policy validation to reject non-zero repair and revision
+     budgets for the Milestone 1 path;
+  4. fix the exact recorded retrieval evidence needed to replay a projection
+     independently of later memory drift;
+  5. fix a constant, versioned memory-retrieval limit and its participation in
+     the request fingerprint;
+  6. fix one compared replay digest and require replay under recorded execution
+     identity, recorded clock and a forbidden `IdGenerator`;
+  7. require a retention case that makes the `unavailable` replay branch
+     reachable and tested;
+  8. fix the shape of the replay-evidence repository read and the condition
+     under which it must be split into a separate task;
+  9. fix the `ExecutionResult.replayed` semantics for an idempotent repeat;
+  10. correct the unsatisfiable pre-implementation golden-digest verification
+      item;
+  11. decide whether `execute()` exposes `AbortSignal` in the Milestone 1
+      surface, and require matching coverage if it does.
+- Record every resolved decision in the parent's `Decisions and Notes` with
+  enough reasoning that a new contributor can review it without chat history.
+- Keep every proposed value that is a maintainer judgment call, rather than a
+  correctness requirement, explicitly marked for confirmation before freeze.
+- Restore the hardened parent to `docs/CURRENT_TASK.md` as `Draft` and record
+  the completed child, per `docs/TASK_WORKFLOW.md`.
+- Add a dated, signed journal entry and update `docs/CURRENT_STATUS.md`.
 
 ### Out of Scope
 
-- SQLite schema, migrations, WAL behavior, process durability, reopen tests or
-  crash recovery.
-- `resume(executionId)`, in-flight provider reconciliation or the
-  post-response crash-resume guarantee reserved for Milestone 2.
-- Automatic provider retry, backoff, jitter, repair calls, evaluator revision
-  calls or scheduling. This task executes one primary model call.
-- Evaluator registration/execution, safety gates or non-empty evaluator
-  evidence; those remain Milestone 3 work.
-- Replay `rebuild-candidates` or `fork`, diagnostic candidate persistence or
-  mutation of an original execution.
-- ScenarioRunner, multi-step workflows, CLI commands or Domain Test UI
-  implementation.
-- Memory lifecycle maintenance runs or outbox delivery after commit.
-- ResearchModule or any Narrative-, Research- or provider-specific branch in
-  `@acme/core`.
-- Live model adapters, provider SDKs, network access, environment credentials
-  or paid evaluation.
-- Production optimization, package publication, deployment, push or release.
+- Freezing ACME-0018 or setting it to `Ready`. That remains a maintainer act.
+- Writing or accepting the execution identity/replay ADR. It stays inside the
+  parent's scope.
+- Any change to the parent's Goal, Primary Deliverable or Definition of Done
+  that alters what the parent delivers. The parent is `Draft`, so its charter is
+  editable, but this task sharpens it and must not redirect it.
+- Any ExecutionEngine, repository, adapter, module or test source change.
+- Any change to `acme-operation-digest-1`, `acme-model-request-hash-1`,
+  `acme-transition-id-1` or `acme-cjson-1`.
+- The normative specification correction, which ACME-0018 performs together
+  with its ADR.
+- ResearchModule, durable persistence, Domain Test UI or any other backlog item.
 
 ### Definition of Done
 
-- The accepted ADR removes ambiguity from effective-policy defaults, request
-  fingerprinting, operation identity, replay evidence/digest and the bounded
-  Milestone 1 public engine surface.
-- ExecutionEngine coordinates exactly one registered task exclusively through
-  public ports and pure engines; core imports no module or concrete adapter.
-- Task input is runtime-validated without coercion, detached, deeply frozen
-  and reused exactly across projection and interpretation.
-- Invalid request and unknown module/task/contract produce no repository or
-  gateway effect; stale expected revision produces ledger-only conflict
-  evidence and no gateway or canonical effect.
-- The complete validated model request is reserved under `model:0` with its
-  exact `acme-model-request-hash-1` before gateway invocation; normalized
-  response/failure evidence is recorded before interpretation.
-- Invalid technical, schema or semantic output cannot produce canonical
-  document, memory, state, event or outbox changes.
-- Allowed output flows through interpretation, MemoryEngine, filtered
-  task-owned state projection, StateEngine and one aggregate commit in the
-  normative order.
-- Same request key plus same fingerprint returns the original terminal result
-  with no additional IDs, model invocation or canonical records. Changed
-  fingerprint under the key returns `CONFLICT_IDEMPOTENCY_KEY`.
-- Replay verification uses exact recorded evidence, invokes no gateway,
-  performs no canonical write and distinguishes `match`, `different` and
-  `unavailable`.
-- The unchanged repository conformance behaviors remain green and new replay
-  evidence cases pass for `@acme/adapter-memory`.
-- A neutral non-empty integration suite passes without domain branches.
-- Narrative Phase 5 passes offline with one source document, exactly three
-  memory decisions, revision one, idempotent repeat and matching replay
-  candidate/state evidence.
-- Required negative-path tests prove no model/canonical effects for invalid
-  input and stale revision, no domain commit for invalid output and complete
-  rollback for memory/state conflict.
-- Full repository gates pass with non-empty integration and Narrative scenario
-  suites; no network, provider SDK, environment credential or ambient
-  wall-clock dependency is introduced.
-- `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`, the normative specification,
-  Narrative plan and journal accurately reflect the implemented boundary and
-  retain durable persistence, resume, evaluators and Research as explicit
-  gaps.
+- All eleven reviewed findings are resolved in the parent charter, each as
+  explicit charter text rather than an open question.
+- The parent's `Open Questions` no longer contains a question whose answer would
+  change its Primary Deliverable or Definition of Done.
+- Every maintainer judgment call introduced by this task is visibly marked as
+  requiring confirmation before freeze.
+- The parent's Goal, Primary Deliverable and Definition of Done still describe
+  the same Milestone 1 ExecutionEngine outcome as before this task.
+- No source file, package manifest, ADR or normative specification section is
+  modified.
+- `docs/CURRENT_TASK.md` holds the hardened ACME-0018 as `Draft`,
+  `docs/paused/` holds no ACME-0018 file, and this task is archived under
+  `docs/finished/`.
+- `docs/JOURNAL.md` and `docs/CURRENT_STATUS.md` reflect the real state.
 
 ### Minimum Verification Gates
 
-- [ ] `pnpm install --frozen-lockfile`
-- [ ] `pnpm format:check`
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm boundaries`
-- [ ] `pnpm test:unit`
-- [ ] `pnpm test:conformance` with the extended non-empty repository suite
-- [ ] `pnpm test:integration` with a non-empty neutral engine suite
-- [ ] `pnpm test:scenario` with Narrative Phase 5
-- [ ] `pnpm build`
-- [ ] ADR decision/compatibility review and internal documentation links
-- [ ] Balanced Markdown fences
-- [ ] Core forbidden-vocabulary scan
+- [ ] `pnpm docs:check`
 - [ ] `git diff --check`
+- [ ] Balanced Markdown fences in every changed file
+- [ ] Confirm no file outside `docs/` is modified
+- [ ] Confirm the parent's Goal, Primary Deliverable and Definition of Done are
+      unchanged in outcome
 
 ## References
 
-- `docs/PROJECT_BRIEF.md`, First Proof Milestone and Next Deliverable
-- `docs/design/acme-design-and-development-spec.md`, sections 5, 8–16, 19
-  and Milestone 1
-- `docs/design/narrative-module-build-and-test-plan.md`, Phase 5 and
-  negative-path execution tests
-- ADR-0002 through ADR-0011 as listed under Read First
-- `packages/core/src/execution-types.ts`
-- `packages/core/src/repository.ts`
-- `packages/core/src/repository-model-call.ts`
-- `packages/core/src/response-pipeline.ts`
-- `packages/core/src/memory-engine.ts`
-- `packages/core/src/state-projection.ts`
-- `packages/core/src/state-engine.ts`
-- `packages/core/src/repository-digest.ts`
-- `packages/adapter-memory/src/repository.ts`
-- `packages/adapter-model-mock/src/scripted-model-gateway.ts`
-- `packages/module-narrative/src/tasks/observe-document.ts`
+- `docs/paused/ACME-0018_single-task-execution-engine.md`
+- `docs/design/acme-design-and-development-spec.md`, sections 12 and 14.1–14.6
+- `packages/core/src/repository.ts`, `AcceptedExecution.requestFingerprint`
+- `packages/core/src/repository-digest.ts`, `acme-operation-digest-1`
+- `packages/core/src/memory-engine.ts`, `retrieve()`
+- `packages/adapter-memory/src/repository.ts`, `accept()` and `loadContext()`
 
 ## Checklist
 
 - [x] Read `AGENTS.md` and the required repository documents in order.
-- [x] Inspect the implemented contracts, adapters, Narrative Phase 5 plan and
-      relevant accepted ADRs.
-- [x] Activate ACME-0018 as a bounded ExecutionEngine Draft.
-- [ ] Review and approve the staged Milestone 1 engine surface.
-- [ ] Resolve request fingerprint, effective-policy, operation-key and
-      replay-evidence decisions in the Draft.
-- [ ] Freeze the approved charter and set status to `Ready`.
-- [ ] Write and accept the execution identity/replay ADR; correct the normative
-      specification before implementation.
-- [ ] Implement request validation, immutable identity and repository
-      acceptance.
-- [ ] Implement context loading/retrieval and replay evidence retention.
-- [ ] Implement primary model-call reservation, invocation and response
-      durability.
-- [ ] Implement response, interpretation, memory, projection and state
-      orchestration.
-- [ ] Implement aggregate commit, terminal mapping and request-key
-      idempotency.
-- [ ] Implement write-free, gateway-free replay verification.
-- [ ] Extend repository conformance and add engine unit/integration coverage.
-- [ ] Add and pass the Narrative Phase 5 offline scenario and negative paths.
+- [x] Confirm ACME-0019 is the next monotonically increasing task ID.
+- [x] Pause ACME-0018, record its blocker, child and resume condition, and move
+      it unchanged in scope to `docs/paused/`.
+- [x] Activate this bounded child charter in `docs/CURRENT_TASK.md`.
+- [ ] Resolve findings 1–3: ADR role, fingerprint content, effective-policy
+      validation.
+- [ ] Resolve findings 4–5: retrieval evidence and the constant retrieval limit.
+- [ ] Resolve findings 6–8: digest comparison, replay execution mode, the
+      `unavailable` branch and the replay-evidence read shape.
+- [ ] Resolve findings 9–11: `replayed` semantics, the golden-digest
+      verification item and the `AbortSignal` decision.
+- [ ] Record the reasoning in the parent's `Decisions and Notes` and mark
+      maintainer judgment calls.
 - [ ] Run every frozen verification gate and record exact evidence.
-- [ ] Update long-lived documentation and add a signed completion journal.
-- [ ] Archive the completed task and restore the task template.
+- [ ] Restore the hardened parent to `docs/CURRENT_TASK.md` as `Draft`.
+- [ ] Update `docs/CURRENT_STATUS.md` and add a signed journal entry.
+- [ ] Archive this task under `docs/finished/`.
 
 ## Decisions and Notes
 
-- The maintainer explicitly requested an ExecutionEngine charter on
-  2026-07-31 so Narrative Phase 5 can run.
-- The recommended boundary is the Milestone 1 primary path: one task, one
-  primary model call, in-memory repository, idempotent terminal reuse and
-  replay verification. Durable resume, repair/revision, evaluators and
-  multi-step flows are later independently valuable deliverables.
-- Request fingerprinting and effective-policy defaults are described but not
-  versioned by the current public implementation. They must be fixed before
-  repository acceptance depends on them.
-- The current task contract does not declare a memory query or retrieval
-  limit. The ADR must fix one domain-neutral Milestone 1 rule and include its
-  effective configuration in execution identity/replay evidence rather than
-  allowing ambient engine configuration to change projected prompts.
-- Generic replay cannot be reproduced from the current public repository port:
-  it exposes neither the exact execution read set nor a portable replay
-  evidence projection. Adapter-specific `evidence()` is not an acceptable core
-  dependency. The ADR must close this boundary without weakening aggregate
-  repository ownership.
-- `acme-operation-digest-1` is immutable. Prefer a separate versioned replay
-  digest/evidence contract over silently changing its preimage.
-- Narrative Phase 5 is the acceptance proof for the engine, not a reopening of
-  ACME-0017 or authorization to add Narrative behavior to core.
-- The Domain Test UI implementation remains in backlog.
-- Apply `docs/TASK_WORKFLOW.md` to every discovered work item.
+- A checkpoint after each step or substep is required. The checklist is
+  therefore updated along the work and `CURRENT_STATUS.md` is always updated
+  when changes affect behavior.
+- The maintainer reviewed the four pre-freeze decisions on 2026-07-31, accepted
+  the reasoning and explicitly requested that the resulting charter changes be
+  performed as their own task for traceability.
+- `docs/TASK_WORKFLOW.md` describes pause/resume for a frozen `In Progress`
+  parent. ACME-0018 is `Draft`, so it is paused as `Draft` and resumes as
+  `Draft` rather than `In Progress`. This deviation is recorded rather than
+  silently applied.
+- The parent charter is editable because it is `Draft`. This task therefore
+  sharpens it in place instead of using the `Charter Amendment Log`, which
+  governs post-`Ready` corrections only.
+- Findings that propose a specific value rather than a correctness requirement
+  — the retrieval limit and the `AbortSignal` decision — are maintainer calls.
+  This task writes a recommendation and marks it for confirmation; it does not
+  claim approval the maintainer has not given.
+- This task must not become a container for the ADR itself. If resolving a
+  finding requires a durable architecture decision beyond recording it in the
+  charter, that belongs to ACME-0018 and its ADR.
 
 ## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
 
 - None.
 
 ## Verification
 
-- [x] Confirm ACME-0018 is the next monotonically increasing task ID.
-- [x] Confirm `docs/CURRENT_TASK.md` contained only the inactive Draft
-      template before activation.
-- [x] Trace the Draft against Project Brief First Proof Milestone, specification
-      Milestone 1 and Narrative Phase 5.
-- [x] Identify pre-freeze contract gaps: request/policy identity, replay
-      evidence/digest, deterministic memory retrieval and staged public engine
-      surface.
-- [x] `pnpm docs:check` passed for 50 Markdown files and `git diff --check`
-      passed for the Draft documentation change.
-- [ ] Review the proposed ADR decision set with the maintainer.
-- [ ] Define exact fixture IDs, timestamps, request/model/operation/replay
-      digests and expected Narrative state hash before implementation.
-- [ ] Define the engine unit, neutral integration, repository conformance and
-      Narrative scenario matrices before freeze.
-- [ ] Record all implementation verification evidence and skipped checks with
-      reasons.
+- [ ] `pnpm docs:check` passes for all Markdown files.
+- [ ] `git diff --check` passes.
+- [ ] `git status` shows changes only under `docs/`.
+- [ ] Each of the eleven findings is traceable to explicit parent charter text.
+- [ ] The parent's Goal, Primary Deliverable and Definition of Done are
+      compared before and after and describe the same outcome.
+- [ ] Document skipped checks and reasons. No runtime gate applies because this
+      task adds no source file.
 
 ## Documentation Updates
 
-- [ ] New execution identity and replay evidence ADR
-- [ ] `docs/design/acme-design-and-development-spec.md`
-- [ ] `docs/design/narrative-module-build-and-test-plan.md`
+- [ ] `docs/CURRENT_TASK.md` (restored hardened ACME-0018 `Draft`)
 - [ ] `docs/CURRENT_STATUS.md`
-- [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
 - [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change — not expected for this task
 
 ## Handoff and Follow-ups
 
-- Current state: Draft charter activated; no ExecutionEngine code or public
-  contract has changed.
-- Next recommended step: Review the bounded surface and the proposed
-  request/replay ADR decisions, then freeze ACME-0018 only if approved.
-- Blockers: Implementation is blocked by Draft status and the unresolved
-  execution identity/replay evidence decision.
+- Current state: Charter frozen at `Ready`; hardening not yet applied.
+- Next recommended step: Apply findings 1–11 to the paused parent charter.
+- Blockers: None.
 - Child tasks: None.
-- Resume condition: Maintainer approval of the frozen charter and its staged
-  Milestone 1 API/evidence boundary.
+- Resume condition: Not applicable.
 - Open questions:
-  - Should Milestone 1 expose only `execute` plus replay-verify, with
-    `resume`, replay-fork and replay-rebuild deferred as proposed?
-  - Should exact replay read-set/prepared evidence be added to the aggregate
-    repository port under one accepted ADR as proposed?
-  - Are one primary call and zero evaluators/repair/revision attempts the
-    approved policy subset for this task?
-  - What fixed or request-bound memory retrieval limit should Milestone 1 use,
-    and where should it participate in the request fingerprint?
+  - Does the maintainer accept the recommended constant memory-retrieval limit,
+    or should ACME-0018 carry a different value into its ADR?
+  - Should `execute()` expose `AbortSignal` in the Milestone 1 surface at all?
 
 ## Finalize When Complete
 
-- Archive this file as
-  `docs/finished/ACME-0018_single-task-execution-engine.md`.
-- Restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+- Archive this file as `docs/finished/ACME-0019_acme-0018-charter-hardening.md`.
+- Restore the hardened ACME-0018 to `docs/CURRENT_TASK.md` as `Draft`.
 - Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changes after `Ready`, supersede this task
-  instead of rewriting it.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.
