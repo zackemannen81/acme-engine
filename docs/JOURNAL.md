@@ -952,3 +952,50 @@ Add one dated, signed entry for every meaningful work session or handoff.
   proven separately by the ACME-0021 reopen test. A live provider adapter and
   a CLI composition root remain separate approved work.
 - Signature: Claude
+
+## 2026-07-31 — Governing documents synchronized after ACME-0023
+
+- Date: 2026-07-31
+- Author: Claude
+- Task: ACME-0024
+- Summary: Corrected every current-facing governing document that still
+  described a repository without durable persistence or ResearchModule. A
+  sweep found six stale locations, two more than the three the user had
+  identified: `AGENTS.md` still said durable persistence and ResearchModule do
+  not exist, `README.md` said no durable persistence adapter or Research
+  reference module exists and omitted both packages from its repository map,
+  `docs/PROJECT_BRIEF.md` still listed them as separate future deliverables,
+  and the Domain Test UI prerequisites were described as unimplemented in
+  `docs/CURRENT_STATUS.md`, `docs/FILESTRUCTURE.md` and the backlog proposal.
+  `AGENTS.md` mattered most because it is the first file a new contributor
+  reads and it was two tasks behind. The backlog prerequisite list is now split
+  into satisfied and still-missing, so having prerequisites is not confused
+  with having resolved the specification's own decision gates.
+- Evidence: One verified gap was recorded rather than fixed.
+  `retention: 'encrypted-payload'` performs no encryption; both adapters store
+  the complete `NormalizedModelResponse` as supplied, and `protectedResponse`
+  is a caller-supplied field nothing populates. Nothing delivered is wrong,
+  because every retained payload so far is a test fixture. It matters now
+  because `retention: 'hash-only'` is not a workaround: without a retained
+  response `replayVerify()` reports `unavailable`, so confidentiality and
+  replay are not simultaneously available. The gap is recorded in
+  `docs/CURRENT_STATUS.md` and proposed for closure in
+  `docs/backlog/encrypted-payload-retention.md`, so the live-provider ADR must
+  confront it rather than discover it.
+- Verification: The discovery sweep was repeated and returns only true
+  statements about the live provider adapter, ScenarioRunner and the CLI.
+  `pnpm docs:check` passed 60 Markdown files after archival. `pnpm format:check`,
+  `pnpm lint`, `pnpm typecheck` and `pnpm build` passed. `pnpm boundaries`
+  passed. `pnpm test:unit` passed 243 tests in 33 files,
+  `pnpm test:conformance` passed 41 tests in 6 files, `pnpm test:integration`
+  passed 13 tests in 2 files and `pnpm test:scenario` passed 5 tests in 2
+  files. `git diff --check` passed. No file outside documentation changed. No
+  check was skipped.
+- Follow-ups: The agreed remaining Milestone 1 order is now recorded in
+  `docs/PROJECT_BRIEF.md`: a live provider adapter with its own ADR, a thin
+  CLI composition root, ScenarioRunner over the named `acme-scenario/1`
+  format, then a budgeted live test. The provider ADR must decide the
+  retention question above, and must define what produces the `ambiguous`
+  model-call status that core and both adapters already handle but nothing
+  currently emits.
+- Signature: Claude

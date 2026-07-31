@@ -9,9 +9,11 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Repository: `acme-engine`
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
 - Current phase: Milestone 1 implementation. The contract layer, pure
-  StateEngine and MemoryEngine, in-memory repository, deterministic model mock
-  shared conformance kits, NarrativeModule and the bounded single-task
-  ExecutionEngine exist; durable persistence and ResearchModule do not.
+  StateEngine and MemoryEngine, in-memory and durable SQLite repositories,
+  deterministic model mock, shared conformance kits, NarrativeModule,
+  ResearchModule and the bounded single-task ExecutionEngine exist. Both
+  reference domains have offline acceptance scenarios. A live provider
+  adapter, ScenarioRunner and a CLI composition root do not exist.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

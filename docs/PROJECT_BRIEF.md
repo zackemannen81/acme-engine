@@ -161,7 +161,13 @@ The first platform version is successful when:
 
 ## Next Deliverable
 
-The bounded single-task ExecutionEngine and NarrativeModule offline acceptance
-scenario now implement the first in-memory vertical slice. The next
-deliverable must be explicitly approved from the remaining Milestone 1 scope;
-ResearchModule and durable SQLite persistence remain separate deliverables.
+The First Proof Milestone's offline half is complete. The bounded single-task
+ExecutionEngine, durable SQLite persistence, NarrativeModule and
+ResearchModule are implemented, and both reference domains reach committed
+canonical state and replay offline through the same core with no domain branch
+in it.
+
+The remaining Milestone 1 scope is the live half and the surfaces around it:
+a live provider adapter with its own ADR, ScenarioRunner over the named
+`acme-scenario/1` format, and a CLI composition root. The next deliverable
+must still be explicitly approved before activation.

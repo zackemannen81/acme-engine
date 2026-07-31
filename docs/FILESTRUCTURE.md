@@ -192,7 +192,8 @@ acme-engine/
 │   │   └── template.md
 │   ├── backlog/
 │   │   ├── README.md
-│   │   └── domain-test-ui-implementation.md
+│   │   ├── domain-test-ui-implementation.md
+│   │   └── encrypted-payload-retention.md
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
@@ -223,6 +224,7 @@ acme-engine/
 │   │   ├── ACME-0021_durable-sqlite-persistence.md
 │   │   ├── ACME-0022_research-module-observe-evidence.md
 │   │   ├── ACME-0023_research-offline-acceptance-scenario.md
+│   │   ├── ACME-0024_governing-document-sync.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -311,9 +313,11 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
 composition-root application for configuring, executing, inspecting,
 validating and measuring domain tests. No such package exists; the file is a
-specification awaiting review, and its readiness prerequisites are
-unimplemented.
+specification awaiting review. Its durable-persistence prerequisite now
+exists, but ScenarioRunner and its JSON report do not.
 
-The remaining `docs/backlog/` proposal records the domain-test-UI
-implementation. It must remain separate until its explicit prerequisites
-exist.
+The `docs/backlog/` proposals record the domain-test-UI implementation and the
+`encrypted-payload` retention gap. The first must remain separate until its
+explicit prerequisites exist and its own decision gates are resolved. The
+second must be resolved by the live-provider ADR before any real provider
+payload is stored.

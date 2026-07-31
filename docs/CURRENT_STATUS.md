@@ -168,14 +168,16 @@ runtime schemas, deterministic immutable task/state behavior, unique effects
 and caller-supplied memory-policy expectations. It runs unchanged against
 testing-owned producer and empty-analyzer fixtures, and future module source
 is prevented from importing apps, concrete adapters or `@acme/testing`.
-Narrative and Research implementation remain separate tasks.
+Narrative and Research were then implemented as separate tasks, ACME-0017 and
+ACME-0022, and both run that suite unchanged.
 
 ACME-0014 added the proposed
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) as
 documentation only. It defines a human surface for configuring, executing,
 inspecting, validating and measuring domain tests strictly over existing
-ports, ledger evidence and reports. Nothing in it is implemented or chartered,
-and its remaining readiness prerequisites do not exist yet.
+ports, ledger evidence and reports. Nothing in it is implemented or chartered.
+Its durable-persistence prerequisite now exists; ScenarioRunner, its JSON
+report and the specification’s own decision gates do not.
 
 ACME-0016 synchronized current-facing repository documentation with the
 implemented workspace after ACME-0015. It corrected pre-implementation phase
@@ -249,5 +251,14 @@ evidence.
   proposed interface is specification-only; ScenarioRunner, durable
   persistence and its unresolved decision gates still block activation, whose
   proposal remains in `docs/backlog/`.
+- `retention: 'encrypted-payload'` performs no encryption. Both adapters store
+  the complete `NormalizedModelResponse` as supplied, and `protectedResponse`
+  is a caller-supplied field that nothing currently populates. No delivered
+  behavior is wrong today because every retained payload is a test fixture,
+  but the mode's name promises more than it does. `retention: 'hash-only'` is
+  not a workaround: without a retained response, `replayVerify()` reports
+  `unavailable`. Retaining a live provider response and replaying it are
+  therefore not simultaneously available under an honest reading, which the
+  live-provider ADR must resolve before any real payload is stored.
 - Live provider call reconciliation, encrypted retention and privacy deletion
   intentionally require future ADRs before implementation.

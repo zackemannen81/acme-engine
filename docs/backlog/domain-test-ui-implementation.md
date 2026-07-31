@@ -36,14 +36,23 @@ cross-package implementation deliverable with its own verification story.
 
 ## Dependencies
 
+Satisfied:
+
 - the implemented bounded `ExecutionEngine` orchestration
-- `ScenarioRunner` and its JSON report in `@acme/testing`, which do not exist
-- the implemented Narrative reference module and offline acceptance scenario
+- the implemented Narrative and Research reference modules, each with an
+  offline acceptance scenario
 - the reusable `DomainModule` conformance kit implemented by ACME-0015
-- `@acme/adapter-sqlite` for durable run history, which does not exist
+- `@acme/adapter-sqlite` for durable run history, implemented by ACME-0021
+
+Still missing:
+
+- `ScenarioRunner` and its JSON report in `@acme/testing`
+- a CLI composition root, so no surface outside tests currently selects an
+  adapter
 - resolution of the seven decision gates in the specification, in particular
   the runtime shape, the `acme-test-plan/1` contract and interface storage
-  location
+  location. These are decisions, not build steps; having the prerequisites
+  does not resolve them.
 
 ## Suggested verification
 

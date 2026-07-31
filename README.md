@@ -7,14 +7,16 @@ replayable AI execution engine. Narrative is the first reference module, not
 the engine itself.
 
 The complete design baseline, repository bootstrap, pure state/memory engines,
-deterministic in-memory Unit of Work, exact scripted model mock and bounded
-single-task ExecutionEngine are complete. The workspace contains model-output
-validation, versioned request and execution identity, static composition
-contracts, revisioned preparation, replay verification and reusable
-repository/gateway/module conformance suites; no durable persistence adapter,
-Research reference module, live model adapter or published package exists
-yet. The pure `@acme/module-narrative` package and its offline acceptance
-scenario implement the first bounded reference-domain behavior.
+deterministic in-memory Unit of Work, durable SQLite Unit of Work, exact
+scripted model mock and bounded single-task ExecutionEngine are complete. The
+workspace contains model-output validation, versioned request and execution
+identity, static composition contracts, revisioned preparation, replay
+verification and reusable repository/gateway/module conformance suites. The
+pure `@acme/module-narrative` and `@acme/module-research` packages implement
+two reference domains over that same core, each with its own offline
+acceptance scenario, which is the executable evidence that core is
+domain-neutral. No live model adapter, ScenarioRunner, CLI composition root or
+published package exists yet.
 
 ## Start here
 
@@ -43,14 +45,17 @@ docs/finished/            Completed task archive
 apps/cli/                 CLI composition-root skeleton
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
+packages/adapter-sqlite/  Durable WAL-mode revisioned repository
 packages/adapter-model-mock/ Exact finite model-call scripts
 packages/module-narrative/ Narrative observe-document reference module
+packages/module-research/ Research observe-evidence reference module
 packages/testing/         Reusable repository/gateway/module conformance support
 tooling/                   Shared configuration and repository checks
 ```
 
 ## Current objective
 
-`docs/CURRENT_TASK.md` is the sole source for active work. NarrativeModule
-phases 1–5 and the bounded Milestone 1 single-task ExecutionEngine are
-implemented. The next task must be explicitly approved before activation.
+`docs/CURRENT_TASK.md` is the sole source for active work. NarrativeModule and
+ResearchModule phases 1–5, the bounded Milestone 1 single-task ExecutionEngine
+and the durable SQLite adapter are implemented. The next task must be
+explicitly approved before activation.
