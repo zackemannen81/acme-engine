@@ -188,7 +188,8 @@ acme-engine/
 │   │   ├── module-narrative.test.ts
 │   │   └── module-research.test.ts
 │   ├── fixtures/
-│   │   └── neutral-execution.ts
+│   │   ├── neutral-execution.ts
+│   │   └── process-loss.ts
 │   ├── live/
 │   │   └── openai-responses.test.ts
 │   ├── integration/
@@ -234,6 +235,7 @@ acme-engine/
 │   │   ├── 0014-live-provider-boundary-and-transport-port.md
 │   │   ├── 0015-strict-structured-output-schema-lowering.md
 │   │   ├── 0016-encrypted-payload-retention.md
+│   │   ├── 0017-durable-execution-resume.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -283,6 +285,7 @@ acme-engine/
 │   │   ├── ACME-0030_encrypted-payload-retention.md
 │   │   ├── ACME-0031_documentation-reality-sync.md
 │   │   ├── ACME-0032_cli-live-openai-gateway.md
+│   │   ├── ACME-0033_durable-execution-resume.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

@@ -33,6 +33,7 @@ import {
   neutralResponse,
   neutralSelection,
 } from '../fixtures/neutral-execution.js';
+import { processLossAt } from '../fixtures/process-loss.js';
 
 const payloadEncryptor = createTestPayloadEncryptor();
 
@@ -119,7 +120,7 @@ function createGateway() {
 function createEngine(
   repository: ExecutionRepository,
   ids: IdGenerator,
-  gateway: ReturnType<typeof createGateway>,
+  gateway: Parameters<typeof createExecutionEngine>[0]['gateway'],
 ) {
   return createExecutionEngine({
     clock: { now: () => neutralNow },
@@ -257,6 +258,135 @@ describe('ExecutionEngine durable SQLite integration', () => {
     expect(forbiddenGenerate).not.toHaveBeenCalled();
     expect(gateway.invocations()).toHaveLength(1);
     expect(recovered.snapshot()).toEqual(snapshotBeforeClose);
+  });
+
+  it('resumes across a real reopen without a second model call', async () => {
+    const location = databaseLocation();
+    const first = createIds();
+    const gateway = createGateway();
+    const interrupted = createSqliteExecutionRepository({
+      database: open(location),
+      ids: first.ids,
+      payloadEncryptor,
+    });
+    await expect(
+      createEngine(
+        processLossAt(interrupted, 'commit'),
+        first.ids,
+        gateway,
+      ).execute(executionRequest),
+    ).rejects.toThrow('Simulated process loss.');
+    expect(gateway.invocations()).toHaveLength(1);
+    expect(interrupted.snapshot()).toMatchObject({
+      executions: [{ status: 'preparing-commit' }],
+      modelCalls: [{ callKey: 'model:0', status: 'succeeded' }],
+      documents: [],
+      state: { snapshots: [] },
+    });
+
+    // Simulate a process restart: drop every connection and reopen the file.
+    opened.pop()?.close();
+
+    const second = createIds();
+    const recovered = createSqliteExecutionRepository({
+      database: open(location),
+      ids: second.ids,
+      payloadEncryptor,
+    });
+    const forbiddenGenerate = vi.fn(async () => {
+      throw new Error('Resume invoked the provider.');
+    });
+    const resumeIds = createIds();
+    const resumed = await createEngine(recovered, resumeIds.ids, {
+      capabilities: async () => {
+        throw new Error('Resume invoked gateway capabilities.');
+      },
+      generate: forbiddenGenerate,
+    }).execute(executionRequest);
+    expect(resumed).toEqual({
+      status: 'committed',
+      executionId,
+      replayed: false,
+      revision: 1,
+      documentKeys: ['neutral-document-1'],
+      eventIds: [],
+    });
+    expect(forbiddenGenerate).not.toHaveBeenCalled();
+    expect(gateway.invocations()).toHaveLength(1);
+    expect(recovered.snapshot().modelCalls).toHaveLength(1);
+    // No model-call ID is allocated, because no reservation is made.
+    expect(resumeIds.next.mock.calls.map(([kind]) => kind)).not.toContain(
+      'call',
+    );
+
+    // A clean uninterrupted run of the same request must reach the same
+    // operation digest.
+    const cleanIds = createIds();
+    const clean = createSqliteExecutionRepository({
+      database: open(databaseLocation()),
+      ids: cleanIds.ids,
+      payloadEncryptor,
+    });
+    await createEngine(clean, cleanIds.ids, createGateway()).execute(
+      executionRequest,
+    );
+    expect(
+      (await recovered.loadReplayEvidence(executionId))?.preparedCommit
+        .operationDigest,
+    ).toBe(
+      (await clean.loadReplayEvidence(executionId))?.preparedCommit
+        .operationDigest,
+    );
+  });
+
+  it('refuses to resume a sealed response when the key is gone', async () => {
+    const location = databaseLocation();
+    const first = createIds();
+    const gateway = createGateway();
+    const interrupted = createSqliteExecutionRepository({
+      database: open(location),
+      ids: first.ids,
+      payloadEncryptor,
+    });
+    await expect(
+      createEngine(
+        processLossAt(interrupted, 'commit'),
+        first.ids,
+        gateway,
+      ).execute(executionRequest),
+    ).rejects.toThrow('Simulated process loss.');
+    opened.pop()?.close();
+
+    // Reopen without the encryptor: the envelope rests unreadable.
+    const keyless = createSqliteExecutionRepository({
+      database: open(location),
+      ids: createIds().ids,
+    });
+    const forbiddenGenerate = vi.fn(async () => {
+      throw new Error('Resume invoked the provider.');
+    });
+    await expect(
+      createEngine(keyless, createIds().ids, {
+        capabilities: async () => {
+          throw new Error('Resume invoked gateway capabilities.');
+        },
+        generate: forbiddenGenerate,
+      }).execute(executionRequest),
+    ).resolves.toMatchObject({
+      status: 'failed',
+      error: {
+        code: 'RESUME_EVIDENCE_UNAVAILABLE',
+        stage: 'calling-model',
+        retryable: false,
+      },
+    });
+    expect(forbiddenGenerate).not.toHaveBeenCalled();
+    expect(gateway.invocations()).toHaveLength(1);
+    expect(keyless.snapshot()).toMatchObject({
+      executions: [{ status: 'failed' }],
+      documents: [],
+      state: { snapshots: [] },
+    });
   });
 
   it('produces the same durable evidence as the in-memory adapter', async () => {

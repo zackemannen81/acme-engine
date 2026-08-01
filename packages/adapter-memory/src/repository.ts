@@ -15,6 +15,7 @@ import {
   type ExecutionRecord,
   type ExecutionReplayEvidence,
   type ExecutionRepository,
+  type ExecutionResumeState,
   type FailedModelCall,
   type Hashing,
   type IdGenerator,
@@ -864,6 +865,33 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       },
       this.#hashing,
     );
+  }
+
+  async loadResumeState(
+    executionId: string,
+  ): Promise<ExecutionResumeState | null> {
+    const execution = this.#store.executions.get(executionId);
+    if (execution === undefined) {
+      return null;
+    }
+    let lastAttemptNumber = 0;
+    for (const attempt of this.#store.attempts.values()) {
+      if (
+        attempt.executionId === executionId &&
+        attempt.attemptNumber > lastAttemptNumber
+      ) {
+        lastAttemptNumber = attempt.attemptNumber;
+      }
+    }
+    const modelCalls = [...this.#store.modelCalls.values()]
+      .filter((call) => call.executionId === executionId)
+      .sort(
+        (left, right) =>
+          compareText(left.callKey, right.callKey) ||
+          left.attempt - right.attempt,
+      )
+      .map((call) => this.#revealCall(call));
+    return clone({ executionId, lastAttemptNumber, modelCalls }, this.#hashing);
   }
 
   #revealCall(call: ModelCallRecord): ModelCallRecord {

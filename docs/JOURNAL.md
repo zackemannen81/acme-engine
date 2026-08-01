@@ -1327,3 +1327,51 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Follow-ups: remaining gaps Domain Test UI decision gates, M2 outbox/fault
   injection, optional temperature capability. ScenarioRunner has no live step.
 - Signature: Grok
+
+## 2026-08-01 — ACME-0033 durable execution resume
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0033
+- Summary: Closed the Milestone 2 gap that made a crash after a successful
+  model call unrecoverable. An accepted but non-terminal execution is now
+  resumed by re-submitting the same request; it completes from the recorded
+  model call without contacting the provider, or terminates with a classified
+  error. ADR-0017 fixes the semantics.
+- Context: the previous session ended at commit `75d63c3`
+  (`checkpoint : m2 - verified 1/2`), an empty checkpoint commit with no
+  journal entry. Reading the code showed what the half was: the engine
+  answered a non-terminal existing execution with `PERSISTENCE_TRANSIENT` and
+  the literal message that durable resume is not implemented.
+- Decisions (ADR-0017, all settled at freeze): resume never calls the provider
+  and either completes from evidence or terminates; a missing reservation is
+  the one case that runs from the beginning, because reservation precedes
+  dispatch and therefore proves nothing was sent; `reserved`/`in-flight` is
+  terminal for the same reason ADR-0014 gives for `ambiguous`; resume re-reads
+  the context so a moved revision conflicts instead of committing against a
+  stale world; a resumed run records its own attempt number; the capability is
+  a new `loadResumeState` rather than a widened `loadReplayEvidence`.
+- Implementation: `ExecutionRepository.loadResumeState()` in core plus both
+  adapters, revealing sealed payloads exactly as replay does; the resume plan
+  and recorded-response path in `ExecutionEngine`; `RESUME_EVIDENCE_UNAVAILABLE`
+  added to the error taxonomy; stage attempts now carry an attempt number.
+- Verification: `pnpm docs:check` 76 Markdown files after archival; `format:check`, `lint`,
+  `typecheck`, `boundaries` and `build` passed. `pnpm test:unit` 361 tests in
+  42 files, `pnpm test:conformance` 54 in 7, `pnpm test:integration` 21 in 2,
+  `pnpm test:scenario` 19 in 3. `git diff --check` passed. Both adapters run
+  the extended conformance suite unchanged. The SQLite proof closes every
+  connection, reopens the file, resumes, and reaches the same operation digest
+  as an uninterrupted run of the same request, with one gateway invocation in
+  total and no `call` ID allocated by the resumed engine.
+- Not established: no live provider call was made, by charter. The `ambiguous`
+  path is proven by forcing `ambiguous: true` at the repository boundary,
+  because the engine still records `ambiguous: false` on every failure — no
+  code in the workspace produces the status the adapters implement. That
+  wiring is a separate concern and was left alone.
+- Spend: none. Offline only.
+- Follow-ups: fault injection at transaction boundaries and a concurrent
+  two-writer CAS race remain the open Milestone 2 residuals, together with
+  outbox draining. Executions stranded by an unobserved reservation or an
+  unretained response are terminal and have no operator command to list or
+  discharge them.
+- Signature: Claude

@@ -65,6 +65,18 @@ export interface ExecutionRecord {
   readonly updatedAt: IsoTimestamp;
 }
 
+/**
+ * Recorded evidence an interrupted execution can be resumed from (ADR-0017).
+ *
+ * `lastAttemptNumber` is `0` when no attempt has been recorded yet, so a
+ * resumed run always continues at `lastAttemptNumber + 1`.
+ */
+export interface ExecutionResumeState {
+  readonly executionId: ExecutionId;
+  readonly lastAttemptNumber: number;
+  readonly modelCalls: readonly ModelCallRecord[];
+}
+
 export interface ExecutionAttempt {
   readonly executionId: ExecutionId;
   readonly attemptNumber: number;
@@ -200,6 +212,14 @@ export interface ExecutionRepository {
   completeModelCall(call: CompletedModelCall): Promise<void>;
   failModelCall(call: FailedModelCall): Promise<void>;
   loadContext(query: ContextQuery): Promise<ExecutionReadSet>;
+  /**
+   * Recorded model calls and attempt progress of an accepted execution,
+   * revealed with the same payload rules as `loadReplayEvidence`. Returns
+   * `null` only when the execution is unknown.
+   */
+  loadResumeState(
+    executionId: ExecutionId,
+  ): Promise<ExecutionResumeState | null>;
   commit(prepared: PreparedCommit): Promise<CommittedExecution>;
   markTerminal(terminal: NonCommitTerminalRecord): Promise<void>;
   loadReplayEvidence(

@@ -15,6 +15,7 @@ import {
   type ExecutionRecord,
   type ExecutionReplayEvidence,
   type ExecutionRepository,
+  type ExecutionResumeState,
   type FailedModelCall,
   type Hashing,
   type IdGenerator,
@@ -911,6 +912,32 @@ export class SqliteExecutionRepository implements ExecutionRepository {
       readSet: prepared.replayEvidence.readSet,
       modelCalls,
       preparedCommit: prepared,
+    });
+  }
+
+  async loadResumeState(
+    executionId: string,
+  ): Promise<ExecutionResumeState | null> {
+    const execution = this.#findExecution(executionId);
+    if (execution === undefined) {
+      return null;
+    }
+    const highest = this.#one<{ readonly last_attempt: number | null }>(
+      `SELECT MAX(attempt_number) AS last_attempt
+       FROM execution_attempts
+       WHERE execution_id = ?`,
+      [executionId],
+    );
+    const modelCalls = this.#all<{ readonly record_json: string }>(
+      `SELECT record_json FROM model_calls
+       WHERE execution_id = ?
+       ORDER BY call_key, attempt`,
+      [executionId],
+    ).map((row) => this.#revealCall(toModelCallRecord(row.record_json)));
+    return this.#clone({
+      executionId,
+      lastAttemptNumber: highest?.last_attempt ?? 0,
+      modelCalls,
     });
   }
 

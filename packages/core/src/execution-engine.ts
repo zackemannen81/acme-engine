@@ -107,6 +107,16 @@ interface ResolvedExecution {
   readonly taskInput: JsonValue;
 }
 
+/**
+ * How a non-terminal execution continues (ADR-0017). `recordedResponse` is
+ * present when a successful primary call was retained, and the provider must
+ * then not be called again.
+ */
+interface Resumption {
+  readonly attemptNumber: number;
+  readonly recordedResponse?: NormalizedModelResponse;
+}
+
 const requestKeys = new Set([
   'requestKey',
   'namespace',
@@ -738,27 +748,25 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
     }
     if (acceptance.kind === 'existing') {
       const result = acceptance.execution.result;
-      if (result === undefined) {
-        throw new AcmeError({
-          code: 'PERSISTENCE_TRANSIENT',
-          message:
-            'Compatible execution exists but is not terminal; durable resume is not implemented.',
-          stage: acceptance.execution.currentStage,
-          retryable: true,
-        });
+      if (result !== undefined) {
+        return result.status === 'committed'
+          ? deepFreeze({ ...result, replayed: true })
+          : result;
       }
-      return result.status === 'committed'
-        ? deepFreeze({ ...result, replayed: true })
-        : result;
     }
 
     try {
+      const resumption =
+        acceptance.kind === 'existing'
+          ? await this.#planResume(executionId)
+          : undefined;
       return await this.#runAccepted(
         storedRequest,
         resolved,
         executionId,
         effectivePolicy,
         now,
+        resumption,
       );
     } catch (error) {
       const data = errorData(error, 'failed');
@@ -825,16 +833,76 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
 
   async #stage(
     executionId: string,
+    attemptNumber: number,
     stage: ExecutionStatus,
     now: string,
   ): Promise<void> {
     await this.#repository.appendAttempt({
       executionId,
-      attemptNumber: 1,
+      attemptNumber,
       stage,
       outcome: 'started',
       occurredAt: now,
     });
+  }
+
+  /**
+   * Decide how an accepted but non-terminal execution continues (ADR-0017).
+   * Resume never calls the provider: it either continues from a recorded
+   * response, runs from the beginning when no reservation exists, or throws a
+   * terminal error.
+   */
+  async #planResume(executionId: string): Promise<Resumption> {
+    const state = await this.#repository.loadResumeState(executionId);
+    if (state === null) {
+      throw invalid(
+        'PERSISTENCE_CORRUPTION',
+        'Accepted execution has no recorded resume state.',
+        'accepted',
+        { executionId },
+      );
+    }
+    const attemptNumber = state.lastAttemptNumber + 1;
+    const call = state.modelCalls.find(
+      (candidate) =>
+        candidate.callKey === 'model:0' &&
+        candidate.attempt === 1 &&
+        candidate.purpose === 'primary',
+    );
+    // No reservation exists, and reservation precedes dispatch, so no request
+    // can have left the process. Running from the beginning is safe.
+    if (call === undefined) {
+      return Object.freeze({ attemptNumber });
+    }
+    if (call.status === 'succeeded') {
+      if (call.response === undefined) {
+        throw invalid(
+          'RESUME_EVIDENCE_UNAVAILABLE',
+          'Recorded model response is not readable; the execution cannot be resumed.',
+          'calling-model',
+          { modelCallId: call.modelCallId },
+        );
+      }
+      return Object.freeze({ attemptNumber, recordedResponse: call.response });
+    }
+    if (call.status === 'failed' || call.status === 'ambiguous') {
+      throw new AcmeError(
+        call.error ?? {
+          code: 'MODEL_UNAVAILABLE',
+          message: `Recorded model call is ${call.status} without a recorded error.`,
+          stage: 'calling-model',
+          retryable: false,
+        },
+      );
+    }
+    // Reserved or in-flight: the outcome was never recorded, so the request may
+    // have reached the provider. ADR-0014 forbids guessing in that direction.
+    throw invalid(
+      'MODEL_UNAVAILABLE',
+      `Recorded model call is ${call.status}; its outcome was never observed and it is not retried.`,
+      'calling-model',
+      { modelCallId: call.modelCallId },
+    );
   }
 
   #nextCallId(): string {
@@ -866,8 +934,10 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
     executionId: string,
     policy: ExecutionPolicy,
     now: string,
+    resumption?: Resumption,
   ): Promise<ExecutionResult> {
-    await this.#stage(executionId, 'loading', now);
+    const attemptNumber = resumption?.attemptNumber ?? 1;
+    await this.#stage(executionId, attemptNumber, 'loading', now);
     const query = memoryQuery(
       request.namespace,
       request.entityId,
@@ -911,51 +981,56 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
     );
     const requestHash = computeModelRequestHash(modelRequest, this.#hashing);
 
-    await this.#stage(executionId, 'calling-model', now);
-    const modelCallId = this.#nextCallId();
-    await this.#repository.reserveModelCall({
-      modelCallId,
-      executionId,
-      callKey: 'model:0',
-      attempt: 1,
-      purpose: 'primary',
-      selection: request.model,
-      requestHash,
-      startedAt: now,
-    });
-
+    await this.#stage(executionId, attemptNumber, 'calling-model', now);
     let response: NormalizedModelResponse;
-    try {
-      response = validateNormalizedModelResponse(
-        await this.#gateway.generate(modelRequest, {
-          executionId,
-          callKey: 'model:0',
-          selection: request.model,
-          requiredCapabilities: resolved.contract.requiredCapabilities,
-          timeoutMs: policy.timeoutMs,
-          signal: new AbortController().signal,
-        }),
-      );
-    } catch (error) {
-      const data = errorData(error, 'calling-model');
-      await this.#repository.failModelCall({
+    if (resumption?.recordedResponse !== undefined) {
+      // ADR-0017: the recorded response replaces the call. The provider is not
+      // contacted, no reservation is made and no model-call ID is allocated.
+      response = validateNormalizedModelResponse(resumption.recordedResponse);
+    } else {
+      const modelCallId = this.#nextCallId();
+      await this.#repository.reserveModelCall({
         modelCallId,
-        error: data,
-        ambiguous: false,
+        executionId,
+        callKey: 'model:0',
+        attempt: 1,
+        purpose: 'primary',
+        selection: request.model,
+        requestHash,
+        startedAt: now,
+      });
+
+      try {
+        response = validateNormalizedModelResponse(
+          await this.#gateway.generate(modelRequest, {
+            executionId,
+            callKey: 'model:0',
+            selection: request.model,
+            requiredCapabilities: resolved.contract.requiredCapabilities,
+            timeoutMs: policy.timeoutMs,
+            signal: new AbortController().signal,
+          }),
+        );
+      } catch (error) {
+        const data = errorData(error, 'calling-model');
+        await this.#repository.failModelCall({
+          modelCallId,
+          error: data,
+          ambiguous: false,
+          completedAt: now,
+        });
+        throw new AcmeError(data);
+      }
+      await this.#repository.completeModelCall({
+        modelCallId,
+        response,
+        responseHash: computeModelResponseHash(response, this.#hashing),
         completedAt: now,
       });
-      throw new AcmeError(data);
     }
-    const responseHash = computeModelResponseHash(response, this.#hashing);
-    await this.#repository.completeModelCall({
-      modelCallId,
-      response,
-      responseHash,
-      completedAt: now,
-    });
     enforceResponseBudgets(response, policy);
 
-    await this.#stage(executionId, 'validating', now);
+    await this.#stage(executionId, attemptNumber, 'validating', now);
     const pipeline = this.#pipeline.process(
       response,
       resolved.contract,
@@ -974,7 +1049,7 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
       );
     }
 
-    await this.#stage(executionId, 'interpreting', now);
+    await this.#stage(executionId, attemptNumber, 'interpreting', now);
     const moduleResult = validateModuleResult(
       await resolved.task.interpret(
         pipeline.value,
@@ -984,8 +1059,8 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
       this.#hashing,
     );
 
-    await this.#stage(executionId, 'evaluating', now);
-    await this.#stage(executionId, 'preparing-commit', now);
+    await this.#stage(executionId, attemptNumber, 'evaluating', now);
+    await this.#stage(executionId, attemptNumber, 'preparing-commit', now);
     const preparedMemory = this.#memory.prepare(
       resolved.module.memoryPolicy,
       moduleResult.memories,
