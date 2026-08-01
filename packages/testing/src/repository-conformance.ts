@@ -180,6 +180,114 @@ export function executionRepositoryConformance(
       );
     });
 
+    it('reports ordered resume state and unretained responses (ADR-0017)', async () => {
+      const repository = options.createRepository();
+      await expect(
+        repository.loadResumeState('execution-unknown'),
+      ).resolves.toBeNull();
+
+      await repository.accept(accepted('execution-resume'));
+      await expect(
+        repository.loadResumeState('execution-resume'),
+      ).resolves.toEqual({
+        executionId: 'execution-resume',
+        lastAttemptNumber: 0,
+        modelCalls: [],
+      });
+
+      for (const [attemptNumber, stage] of [
+        [1, 'loading'],
+        [1, 'calling-model'],
+        [2, 'loading'],
+      ] as const) {
+        await repository.appendAttempt({
+          executionId: 'execution-resume',
+          attemptNumber,
+          stage,
+          outcome: 'started',
+          occurredAt: timestamp,
+        });
+      }
+      const reservation = {
+        executionId: 'execution-resume',
+        callKey: 'model:0',
+        purpose: 'primary' as const,
+        selection: { profile: 'fixture' },
+        requestHash: 'request-hash',
+        startedAt: timestamp,
+      };
+      await repository.reserveModelCall({
+        ...reservation,
+        modelCallId: 'call-resume-2',
+        attempt: 2,
+      });
+      await repository.reserveModelCall({
+        ...reservation,
+        modelCallId: 'call-resume-1',
+        attempt: 1,
+      });
+      await repository.completeModelCall({
+        modelCallId: 'call-resume-1',
+        response: fixtureResponse,
+        responseHash: 'response-hash',
+        completedAt: timestamp,
+      });
+
+      const state = await repository.loadResumeState('execution-resume');
+      expect(state).toMatchObject({
+        executionId: 'execution-resume',
+        lastAttemptNumber: 2,
+        modelCalls: [
+          { modelCallId: 'call-resume-1', attempt: 1, status: 'succeeded' },
+          { modelCallId: 'call-resume-2', attempt: 2, status: 'reserved' },
+        ],
+      });
+      // The accepted execution retains `hash-only`, so no response is
+      // recoverable and the engine must refuse to resume.
+      expect(state?.modelCalls[0]?.response).toBeUndefined();
+      expect(state?.modelCalls[0]?.responseHash).toBe('response-hash');
+      expect(Object.isFrozen(state)).toBe(true);
+    });
+
+    it('reveals a sealed response for resume when the key is available', async () => {
+      const repository = options.createRepository({
+        payloadEncryptor: createAes256GcmPayloadEncryptor({
+          key: new Uint8Array(32).fill(7),
+          keyId: 'conformance-resume-key',
+        }),
+      });
+      await repository.accept(
+        accepted(
+          'execution-resume-sealed',
+          'execution-resume-sealed',
+          'fingerprint-execution-resume-sealed',
+          'encrypted-payload',
+        ),
+      );
+      await repository.reserveModelCall({
+        modelCallId: 'call-resume-sealed',
+        executionId: 'execution-resume-sealed',
+        callKey: 'model:0',
+        attempt: 1,
+        purpose: 'primary',
+        selection: { profile: 'fixture' },
+        requestHash: 'request-hash',
+        startedAt: timestamp,
+      });
+      await repository.completeModelCall({
+        modelCallId: 'call-resume-sealed',
+        response: fixtureResponse,
+        responseHash: 'response-hash',
+        completedAt: timestamp,
+      });
+
+      const state = await repository.loadResumeState('execution-resume-sealed');
+      expect(state?.modelCalls[0]?.response).toEqual(fixtureResponse);
+      expect(
+        JSON.stringify(state?.modelCalls[0]?.protectedResponse),
+      ).not.toContain('cleartext-must-not-rest');
+    });
+
     it('loads a deterministic empty context and rejects stale revisions', async () => {
       const repository = options.createRepository();
       const query = {

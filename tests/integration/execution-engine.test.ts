@@ -28,6 +28,7 @@ import {
   neutralResponse,
   neutralSelection,
 } from '../fixtures/neutral-execution.js';
+import { processLossAt } from '../fixtures/process-loss.js';
 
 function createIds() {
   const counts = {
@@ -147,6 +148,33 @@ function fixture(
     clock: clock.now,
   };
 }
+
+function engineOver(options: {
+  readonly repository: ExecutionRepository;
+  readonly ids: IdGenerator;
+  readonly gateway: Parameters<typeof createExecutionEngine>[0]['gateway'];
+}) {
+  return createExecutionEngine({
+    clock: { now: () => neutralNow },
+    ids: options.ids,
+    modules: createModuleRegistry([neutralModule]),
+    contracts: createContractRegistry([neutralContract]),
+    pipeline: createResponsePipeline(),
+    gateway: options.gateway,
+    memory: createMemoryEngine({ ids: options.ids }),
+    state: createStateEngine(),
+    repository: options.repository,
+  });
+}
+
+const forbiddenGateway = {
+  async capabilities() {
+    throw new Error('Resume invoked gateway capabilities.');
+  },
+  async generate() {
+    throw new Error('Resume invoked the provider.');
+  },
+} as unknown as Parameters<typeof createExecutionEngine>[0]['gateway'];
 
 describe('ExecutionEngine neutral integration', () => {
   it('commits once, reuses the terminal result, and replay-verifies without effects', async () => {
@@ -387,6 +415,7 @@ describe('ExecutionEngine neutral integration', () => {
       completeModelCall: base.completeModelCall.bind(base),
       failModelCall: base.failModelCall.bind(base),
       loadContext: base.loadContext.bind(base),
+      loadResumeState: base.loadResumeState.bind(base),
       markTerminal: base.markTerminal.bind(base),
       loadReplayEvidence: base.loadReplayEvidence.bind(base),
       async commit() {
@@ -546,6 +575,226 @@ describe('ExecutionEngine neutral integration', () => {
       recordedDigest: expect.any(String),
       replayDigest: expect.any(String),
       differences: [{ code: 'REPLAY_OPERATION_DIGEST_DIFFERENT' }],
+    });
+    expect(subject.gateway.invocations()).toHaveLength(1);
+  });
+
+  it('resumes an interrupted execution from the recorded model call', async () => {
+    const clean = fixture();
+    const cleanResult = await clean.engine.execute(clean.request);
+    const cleanDigest = (
+      await clean.repository.loadReplayEvidence(clean.executionId)
+    )?.preparedCommit.operationDigest;
+
+    const subject = fixture();
+    const interrupted = engineOver({
+      repository: processLossAt(subject.repository, 'commit'),
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+    expect(subject.gateway.invocations()).toHaveLength(1);
+    expect(subject.repository.snapshot()).toMatchObject({
+      executions: [{ status: 'preparing-commit' }],
+      modelCalls: [{ callKey: 'model:0', status: 'succeeded' }],
+      documents: [],
+      memoryRecords: [],
+      state: { snapshots: [] },
+    });
+
+    const resumed = engineOver({
+      repository: subject.repository,
+      ids: createIds().ids,
+      gateway: forbiddenGateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toEqual(
+      cleanResult,
+    );
+    expect(subject.gateway.invocations()).toHaveLength(1);
+    expect(
+      (await subject.repository.loadReplayEvidence(subject.executionId))
+        ?.preparedCommit.operationDigest,
+    ).toBe(cleanDigest);
+    // The resumed run is a separate attempt, so the ledger never claims one
+    // uninterrupted pass.
+    expect(
+      subject.repository
+        .snapshot()
+        .attempts.map((attempt) => attempt.attemptNumber),
+    ).toContain(2);
+  });
+
+  it('refuses to resume when retention kept no readable response', async () => {
+    const subject = fixture({
+      request: request({
+        requestKey: 'neutral-resume-hash-only',
+        policy: { retention: 'hash-only' },
+      }),
+    });
+    const interrupted = engineOver({
+      repository: processLossAt(subject.repository, 'commit'),
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+
+    const resumed = engineOver({
+      repository: subject.repository,
+      ids: createIds().ids,
+      gateway: forbiddenGateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toMatchObject({
+      status: 'failed',
+      error: {
+        code: 'RESUME_EVIDENCE_UNAVAILABLE',
+        stage: 'calling-model',
+        retryable: false,
+      },
+    });
+    expect(subject.gateway.invocations()).toHaveLength(1);
+    expect(subject.repository.snapshot()).toMatchObject({
+      documents: [],
+      memoryRecords: [],
+      state: { snapshots: [] },
+    });
+  });
+
+  it('refuses to resume a reservation whose outcome was never observed', async () => {
+    const subject = fixture();
+    const interrupted = engineOver({
+      repository: processLossAt(subject.repository, 'completeModelCall'),
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+    expect(subject.gateway.invocations()).toHaveLength(1);
+    expect(subject.repository.snapshot()).toMatchObject({
+      modelCalls: [{ callKey: 'model:0', status: 'reserved' }],
+    });
+
+    const resumed = engineOver({
+      repository: subject.repository,
+      ids: createIds().ids,
+      gateway: forbiddenGateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toMatchObject({
+      status: 'failed',
+      error: {
+        code: 'MODEL_UNAVAILABLE',
+        stage: 'calling-model',
+        retryable: false,
+      },
+    });
+    expect(subject.gateway.invocations()).toHaveLength(1);
+  });
+
+  it('re-raises a recorded model-call failure instead of calling again', async () => {
+    const subject = fixture({
+      modelError: {
+        code: 'MODEL_UNAVAILABLE',
+        message: 'fixture provider outage',
+        stage: 'calling-model',
+        retryable: true,
+      },
+    });
+    // The terminal write is the only thing lost, so the recorded failure
+    // survives without a terminal execution result.
+    const interrupted = engineOver({
+      repository: processLossAt(subject.repository),
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+    expect(subject.repository.snapshot()).toMatchObject({
+      modelCalls: [{ status: 'failed', error: { code: 'MODEL_UNAVAILABLE' } }],
+    });
+
+    const resumed = engineOver({
+      repository: subject.repository,
+      ids: createIds().ids,
+      gateway: forbiddenGateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toMatchObject({
+      status: 'failed',
+      error: {
+        code: 'MODEL_UNAVAILABLE',
+        message: 'fixture provider outage',
+        stage: 'calling-model',
+      },
+    });
+    expect(subject.gateway.invocations()).toHaveLength(1);
+  });
+
+  it('never retries a model call recorded as ambiguous', async () => {
+    const subject = fixture({
+      modelError: {
+        code: 'TIMEOUT',
+        message: 'fixture timeout after dispatch',
+        stage: 'calling-model',
+        retryable: true,
+      },
+    });
+    const base = subject.repository;
+    // The engine records `ambiguous: false` today; force the ADR-0014 outcome
+    // a provider adapter reports when delivery cannot be disproven.
+    const ambiguous: ExecutionRepository = {
+      ...processLossAt(base),
+      failModelCall: async (call) =>
+        base.failModelCall({ ...call, ambiguous: true }),
+    };
+    const interrupted = engineOver({
+      repository: ambiguous,
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+    expect(base.snapshot()).toMatchObject({
+      modelCalls: [{ status: 'ambiguous' }],
+    });
+
+    const resumed = engineOver({
+      repository: base,
+      ids: createIds().ids,
+      gateway: forbiddenGateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toMatchObject({
+      status: 'failed',
+      error: { code: 'TIMEOUT', stage: 'calling-model' },
+    });
+    expect(subject.gateway.invocations()).toHaveLength(1);
+  });
+
+  it('runs from the beginning when the crash preceded any reservation', async () => {
+    const subject = fixture();
+    const interrupted = engineOver({
+      repository: processLossAt(subject.repository, 'reserveModelCall'),
+      ids: { next: subject.ids as unknown as IdGenerator['next'] },
+      gateway: subject.gateway,
+    });
+    await expect(interrupted.execute(subject.request)).rejects.toThrow(
+      'Simulated process loss.',
+    );
+    expect(subject.gateway.invocations()).toHaveLength(0);
+    expect(subject.repository.snapshot().modelCalls).toEqual([]);
+
+    const resumed = engineOver({
+      repository: subject.repository,
+      ids: createIds().ids,
+      gateway: subject.gateway,
+    });
+    await expect(resumed.execute(subject.request)).resolves.toMatchObject({
+      status: 'committed',
+      revision: 1,
     });
     expect(subject.gateway.invocations()).toHaveLength(1);
   });

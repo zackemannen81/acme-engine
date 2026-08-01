@@ -352,6 +352,9 @@ compare-and-swap and promotes mutations atomically.
   `loadReplayEvidence` when the key is available; missing keys yield
   `REPLAY_MODEL_RESPONSE_UNAVAILABLE`
 - detached immutable `loadReplayEvidence()` projections for verification
+- `loadResumeState()` (ADR-0017): recorded model calls ordered by call key and
+  attempt, plus the highest recorded attempt number, revealed under the same
+  payload rules as replay evidence
 - detached, deeply frozen read results and deterministic evidence snapshots
 
 The adapter is deterministic test persistence only. It does not survive
@@ -472,8 +475,9 @@ and first migration.
   the core contract is richer than those columns can express
 - an `execution_commits` row holding the operation digest, committed
   projection and exact prepared commit, including the ADR-0012 replay sidecar
-- reads for `get()`, `loadContext()` and `loadReplayEvidence()` that return
-  detached, deeply frozen values and open no transaction
+- reads for `get()`, `loadContext()`, `loadResumeState()` and
+  `loadReplayEvidence()` that return detached, deeply frozen values and open no
+  transaction
 
 Observable behavior is identical to `@acme/adapter-memory`, including
 encrypted-payload sealing when both are given the same encryptor (ciphertext
@@ -483,6 +487,34 @@ database reopened in a new connection returns identical replay evidence and
 the recorded terminal result without a new model call or ID allocation, when
 the reopened repository still has the key needed to open sealed payloads.
 Fault injection at arbitrary transaction boundaries remains Milestone 2 work.
+
+## Implemented Durable Execution Resume
+
+An execution that was accepted but never reached a terminal result is resumed
+by re-submitting the same request. ADR-0017 fixes the semantics:
+
+- resume never calls the provider; it completes from recorded evidence or
+  terminates
+- a recorded successful primary call whose response is readable continues from
+  response validation, with no reservation, no gateway call and no model-call
+  ID allocation
+- no reservation at all means no request can have left the process, because
+  reservation precedes dispatch, so the execution runs from the beginning
+- a `reserved` or `in-flight` call is terminal `MODEL_UNAVAILABLE`: its outcome
+  was never observed, and ADR-0014 forbids guessing that it never ran
+- a `failed` or `ambiguous` call is terminal, re-raising the recorded error
+- a successful call whose response was not retained — `none`/`hash-only`
+  retention, or `encrypted-payload` without a working key — is terminal
+  `RESUME_EVIDENCE_UNAVAILABLE`
+- the resumed run re-reads state, memory and documents; a moved expected
+  revision terminates it as `conflicted` rather than committing against a
+  world that has changed
+- the resumed run records its own attempt number, so the ledger distinguishes
+  an interrupted-and-resumed execution from an uninterrupted one
+
+Both repository adapters prove the same behavior, and the SQLite proof
+survives a real close and reopen of the database file: the resumed run reaches
+the same operation digest as an uninterrupted run of the same request.
 
 ## System Purpose
 
@@ -502,6 +534,8 @@ separate.
   deterministically ranked memory records.
 - Runs one reserved primary model call through the provider-neutral gateway,
   records its request/response hashes and honors the frozen retention mode.
+- Resumes an accepted but non-terminal execution from recorded evidence
+  without contacting the provider, or terminates it (ADR-0017).
 - Validates and interprets the response, then coordinates MemoryEngine,
   post-memory projection and StateEngine.
 - Commits prepared evidence and canonical effects atomically through the
@@ -509,9 +543,10 @@ separate.
 - Replays committed evidence without a gateway, clock or ID generator and
   reports `match`, `different` or `unavailable`.
 
-Its public Milestone 1 surface is `execute()` and `replayVerify()`. It does not
-own domain vocabulary, multi-step workflow definitions, repair/revision calls,
-resume/fork or caller cancellation.
+Its public Milestone 1 surface is `execute()` and `replayVerify()`; resume has
+no separate entry point, because re-submitting the request is the resume.
+It does not own domain vocabulary, multi-step workflow definitions,
+repair/revision calls, execution forking or caller cancellation.
 
 ### Contract System
 
@@ -690,6 +725,8 @@ layers.
   Live `encrypted-payload` executions can replay when the repository has a
   working `PayloadEncryptor`.
 - Structured logs redact content by default.
+- An interrupted execution resumes from recorded evidence without a second
+  provider call (ADR-0017).
 - ScenarioRunner live provider steps, outbox drain and fault injection remain
   open.
 

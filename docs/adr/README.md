@@ -51,3 +51,4 @@ current architecture.
 - [`0014-live-provider-boundary-and-transport-port.md`](0014-live-provider-boundary-and-transport-port.md)
 - [`0015-strict-structured-output-schema-lowering.md`](0015-strict-structured-output-schema-lowering.md)
 - [`0016-encrypted-payload-retention.md`](0016-encrypted-payload-retention.md)
+- [`0017-durable-execution-resume.md`](0017-durable-execution-resume.md)

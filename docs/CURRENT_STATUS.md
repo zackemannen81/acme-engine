@@ -41,6 +41,7 @@ implementation baseline:
 - ADR-0014: Live provider boundary and transport port
 - ADR-0015: Strict structured-output schema lowering
 - ADR-0016: Encrypted payload retention
+- ADR-0017: Durable execution resume
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
@@ -161,6 +162,16 @@ There is currently:
 - deterministic memory retrieval capped at 50 records and a replay verifier
   that uses only recorded evidence and reports `match`, `different` or
   `unavailable`
+- durable execution resume (ADR-0017): re-submitting the request of an
+  accepted but non-terminal execution completes it from the recorded model
+  call with no provider call, no reservation and no model-call ID, reaching
+  the same operation digest as an uninterrupted run on both repository
+  adapters and across a real SQLite close/reopen
+- resume refusals that never call the provider: unretained or unreadable
+  responses are terminal `RESUME_EVIDENCE_UNAVAILABLE`, unobserved
+  reservations are terminal `MODEL_UNAVAILABLE`, and recorded `failed` or
+  `ambiguous` calls re-raise their recorded error; a crash before any
+  reservation runs from the beginning
 - a non-empty neutral integration suite plus the fixed Narrative and Research
   Phase 5 offline scenarios, including repeat-without-effects and
   replay-without-clock, gateway or ID allocation
@@ -178,9 +189,9 @@ There is currently:
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 345 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (42 files), with separate conformance (50),
-  integration (13) and scenario (19) gates
+- 361 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (42 files), with separate conformance (54),
+  integration (21) and scenario (19) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -209,6 +220,11 @@ template until the next charter is explicitly approved.
   output.
 - **ACME-0030:** Encrypted-payload retention (ADR-0016) with injected
   `PayloadEncryptor`, ciphertext at rest, decrypt-on-replay when the key works.
+- **ACME-0031–0032:** Documentation reality sync after the live work, then the
+  CLI live OpenAI gateway (`acme execute --gateway openai`).
+- **ACME-0033:** Durable execution resume (ADR-0017): an interrupted execution
+  completes from its recorded model call without a second provider call, with
+  classified terminal refusals where the evidence is insufficient.
 
 ### Domain Test UI (not active)
 
@@ -226,9 +242,15 @@ by missing ScenarioRunner or durability. Proposal:
   (ACME-0032). Requires `OPENAI_API_KEY`; model from `ACME_OPENAI_MODEL` or
   `ACME_LIVE_MODEL`. The mock path remains `--script`. ScenarioRunner still has
   no live provider step.
-- **Milestone 2 residuals:** fault injection at transaction boundaries is not
-  implemented (durability is clean-reopen proof only). The outbox is written
-  atomically but never drained; no background workers.
+- **Milestone 2 residuals:** post-call crash resume is implemented
+  (ACME-0033 / ADR-0017). Fault injection at transaction boundaries is still
+  not implemented, so "a transaction crash leaves no partial state" rests on
+  clean-reopen evidence rather than an injected fault, and no concurrent
+  two-writer CAS race is exercised. The outbox is written atomically but never
+  drained; no background workers.
+- **Stranded executions:** an execution interrupted between model-call
+  reservation and outcome, or one whose response was not retained, is terminal
+  and needs a human decision. No operator command lists or discharges them.
 - **Domain Test UI:** specification only; decision gates unresolved. First
   meaningful charter would be gates + phase 1 plan compiler, not the full UI.
 - **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
