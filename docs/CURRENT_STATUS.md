@@ -44,6 +44,13 @@ implementation baseline:
 - ADR-0017: Durable execution resume
 - ADR-0018: Outbox delivery boundary
 
+Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
+are proven: the shared conformance suite passes unchanged for SQLite, a
+post-call crash resumes with zero gateway calls (ACME-0033), close and reopen
+preserve the replay digest, an interrupted transaction leaves no partial state,
+two writers against one revision yield exactly one commit (ACME-0034), and the
+outbox work package landed with ACME-0035.
+
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
 Work, a bounded single-task ExecutionEngine and a durable SQLite adapter.
@@ -114,13 +121,16 @@ There is currently:
 - observed compare-and-swap: two writers on one SQLite file that read the same
   revision produce exactly one commit; the loser fails its commit with
   `CONFLICT_STATE_REVISION` and writes nothing
-- an outbox delivery boundary (ADR-0018): `claimOutbox`, `markOutboxDelivered`,
-  `markOutboxFailed` and `listOutbox` on both adapters, a domain-neutral
-  `drainOutbox` coordinator over an injected `OutboxDispatcher`, and
-  `acme outbox inspect` / `acme outbox drain` in the composition root
-- at-least-once delivery with a claim visibility timeout, caller-owned retry
+- an outbox delivery boundary (ADR-0018): `leaseOutbox`,
+  `markOutboxDelivered`, `markOutboxFailed` and `listOutbox` on both adapters,
+  a domain-neutral `drainOutbox` coordinator over an injected
+  `OutboxDispatcher`, and `acme outbox inspect` / `acme outbox drain` in the
+  composition root
+- at-least-once delivery with a lease visibility timeout, caller-owned retry
   policy, terminal `failed` entries and a versioned
-  `acme-outbox-drain-report/1`; nothing drains on its own
+  `acme-outbox-drain-report/1`; nothing drains on its own. The API says lease
+  because `claim` is Research vocabulary the core guard forbids; the persisted
+  status value stays `claimed`
 - a deterministic `@acme/adapter-model-mock` with immutable exact-selection
   profiles, finite exact-call scripts and no provider, network, environment,
   filesystem, clock or random dependency
@@ -260,16 +270,11 @@ by missing ScenarioRunner or durability. Proposal:
 
 ## Persistent Gaps
 
-- **CLI live gateway:** Implemented as `acme execute --gateway openai`
-  (ACME-0032). Requires `OPENAI_API_KEY`; model from `ACME_OPENAI_MODEL` or
-  `ACME_LIVE_MODEL`. The mock path remains `--script`. ScenarioRunner still has
-  no live provider step.
-- **Milestone 2 is complete.** All five acceptance conditions are proven —
-  conformance unchanged for SQLite, post-call crash resume (ACME-0033), close
-  and reopen preserving the replay digest, no partial state after an injected
-  fault, one commit from two writers (ACME-0034) — and the outbox work package
-  landed with ACME-0035. Nothing drains automatically: a composition root must
-  call the drain, and no alarm exists for a growing outbox.
+- **ScenarioRunner has no live provider step.** `acme execute --gateway openai`
+  reaches a live model (ACME-0032), but a scenario file cannot; scenario runs
+  are mock-only.
+- **Nothing drains the outbox automatically.** A composition root must call the
+  drain, and no alarm exists for a growing outbox (ADR-0018).
 - **Outbox residuals:** `failed` entries have no redrive path, no real
   transport exists beyond the CLI's report dispatcher, and neither reference
   module emits domain events yet, so production outbox traffic is still
@@ -297,7 +302,8 @@ by missing ScenarioRunner or durability. Proposal:
   fields tolerated); they are not byte-identical live captures.
 - Package boundary enforcement covers current packages; future adapters must
   extend its rule set.
-- `better-sqlite3` prebuild resolution is verified on Windows only. The Linux
-  CI matrix has not been observed since the dependency was added.
+- `better-sqlite3` prebuild resolution is exercised on Windows locally and on
+  `ubuntu-latest` in CI, where the full suite including the SQLite adapter
+  passes. No other platform is observed.
 - A general evaluation / quality-scoring harness is not implemented.
   ScenarioRunner asserts recorded evidence only.

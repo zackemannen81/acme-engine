@@ -1466,3 +1466,43 @@ Add one dated, signed entry for every meaningful work session or handoff.
   composition roots, whether a drain belongs in ScenarioRunner steps, and
   outbox-depth metrics. Milestone 2 is complete.
 - Signature: Claude
+
+## 2026-08-01 — ACME-0036 documentation reality sync after Milestone 2
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0036
+- Summary: Documentation-only sync after ACME-0033 through ACME-0035 merged.
+  Those tasks each kept their own documents current, but the entry documents
+  they did not touch still described a project one milestone behind.
+- Corrected: the current-phase paragraphs in `AGENTS.md`, `README.md` and
+  `docs/PROJECT_BRIEF.md` said Milestone 2 durability was partial; the brief's
+  `Next Deliverable` still named the live half of Milestone 1 as outstanding,
+  which shipped in ACME-0025 through ACME-0029; `docs/SYSTEMDOC.md` told a
+  reader there is no resume behavior and listed a composition root without its
+  `outbox inspect` and `outbox drain` commands; the Domain Test UI readiness
+  table lacked the durability and outbox prerequisites.
+- Found while auditing, and fixed: `docs/CURRENT_STATUS.md` still named
+  `claimOutbox` and a "claim visibility timeout" from before ACME-0035's rename
+  to lease vocabulary. The task that renamed the API missed its own status
+  entry, which is exactly the drift this sync exists to catch.
+- Also corrected: `better-sqlite3` was recorded as verified on Windows only,
+  with the Linux CI matrix unobserved. CI runs the full suite including the
+  SQLite adapter on `ubuntu-latest` and has passed on `main`, so the gap is
+  now an observation rather than an unknown. The persistent-gaps list also had
+  two entries that were status statements rather than gaps; those moved to the
+  phase section, leaving the list to describe only what is missing.
+- Deliberately unchanged: `docs/design/acme-design-and-development-spec.md`.
+  It records the approved plan, and rewriting its milestone sections as they
+  complete would erase the difference between what was planned and what
+  happened. Archived tasks under `docs/finished/` are immutable history and
+  were not touched either.
+- Verification: `pnpm docs:check` 81 Markdown files after archival; `format:check`, `lint`,
+  `typecheck` and `build` clean; `pnpm test` passed 384 unit, 58 conformance,
+  29 integration and 19 scenario tests. `git diff --check` passed and the diff
+  contains Markdown only. No live provider call.
+- Spend: none.
+- Follow-ups: none from this task. The open choices remain the Domain Test UI
+  decision gates, outbox redrive and real transports, driver-error
+  classification, and an evaluation harness.
+- Signature: Claude

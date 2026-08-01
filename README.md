@@ -22,6 +22,15 @@ opt-in gate. Encrypted-payload retention seals model responses at rest.
 files, and can execute with the mock gateway (`--script`) or live OpenAI
 (`--gateway openai`). No published package exists.
 
+Milestone 2 is complete. An execution interrupted after a successful model
+call resumes from the recorded response without paying for a second one, or
+terminates with a classified error where the evidence is insufficient. That an
+interrupted transaction leaves no partial state, and that two writers against
+one revision produce exactly one commit, are proven by injected fault and
+contended write rather than assumed. Committed domain events leave the outbox
+through an explicit bounded drain with at-least-once delivery: nothing drains
+on its own, because scheduling belongs to whatever process operates ACME.
+
 ## Start here
 
 1. Read [the active task](docs/CURRENT_TASK.md).
@@ -62,6 +71,6 @@ tooling/                   Shared configuration and repository checks
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
 `docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(CLI live gateway, Domain Test UI decision gates, M2 residuals, optional
-temperature capability). The next task must be explicitly approved before
-activation.
+(Domain Test UI decision gates, outbox redrive and real transports, ambiguous
+call reconciliation, key lifecycle, optional temperature capability). The next
+task must be explicitly approved before activation.

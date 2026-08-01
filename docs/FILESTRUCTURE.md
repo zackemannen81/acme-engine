@@ -295,6 +295,7 @@ acme-engine/
 │   │   ├── ACME-0033_durable-execution-resume.md
 │   │   ├── ACME-0034_milestone-2-durability-proofs.md
 │   │   ├── ACME-0035_outbox-delivery-boundary.md
+│   │   ├── ACME-0036_documentation-reality-sync.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
