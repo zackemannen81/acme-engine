@@ -114,11 +114,11 @@ forbidden import fails, mirroring `tooling/boundaries/`.
 ## Readiness prerequisites
 
 **As of 2026-08-01** (see [`docs/CURRENT_STATUS.md`](../CURRENT_STATUS.md)),
-the engine-side prerequisites below are **satisfied**. This specification was
-written when none of them existed; that historical claim is obsolete. What
-still blocks activation is the set of **decision gates** later in this
-document (runtime shape, `acme-test-plan/1`, storage, v1 scope), not missing
-ExecutionEngine or ScenarioRunner.
+the engine-side prerequisites below are **satisfied**, and Milestone 2 is
+complete. This specification was written when none of them existed; that
+historical claim is obsolete. What still blocks activation is the set of
+**decision gates** later in this document (runtime shape, `acme-test-plan/1`,
+storage, v1 scope). Milestone 2 completing does not resolve any of them.
 
 | Prerequisite | Status | Why the interface needs it |
 | --- | --- | --- |
@@ -129,6 +129,8 @@ ExecutionEngine or ScenarioRunner.
 | `@acme/adapter-sqlite` | Satisfied (ACME-0021) | gives run history a durable home |
 | CLI composition root | Satisfied (ACME-0026) | selects adapters outside the test suite |
 | Encrypted-payload retention | Satisfied when encryptor supplied (ACME-0030) | any live-retained payload path must not store cleartext |
+| Durable resume and rollback proofs | Satisfied (ACME-0033, ACME-0034) | run history stays trustworthy when a run is interrupted mid-flight |
+| Outbox delivery | Satisfied (ACME-0035) | a run's committed events can reach anything the interface might subscribe to |
 
 Phases 1 and 2 of the [build plan](#ordered-build-plan) can still begin against
 fixture reports rather than a live engine, once the decision gates they depend

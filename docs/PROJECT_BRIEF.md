@@ -8,8 +8,8 @@ Last updated: 2026-08-01
 - Name: ACME
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
-- Phase: Milestone 1 delivered; Milestone 2 durability partial; experimental
-  live path proven (see `docs/CURRENT_STATUS.md`)
+- Phase: Milestones 1 and 2 delivered; experimental live path proven
+  (see `docs/CURRENT_STATUS.md`)
 
 ## Problem
 
@@ -162,13 +162,20 @@ The first platform version is successful when:
 
 ## Next Deliverable
 
-The First Proof Milestone's offline half is complete. The bounded single-task
+The First Proof Milestone is complete in both halves. The bounded single-task
 ExecutionEngine, durable SQLite persistence, NarrativeModule and
-ResearchModule are implemented, and both reference domains reach committed
+ResearchModule are implemented; both reference domains reach committed
 canonical state and replay offline through the same core with no domain branch
-in it.
+in it; and the live half landed as a provider adapter behind a transport port,
+a ScenarioRunner over `acme-scenario/1` and a CLI composition root.
 
-The remaining Milestone 1 scope is the live half and the surfaces around it:
-a live provider adapter with its own ADR, ScenarioRunner over the named
-`acme-scenario/1` format, and a CLI composition root. The next deliverable
-must still be explicitly approved before activation.
+The durability requirement above is also met. A crash after a successful model
+call is recoverable without calling the provider again, an interrupted
+transaction is proven to leave no partial state, and committed events can
+leave the outbox.
+
+No deliverable is currently outstanding against this brief. The open choices
+are the Domain Test UI decision gates, an evaluation and quality-scoring
+harness, and the operational surfaces this brief never claimed: real event
+transports, redrive for dead-lettered events, and key lifecycle. The next
+deliverable must still be explicitly approved before activation.

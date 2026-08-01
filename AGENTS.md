@@ -8,17 +8,23 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
-- Current phase: Milestone 1 delivered; Milestone 2 durability partial;
-  experimental live path proven. The contract layer, pure StateEngine and
-  MemoryEngine, in-memory and durable SQLite repositories, deterministic model
-  mock, shared conformance kits, NarrativeModule, ResearchModule, bounded
-  single-task ExecutionEngine, ScenarioRunner and CLI composition root exist.
-  Both reference domains have offline acceptance scenarios. The OpenAI
-  Responses mapping lowers schemas for strict structured output, has a `fetch`
-  transport and an opt-in live gate, and has reached live success for both
-  reference contracts. Encrypted-payload retention is implemented behind an
-  injected `PayloadEncryptor`. The CLI selects the mock gateway via `--script`
-  or a live OpenAI gateway via `--gateway openai` (env credentials).
+- Current phase: Milestones 1 and 2 delivered; experimental live path proven.
+  The contract layer, pure StateEngine and MemoryEngine, in-memory and durable
+  SQLite repositories, deterministic model mock, shared conformance kits,
+  NarrativeModule, ResearchModule, bounded single-task ExecutionEngine,
+  ScenarioRunner and CLI composition root exist. Both reference domains have
+  offline acceptance scenarios. The OpenAI Responses mapping lowers schemas
+  for strict structured output, has a `fetch` transport and an opt-in live
+  gate, and has reached live success for both reference contracts.
+  Encrypted-payload retention is implemented behind an injected
+  `PayloadEncryptor`. The CLI selects the mock gateway via `--script` or a
+  live OpenAI gateway via `--gateway openai` (env credentials).
+- Milestone 2 is complete: an interrupted execution resumes from its recorded
+  model call without a second provider call (ADR-0017); rollback and
+  compare-and-swap are proven by injected fault and contended write rather
+  than assumed; and committed events leave the outbox through an explicit
+  bounded drain with at-least-once delivery (ADR-0018). Nothing drains on its
+  own, and neither reference module emits domain events yet.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

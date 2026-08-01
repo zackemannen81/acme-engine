@@ -402,6 +402,9 @@ repository adapter. Everything else works through core ports.
 - `execution replay --mode verify` reports the ADR-0012 verdict
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
+- `outbox inspect` lists entries with their events; `outbox drain` leases,
+  delivers and settles one bounded batch, bounded by `--limit` and
+  `--lease-timeout-ms`
 - `--adapter memory|sqlite` selects the repository; `--database` is required
   for SQLite and rejected for memory
 - versioned JSON goes to stdout and diagnostics to stderr
@@ -414,8 +417,9 @@ deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
 `createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
 (model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-4.1-mini`).
 Scenario runs remain mock-only. Commands that cannot work are absent rather
-than present and failing: there is no `execution resume` without resume
-behavior.
+than present and failing, and resume needs no command of its own: an
+interrupted execution is resumed by re-submitting the same request through
+`execute` (ADR-0017).
 
 ## Implemented Provider Boundary
 
