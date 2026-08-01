@@ -1,9 +1,12 @@
 import {
   AcmeError,
+  canonicalJson,
   computeOperationDigest,
   createAes256GcmPayloadEncryptor,
+  sha256,
   type AcceptedExecution,
   type ExecutionRepository,
+  type IdGenerator,
   type PayloadEncryptor,
   type PreparedCommit,
   type PreparedCommitContent,
@@ -13,6 +16,11 @@ import { describe, expect, it } from 'vitest';
 export interface ExecutionRepositoryConformanceOptions {
   readonly createRepository: (deps?: {
     readonly payloadEncryptor?: PayloadEncryptor;
+    /**
+     * Replaces the adapter's ID generator. A generator that throws raises a
+     * fault deep inside `commit()` on every adapter without a production seam.
+     */
+    readonly ids?: IdGenerator;
   }) => ExecutionRepository;
 }
 
@@ -79,6 +87,56 @@ function prepared(
   return {
     ...content,
     operationDigest: computeOperationDigest(content),
+  };
+}
+
+const documentValue = { note: 'partial-state-must-not-rest' };
+
+/**
+ * A commit whose promotion must allocate a document ID and then an event ID,
+ * so a generator that fails on `event` raises the fault after at least one
+ * write of the same transaction has already happened.
+ */
+function preparedWithEffects(executionId: string): PreparedCommit {
+  return prepared(executionId, {
+    documents: [
+      {
+        key: 'conformance-document-1',
+        kind: 'note',
+        schemaVersion: '1.0.0',
+        value: documentValue,
+        contentHash: sha256(canonicalJson(documentValue)),
+      },
+    ],
+    events: [
+      {
+        key: 'conformance-event-1',
+        type: 'conformance.observed',
+        schemaVersion: '1.0.0',
+        payload: { executionId },
+      },
+    ],
+  });
+}
+
+/**
+ * Fails once on the first event ID, after the document ID of the same commit
+ * has already been handed out. The second attempt succeeds, so the retry after
+ * a rolled-back fault is exercised on the same repository.
+ */
+function faultOnFirstEventId(): IdGenerator {
+  let events = 0;
+  return {
+    next(kind) {
+      if (kind !== 'event') {
+        return `${kind}-1`;
+      }
+      events += 1;
+      if (events === 1) {
+        throw new Error('Simulated storage fault.');
+      }
+      return `event-${events}`;
+    },
   };
 }
 
@@ -352,6 +410,51 @@ export function executionRepositoryConformance(
         committedAt: '2026-07-29T12:00:01.000Z',
       });
       await expectCode(repository.commit(divergent), 'PERSISTENCE_CORRUPTION');
+    });
+
+    it('leaves no partial state when a fault interrupts commit', async () => {
+      const faulted = options.createRepository({
+        ids: faultOnFirstEventId(),
+      });
+      await faulted.accept(accepted('execution-fault'));
+      const commit = preparedWithEffects('execution-fault');
+      // Both adapters classify the injected failure identically before the
+      // transaction unwinds.
+      await expect(faulted.commit(commit)).rejects.toMatchObject({
+        data: { code: 'INTERNAL', message: 'ID generator failed for event.' },
+      });
+
+      // Nothing from the interrupted transaction may survive, including the
+      // document written before the fault.
+      await expect(
+        faulted.loadReplayEvidence('execution-fault'),
+      ).resolves.toBeNull();
+      await expect(faulted.get('execution-fault')).resolves.toMatchObject({
+        status: 'accepted',
+      });
+      await expect(
+        faulted.loadContext({
+          namespace: 'conformance',
+          entityId: 'entity-1',
+          expectedRevision: 0,
+          memory: {
+            namespace: 'conformance',
+            entityId: 'entity-1',
+            task: 'observe',
+            limit: 10,
+          },
+        }),
+      ).resolves.toEqual({ state: null, memories: [], documents: [] });
+
+      // The repository stays usable, and the retried commit records the
+      // digest an uninterrupted run would have recorded.
+      const working = options.createRepository();
+      await working.accept(accepted('execution-fault'));
+      const expected = await working.commit(commit);
+      const retried = await faulted.commit(commit);
+      expect(retried.operationDigest).toBe(commit.operationDigest);
+      expect(retried.documentKeys).toEqual(expected.documentKeys);
+      expect(retried.revision).toBe(expected.revision);
     });
 
     it('loads immutable aggregate replay evidence and honors hash-only retention', async () => {

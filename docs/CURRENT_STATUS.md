@@ -106,6 +106,13 @@ There is currently:
   new model call and no new ID allocation
 - durable and in-memory repository evidence proven equal for the same neutral
   execution
+- observed rollback: a fault inside `commit()` leaves no documents, memory,
+  state, events, outbox entries, commit record or terminal result on either
+  adapter, and the repository stays usable with the retried commit reaching
+  the recorded operation digest
+- observed compare-and-swap: two writers on one SQLite file that read the same
+  revision produce exactly one commit; the loser fails its commit with
+  `CONFLICT_STATE_REVISION` and writes nothing
 - a deterministic `@acme/adapter-model-mock` with immutable exact-selection
   profiles, finite exact-call scripts and no provider, network, environment,
   filesystem, clock or random dependency
@@ -189,9 +196,9 @@ There is currently:
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 361 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (42 files), with separate conformance (54),
-  integration (21) and scenario (19) gates
+- 365 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (43 files), with separate conformance (56),
+  integration (23) and scenario (19) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -225,6 +232,10 @@ template until the next charter is explicitly approved.
 - **ACME-0033:** Durable execution resume (ADR-0017): an interrupted execution
   completes from its recorded model call without a second provider call, with
   classified terminal refusals where the evidence is insufficient.
+- **ACME-0034:** Milestone 2 durability and concurrency proofs: a fault inside
+  `commit()` leaves no partial state on either adapter, a driver-level fault
+  rolls back across a real reopen, and two writers against one revision yield
+  exactly one commit.
 
 ### Domain Test UI (not active)
 
@@ -242,12 +253,16 @@ by missing ScenarioRunner or durability. Proposal:
   (ACME-0032). Requires `OPENAI_API_KEY`; model from `ACME_OPENAI_MODEL` or
   `ACME_LIVE_MODEL`. The mock path remains `--script`. ScenarioRunner still has
   no live provider step.
-- **Milestone 2 residuals:** post-call crash resume is implemented
-  (ACME-0033 / ADR-0017). Fault injection at transaction boundaries is still
-  not implemented, so "a transaction crash leaves no partial state" rests on
-  clean-reopen evidence rather than an injected fault, and no concurrent
-  two-writer CAS race is exercised. The outbox is written atomically but never
-  drained; no background workers.
+- **Milestone 2 residuals:** all five acceptance conditions are now proven —
+  conformance unchanged for SQLite, post-call crash resume (ACME-0033), close
+  and reopen preserving the replay digest, no partial state after an injected
+  fault, and one commit from two writers (ACME-0034). What remains open is the
+  outbox: it is written atomically but never drained, and there are no
+  background workers.
+- **Driver error classification:** a `better-sqlite3` failure reaches the
+  caller as non-retryable `INTERNAL`, so a transient `SQLITE_BUSY` would be
+  indistinguishable from an internal defect. Proposal:
+  `docs/backlog/driver-error-classification.md`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.

@@ -4,7 +4,7 @@ import { executionRepositoryConformance } from '../../packages/testing/src/index
 executionRepositoryConformance('in-memory adapter', {
   createRepository: (deps) =>
     createInMemoryExecutionRepository({
-      ids: {
+      ids: deps?.ids ?? {
         next(kind) {
           return `${kind}-unused`;
         },

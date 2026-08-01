@@ -188,11 +188,13 @@ acme-engine/
 │   │   ├── module-narrative.test.ts
 │   │   └── module-research.test.ts
 │   ├── fixtures/
+│   │   ├── faulting-database.ts
 │   │   ├── neutral-execution.ts
 │   │   └── process-loss.ts
 │   ├── live/
 │   │   └── openai-responses.test.ts
 │   ├── integration/
+│   │   ├── durability-sqlite.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   └── execution-engine-sqlite.test.ts
 │   └── scenario/
@@ -244,6 +246,7 @@ acme-engine/
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
+│   │   ├── driver-error-classification.md
 │   │   ├── strict-structured-output-schema-subset.md
 │   │   └── encrypted-payload-retention.md
 │   ├── design/
@@ -286,6 +289,7 @@ acme-engine/
 │   │   ├── ACME-0031_documentation-reality-sync.md
 │   │   ├── ACME-0032_cli-live-openai-gateway.md
 │   │   ├── ACME-0033_durable-execution-resume.md
+│   │   ├── ACME-0034_milestone-2-durability-proofs.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
