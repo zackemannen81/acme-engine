@@ -261,12 +261,15 @@ template until the next charter is explicitly approved.
 ### Domain Test UI (not active)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
-remains documentation only. Engine prerequisites (ExecutionEngine, both
-reference domains, SQLite, ScenarioRunner, CLI) exist. Activation is still
-blocked by the specification’s own **decision gates** (runtime shape,
-`acme-test-plan/1`, storage location, and whether the UI is in v1 at all), not
-by missing ScenarioRunner or durability. Proposal:
-`docs/backlog/domain-test-ui-implementation.md`.
+remains documentation only (revised ACME-0038). Engine prerequisites are
+satisfied. The specification records **proposed gate freezes** (local SPA +
+composition process, thin `acme-test-plan/1` with ADR at export, file-based
+interface storage, CLI remains CI entry, live UI late and gated) and a
+**view-contract-first** build order with separate module and adapter
+workbenches. Activation still requires an explicit implementation charter;
+ACME-0038 does not authorize code. Proposal:
+`docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
+lives under `docs/concepts_sandbox/temp/`.
 
 ## Persistent Gaps
 
@@ -286,8 +289,10 @@ by missing ScenarioRunner or durability. Proposal:
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **Domain Test UI:** specification only; decision gates unresolved. First
-  meaningful charter would be gates + phase 1 plan compiler, not the full UI.
+- **Domain Test UI:** specification only; proposed gate freezes recorded
+  (ACME-0038) but not implementation-accepted. First code charter should accept
+  gates, add package boundaries, and deliver phase 1 read-model view contracts
+  — not the full UI and not plan-compiler-first.
 - **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
   `temperature` after accepting the schema. Reference contracts no longer emit
   a default `temperature` (ACME-0037); core and the OpenAI adapter already treat

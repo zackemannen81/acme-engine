@@ -1507,6 +1507,61 @@ Add one dated, signed entry for every meaningful work session or handoff.
   classification, and an evaluation harness.
 - Signature: Claude
 
+## 2026-08-01 — Remove resolved encrypted-payload backlog proposal
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: none (docs hygiene after ACME-0030)
+- Summary: Deleted `docs/backlog/encrypted-payload-retention.md` after
+  verifying the proposal was fully delivered by ACME-0030 / ADR-0016.
+  Updated backlog README, FILESTRUCTURE, and ADR-0014 / ADR-0016 references
+  so they point at the finished task and ADR instead of the removed file.
+  Archived task prose that still names the old path was left as history
+  (backtick paths, not links).
+- Verification: `pnpm docs:check`.
+- Follow-ups: residual KMS / live default to encrypted-payload remains in
+  CURRENT_STATUS only.
+- Signature: Grok
+
+## 2026-08-01 — Remove resolved strict-structured-output backlog proposal
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: none (docs hygiene after ACME-0029; pairs with Domain Test UI rewrite)
+- Summary: Deleted `docs/backlog/strict-structured-output-schema-subset.md`
+  after verifying resolution by ACME-0029 / ADR-0015. Updated backlog README
+  and FILESTRUCTURE. Domain Test UI backlog rewrite remains open.
+- Verification: `pnpm docs:check`.
+- Signature: Grok
+
+## 2026-08-01 — ACME-0038 Domain Test UI specification and backlog rewrite
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0038
+- Summary: Docs-only rewrite of the Domain Test UI design specification and
+  implementation backlog after Milestone 2. No application package and no
+  runtime code. Also records completed removal of resolved backlog proposals
+  for encrypted-payload (ACME-0030) and strict structured-output (ACME-0029).
+- Design (`domain-test-ui-specification.md`): post-M2 readiness; module vs
+  adapter workbenches; composition-first; surfaces S1–S10 retained with view
+  contracts first; proposed freezes for all seven gates (local SPA + process,
+  thin `acme-test-plan/1` with ADR at export, file/separate-SQLite interface
+  storage, CLI stays CI entry, live UI late and gated, localhost only);
+  build order reordered so phase 1 is read-model over fixtures, not plan
+  compiler; concepts_sandbox HTML mock mapped as non-authority visual
+  hypothesis.
+- Backlog (`domain-test-ui-implementation.md`): activation slices matching the
+  new phases; first code charter = accept gates + skeleton + view contracts.
+- Status sync: CURRENT_STATUS, SYSTEMDOC, FILESTRUCTURE, design README,
+  concepts_sandbox README, backlog README.
+- Verification: `pnpm docs:check`; `git diff --check`. Runtime suites skipped
+  (docs-only).
+- Follow-ups: maintainer acceptance of proposed gate freezes; then a bounded
+  implementation charter (phase 0/1 only). Do not start `apps/test-ui` from
+  chat without that charter.
+- Signature: Grok
+
 ## 2026-08-01 — ACME-0037 omit default temperature from reference contracts
 
 - Date: 2026-08-01

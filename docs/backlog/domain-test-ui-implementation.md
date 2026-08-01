@@ -1,73 +1,103 @@
-# Domain test UI implementation
+# Domain Test UI implementation
 
-Status: Backlog proposal  
+Status: **Open — rewrite 2026-08-01 (ACME-0038)**
 Discovered in: ACME-0014
+Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
 
 ## Discovery context
 
-ACME-0014 specifies a Domain Test UI for configuring, executing, inspecting,
-validating and measuring domain tests. The specification is
-[`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md).
+ACME-0014 specified a Domain Test UI when ExecutionEngine, ScenarioRunner,
+SQLite and the reference modules did not yet exist. Those engine prerequisites
+are now satisfied (through ACME-0035 / ACME-0036). What remains is not "build
+the missing engine" but:
 
-The specification is complete enough to review but deliberately implements
-nothing. It also documents that the interface has no evidence to display until
-several missing engine layers exist.
+1. accept or amend the **proposed gate freezes** in the design specification
+2. implement a **local-only** workbench as a lens and launcher over existing
+   ports, ScenarioRunner and conformance kits
+
+A visual mock (non-authority) exists at:
+
+`docs/concepts_sandbox/temp/testregistry_workbench_professional_test_engineering_suite.html`
+
+Resolved backlog items that once competed for attention and are **removed**:
+
+- encrypted-payload retention → ACME-0030 / ADR-0016
+- strict structured-output schema subset → ACME-0029 / ADR-0015
 
 ## Proposed outcome
 
-Activate the specified interface in the five ordered phases the specification
-defines, starting with the pure, testable layers:
+Ship a Domain Test UI application beside `@acme/cli` that:
 
-1. the `acme-test-plan/1` schema and its deterministic compiler
-2. versioned read-model view contracts over recorded evidence fixtures
-3. catalog and inspection surfaces over the in-memory composition
-4. authoring and execution surfaces
-5. measurement, human fixture review and gated live evaluation
+- supports **module workbench** runs (scenario / execution inspection)
+- supports **adapter workbench** runs (existing conformance kits only)
+- treats composition (repository, gateway, retention, seed, policy) as
+  first-class
+- exposes versioned **view contracts** before chrome
+- compiles optional `acme-test-plan/1` into `acme-scenario/1` and
+  `ExecutionRequest` only (ADR at first export)
+- never becomes a second source of truth or a CI replacement
 
-Each phase is independently valuable and should be chartered separately. Phases
-1 and 2 are the only ones that can begin against fixtures rather than a live
-engine.
+## Recommended activation sequence
 
-## Why this is outside ACME-0014
+Do **not** charter the full UI in one task. Follow the design-spec phases:
 
-ACME-0014 packages documentation only. Adding an application package, a new
-versioned configuration contract, a read model and rendering surfaces is a
-cross-package implementation deliverable with its own verification story.
+| Charter slice | Content |
+| --- | --- |
+| **First implementation charter** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 over fixtures |
+| Second | Phase 2 catalog (modules, contracts, adapters, scenarios) |
+| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens |
+| Fourth | Phase 4 offline authoring, launch, history |
+| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) |
+
+**Why phase 1 is read model, not plan compiler:** CLI and ScenarioRunner already
+run offline domain tests. The human gap is inspectable evidence. View contracts
+make the Execution Inspector real and testable without a browser.
+
+## Why this stays outside any non-UI active task
+
+Cross-package application work: new app package, optional versioned plan
+contract, read models, rendering, redaction UX and approval workflow. It needs
+its own verification story and must not expand an unrelated frozen charter.
 
 ## Dependencies
 
-Satisfied (as of ACME-0027 / ACME-0030 era):
+**Satisfied:**
 
-- the implemented bounded `ExecutionEngine` orchestration
-- the implemented Narrative and Research reference modules, each with an
-  offline acceptance scenario
-- the reusable `DomainModule` conformance kit implemented by ACME-0015
-- `@acme/adapter-sqlite` for durable run history, implemented by ACME-0021
-- `ScenarioRunner` and `acme-scenario-report/1` in `@acme/testing` (ACME-0027)
-- `@acme/cli` composition root selecting memory or SQLite (ACME-0026)
-- encrypted-payload retention when an encryptor is supplied (ACME-0030),
-  relevant for any UI surface that retains live responses
+- ExecutionEngine, Narrative + Research, DomainModule conformance
+- SQLite + memory repositories, gateway mock + OpenAI adapter
+- ScenarioRunner, CLI composition (including live execute)
+- encrypted-payload when encryptor supplied
+- durable resume, rollback/CAS proofs, outbox boundary
 
-Still missing (blocks activation):
+**Blocks activation (decisions, not missing code):**
 
-- resolution of the seven decision gates in the specification, in particular
-  the runtime shape, the `acme-test-plan/1` contract and interface storage
-  location, and whether the interface belongs in version 1 at all. These are
-  decisions, not build steps; having the engine prerequisites does not resolve
-  them.
+- maintainer acceptance of the proposed gate freezes (design spec table)
+- explicit implementation charter (docs-only ACME-0038 does not authorize code)
 
-Recommended first charter: decide the gates, then implement phase 1 only
-(`acme-test-plan/1` schema and deterministic compiler). Do not activate the
-full five-phase UI in one task.
+**Residuals that shape later phases only:**
+
+- ScenarioRunner has no live step (S10 / CLI live until then)
+- no auto outbox drain (UI must not imply silent delivery)
 
 ## Suggested verification
 
-- plan compilation is deterministic and byte-identical for identical plans
-- every surface's view contract is asserted as JSON without rendering
-- content payloads are redacted by default under every retention mode
-- prepared memory decision order and registry order are preserved
-- a live run is impossible without explicit environment opt-in, confirmation
-  and a configured budget
-- golden fixtures cannot be updated without a recorded human approval
-- the app package imports no core internal and is imported by no other package
-- no test in the package performs a network call or reads the wall clock
+From the design specification verification plan, at minimum for first code
+charter:
+
+- every S4–S7 view contract asserted as JSON without rendering
+- missing evidence renders unavailable, not zero
+- redaction defaults under every retention mode
+- prepared memory decision order and registry order preserved
+- package imports no core internal; nothing imports the app
+- no test performs a network call or reads wall-clock time for run identity
+
+Later charters add plan goldens, launch paths, fixture-approval rules and live
+gating proofs.
+
+## Explicit non-goals for v1
+
+- remote multi-user hosting
+- replacing `pnpm test*` / CLI CI
+- auto-approving golden fixtures
+- inventing a second conformance suite inside the UI
+- writing canonical ledger state from the browser
