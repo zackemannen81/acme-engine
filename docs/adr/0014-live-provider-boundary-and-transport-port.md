@@ -211,8 +211,9 @@ decision beyond forbidding its use for real payloads.
   supply a `PayloadEncryptor`, which restores replay when the key is present.
 - Some provider models reject `temperature` after accepting the rest of the
   request (observed on `gpt-5.6-terra`). The adapter still forwards a supplied
-  temperature; composition roots must pick a model that accepts the parameters
-  the contract emits, or a future profile capability must gate them.
+  temperature and omits the field when absent. Reference contracts no longer
+  emit a default (ACME-0037). A future profile capability remains useful only
+  when a request *explicitly* sets temperature for a model that rejects it.
 
 ### Follow-ups
 

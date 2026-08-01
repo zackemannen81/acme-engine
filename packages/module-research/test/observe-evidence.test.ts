@@ -135,7 +135,7 @@ describe('research.observe-evidence contract', () => {
       buildContext,
     );
 
-    expect(request.temperature).toBe(0);
+    expect(request.temperature).toBeUndefined();
     expect(request.output.schemaName).toBe('research_observe_evidence_1_0_0');
     expect(researchObserveEvidenceContract.retention).toBe('hash-only');
     expect(researchObserveEvidenceContract.requiredCapabilities).toEqual({
@@ -152,7 +152,7 @@ describe('research.observe-evidence contract', () => {
     // Pinned golden. A change here means the prompt, schema or projected
     // contract input moved and needs a contract version decision.
     expect(computeModelRequestHash(request)).toBe(
-      'ec45e26705df4049e11c0677cb6675b9df6f207de107448442d7769742ed4a8d',
+      '73e9aec79cdbff9010de522f3c989296e9d7c1bdffd8002899732fc0177a53f4',
     );
   });
 

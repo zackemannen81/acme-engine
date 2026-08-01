@@ -289,9 +289,11 @@ by missing ScenarioRunner or durability. Proposal:
 - **Domain Test UI:** specification only; decision gates unresolved. First
   meaningful charter would be gates + phase 1 plan compiler, not the full UI.
 - **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
-  `temperature` after accepting the schema. Reference contracts still emit
-  `temperature: 0`; the live gate defaults to a chat model that accepts it.
-  Optional residual from ACME-0029 / ADR-0015.
+  `temperature` after accepting the schema. Reference contracts no longer emit
+  a default `temperature` (ACME-0037); core and the OpenAI adapter already treat
+  it as optional and only forward when present. Residual: optional profile /
+  capability gating if a future contract *explicitly* sets temperature for a
+  model that rejects it (ADR-0015).
 - **Ambiguous call reconciliation** against provider-side history is not
   implemented. ADR-0014 keeps such calls terminal and non-retried.
 - **Privacy deletion and full key lifecycle (KMS/rotation)** remain deferred.

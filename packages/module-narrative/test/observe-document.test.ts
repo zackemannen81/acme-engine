@@ -77,14 +77,14 @@ describe('narrative.observe-document@1.0.0', () => {
 
     expect(second).toEqual(first);
     expect(computeModelRequestHash(first)).toBe(
-      'd907eb0d237c03fedeccb842b100378d75d6f66ec448bfe37a88e663dc62d5da',
+      '26fbe9bba122f8bdda9aef00a127054a1111e2561ca99305fd694d263d63782d',
     );
     expect(
       createContractRegistry([narrativeObserveDocumentContract]).fingerprint(
         narrativeObserveDocumentContract.ref,
       ),
     ).toBe('291987c02472e577b2accb7ad0dcee67c2112463c51e594a69562d9c55d71844');
-    expect(first.temperature).toBe(0);
+    expect(first.temperature).toBeUndefined();
     expect(first.output.mode).toBe('json');
     expect(Object.isFrozen(first)).toBe(true);
   });

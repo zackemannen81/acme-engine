@@ -107,16 +107,16 @@ interpretation when the domain still wants absence in state.
 - Each new provider may need its own lowering and refusal table.
 - Output schemas that must support strict providers adopt nullable unknowns,
   which forces schema splits where the same shape also appears on state paths.
-- Some models reject parameters other than schema (e.g. `temperature`); that
-  remains a composition-root / model-selection concern until a capability gate
-  exists.
+- Some models reject parameters other than schema (e.g. `temperature`). Reference
+  contracts no longer default-send `temperature` (ACME-0037); an explicit value
+  still requires a model that accepts it or a future capability gate.
 
 ### Follow-ups
 
 - A second provider adapter should either reuse a shared lowering port or
   document a distinct dialect; do not push dialect rules into core.
-- Optional profile flags for model parameter subsets (temperature, etc.) if
-  more reasoning models are used in live gates.
+- Optional profile flags for model parameter subsets if contracts later set
+  temperature (or similar) for models that reject those parameters.
 
 ## Compatibility and Migration
 

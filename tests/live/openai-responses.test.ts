@@ -32,12 +32,10 @@ import {
  */
 const OPT_IN = process.env['ACME_LIVE_TEST'];
 const API_KEY = process.env['OPENAI_API_KEY'];
-// Default is a Responses-capable chat model that accepts temperature and
-// strict json_schema. Some reasoning models (e.g. gpt-5.6-terra) reject
-// temperature after schema validation; override with ACME_LIVE_MODEL when needed.
-// Default accepts `temperature: 0` from the reference contracts. Reasoning
-// models such as gpt-5.6-terra reject temperature; set ACME_LIVE_MODEL when
-// probing them (and omit or gate temperature separately).
+// Default is a Responses-capable chat model that accepts strict json_schema.
+// Reference contracts no longer emit `temperature` (ACME-0037). Override with
+// ACME_LIVE_MODEL to probe other models; an explicit temperature on a request
+// still requires a model that accepts that parameter.
 const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-4.1-mini';
 const MAX_OUTPUT_TOKENS = Number(
   process.env['ACME_LIVE_MAX_OUTPUT_TOKENS'] ?? '512',

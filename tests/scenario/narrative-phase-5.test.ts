@@ -241,7 +241,7 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       requestFingerprint:
         'd7cc17c51745eaf68c6a326008ff36b4d57e8a62fc510952734bc2a92ad89402',
       modelRequestHash:
-        'eff700f31f2ee9867db3a90bc9945bdd809d62aa038ba6ae7198fcbfccc843c2',
+        'a0a600a29ab4f52b3ce572d4d4d72504183f0632aaa3eec32ea9be218fb52bbf',
       modelResponseHash:
         'e7bc7256e9c6330675a2afaa7c840709757490eb10558e25ab2f89bea73ae40f',
       operationDigest:
