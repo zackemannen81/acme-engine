@@ -195,19 +195,28 @@ decision beyond forbidding its use for real payloads.
 
 ### Negative
 
-- The fixtures are hand-written from our understanding of the Responses wire
-  format, not captured from a live call. They make the adapter internally
-  consistent but cannot prove that understanding is correct. Only the live
-  task can. A self-consistent wrong belief is the failure mode fixture-driven
-  work invites, and it is accepted here deliberately rather than papered over.
+- Offline fixtures remain simplified success-path samples. ACME-0028 falsified
+  the assumption that canonical JSON Schema could be sent verbatim under
+  `strict: true`. ACME-0029 confirmed the success path against real Responses
+  bodies: `OpenAiResponseSchema` accepted a completed `200` response,
+  `hash-only` retained no payload, and `replayVerify()` reported `unavailable`.
+  The committed offline fixtures are still minimal (they omit many provider
+  fields the real body includes); they stay valid because the wire schema is
+  deliberately tolerant of unknown fields, not because they are byte-identical
+  to a live body.
 - Conservative ambiguity will sometimes mark a call ambiguous that in fact
   never reached the provider.
 - Live executions cannot be replayed while `hash-only` is mandated.
+- Some provider models reject `temperature` after accepting the rest of the
+  request (observed on `gpt-5.6-terra`). The adapter still forwards a supplied
+  temperature; composition roots must pick a model that accepts the parameters
+  the contract emits, or a future profile capability must gate them.
 
 ### Follow-ups
 
-- The live-transport task must confirm or correct the fixtures, and that is
-  part of its purpose, not an incidental risk.
+- Schema lowering for strict structured output lives in the adapter
+  (`lowerStrictStructuredOutputSchema`); a future multi-provider ADR should
+  decide whether wire-schema digests and refusal details stay adapter-local.
 - Reconciling ambiguous calls against provider history needs its own decision.
 - Encrypted retention remains a backlog proposal.
 

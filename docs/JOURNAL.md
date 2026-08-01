@@ -1189,3 +1189,63 @@ Add one dated, signed entry for every meaningful work session or handoff.
   subset. The next task must prove nested `anyOf` support against the provider
   rather than assume it, for the same reason.
 - Signature: Claude
+
+## 2026-08-01 — Schema lowering and preflight (offline)
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0029
+- Summary: Activated ACME-0029 to `In Progress` and implemented deterministic
+  schema lowering in `@acme/adapter-model-openai`. Canonical contracts stay
+  domain truth; the adapter lowers into the provider strict subset and refuses
+  locally when it cannot. `providerWireSchemaHash` is recorded on response
+  metadata. No live call in this session.
+- Implementation: Added `schema-lower.ts` with `lowerStrictStructuredOutputSchema`
+  and `computeProviderWireSchemaHash`. `buildResponsesBody` returns
+  `{ body, providerWireSchemaHash }` and always sends the lowered schema under
+  `text.format.schema` with `strict: true`. Gateway metadata includes the hash.
+  Discriminated `oneOf` (distinct const discriminators) becomes `anyOf`; plain
+  unions and `$ref` raise `UNSUPPORTED_CAPABILITY` before transport.
+- Verification (offline): `pnpm docs:check` (68 Markdown files),
+  `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm boundaries`,
+  `pnpm build` passed. Adapter unit suite 49 tests, openai conformance 5,
+  `pnpm test:integration` 13, `pnpm test:scenario` 19. Determinism and
+  no-network refusal proven by unit tests. Both reference-domain output schemas
+  lower without refusal in a local probe (not committed). `git diff --check`
+  not re-run after the last doc edit in this note — run before commit.
+- Spend: none. Live probe deferred to an explicit checkpoint.
+- Follow-ups: Prove nested `anyOf` (and the research-only required-nullable
+  form) against the provider, then `pnpm test:live` for a success response,
+  hash-only retention and `unavailable` replay. Update ADR-0014 limitation
+  section once fixtures are confirmed or corrected. Archive ACME-0029 when Done.
+- Signature: Grok
+
+## 2026-08-01 — ACME-0029 complete: live success under schema lowering
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0029
+- Summary: Finished strict structured-output schema lowering. Canonical
+  contracts stay domain truth; the OpenAI adapter lowers into the provider
+  subset, refuses unlowerable constructs locally, and records
+  `providerWireSchemaHash`. Live success reached for both reference domains.
+- Live evidence:
+  - `gpt-5.6-terra`: 400 on unsupported `temperature` after schema accepted
+    (proves lowering passed provider schema validation).
+  - `gpt-4.1-mini` + `research.observe-evidence` via `pnpm test:live`: 200,
+    committed, `OpenAiResponseSchema` matched, hash-only, replay
+    `unavailable`. ~538 total tokens.
+  - `gpt-4.1-mini` + `narrative.observe-document` (nested anyOf on wire): 200,
+    committed. ~674 total tokens. Wire had anyOf, no oneOf.
+- Docs: ADR-0015 accepted; ADR-0014 limitations updated; SYSTEMDOC,
+  CURRENT_STATUS, FILESTRUCTURE, backlog proposal marked resolved; task
+  archived to `docs/finished/ACME-0029_strict-structured-output-schema-lowering.md`.
+- Verification: `pnpm docs:check` 69 Markdown files; format, lint, typecheck,
+  boundaries, build passed. Unit 331 tests / 39 files; conformance 46 / 7;
+  integration 13 / 2; scenario 19 / 3. `git diff --check` passed. No credential
+  in any committed file.
+- Spend: two successful billed calls (~1212 total tokens reported) plus one
+  free temperature rejection. No currency meter in-adapter.
+- Follow-ups: empty `CURRENT_TASK` template awaits the next approved charter.
+  Optional: profile capability for models that reject `temperature`.
+- Signature: Grok

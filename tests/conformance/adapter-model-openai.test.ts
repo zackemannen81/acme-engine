@@ -1,4 +1,5 @@
 import {
+  buildResponsesBody,
   createOpenAiResponsesGateway,
   type ProviderTransport,
   type ProviderTransportResult,
@@ -60,6 +61,8 @@ const successBody = JSON.stringify({
   usage: { input_tokens: 12, output_tokens: 4, total_tokens: 16 },
 });
 
+const { providerWireSchemaHash } = buildResponsesBody(successRequest, model);
+
 const successResponse: NormalizedModelResponse = {
   provider: 'openai',
   model,
@@ -68,7 +71,10 @@ const successResponse: NormalizedModelResponse = {
   finishReason: 'stop',
   text: '{"ok":true}',
   usage: { inputTokens: 12, outputTokens: 4, totalTokens: 16 },
-  metadata: { providerStatus: 'completed' },
+  metadata: {
+    providerStatus: 'completed',
+    providerWireSchemaHash,
+  },
 };
 
 function context(

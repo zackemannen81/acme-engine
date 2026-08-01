@@ -32,7 +32,10 @@ import {
  */
 const OPT_IN = process.env['ACME_LIVE_TEST'];
 const API_KEY = process.env['OPENAI_API_KEY'];
-const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-5.6-terra';
+// Default is a Responses-capable chat model that accepts temperature and
+// strict json_schema. Some reasoning models (e.g. gpt-5.6-terra) reject
+// temperature after schema validation; override with ACME_LIVE_MODEL when needed.
+const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-4.1-mini';
 const MAX_OUTPUT_TOKENS = Number(
   process.env['ACME_LIVE_MAX_OUTPUT_TOKENS'] ?? '512',
 );
@@ -43,10 +46,11 @@ const entityId = 'live-topic-1';
 const requestKey = `live-${new Date().toISOString()}`;
 
 /**
- * The charter was amended to `research.observe-evidence` after the first live
- * call: the Narrative output schema compiles a discriminated union to
- * `oneOf`, which OpenAI's strict structured-output subset rejects. The
- * Research contract emits no `oneOf`. See docs/backlog/.
+ * ACME-0029: the adapter lowers the canonical output schema into the provider
+ * strict subset before dispatch, so both reference contracts are usable.
+ * This gate still drives `research.observe-evidence` (no nested anyOf) as the
+ * durable success path; nested `anyOf` from narrative was proven separately in
+ * the ACME-0029 journal evidence.
  *
  * Small synthetic evidence written for this task. No personal data and no
  * repository content is sent, and the URI is never dereferenced.

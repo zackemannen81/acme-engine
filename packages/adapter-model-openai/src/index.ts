@@ -4,7 +4,12 @@ export {
   type OpenAiGatewayOptions,
   type OpenAiModelProfile,
 } from './gateway.js';
-export { buildResponsesBody } from './request.js';
+export { buildResponsesBody, type ResponsesBodyBuild } from './request.js';
+export {
+  computeProviderWireSchemaHash,
+  lowerStrictStructuredOutputSchema,
+  PROVIDER_WIRE_SCHEMA_HASH_ALGORITHM,
+} from './schema-lower.js';
 export {
   type ProviderTransport,
   type ProviderTransportDelivery,
