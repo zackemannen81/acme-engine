@@ -406,11 +406,13 @@ repository adapter. Everything else works through core ports.
 - exit codes separate success, a terminal outcome that did not commit or
   verify, and a usage error
 
-The CLI gateway is limited to the deterministic mock via `--script`. A live
-OpenAI mapping, `fetch` transport and opt-in `pnpm test:live` gate exist in
-the workspace, but the composition root does not yet select a provider gateway.
-Commands that cannot work are absent rather than present and failing: there is
-no `execution resume` without resume behavior.
+`execute` selects a gateway mutually exclusively: `--script` loads the
+deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
+`createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
+(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-4.1-mini`).
+Scenario runs remain mock-only. Commands that cannot work are absent rather
+than present and failing: there is no `execution resume` without resume
+behavior.
 
 ## Implemented Provider Boundary
 
@@ -688,7 +690,8 @@ layers.
   Live `encrypted-payload` executions can replay when the repository has a
   working `PayloadEncryptor`.
 - Structured logs redact content by default.
-- CLI live provider selection and outbox drain / fault injection remain open.
+- ScenarioRunner live provider steps, outbox drain and fault injection remain
+  open.
 
 ## Deliberately Deferred Decisions
 

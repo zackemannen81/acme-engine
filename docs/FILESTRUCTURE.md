@@ -282,6 +282,7 @@ acme-engine/
 │   │   ├── ACME-0029_strict-structured-output-schema-lowering.md
 │   │   ├── ACME-0030_encrypted-payload-retention.md
 │   │   ├── ACME-0031_documentation-reality-sync.md
+│   │   ├── ACME-0032_cli-live-openai-gateway.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -355,7 +356,8 @@ content remains intentionally omitted here.
   `acme-scenario/1`. It depends on `@acme/core` alone; the caller injects the
   composition and the fixture loader.
 - `@acme/cli`: the composition root. It is the only place that selects a
-  concrete repository adapter, and it exposes `execute`, `execution replay`,
+  concrete repository adapter and model gateway (`--script` mock or
+  `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
 - `tooling/typescript/`: shared strict ESM compiler configuration.

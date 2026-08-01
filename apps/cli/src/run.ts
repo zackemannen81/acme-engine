@@ -5,10 +5,22 @@ import {
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
+  type ModelSelection,
 } from '@acme/core';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
+import {
+  createOpenAiResponsesGateway,
+  type ProviderTransport,
+} from '@acme/adapter-model-openai';
+import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
 
-import { parseCommand, UsageError, USAGE, type Command } from './args.js';
+import {
+  parseCommand,
+  UsageError,
+  USAGE,
+  type Command,
+  type ExecuteGateway,
+} from './args.js';
 import {
   createComposition,
   type CompositionOverrides,
@@ -26,6 +38,13 @@ export const EXIT_USAGE = 2;
 
 export interface RunOptions extends CompositionOverrides {
   readonly io: CliIo;
+  /**
+   * Test injection for the live OpenAI path. Production never sets this;
+   * the default builds a real fetch transport.
+   */
+  readonly openAiTransport?: ProviderTransport;
+  /** Test injection of the live model id (defaults to env / gpt-4.1-mini). */
+  readonly openAiModel?: string;
 }
 
 async function readJson(path: string, label: string): Promise<JsonValue> {
@@ -55,6 +74,62 @@ async function gatewayFromScript(path: string): Promise<ModelGateway> {
         : 'The script file was rejected.',
     );
   }
+}
+
+function openAiModelId(options: RunOptions): string {
+  if (options.openAiModel !== undefined && options.openAiModel.length > 0) {
+    return options.openAiModel;
+  }
+  return (
+    process.env['ACME_OPENAI_MODEL'] ??
+    process.env['ACME_LIVE_MODEL'] ??
+    'gpt-4.1-mini'
+  );
+}
+
+/**
+ * Live OpenAI Responses gateway. Credentials stay in the composition root;
+ * the adapter package never reads the environment.
+ */
+function gatewayFromOpenAi(
+  selection: ModelSelection,
+  options: RunOptions,
+): ModelGateway {
+  const apiKey = process.env['OPENAI_API_KEY'];
+  if (apiKey === undefined || apiKey.trim().length === 0) {
+    throw new UsageError(
+      'execute --gateway openai requires OPENAI_API_KEY in the environment.',
+    );
+  }
+  const transport = options.openAiTransport ?? createFetchTransport();
+  const model = openAiModelId(options);
+  return createOpenAiResponsesGateway({
+    transport,
+    now: () => new Date().toISOString(),
+    headers: () => ({ authorization: `Bearer ${apiKey}` }),
+    profiles: [
+      {
+        selection,
+        model,
+        capabilities: {
+          structuredOutput: true,
+          tools: false,
+          vision: false,
+        },
+      },
+    ],
+  });
+}
+
+async function resolveExecuteGateway(
+  gateway: ExecuteGateway,
+  request: ExecutionRequest,
+  options: RunOptions,
+): Promise<ModelGateway> {
+  if (gateway.kind === 'script') {
+    return gatewayFromScript(gateway.script);
+  }
+  return gatewayFromOpenAi(request.model, options);
 }
 
 function executionEvidence(
@@ -132,7 +207,11 @@ async function execute(
     command.request,
     'request',
   )) as unknown as ExecutionRequest;
-  const gateway = await gatewayFromScript(command.script);
+  const gateway = await resolveExecuteGateway(
+    command.gateway,
+    request,
+    options,
+  );
   const composition = createComposition(
     command.common.adapter,
     command.common.database,

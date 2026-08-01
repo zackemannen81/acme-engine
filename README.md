@@ -18,9 +18,9 @@ acceptance scenario, which is the executable evidence that core is
 domain-neutral. The OpenAI Responses mapping lowers schemas for strict
 structured output, is proven offline and has reached live success through an
 opt-in gate. Encrypted-payload retention seals model responses at rest.
-`@acme/cli` selects either repository and runs declarative `acme-scenario/1`
-files, but still uses only the mock gateway via `--script`. No published
-package exists.
+`@acme/cli` selects either repository, runs declarative `acme-scenario/1`
+files, and can execute with the mock gateway (`--script`) or live OpenAI
+(`--gateway openai`). No published package exists.
 
 ## Start here
 

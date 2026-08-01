@@ -222,9 +222,10 @@ by missing ScenarioRunner or durability. Proposal:
 
 ## Persistent Gaps
 
-- **CLI live gateway:** `@acme/cli` still drives only the deterministic model
-  mock via `--script`. The OpenAI adapter, `fetch` transport and `pnpm test:live`
-  exist, but the composition root does not yet select a live provider gateway.
+- **CLI live gateway:** Implemented as `acme execute --gateway openai`
+  (ACME-0032). Requires `OPENAI_API_KEY`; model from `ACME_OPENAI_MODEL` or
+  `ACME_LIVE_MODEL`. The mock path remains `--script`. ScenarioRunner still has
+  no live provider step.
 - **Milestone 2 residuals:** fault injection at transaction boundaries is not
   implemented (durability is clean-reopen proof only). The outbox is written
   atomically but never drained; no background workers.

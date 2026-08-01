@@ -17,8 +17,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   Responses mapping lowers schemas for strict structured output, has a `fetch`
   transport and an opt-in live gate, and has reached live success for both
   reference contracts. Encrypted-payload retention is implemented behind an
-  injected `PayloadEncryptor`. The CLI still drives only the mock gateway via
-  `--script`; wiring a live gateway into the composition root is open.
+  injected `PayloadEncryptor`. The CLI selects the mock gateway via `--script`
+  or a live OpenAI gateway via `--gateway openai` (env credentials).
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.
