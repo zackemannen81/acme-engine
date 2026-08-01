@@ -89,7 +89,6 @@ const contract: PromptContract<ResearchContractInput, ResearchContractOutput> =
           schemaName: 'research_observe_evidence_1_0_0',
           jsonSchema: z.toJSONSchema(ResearchContractOutputSchema) as JsonValue,
         },
-        temperature: 0,
         maxOutputTokens: 2048,
       } satisfies ModelRequest;
       return immutableJson(request);

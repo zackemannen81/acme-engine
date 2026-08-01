@@ -103,7 +103,6 @@ const contract: PromptContract<
         schemaName: 'narrative_observe_document_1_0_0',
         jsonSchema: z.toJSONSchema(NarrativeContractOutputSchema) as JsonValue,
       },
-      temperature: 0,
       maxOutputTokens: 2048,
     } satisfies ModelRequest;
     return immutableJson(request);

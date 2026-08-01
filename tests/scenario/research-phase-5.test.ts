@@ -588,7 +588,7 @@ describe('ResearchModule Phase 5 offline acceptance', () => {
       requestFingerprint:
         '42ecf345c81b3a26ae8e6895aa1c7c02476de8c8822ba78ddd03ad43de15a0ff',
       modelRequestHash:
-        '54cdd37ad37ebe0ed27f498985cb9baefff828b3a4e934855957cccfdfeedb09',
+        '53e15a48abf5205425887d91fc78e180813c731d11364193659fc31bfa9efe53',
       modelResponseHash:
         '843141f0067f810e26efdee7d3565536107eecacc393ba7671855b384121a28b',
       operationDigest:

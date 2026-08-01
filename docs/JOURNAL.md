@@ -1506,3 +1506,33 @@ Add one dated, signed entry for every meaningful work session or handoff.
   decision gates, outbox redrive and real transports, driver-error
   classification, and an evaluation harness.
 - Signature: Claude
+
+## 2026-08-01 — ACME-0037 omit default temperature from reference contracts
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0037
+- Summary: Reference contracts no longer default-send `temperature`. Core and
+  the OpenAI adapter already treated the field as optional; the blocker for
+  models such as `gpt-5.6-terra` was Narrative and Research always emitting
+  `temperature: 0`.
+- Code: Removed `temperature: 0` from
+  `narrative.observe-document` and `research.observe-evidence` `buildRequest`
+  paths. Explicit temperature in adapter/mock/neutral fixtures remains to prove
+  optional-field handling.
+- Goldens re-pinned (request-hash only; contract refs/versions unchanged):
+  unit request hashes for both modules; phase-5 scenario `modelRequestHash`
+  pins for Narrative and Research. Other digests/fingerprints/state hashes
+  were unchanged.
+- Docs: CURRENT_STATUS residual updated; ADR-0014 / ADR-0015 residual wording
+  corrected; live-test comments and README gap list adjusted. SYSTEMDOC had no
+  stale claim.
+- Verification: `pnpm typecheck`; `pnpm test` 384 unit, 58 conformance, 29
+  integration, 19 scenario; `pnpm docs:check` 81 Markdown files; `format:check`,
+  `lint`, `git diff --check` clean. Live provider call skipped by charter.
+- Spend: none.
+- Follow-ups: optional profile/capability gating only if a future contract
+  *explicitly* sets temperature for a model that rejects it. Open product
+  choices unchanged (Domain Test UI gates, outbox redrive, driver errors, eval
+  harness).
+- Signature: Grok
