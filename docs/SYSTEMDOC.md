@@ -486,7 +486,21 @@ an envelope match). Both adapters run the same conformance suite. A committed
 database reopened in a new connection returns identical replay evidence and
 the recorded terminal result without a new model call or ID allocation, when
 the reopened repository still has the key needed to open sealed payloads.
-Fault injection at arbitrary transaction boundaries remains Milestone 2 work.
+
+Rollback is observed rather than assumed. A fault injected inside `commit()`
+through the injected `IdGenerator` leaves no partial effect on either adapter,
+and a driver-level fault injected inside the `BEGIN IMMEDIATE` transaction —
+after documents, memory candidates, the state snapshot, the transition and the
+state-head upsert are written — leaves none of them behind once every
+connection is closed and the file is reopened. The recorded model call
+survives, because it is written outside the commit. A driver failure carries
+no ACME classification today and reaches the caller as non-retryable
+`INTERNAL`; see `docs/backlog/driver-error-classification.md`.
+
+Two writers on one file that read the same revision produce exactly one
+commit. The loser's compare-and-swap fails at commit time with
+`CONFLICT_STATE_REVISION`, and it contributes no document, memory record,
+snapshot, transition, event or outbox entry.
 
 ## Implemented Durable Execution Resume
 

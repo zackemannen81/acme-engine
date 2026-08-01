@@ -19,5 +19,6 @@ as `docs/CURRENT_TASK.md`.
 | Proposal | Status |
 | --- | --- |
 | [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Open; engine prerequisites met; decision gates block activation |
+| [`driver-error-classification.md`](driver-error-classification.md) | Open; discovered by ACME-0034 |
 | [`encrypted-payload-retention.md`](encrypted-payload-retention.md) | Resolved by ACME-0030 / ADR-0016 |
 | [`strict-structured-output-schema-subset.md`](strict-structured-output-schema-subset.md) | Resolved by ACME-0029 / ADR-0015 |

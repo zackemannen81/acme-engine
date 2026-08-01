@@ -1375,3 +1375,51 @@ Add one dated, signed entry for every meaningful work session or handoff.
   unretained response are terminal and have no operator command to list or
   discharge them.
 - Signature: Claude
+
+## 2026-08-01 — ACME-0034 Milestone 2 durability and concurrency proofs
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0034
+- Summary: Closed the last two Milestone 2 acceptance conditions by
+  observation. "A transaction crash leaves no partial state" and "two-writer
+  CAS yields one commit" were previously assumptions; both are now tests. No
+  runtime behavior changed.
+- Fault seams: the shared conformance case injects an `IdGenerator` that fails
+  once on the first event ID, after the document ID of the same commit has
+  been handed out, so the fault lands with work already staged. The SQLite
+  case wraps the driver in a proxy `Database` that fails one chosen statement
+  once. Neither seam exists in shipped code; a durability claim proven through
+  a production backdoor proves the backdoor.
+- Evidence: the fault targets `INSERT INTO execution_commits`, which the
+  adapter writes after documents, memory candidates, the state snapshot, the
+  transition and the state-head upsert. After the fault, every connection is
+  closed and the file reopened: no documents, memory records or candidates, no
+  snapshot, transition, event, outbox entry or commit record survive, and
+  `loadReplayEvidence` returns null. The recorded model call does survive,
+  correctly, because it is written outside the commit. The reopened database
+  then commits a different execution successfully.
+- Two writers: the loser loads its context at revision 0, the winner commits
+  revision 1 while the loser is mid-execution, and the loser's commit loses
+  the compare-and-swap with `CONFLICT_STATE_REVISION`. The store holds one
+  snapshot, one transition and one document. The race is created by
+  interleaving inside the loser's gateway call, so it is deterministic rather
+  than timing-dependent.
+- Finding: a driver-level failure reaches the caller as non-retryable
+  `INTERNAL`, because `errorData()` maps anything that is not an `AcmeError`
+  to that fallback and neither adapter translates driver errors. The injected
+  fault is synthetic, but `SQLITE_BUSY` is not, and the taxonomy already has
+  `PERSISTENCE_TRANSIENT` for it. Out of this charter by its Out of Scope
+  section; recorded in `docs/backlog/driver-error-classification.md` and
+  pinned by an assertion so the current behavior is visible rather than
+  implied.
+- Verification: `pnpm docs:check` 78 Markdown files after archival; `format:check`, `lint`,
+  `typecheck`, `boundaries` and `build` passed. `pnpm test:unit` 365 tests in
+  43 files, `pnpm test:conformance` 56 in 7, `pnpm test:integration` 23 in 3,
+  `pnpm test:scenario` 19 in 3. `git diff --check` passed. No live provider
+  call; `tests/live` was not run.
+- Spend: none. Offline only.
+- Follow-ups: Milestone 2's only remaining work is the outbox, which is
+  written atomically and never drained. Driver error classification is a
+  backlog proposal.
+- Signature: Claude

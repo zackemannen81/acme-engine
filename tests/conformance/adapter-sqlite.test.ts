@@ -31,7 +31,7 @@ executionRepositoryConformance('sqlite adapter', {
     opened.push(database);
     return createSqliteExecutionRepository({
       database,
-      ids: {
+      ids: deps?.ids ?? {
         next(kind) {
           return `${kind}-unused`;
         },
