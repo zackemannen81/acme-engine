@@ -17,6 +17,7 @@ export * from './model-request-hash.js';
 export * from './model-response-hash.js';
 export * from './model-validation.js';
 export * from './modules.js';
+export * from './payload-encryptor.js';
 export * from './registries.js';
 export * from './response-pipeline.js';
 export * from './repository.js';

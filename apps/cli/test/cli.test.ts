@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import {
   computeModelRequestHash,
+  createAes256GcmPayloadEncryptor,
   deriveExecutionId,
   type IdGenerator,
 } from '@acme/core';
@@ -22,6 +23,11 @@ import {
   run,
   type RunOptions,
 } from '../src/index.js';
+
+const testPayloadEncryptor = createAes256GcmPayloadEncryptor({
+  key: new Uint8Array(32).fill(0xac),
+  keyId: 'cli-test-payload-key',
+});
 
 const now = '2026-07-31T12:00:00.000Z';
 const entityId = 'cli-story-1';
@@ -93,6 +99,7 @@ function capture(): {
       },
       clock: { now: () => now },
       ids: createIds(),
+      payloadEncryptor: testPayloadEncryptor,
     },
   };
 }

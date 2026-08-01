@@ -16,6 +16,7 @@ import {
   type IdGenerator,
 } from '../../packages/core/src/index.js';
 import { createInMemoryExecutionRepository } from '../../packages/adapter-memory/src/index.js';
+import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 import { createScriptedModelGateway } from '../../packages/adapter-model-mock/src/index.js';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -120,7 +121,10 @@ function fixture(
           }),
   });
   const id = createIds();
-  const repository = createInMemoryExecutionRepository({ ids: id.ids });
+  const repository = createInMemoryExecutionRepository({
+    ids: id.ids,
+    payloadEncryptor: createTestPayloadEncryptor(),
+  });
   const clock = { now: vi.fn(() => neutralNow) };
   const engine = createExecutionEngine({
     clock,

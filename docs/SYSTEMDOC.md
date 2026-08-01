@@ -343,6 +343,11 @@ compare-and-swap and promotes mutations atomically.
 - atomic retention of the exact prepared commit and portable replay sidecar
 - response-payload retention according to the stored execution policy while
   preserving response-hash evidence
+- `encrypted-payload` retention (ADR-0016): adapters seal the normalized
+  response with an injected `PayloadEncryptor`, store only
+  `protectedResponse` (AES-256-GCM envelope), and decrypt on
+  `loadReplayEvidence` when the key is available; missing keys yield
+  `REPLAY_MODEL_RESPONSE_UNAVAILABLE`
 - detached immutable `loadReplayEvidence()` projections for verification
 - detached, deeply frozen read results and deterministic evidence snapshots
 
@@ -437,8 +442,10 @@ the scripted mock and a real provider mapping satisfy one contract. Boundary
 rules and a negative fixture prove provider wire shapes are unreachable from
 core, modules, apps and other adapters, and the core vocabulary guard now
 rejects provider names outright. A live `200` has been observed for both
-reference-domain contracts under the lowered schema; live executions use
-`hash-only` retention and therefore replay as `unavailable`.
+reference-domain contracts under the lowered schema; the opt-in live gate
+still defaults to `hash-only` until the composition root always supplies an
+encryptor for live runs. With `encrypted-payload` and a working key, replay
+is available without cleartext at rest.
 
 ## Implemented Durable Unit of Work
 
@@ -461,12 +468,14 @@ and first migration.
 - reads for `get()`, `loadContext()` and `loadReplayEvidence()` that return
   detached, deeply frozen values and open no transaction
 
-Observable behavior is identical to `@acme/adapter-memory`. Both adapters run
-the same unchanged conformance suite, and the same neutral execution produces
-equal repository evidence in both. A committed database reopened in a new
-connection returns identical replay evidence and the recorded terminal result
-without a new model call or ID allocation. Fault injection at arbitrary
-transaction boundaries remains Milestone 2 work.
+Observable behavior is identical to `@acme/adapter-memory`, including
+encrypted-payload sealing when both are given the same encryptor (ciphertext
+bytes differ per call because IVs are random; `responseHash` and presence of
+an envelope match). Both adapters run the same conformance suite. A committed
+database reopened in a new connection returns identical replay evidence and
+the recorded terminal result without a new model call or ID allocation, when
+the reopened repository still has the key needed to open sealed payloads.
+Fault injection at arbitrary transaction boundaries remains Milestone 2 work.
 
 ## System Purpose
 

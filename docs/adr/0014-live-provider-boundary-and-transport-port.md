@@ -206,7 +206,9 @@ decision beyond forbidding its use for real payloads.
   to a live body.
 - Conservative ambiguity will sometimes mark a call ambiguous that in fact
   never reached the provider.
-- Live executions cannot be replayed while `hash-only` is mandated.
+- Live executions that stay on `hash-only` cannot be replayed. With
+  ACME-0030 / ADR-0016, composition roots may use `encrypted-payload` when they
+  supply a `PayloadEncryptor`, which restores replay when the key is present.
 - Some provider models reject `temperature` after accepting the rest of the
   request (observed on `gpt-5.6-terra`). The adapter still forwards a supplied
   temperature; composition roots must pick a model that accepts the parameters
@@ -218,7 +220,10 @@ decision beyond forbidding its use for real payloads.
   (`lowerStrictStructuredOutputSchema`); a future multi-provider ADR should
   decide whether wire-schema digests and refusal details stay adapter-local.
 - Reconciling ambiguous calls against provider history needs its own decision.
-- Encrypted retention remains a backlog proposal.
+- Encrypted retention is implemented (ADR-0016). KMS / multi-key rotation
+  remain future work on the same port. Live gates may switch default retention
+  from `hash-only` to `encrypted-payload` once the composition root always
+  supplies an encryptor for live runs.
 
 ## Compatibility and Migration
 

@@ -1,7 +1,9 @@
 import {
   AcmeError,
+  applyModelCallRetention,
   computeOperationDigest,
   nodeHashing,
+  revealModelCallResponse,
   type AcceptResult,
   type AcceptedExecution,
   type CommittedExecution,
@@ -22,6 +24,7 @@ import {
   type ModelCallReservation,
   type NonCommitTerminalRecord,
   type OutboxRecord,
+  type PayloadEncryptor,
   type PreparedCommit,
   type RepositoryEvidence,
   type StateSnapshot,
@@ -57,6 +60,11 @@ export interface SqliteExecutionRepositoryOptions {
   readonly database: Database;
   readonly ids: IdGenerator;
   readonly hashing?: Hashing;
+  /**
+   * Required only when an execution uses `retention: 'encrypted-payload'`.
+   * Missing encryptor fails at completeModelCall, not at construction.
+   */
+  readonly payloadEncryptor?: PayloadEncryptor;
 }
 
 interface StateHead {
@@ -176,12 +184,14 @@ export class SqliteExecutionRepository implements ExecutionRepository {
   readonly #database: Database;
   readonly #ids: IdGenerator;
   readonly #hashing: Hashing;
+  readonly #payloadEncryptor: PayloadEncryptor | undefined;
   readonly #statements = new Map<string, Statement>();
 
   constructor(options: SqliteExecutionRepositoryOptions) {
     this.#database = options.database;
     this.#ids = options.ids;
     this.#hashing = options.hashing ?? nodeHashing;
+    this.#payloadEncryptor = options.payloadEncryptor;
   }
 
   async accept(input: AcceptedExecution): Promise<AcceptResult> {
@@ -426,16 +436,21 @@ export class SqliteExecutionRepository implements ExecutionRepository {
             modelCallId: existing.modelCallId,
           });
         }
+        // Compare the engine-supplied plaintext completion only. Envelope
+        // bytes are adapter-owned and non-deterministic (random IV).
         const prior: CompletedModelCall = {
           modelCallId: existing.modelCallId,
           response: completed.response,
           responseHash: existing.responseHash,
-          ...(existing.protectedResponse === undefined
-            ? {}
-            : { protectedResponse: existing.protectedResponse }),
           completedAt: existing.completedAt,
         };
-        if (!this.#equivalent(prior, completed)) {
+        const expected: CompletedModelCall = {
+          modelCallId: completed.modelCallId,
+          response: completed.response,
+          responseHash: completed.responseHash,
+          completedAt: completed.completedAt,
+        };
+        if (!this.#equivalent(prior, expected)) {
           corruption('Divergent model-call completion was attempted.', {
             modelCallId: completed.modelCallId,
           });
@@ -448,15 +463,17 @@ export class SqliteExecutionRepository implements ExecutionRepository {
         });
       }
       const execution = this.#requireExecution(existing.executionId);
-      const retainPayload = execution.policy.retention === 'encrypted-payload';
+      const retained = applyModelCallRetention({
+        retention: execution.policy.retention,
+        completed,
+        ...(this.#payloadEncryptor === undefined
+          ? {}
+          : { payloadEncryptor: this.#payloadEncryptor }),
+      });
       const record: ModelCallRecord = this.#clone({
         ...existing,
         status: 'succeeded',
-        ...(retainPayload ? { response: completed.response } : {}),
-        responseHash: completed.responseHash,
-        ...(retainPayload && completed.protectedResponse !== undefined
-          ? { protectedResponse: completed.protectedResponse }
-          : {}),
+        ...retained,
         completedAt: completed.completedAt,
       });
       this.#writeModelCall(record);
@@ -881,7 +898,7 @@ export class SqliteExecutionRepository implements ExecutionRepository {
        WHERE execution_id = ?
        ORDER BY call_key, attempt`,
       [executionId],
-    ).map((row) => toModelCallRecord(row.record_json));
+    ).map((row) => this.#revealCall(toModelCallRecord(row.record_json)));
     return this.#clone({
       executionId,
       request: execution.request,
@@ -895,6 +912,19 @@ export class SqliteExecutionRepository implements ExecutionRepository {
       modelCalls,
       preparedCommit: prepared,
     });
+  }
+
+  #revealCall(call: ModelCallRecord): ModelCallRecord {
+    const response = revealModelCallResponse({
+      call,
+      ...(this.#payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: this.#payloadEncryptor }),
+    });
+    if (response === undefined) {
+      return call;
+    }
+    return { ...call, response };
   }
 
   async markTerminal(input: NonCommitTerminalRecord): Promise<void> {

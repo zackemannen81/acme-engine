@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import {
+  createAes256GcmPayloadEncryptor,
   createContractRegistry,
   createExecutionEngine,
   createMemoryEngine,
@@ -12,6 +13,7 @@ import {
   type ExecutionRepository,
   type IdGenerator,
   type ModelGateway,
+  type PayloadEncryptor,
   type RepositoryEvidence,
 } from '@acme/core';
 import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
@@ -41,6 +43,30 @@ export type InspectableRepository = ExecutionRepository & {
 export interface CompositionOverrides {
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
+  readonly payloadEncryptor?: PayloadEncryptor;
+}
+
+/**
+ * Optional env-backed encryptor for live/local CLI use.
+ * `ACME_PAYLOAD_KEY` is 32 raw bytes as base64; `ACME_PAYLOAD_KEY_ID` names it.
+ * Composition owns key acquisition; core never reads the environment.
+ */
+function payloadEncryptorFromEnv(): PayloadEncryptor | undefined {
+  const encoded = process.env['ACME_PAYLOAD_KEY'];
+  if (encoded === undefined || encoded.trim().length === 0) {
+    return undefined;
+  }
+  const key = Buffer.from(encoded, 'base64');
+  if (key.byteLength !== 32) {
+    throw new Error(
+      'ACME_PAYLOAD_KEY must decode to exactly 32 bytes (AES-256).',
+    );
+  }
+  const keyId = process.env['ACME_PAYLOAD_KEY_ID'] ?? 'env-default';
+  return createAes256GcmPayloadEncryptor({
+    key: new Uint8Array(key),
+    keyId,
+  });
 }
 
 export interface Composition {
@@ -76,6 +102,8 @@ export function createComposition(
 ): Composition {
   const ids = overrides.ids ?? defaultIds();
   const clock = overrides.clock ?? defaultClock();
+  const payloadEncryptor =
+    overrides.payloadEncryptor ?? payloadEncryptorFromEnv();
 
   let repository: InspectableRepository;
   let close = (): void => {};
@@ -91,9 +119,16 @@ export function createComposition(
     close = (): void => {
       connection.close();
     };
-    repository = createSqliteExecutionRepository({ database: connection, ids });
+    repository = createSqliteExecutionRepository({
+      database: connection,
+      ids,
+      ...(payloadEncryptor === undefined ? {} : { payloadEncryptor }),
+    });
   } else {
-    repository = createInMemoryExecutionRepository({ ids });
+    repository = createInMemoryExecutionRepository({
+      ids,
+      ...(payloadEncryptor === undefined ? {} : { payloadEncryptor }),
+    });
   }
 
   return {

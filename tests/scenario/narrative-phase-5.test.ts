@@ -12,6 +12,7 @@ import {
   type IdGenerator,
 } from '../../packages/core/src/index.js';
 import { createInMemoryExecutionRepository } from '../../packages/adapter-memory/src/index.js';
+import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 import { createScriptedModelGateway } from '../../packages/adapter-model-mock/src/index.js';
 import {
   NARRATIVE_STATE_SCHEMA_VERSION,
@@ -142,7 +143,10 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       ],
     });
     const id = createIds();
-    const repository = createInMemoryExecutionRepository({ ids: id.ids });
+    const repository = createInMemoryExecutionRepository({
+      ids: id.ids,
+      payloadEncryptor: createTestPayloadEncryptor(),
+    });
     const engine = createExecutionEngine({
       clock: { now: () => now },
       ids: id.ids,

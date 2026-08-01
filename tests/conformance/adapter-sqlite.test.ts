@@ -23,7 +23,7 @@ afterAll(() => {
 });
 
 executionRepositoryConformance('sqlite adapter', {
-  createRepository: () => {
+  createRepository: (deps) => {
     const database = openDatabase({
       location: join(root, `conformance-${opened.length}.sqlite`),
       appliedAt: '2026-07-31T00:00:00.000Z',
@@ -36,6 +36,9 @@ executionRepositoryConformance('sqlite adapter', {
           return `${kind}-unused`;
         },
       },
+      ...(deps?.payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: deps.payloadEncryptor }),
     });
   },
 });

@@ -1,5 +1,8 @@
 # Close the `encrypted-payload` retention gap
 
+Status: **Resolved by ACME-0030**. Decisions in
+[ADR-0016](../adr/0016-encrypted-payload-retention.md).
+
 ## Discovery context
 
 Found while planning the live-provider deliverable, during ACME-0024, by
