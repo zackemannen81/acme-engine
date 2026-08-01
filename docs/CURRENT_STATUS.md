@@ -115,8 +115,9 @@ There is currently:
   `@acme/testing` that the scripted mock and the OpenAI adapter both pass
   unchanged
 - an `@acme/adapter-model-openai` targeting the OpenAI Responses API behind an
-  injected transport port, with request mapping, response normalization and
-  the ADR-0014 failure classification proven against hand-written fixtures
+  injected transport port, with request mapping, response normalization,
+  deterministic strict structured-output schema lowering (ADR-0015) and the
+  ADR-0014 failure classification
 - the first producer of the `ambiguous` model-call status: any transport
   outcome without a status line is ambiguous unless the transport can prove
   the request never left
@@ -127,8 +128,15 @@ There is currently:
 - an opt-in `pnpm test:live` gate that is structurally excluded from
   `vitest.config.ts`, so no default run and no CI step can reach it, and that
   refuses rather than skips when the opt-in or credential is absent
+- live success path confirmed: research and narrative reference contracts both
+  reached HTTP `200` and committed under the lowered schema; nested `anyOf`
+  is accepted; `OpenAiResponseSchema` matched a real completed body
 - real-provider confirmation of the ADR-0014 failure classification and of the
-  provider error-body schema, obtained from two live calls
+  provider error-body schema (ACME-0028 rejections) plus success-path fixtures
+  tolerance (ACME-0029)
+- a core `PayloadEncryptor` port and AES-256-GCM reference helper
+  (ADR-0016 / ACME-0030); both repository adapters seal `encrypted-payload`
+  at rest and decrypt on `loadReplayEvidence` when the key is available
 - a reusable non-empty public-core-only `DomainModule` conformance suite in
   `@acme/testing`, proven unchanged against testing-owned producer and empty
   analyzer fixtures
@@ -170,18 +178,13 @@ There is currently:
   codes separating success, a non-committed outcome and a usage error
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module and SQLite-driver boundary fixtures
-- 322 passing tests across canonicalization, execution identity, model-request
-  hashing, response/gateway validation, registries, state/memory preparation,
-  post-memory state projection, repository digest, repository/gateway
-  plus neutral and Narrative module conformance, Narrative schemas, context,
-  identity, policy and state behavior, mock matching, immutability, atomic
-  rollback, SQLite migrations, Research identity, schemas, policy, state,
-  contract and task behavior, and workspace imports
+- 345 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (42 files), with separate conformance (50),
+  integration (13) and scenario (19) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
   and scenario gates
-- no live model provider adapter
 - no published package
 - no deployment
 
@@ -192,122 +195,56 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-ACME-0015 completed the final shared pre-reference-module gate. The exported
-`domainModuleConformance()` suite now verifies the public module boundary,
-runtime schemas, deterministic immutable task/state behavior, unique effects
-and caller-supplied memory-policy expectations. It runs unchanged against
-testing-owned producer and empty-analyzer fixtures, and future module source
-is prevented from importing apps, concrete adapters or `@acme/testing`.
-Narrative and Research were then implemented as separate tasks, ACME-0017 and
-ACME-0022, and both run that suite unchanged.
+No product implementation task is active. `docs/CURRENT_TASK.md` is the empty
+template until the next charter is explicitly approved.
 
-ACME-0014 added the proposed
-[`Domain Test UI — Specification`](design/domain-test-ui-specification.md) as
-documentation only. It defines a human surface for configuring, executing,
-inspecting, validating and measuring domain tests strictly over existing
-ports, ledger evidence and reports. Nothing in it is implemented or chartered.
-Its durable-persistence prerequisite now exists; ScenarioRunner, its JSON
-report and the specification’s own decision gates do not.
+### Recent completed work (summary)
 
-ACME-0016 synchronized current-facing repository documentation with the
-implemented workspace after ACME-0015. It corrected pre-implementation phase
-claims and audited the canonical repository map without changing runtime
-behavior or historical records.
+- **ACME-0017–0023:** Narrative and Research reference modules, offline Phase 5
+  scenarios, ExecutionEngine (ADR-0012), SQLite durability (ADR-0013).
+- **ACME-0025–0027:** OpenAI Responses adapter behind a transport port, CLI
+  composition root (mock gateway only), ScenarioRunner over `acme-scenario/1`.
+- **ACME-0028–0029:** `fetch` transport, opt-in live gate, schema lowering
+  (ADR-0015), live success for both reference contracts under strict structured
+  output.
+- **ACME-0030:** Encrypted-payload retention (ADR-0016) with injected
+  `PayloadEncryptor`, ciphertext at rest, decrypt-on-replay when the key works.
 
-ACME-0017 completed NarrativeModule build phases 1–4.
-`@acme/module-narrative` now implements
-`narrative.observe-document@1.0.0`, strict schemas, deterministic projection
-and interpretation, post-memory state projection, pure state behavior and the
-Narrative memory policy. ADR-0011's exclusive memory/state ownership,
-two-summary `narrative-window-1` and source-backed
-`previous-document-tail-1` are executable and golden-tested.
+### Domain Test UI (not active)
 
-ACME-0018 completed the bounded Milestone 1 ExecutionEngine and Narrative
-Phase 5 on 2026-07-31. ADR-0012 fixes its default policy, retrieval limit,
-identity algorithms and portable replay-evidence boundary. The implementation
-coordinates exactly one primary call through the existing ports and pure
-engines, commits atomically and verifies replay without external effects.
-
-ACME-0021 completed durable SQLite persistence on 2026-07-31.
-`@acme/adapter-sqlite` implements the aggregate `ExecutionRepository` over the
-ADR-0003 revisioned Unit of Work and passes the unchanged shared conformance
-suite. ADR-0013 fixes the `better-sqlite3` driver, the first ordered
-checksum-verified migration and the exact points where the persisted schema
-extends specification section 15.2. Durability is proven by reopening a
-committed database in a fresh connection: the recovered evidence, operation
-digest and terminal result are identical, and repeating the same request
-returns the recorded result without a new model call or ID allocation.
-
-ACME-0022 completed ResearchModule build phases 1–4 on 2026-07-31.
-`@acme/module-research` implements `research.observe-evidence@1.0.0` and is the
-second reference domain, so the shared conformance suite, memory mechanics,
-state mechanics and post-memory projection are now proven against two
-independent domains. ADR-0009's proposition, source and source-independence
-identity algorithms are executable and reproduce their published golden
-vectors. Corroboration counts distinct declared independence keys only;
-contradictory evidence contests the claim and preserves every variant. Claim
-verification is derived post-memory from applied decisions and is never
-asserted by the model.
-
-ACME-0023 completed the Research offline acceptance scenario on 2026-07-31.
-Sources A, B and C run through the same bounded ExecutionEngine, repository and
-replay path as Narrative and reach deferred, verified and contested standing in
-that order. One source cannot verify a claim; a second independent source
-promotes it; a contradiction contests it and preserves every variant. A stale
-expected revision performs no model call, allocates no ID and writes nothing.
-Every committed execution replay-verifies offline with an unchanged operation
-digest. Both reference domains now have executable end-to-end acceptance
-evidence.
-
-ACME-0029 completed schema lowering and live success under the provider subset.
-ACME-0030 implemented encrypted-payload retention (ADR-0016): repository
-adapters seal model responses with an injected encryptor, store only the
-envelope, and reveal plaintext on replay load when the key is available.
+[`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
+remains documentation only. Engine prerequisites (ExecutionEngine, both
+reference domains, SQLite, ScenarioRunner, CLI) exist. Activation is still
+blocked by the specification’s own **decision gates** (runtime shape,
+`acme-test-plan/1`, storage location, and whether the UI is in v1 at all), not
+by missing ScenarioRunner or durability. Proposal:
+`docs/backlog/domain-test-ui-implementation.md`.
 
 ## Persistent Gaps
 
-- A live provider adapter and provider-specific normalization are not
-  implemented.
-- Fault injection at every transaction boundary is Milestone 2 work; durability
-  is proven by clean reopen, not by simulated mid-transaction failure.
-- Outbox delivery, background workers and retention encryption are not
-  implemented; the outbox is written atomically but never drained.
-- The CLI can only drive the deterministic model mock from a script file,
-  because no network transport exists. The gateway flag is shaped so a provider
-  gateway is additive.
-- Package boundary enforcement covers core, testing, the in-memory, model-mock
-  and SQLite adapters, CLI substrate and the future `packages/module-*`
-  dependency direction; future adapters must extend its rule set.
+- **CLI live gateway:** `@acme/cli` still drives only the deterministic model
+  mock via `--script`. The OpenAI adapter, `fetch` transport and `pnpm test:live`
+  exist, but the composition root does not yet select a live provider gateway.
+- **Milestone 2 residuals:** fault injection at transaction boundaries is not
+  implemented (durability is clean-reopen proof only). The outbox is written
+  atomically but never drained; no background workers.
+- **Domain Test UI:** specification only; decision gates unresolved. First
+  meaningful charter would be gates + phase 1 plan compiler, not the full UI.
+- **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
+  `temperature` after accepting the schema. Reference contracts still emit
+  `temperature: 0`; the live gate defaults to a chat model that accepts it.
+  Optional residual from ACME-0029 / ADR-0015.
+- **Ambiguous call reconciliation** against provider-side history is not
+  implemented. ADR-0014 keeps such calls terminal and non-retried.
+- **Privacy deletion and full key lifecycle (KMS/rotation)** remain deferred.
+  Payload encryption at rest is implemented (ADR-0016); live runs may use
+  `encrypted-payload` when the composition root supplies an encryptor. The
+  opt-in live gate still defaults to `hash-only` until that wiring is normal.
+- Offline success-path Responses fixtures remain simplified samples (unknown
+  fields tolerated); they are not byte-identical live captures.
+- Package boundary enforcement covers current packages; future adapters must
+  extend its rule set.
 - `better-sqlite3` prebuild resolution is verified on Windows only. The Linux
   CI matrix has not been observed since the dependency was added.
-- A general evaluation harness is not implemented. ScenarioRunner sequences
-  executions and asserts recorded evidence; it does not score output quality.
-- No human surface exists for configuring or inspecting domain tests. The
-  proposed interface is specification-only; ScenarioRunner, durable
-  persistence and its unresolved decision gates still block activation, whose
-  proposal remains in `docs/backlog/`.
-- `retention: 'encrypted-payload'` now encrypts at rest via an injected
-  `PayloadEncryptor` (AES-256-GCM reference helper in core). Cleartext
-  `response` is not stored; `protectedResponse` holds the envelope.
-  `replayVerify()` decrypts when the key works and reports `unavailable`
-  when it does not. Composition roots supply the encryptor (CLI:
-  override or `ACME_PAYLOAD_KEY` / `ACME_PAYLOAD_KEY_ID`).
-- ACME-0029 completed the offline lowering and confirmed a live success path.
-  Output-facing schemas accept `null` for unknown values; the adapter lowers
-  the canonical JSON Schema into the provider strict subset before dispatch;
-  unlowerable constructs raise `UNSUPPORTED_CAPABILITY` with no network call;
-  `providerWireSchemaHash` records the wire form without changing
-  `acme-model-request-hash-1`. Live evidence: research and narrative contracts
-  both reached HTTP `200` and committed under the lowered schema; nested
-  `anyOf` is accepted; `OpenAiResponseSchema` matched a real completed body;
-  `hash-only` retained no payload; `replayVerify()` reported `unavailable`.
-  Offline fixtures remain simplified samples (unknown fields tolerated).
-  Some models (e.g. `gpt-5.6-terra`) reject `temperature` after accepting the
-  schema; the live gate default is a chat model that accepts the parameters
-  the contracts emit.
-- Reconciling an ambiguous model call against provider-side history is not
-  implemented. ADR-0014 makes such a call terminal and never automatically
-  retried.
-- Encrypted retention and privacy deletion still require future ADRs before
-  implementation. ADR-0014 mandates `hash-only` for live executions until
-  then, which means those executions cannot be replayed.
+- A general evaluation / quality-scoring harness is not implemented.
+  ScenarioRunner asserts recorded evidence only.

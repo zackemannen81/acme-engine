@@ -36,23 +36,29 @@ cross-package implementation deliverable with its own verification story.
 
 ## Dependencies
 
-Satisfied:
+Satisfied (as of ACME-0027 / ACME-0030 era):
 
 - the implemented bounded `ExecutionEngine` orchestration
 - the implemented Narrative and Research reference modules, each with an
   offline acceptance scenario
 - the reusable `DomainModule` conformance kit implemented by ACME-0015
 - `@acme/adapter-sqlite` for durable run history, implemented by ACME-0021
+- `ScenarioRunner` and `acme-scenario-report/1` in `@acme/testing` (ACME-0027)
+- `@acme/cli` composition root selecting memory or SQLite (ACME-0026)
+- encrypted-payload retention when an encryptor is supplied (ACME-0030),
+  relevant for any UI surface that retains live responses
 
-Still missing:
+Still missing (blocks activation):
 
-- `ScenarioRunner` and its JSON report in `@acme/testing`
-- a CLI composition root, so no surface outside tests currently selects an
-  adapter
 - resolution of the seven decision gates in the specification, in particular
   the runtime shape, the `acme-test-plan/1` contract and interface storage
-  location. These are decisions, not build steps; having the prerequisites
-  does not resolve them.
+  location, and whether the interface belongs in version 1 at all. These are
+  decisions, not build steps; having the engine prerequisites does not resolve
+  them.
+
+Recommended first charter: decide the gates, then implement phase 1 only
+(`acme-test-plan/1` schema and deterministic compiler). Do not activate the
+full five-phase UI in one task.
 
 ## Suggested verification
 

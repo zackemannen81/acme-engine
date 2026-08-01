@@ -113,27 +113,26 @@ forbidden import fails, mirroring `tooling/boundaries/`.
 
 ## Readiness prerequisites
 
-**Approved baseline.** Per [`docs/CURRENT_STATUS.md`](../CURRENT_STATUS.md),
-ACME has a pure contract layer, pure StateEngine and MemoryEngine, post-memory
-projection, an input-bound response pipeline, a deterministic in-memory Unit of
-Work and a deterministic model mock. It has **no** ExecutionEngine, no
-ScenarioRunner, no durable adapter, no live provider adapter and no reference
-module.
+**As of 2026-08-01** (see [`docs/CURRENT_STATUS.md`](../CURRENT_STATUS.md)),
+the engine-side prerequisites below are **satisfied**. This specification was
+written when none of them existed; that historical claim is obsolete. What
+still blocks activation is the set of **decision gates** later in this
+document (runtime shape, `acme-test-plan/1`, storage, v1 scope), not missing
+ExecutionEngine or ScenarioRunner.
 
-The interface cannot be implemented before its evidence exists. The minimum
-prerequisites are:
+| Prerequisite | Status | Why the interface needs it |
+| --- | --- | --- |
+| `ExecutionEngine` | Satisfied (ACME-0018) | produces lifecycle stages, attempts, terminal results and replay reports |
+| `ScenarioRunner` in `@acme/testing` | Satisfied (ACME-0027) | executes a multi-step domain test and emits the JSON report the interface renders |
+| Reference modules | Satisfied (Narrative + Research) | give a domain test something domain-specific to configure and measure |
+| Reusable DomainModule conformance kit | Satisfied (ACME-0015) | supplies the module-level verdicts the results view aggregates |
+| `@acme/adapter-sqlite` | Satisfied (ACME-0021) | gives run history a durable home |
+| CLI composition root | Satisfied (ACME-0026) | selects adapters outside the test suite |
+| Encrypted-payload retention | Satisfied when encryptor supplied (ACME-0030) | any live-retained payload path must not store cleartext |
 
-| Prerequisite | Why the interface needs it |
-| --- | --- |
-| `ExecutionEngine` | produces lifecycle stages, attempts, terminal results and replay reports |
-| `ScenarioRunner` in `@acme/testing` | executes a multi-step domain test and emits the JSON report the interface renders |
-| One reference module | gives a domain test something domain-specific to configure and measure |
-| Reusable DomainModule conformance kit | implemented by ACME-0015; supplies the module-level verdicts the results view aggregates |
-| `@acme/adapter-sqlite` | gives run history a durable home; the in-memory adapter cannot survive the process |
-
-Phases 1 and 2 of the [build plan](#ordered-build-plan) are the only parts that
-could begin with less, and only against fixture reports rather than a live
-engine.
+Phases 1 and 2 of the [build plan](#ordered-build-plan) can still begin against
+fixture reports rather than a live engine, once the decision gates they depend
+on are resolved.
 
 ## Vocabulary
 

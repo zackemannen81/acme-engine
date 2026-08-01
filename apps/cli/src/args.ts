@@ -61,7 +61,7 @@ export const USAGE = `acme — ACME composition root
 
   --adapter        memory (default) or sqlite
   --database       required with --adapter sqlite
-  --script         deterministic model-call script; no live provider exists
+  --script         deterministic model-call script (CLI mock gateway only)
   --show-payloads  print document, memory and state values instead of redacting
   --json           versioned JSON on stdout instead of a text summary
 
@@ -144,7 +144,7 @@ export function parseCommand(argv: readonly string[]): Command {
     }
     if (script === undefined) {
       throw new UsageError(
-        'execute requires --script <file>; no live provider transport exists.',
+        'execute requires --script <file>; the CLI composition root does not yet select a live provider gateway.',
       );
     }
     return { kind: 'execute', request, script, common: options };

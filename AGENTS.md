@@ -8,16 +8,17 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
-- Current phase: Milestone 1 implementation. The contract layer, pure
-  StateEngine and MemoryEngine, in-memory and durable SQLite repositories,
-  deterministic model mock, shared conformance kits, NarrativeModule,
-  ResearchModule and the bounded single-task ExecutionEngine exist. Both
-  reference domains have offline acceptance scenarios. The OpenAI Responses
-  mapping exists behind a transport port and `@acme/cli` is a working
-  composition root over both repositories, with a ScenarioRunner over
-  `acme-scenario/1`. A `fetch` transport and an opt-in live gate exist, but no
-  ACME contract yet satisfies the provider's strict schema subset, so no live
-  call has reached a success response.
+- Current phase: Milestone 1 delivered; Milestone 2 durability partial;
+  experimental live path proven. The contract layer, pure StateEngine and
+  MemoryEngine, in-memory and durable SQLite repositories, deterministic model
+  mock, shared conformance kits, NarrativeModule, ResearchModule, bounded
+  single-task ExecutionEngine, ScenarioRunner and CLI composition root exist.
+  Both reference domains have offline acceptance scenarios. The OpenAI
+  Responses mapping lowers schemas for strict structured output, has a `fetch`
+  transport and an opt-in live gate, and has reached live success for both
+  reference contracts. Encrypted-payload retention is implemented behind an
+  injected `PayloadEncryptor`. The CLI still drives only the mock gateway via
+  `--script`; wiring a live gateway into the composition root is open.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

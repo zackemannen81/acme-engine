@@ -1,14 +1,15 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 
 ## Identity
 
 - Name: ACME
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
-- Phase: Milestone 1 implementation
+- Phase: Milestone 1 delivered; Milestone 2 durability partial; experimental
+  live path proven (see `docs/CURRENT_STATUS.md`)
 
 ## Problem
 

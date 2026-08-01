@@ -281,6 +281,7 @@ acme-engine/
 │   │   ├── ACME-0028_first-live-provider-calls.md
 │   │   ├── ACME-0029_strict-structured-output-schema-lowering.md
 │   │   ├── ACME-0030_encrypted-payload-retention.md
+│   │   ├── ACME-0031_documentation-reality-sync.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -365,12 +366,12 @@ content remains intentionally omitted here.
 
 ## Planned Structure
 
-The design specification retains the future package map for the live-model
-adapter and general scenarios. Those files and directories must be added only
-by explicitly activated tasks. NarrativeModule and ResearchModule
-phases 1–5, the bounded ExecutionEngine and the durable SQLite adapter are
-implemented in the workspace, each with its own deterministic offline
-acceptance scenario.
+NarrativeModule and ResearchModule phases 1–5, the bounded ExecutionEngine,
+the durable SQLite adapter, the OpenAI Responses adapter (with schema
+lowering and a live success path), ScenarioRunner and the CLI composition
+root are implemented. The live-model path is experimental and opt-in; the CLI
+still selects only the mock gateway. Further packages (Domain Test UI, workers)
+must be added only by explicitly activated tasks.
 
 The two reference-module build and test plans under `docs/design/` are the
 normative implementation guides. Their `docs/presentations/` DOCX renditions
@@ -381,8 +382,9 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
 composition-root application for configuring, executing, inspecting,
 validating and measuring domain tests. No such package exists; the file is a
-specification awaiting review. Its durable-persistence prerequisite now
-exists, but ScenarioRunner and its JSON report do not.
+specification only. Engine prerequisites (ExecutionEngine, both reference
+domains, SQLite, ScenarioRunner, CLI) exist; activation is blocked by the
+specification’s decision gates, not by missing runtime layers.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
 is decided architecture, roadmap or current scope, and no task may cite it as

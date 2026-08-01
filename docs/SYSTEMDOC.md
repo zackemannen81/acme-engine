@@ -65,6 +65,9 @@ scenarios and an opt-in live provider gate.
   retrieval and model-response hash algorithms
 - portable immutable replay read-set and prepared-commit evidence
 - versioned `acme-operation-digest-1` prepared-commit hashing
+- `PayloadEncryptor` port plus pure AES-256-GCM reference helper
+  (`createAes256GcmPayloadEncryptor`); key material is always
+  composition-supplied (no env reads in core)
 
 Two reference domains now exercise this contract layer.
 
@@ -403,9 +406,11 @@ repository adapter. Everything else works through core ports.
 - exit codes separate success, a terminal outcome that did not commit or
   verify, and a usage error
 
-The gateway is limited to the deterministic mock, because no network
-transport exists. Commands that cannot work are absent rather than present and
-failing: there is no `execution resume` without resume behavior.
+The CLI gateway is limited to the deterministic mock via `--script`. A live
+OpenAI mapping, `fetch` transport and opt-in `pnpm test:live` gate exist in
+the workspace, but the composition root does not yet select a provider gateway.
+Commands that cannot work are absent rather than present and failing: there is
+no `execution resume` without resume behavior.
 
 ## Implemented Provider Boundary
 
@@ -666,7 +671,10 @@ boundaries:
   credential or destructive surface
 
 Its unresolved decisions, including whether the interface belongs in version 1
-at all, remain decision gates inside the specification.
+at all, remain decision gates inside the specification. Engine prerequisites
+(ExecutionEngine, both reference domains, SQLite, ScenarioRunner, CLI) are
+satisfied; activation is blocked by those gates, not by missing runtime
+layers.
 
 ## Remaining Implementation Baseline
 
@@ -677,7 +685,10 @@ at all, remain decision gates inside the specification.
 - Retry, repair and revision are bounded and ledgered.
 - Replay uses recorded model results and never invokes a live provider.
   Live `hash-only` executions report `unavailable` rather than failing replay.
+  Live `encrypted-payload` executions can replay when the repository has a
+  working `PayloadEncryptor`.
 - Structured logs redact content by default.
+- CLI live provider selection and outbox drain / fault injection remain open.
 
 ## Deliberately Deferred Decisions
 
@@ -686,6 +697,6 @@ at all, remain decision gates inside the specification.
 - workflow runtime beyond ScenarioRunner
 - vector retrieval
 - provider-specific reconciliation details
-- encryption key lifecycle and privacy deletion
+- encryption key lifecycle (KMS, rotation) and privacy deletion
 
 These require evidence and ADRs before implementation.

@@ -15,11 +15,12 @@ verification and reusable repository/gateway/module conformance suites. The
 pure `@acme/module-narrative` and `@acme/module-research` packages implement
 two reference domains over that same core, each with its own offline
 acceptance scenario, which is the executable evidence that core is
-domain-neutral. The OpenAI Responses mapping exists behind an injected
-transport port and is proven offline against fixtures, and `@acme/cli`
-selects either repository from outside the test suite and runs declarative
-`acme-scenario/1` files. A `fetch` transport and an opt-in live gate exist; no
-live call has yet reached a success response, and no published package exists.
+domain-neutral. The OpenAI Responses mapping lowers schemas for strict
+structured output, is proven offline and has reached live success through an
+opt-in gate. Encrypted-payload retention seals model responses at rest.
+`@acme/cli` selects either repository and runs declarative `acme-scenario/1`
+files, but still uses only the mock gateway via `--script`. No published
+package exists.
 
 ## Start here
 
@@ -59,7 +60,8 @@ tooling/                   Shared configuration and repository checks
 
 ## Current objective
 
-`docs/CURRENT_TASK.md` is the sole source for active work. NarrativeModule and
-ResearchModule phases 1–5, the bounded Milestone 1 single-task ExecutionEngine
-and the durable SQLite adapter are implemented. The next task must be
-explicitly approved before activation.
+`docs/CURRENT_TASK.md` is the sole source for active work. See
+`docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
+(CLI live gateway, Domain Test UI decision gates, M2 residuals, optional
+temperature capability). The next task must be explicitly approved before
+activation.

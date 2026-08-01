@@ -1290,3 +1290,23 @@ Add one dated, signed entry for every meaningful work session or handoff.
   contracts (user terra probe); live default remains gpt-4.1-mini for models
   that accept temperature.
 - Signature: Grok
+
+## 2026-08-01 — ACME-0031 documentation reality sync
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0031
+- Summary: Documentation-only hygiene after ACME-0029/0030 merges. Corrected
+  current-facing claims that still denied the live adapter, live success path,
+  schema lowering, encrypted retention, ScenarioRunner/CLI as Domain Test UI
+  prerequisites, and stale unit-test counts. CLI usage strings now say the
+  composition root has no live gateway yet, not that no transport exists.
+- Files: CURRENT_STATUS, SYSTEMDOC, AGENTS, README, PROJECT_BRIEF phase line,
+  FILESTRUCTURE planned section, domain-test-ui backlog + specification
+  readiness table, backlog README status table, apps/cli args usage text.
+- Verification: `pnpm docs:check` (72 Markdown files), `pnpm format:check`,
+  `pnpm lint`, CLI unit suite 18 tests, `git diff --check`.
+- Follow-ups: empty CURRENT_TASK; next product charter is an explicit choice
+  (CLI live gateway, Domain Test UI phase 1 after gates, M2 residual, or
+  temperature capability).
+- Signature: Grok
