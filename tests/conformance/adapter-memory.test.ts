@@ -2,12 +2,15 @@ import { createInMemoryExecutionRepository } from '../../packages/adapter-memory
 import { executionRepositoryConformance } from '../../packages/testing/src/index.js';
 
 executionRepositoryConformance('in-memory adapter', {
-  createRepository: () =>
+  createRepository: (deps) =>
     createInMemoryExecutionRepository({
       ids: {
         next(kind) {
           return `${kind}-unused`;
         },
       },
+      ...(deps?.payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: deps.payloadEncryptor }),
     }),
 });

@@ -31,6 +31,7 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   └── repository.ts
 │   │   └── test/
+│   │       ├── encrypted-payload.test.ts
 │   │       └── repository.test.ts
 │   ├── adapter-model-mock/
 │   │   ├── package.json
@@ -67,6 +68,7 @@ acme-engine/
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
 │   │   └── test/
+│   │       ├── encrypted-payload.test.ts
 │   │       └── migrations.test.ts
 │   ├── core/
 │   │   ├── package.json
@@ -89,6 +91,7 @@ acme-engine/
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
 │   │   │   ├── modules.ts
+│   │   │   ├── payload-encryptor.ts
 │   │   │   ├── registries.ts
 │   │   │   ├── response-pipeline.ts
 │   │   │   ├── repository-digest.ts
@@ -102,6 +105,7 @@ acme-engine/
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
 │   │   │   ├── model-request-hash.test.ts
+│   │   │   ├── payload-encryptor.test.ts
 │   │   │   ├── repository-digest.test.ts
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
@@ -168,7 +172,8 @@ acme-engine/
 │       │   ├── index.ts
 │       │   ├── model-gateway-conformance.ts
 │       │   ├── repository-conformance.ts
-│       │   └── scenario.ts
+│       │   ├── scenario.ts
+│       │   └── test-payload-encryptor.ts
 │       ├── test/
 │       │   └── workspace-import.test.ts
 │       └── test-d/
@@ -228,6 +233,7 @@ acme-engine/
 │   │   ├── 0013-durable-sqlite-schema-and-driver.md
 │   │   ├── 0014-live-provider-boundary-and-transport-port.md
 │   │   ├── 0015-strict-structured-output-schema-lowering.md
+│   │   ├── 0016-encrypted-payload-retention.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -274,6 +280,7 @@ acme-engine/
 │   │   ├── ACME-0027_scenario-runner.md
 │   │   ├── ACME-0028_first-live-provider-calls.md
 │   │   ├── ACME-0029_strict-structured-output-schema-lowering.md
+│   │   ├── ACME-0030_encrypted-payload-retention.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

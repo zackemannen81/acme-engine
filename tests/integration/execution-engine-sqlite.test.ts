@@ -23,6 +23,7 @@ import {
   type ExecutionRequest,
   type IdGenerator,
 } from '../../packages/core/src/index.js';
+import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 
 import {
   neutralContract,
@@ -32,6 +33,8 @@ import {
   neutralResponse,
   neutralSelection,
 } from '../fixtures/neutral-execution.js';
+
+const payloadEncryptor = createTestPayloadEncryptor();
 
 type OpenDatabase = ReturnType<typeof openDatabase>;
 
@@ -139,6 +142,7 @@ function reopen(location: string): SqliteExecutionRepository {
         throw new Error('Recovery must not allocate new IDs.');
       },
     },
+    payloadEncryptor,
   });
 }
 
@@ -150,6 +154,7 @@ describe('ExecutionEngine durable SQLite integration', () => {
     const repository = createSqliteExecutionRepository({
       database: open(location),
       ids: first.ids,
+      payloadEncryptor,
     });
 
     const committed = await createEngine(
@@ -207,6 +212,7 @@ describe('ExecutionEngine durable SQLite integration', () => {
     const repository = createSqliteExecutionRepository({
       database: open(location),
       ids: original.ids,
+      payloadEncryptor,
     });
     await createEngine(repository, original.ids, gateway).execute(
       executionRequest,
@@ -259,6 +265,7 @@ describe('ExecutionEngine durable SQLite integration', () => {
     const repository = createSqliteExecutionRepository({
       database: open(location),
       ids: ids.ids,
+      payloadEncryptor,
     });
     await createEngine(repository, ids.ids, createGateway()).execute(
       executionRequest,
@@ -268,11 +275,39 @@ describe('ExecutionEngine durable SQLite integration', () => {
     const { createInMemoryExecutionRepository } =
       await import('../../packages/adapter-memory/src/index.js');
     const memoryIds = createIds();
-    const inMemory = createInMemoryExecutionRepository({ ids: memoryIds.ids });
+    const inMemory = createInMemoryExecutionRepository({
+      ids: memoryIds.ids,
+      payloadEncryptor,
+    });
     await createEngine(inMemory, memoryIds.ids, createGateway()).execute(
       executionRequest,
     );
 
-    expect(durable).toEqual(inMemory.snapshot());
+    // Envelope ciphertext is non-deterministic (random IV). Compare the
+    // retention shape, not the sealed bytes.
+    const normalize = (evidence: typeof durable) => ({
+      ...evidence,
+      modelCalls: evidence.modelCalls.map((call) => ({
+        modelCallId: call.modelCallId,
+        executionId: call.executionId,
+        callKey: call.callKey,
+        attempt: call.attempt,
+        purpose: call.purpose,
+        selection: call.selection,
+        requestHash: call.requestHash,
+        startedAt: call.startedAt,
+        status: call.status,
+        responseHash: call.responseHash,
+        completedAt: call.completedAt,
+        sealed: call.protectedResponse !== undefined,
+        hasCleartext: call.response !== undefined,
+      })),
+    });
+    expect(normalize(durable)).toEqual(normalize(inMemory.snapshot()));
+    expect(durable.modelCalls[0]?.response).toBeUndefined();
+    expect(inMemory.snapshot().modelCalls[0]?.response).toBeUndefined();
+    expect(durable.modelCalls[0]?.responseHash).toBe(
+      inMemory.snapshot().modelCalls[0]?.responseHash,
+    );
   });
 });

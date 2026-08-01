@@ -169,11 +169,16 @@ async function scenario(
   const { report, close } = await runScenarioFile(
     command.scenario,
     (overrides) =>
-      createComposition(
-        command.common.adapter,
-        command.common.database,
-        overrides,
-      ),
+      createComposition(command.common.adapter, command.common.database, {
+        // Preserve composition secrets/keys from the CLI root while the
+        // scenario seed still owns clock and ID allocation.
+        ...(options.payloadEncryptor === undefined
+          ? {}
+          : { payloadEncryptor: options.payloadEncryptor }),
+        ...(options.clock === undefined ? {} : { clock: options.clock }),
+        ...(options.ids === undefined ? {} : { ids: options.ids }),
+        ...overrides,
+      }),
   );
   try {
     emit(

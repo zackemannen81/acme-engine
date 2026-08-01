@@ -1,7 +1,9 @@
 import {
   AcmeError,
+  applyModelCallRetention,
   computeOperationDigest,
   nodeHashing,
+  revealModelCallResponse,
   type AcceptResult,
   type AcceptedExecution,
   type CommittedExecution,
@@ -22,6 +24,7 @@ import {
   type ModelCallReservation,
   type NonCommitTerminalRecord,
   type OutboxRecord,
+  type PayloadEncryptor,
   type PreparedCommit,
   type RepositoryEvidence,
   type StateSnapshot,
@@ -34,6 +37,11 @@ import {
 export interface InMemoryExecutionRepositoryOptions {
   readonly ids: IdGenerator;
   readonly hashing?: Hashing;
+  /**
+   * Required only when an execution uses `retention: 'encrypted-payload'`.
+   * Missing encryptor fails at completeModelCall, not at construction.
+   */
+  readonly payloadEncryptor?: PayloadEncryptor;
 }
 
 interface StateHead {
@@ -256,11 +264,13 @@ function assertMutableExecution(execution: ExecutionRecord): void {
 export class InMemoryExecutionRepository implements ExecutionRepository {
   readonly #ids: IdGenerator;
   readonly #hashing: Hashing;
+  readonly #payloadEncryptor: PayloadEncryptor | undefined;
   #store: Store = emptyStore();
 
   constructor(options: InMemoryExecutionRepositoryOptions) {
     this.#ids = options.ids;
     this.#hashing = options.hashing ?? nodeHashing;
+    this.#payloadEncryptor = options.payloadEncryptor;
   }
 
   async accept(input: AcceptedExecution): Promise<AcceptResult> {
@@ -442,16 +452,21 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
           modelCallId: existing.modelCallId,
         });
       }
+      // Compare the engine-supplied plaintext completion only. Envelope
+      // bytes are adapter-owned and non-deterministic (random IV).
       const prior: CompletedModelCall = {
         modelCallId: existing.modelCallId,
         response: completed.response,
         responseHash: existing.responseHash,
-        ...(existing.protectedResponse === undefined
-          ? {}
-          : { protectedResponse: existing.protectedResponse }),
         completedAt: existing.completedAt,
       };
-      if (!equivalent(prior, completed, this.#hashing)) {
+      const expected: CompletedModelCall = {
+        modelCallId: completed.modelCallId,
+        response: completed.response,
+        responseHash: completed.responseHash,
+        completedAt: completed.completedAt,
+      };
+      if (!equivalent(prior, expected, this.#hashing)) {
         corruption('Divergent model-call completion was attempted.', {
           modelCallId: completed.modelCallId,
         });
@@ -464,16 +479,18 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       });
     }
     const execution = assertKnownExecution(this.#store, existing.executionId);
-    const retainPayload = execution.policy.retention === 'encrypted-payload';
+    const retained = applyModelCallRetention({
+      retention: execution.policy.retention,
+      completed,
+      ...(this.#payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: this.#payloadEncryptor }),
+    });
     const record: ModelCallRecord = clone(
       {
         ...existing,
         status: 'succeeded',
-        ...(retainPayload ? { response: completed.response } : {}),
-        responseHash: completed.responseHash,
-        ...(retainPayload && completed.protectedResponse !== undefined
-          ? { protectedResponse: completed.protectedResponse }
-          : {}),
+        ...retained,
         completedAt: completed.completedAt,
       },
       this.#hashing,
@@ -829,7 +846,8 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
         (left, right) =>
           compareText(left.callKey, right.callKey) ||
           left.attempt - right.attempt,
-      );
+      )
+      .map((call) => this.#revealCall(call));
     return clone(
       {
         executionId,
@@ -846,6 +864,19 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       },
       this.#hashing,
     );
+  }
+
+  #revealCall(call: ModelCallRecord): ModelCallRecord {
+    const response = revealModelCallResponse({
+      call,
+      ...(this.#payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: this.#payloadEncryptor }),
+    });
+    if (response === undefined) {
+      return call;
+    }
+    return { ...call, response };
   }
 
   async markTerminal(input: NonCommitTerminalRecord): Promise<void> {

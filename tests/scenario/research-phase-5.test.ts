@@ -16,6 +16,7 @@ import {
   type NormalizedModelResponse,
 } from '../../packages/core/src/index.js';
 import { createInMemoryExecutionRepository } from '../../packages/adapter-memory/src/index.js';
+import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 import { createScriptedModelGateway } from '../../packages/adapter-model-mock/src/index.js';
 import {
   RESEARCH_STATE_SCHEMA_VERSION,
@@ -319,7 +320,10 @@ describe('ResearchModule Phase 5 offline acceptance', () => {
     const ids = createIds();
     harness = {
       ids,
-      repository: createInMemoryExecutionRepository({ ids: ids.ids }),
+      repository: createInMemoryExecutionRepository({
+        ids: ids.ids,
+        payloadEncryptor: createTestPayloadEncryptor(),
+      }),
     };
   });
 

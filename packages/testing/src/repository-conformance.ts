@@ -1,15 +1,19 @@
 import {
   AcmeError,
   computeOperationDigest,
+  createAes256GcmPayloadEncryptor,
   type AcceptedExecution,
   type ExecutionRepository,
+  type PayloadEncryptor,
   type PreparedCommit,
   type PreparedCommitContent,
 } from '@acme/core';
 import { describe, expect, it } from 'vitest';
 
 export interface ExecutionRepositoryConformanceOptions {
-  readonly createRepository: () => ExecutionRepository;
+  readonly createRepository: (deps?: {
+    readonly payloadEncryptor?: PayloadEncryptor;
+  }) => ExecutionRepository;
 }
 
 const timestamp = '2026-07-29T12:00:00.000Z';
@@ -18,6 +22,7 @@ function accepted(
   executionId: string,
   requestKey = executionId,
   requestFingerprint = `fingerprint-${executionId}`,
+  retention: 'none' | 'hash-only' | 'encrypted-payload' = 'hash-only',
 ): AcceptedExecution {
   return {
     executionId,
@@ -39,11 +44,21 @@ function accepted(
       maxModelCalls: 1,
       maxRepairCalls: 0,
       maxRevisionCalls: 0,
-      retention: 'hash-only',
+      retention,
     },
     createdAt: timestamp,
   };
 }
+
+const fixtureResponse = {
+  provider: 'fixture',
+  model: 'fixture',
+  receivedAt: timestamp,
+  finishReason: 'stop' as const,
+  text: '{"secret":"cleartext-must-not-rest"}',
+  usage: {},
+  metadata: {},
+};
 
 function prepared(
   executionId: string,
@@ -307,6 +322,98 @@ export function executionRepositoryConformance(
       await expect(
         repository.loadReplayEvidence('execution-replay'),
       ).resolves.toEqual(evidence);
+    });
+
+    it('seals encrypted-payload at rest and reveals it for replay with the key', async () => {
+      const key = new Uint8Array(32).fill(3);
+      const encryptor = createAes256GcmPayloadEncryptor({
+        key,
+        keyId: 'conformance-key',
+      });
+      const repository = options.createRepository({
+        payloadEncryptor: encryptor,
+      });
+      await repository.accept(
+        accepted(
+          'execution-encrypted',
+          'execution-encrypted',
+          'fingerprint-execution-encrypted',
+          'encrypted-payload',
+        ),
+      );
+      await repository.reserveModelCall({
+        modelCallId: 'call-encrypted',
+        executionId: 'execution-encrypted',
+        callKey: 'model:0',
+        attempt: 1,
+        purpose: 'primary',
+        selection: { profile: 'fixture' },
+        requestHash: 'request-hash',
+        startedAt: timestamp,
+      });
+      await repository.completeModelCall({
+        modelCallId: 'call-encrypted',
+        response: fixtureResponse,
+        responseHash: 'response-hash',
+        completedAt: timestamp,
+      });
+      await repository.commit(
+        prepared('execution-encrypted', {
+          replayEvidence: {
+            taskInput: { executionId: 'execution-encrypted' },
+            readSet: {
+              state: null,
+              loadedMemories: [],
+              retrievedMemories: [],
+              documents: [],
+            },
+          },
+        }),
+      );
+
+      const evidence = await repository.loadReplayEvidence(
+        'execution-encrypted',
+      );
+      expect(evidence?.modelCalls[0]?.response).toEqual(fixtureResponse);
+      expect(evidence?.modelCalls[0]?.responseHash).toBe('response-hash');
+      expect(evidence?.modelCalls[0]?.protectedResponse).toEqual(
+        expect.any(String),
+      );
+      expect(
+        JSON.stringify(evidence?.modelCalls[0]?.protectedResponse),
+      ).not.toContain('cleartext-must-not-rest');
+    });
+
+    it('fails encrypted-payload completion without an encryptor', async () => {
+      const repository = options.createRepository();
+      await repository.accept(
+        accepted(
+          'execution-missing-encryptor',
+          'execution-missing-encryptor',
+          'fingerprint-execution-missing-encryptor',
+          'encrypted-payload',
+        ),
+      );
+      await repository.reserveModelCall({
+        modelCallId: 'call-missing-encryptor',
+        executionId: 'execution-missing-encryptor',
+        callKey: 'model:0',
+        attempt: 1,
+        purpose: 'primary',
+        selection: { profile: 'fixture' },
+        requestHash: 'request-hash',
+        startedAt: timestamp,
+      });
+      await expect(
+        repository.completeModelCall({
+          modelCallId: 'call-missing-encryptor',
+          response: fixtureResponse,
+          responseHash: 'response-hash',
+          completedAt: timestamp,
+        }),
+      ).rejects.toMatchObject({
+        data: { code: 'INVALID_REQUEST' },
+      });
     });
   });
 }

@@ -14,6 +14,7 @@ import {
   type RunOptions,
 } from '../../apps/cli/src/index.js';
 import {
+  createTestPayloadEncryptor,
   parseScenario,
   SCENARIO_REPORT_VERSION,
 } from '../../packages/testing/src/index.js';
@@ -70,6 +71,7 @@ function capture(): {
       },
       clock: { now: () => '2026-07-31T12:00:00.000Z' },
       ids: createIds(),
+      payloadEncryptor: createTestPayloadEncryptor(),
     },
   };
 }

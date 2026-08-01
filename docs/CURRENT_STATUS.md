@@ -40,6 +40,7 @@ implementation baseline:
 - ADR-0013: Durable SQLite schema and driver
 - ADR-0014: Live provider boundary and transport port
 - ADR-0015: Strict structured-output schema lowering
+- ADR-0016: Encrypted payload retention
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
@@ -258,17 +259,10 @@ Every committed execution replay-verifies offline with an unchanged operation
 digest. Both reference domains now have executable end-to-end acceptance
 evidence.
 
-ACME-0029 is complete pending archival. The model-facing output schemas of both
-reference domains express an unknown value as `null`, and the OpenAI adapter
-lowers those canonical schemas into the provider's strict structured-output
-subset before any network call. Discriminated `oneOf` becomes nested `anyOf`;
-every property is required; unlowerable constructs raise
-`UNSUPPORTED_CAPABILITY` locally. `providerWireSchemaHash` records the wire
-form without contaminating `acme-model-request-hash-1`. Live calls with
-`research.observe-evidence` and `narrative.observe-document` both reached a
-committed `200` under the lowered schema. State still does not accept `null`
-for those fields: shared narrative schemas remain split, and modules narrow
-reported nulls before deltas or memory.
+ACME-0029 completed schema lowering and live success under the provider subset.
+ACME-0030 implemented encrypted-payload retention (ADR-0016): repository
+adapters seal model responses with an injected encryptor, store only the
+envelope, and reveal plaintext on replay load when the key is available.
 
 ## Persistent Gaps
 
@@ -292,15 +286,12 @@ reported nulls before deltas or memory.
   proposed interface is specification-only; ScenarioRunner, durable
   persistence and its unresolved decision gates still block activation, whose
   proposal remains in `docs/backlog/`.
-- `retention: 'encrypted-payload'` performs no encryption. Both adapters store
-  the complete `NormalizedModelResponse` as supplied, and `protectedResponse`
-  is a caller-supplied field that nothing currently populates. No delivered
-  behavior is wrong today because every retained payload is a test fixture,
-  but the mode's name promises more than it does. `retention: 'hash-only'` is
-  not a workaround: without a retained response, `replayVerify()` reports
-  `unavailable`. Retaining a live provider response and replaying it are
-  therefore not simultaneously available under an honest reading, which the
-  live-provider ADR must resolve before any real payload is stored.
+- `retention: 'encrypted-payload'` now encrypts at rest via an injected
+  `PayloadEncryptor` (AES-256-GCM reference helper in core). Cleartext
+  `response` is not stored; `protectedResponse` holds the envelope.
+  `replayVerify()` decrypts when the key works and reports `unavailable`
+  when it does not. Composition roots supply the encryptor (CLI:
+  override or `ACME_PAYLOAD_KEY` / `ACME_PAYLOAD_KEY_ID`).
 - ACME-0029 completed the offline lowering and confirmed a live success path.
   Output-facing schemas accept `null` for unknown values; the adapter lowers
   the canonical JSON Schema into the provider strict subset before dispatch;

@@ -1249,3 +1249,44 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Follow-ups: empty `CURRENT_TASK` template awaits the next approved charter.
   Optional: profile capability for models that reject `temperature`.
 - Signature: Grok
+
+## 2026-08-01 — ACME-0030 draft: encrypted-payload retention decisions
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0030 (Draft)
+- Summary: Captured the four retention decisions as accepted ADR-0016 and a
+  Draft task charter. No runtime code changed.
+- Decisions: (1) inject PayloadEncryptor into repository adapters; core owns
+  the port only; composition owns keys. (2) protectedResponse holds the
+  envelope; cleartext response is not stored. (3) replayVerify works when the
+  key is available, else unavailable. (4) build encryption now; do not rename
+  the mode. First implementer may be a SymmetricKeyEncryptor with caller-supplied
+  key material.
+- Verification: documentation only; docs:check not re-run in this note if
+  later edits follow — run before freeze.
+- Follow-ups: Review and freeze ACME-0030 to Ready when approved, then
+  implement. Open: package home for SymmetricKeyEncryptor; missing-key
+  diagnostic code; whether encryptor is required at repository construction.
+- Signature: Grok
+
+## 2026-08-01 — ACME-0030 complete: encrypted-payload retention
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0030
+- Summary: Implemented ADR-0016. Core defines PayloadEncryptor and
+  createAes256GcmPayloadEncryptor (key material injected, no env in core).
+  Both repository adapters seal on write and reveal on loadReplayEvidence.
+  Cleartext response is not stored under encrypted-payload.
+- Open questions closed: pure AES helper in core; missing key uses details on
+  REPLAY_MODEL_RESPONSE_UNAVAILABLE only; encryptor optional until policy needs
+  it. CLI accepts override or ACME_PAYLOAD_KEY / ACME_PAYLOAD_KEY_ID.
+- Verification: docs:check, format, lint, typecheck, boundaries, build.
+  Unit 345 tests / 42 files; conformance 50 / 7; integration 13 / 2;
+  scenario 19 / 3. Raw SQLite row asserts null response_payload and no cleartext
+  marker; reopen without key leaves response absent.
+- Note: session resumed after power loss mid-task; temperature:0 restored in
+  contracts (user terra probe); live default remains gpt-4.1-mini for models
+  that accept temperature.
+- Signature: Grok
