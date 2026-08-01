@@ -21,6 +21,10 @@ export function processLossAt(
     commit: base.commit.bind(base),
     markTerminal: base.markTerminal.bind(base),
     loadReplayEvidence: base.loadReplayEvidence.bind(base),
+    leaseOutbox: base.leaseOutbox.bind(base),
+    markOutboxDelivered: base.markOutboxDelivered.bind(base),
+    markOutboxFailed: base.markOutboxFailed.bind(base),
+    listOutbox: base.listOutbox.bind(base),
   };
   const lose = (): never => {
     throw new Error('Simulated process loss.');

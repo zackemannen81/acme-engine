@@ -16,6 +16,11 @@ import {
   type ExecutionReplayEvidence,
   type ExecutionRepository,
   type ExecutionResumeState,
+  type LeasedOutboxEntry,
+  type DeliveredOutboxEntry,
+  type FailedOutboxEntry,
+  type OutboxLease,
+  type OutboxQuery,
   type FailedModelCall,
   type Hashing,
   type IdGenerator,
@@ -138,6 +143,21 @@ function memoryConflict(
 function requireText(value: string, field: string): void {
   if (value.trim().length === 0) {
     invalid(`${field} must be a non-empty string.`);
+  }
+}
+
+function requireLimit(value: number): void {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    invalid('limit must be a positive safe integer.');
+  }
+}
+
+function assertClaimedOutbox(record: OutboxRecord): void {
+  if (record.status !== 'claimed') {
+    invalid('Outbox entry is not claimed.', {
+      eventId: record.eventId,
+      status: record.status,
+    });
   }
 }
 
@@ -952,6 +972,129 @@ export class SqliteExecutionRepository implements ExecutionRepository {
       return call;
     }
     return { ...call, response };
+  }
+
+  async leaseOutbox(claim: OutboxLease): Promise<readonly LeasedOutboxEntry[]> {
+    requireLimit(claim.limit);
+    return this.#immediate((): readonly LeasedOutboxEntry[] => {
+      const due = this.#outboxRows(
+        `WHERE outbox.status IN ('pending', 'claimed')
+           AND outbox.available_at <= ?`,
+        [claim.now],
+        claim.limit,
+      );
+      for (const entry of due) {
+        this.#run(
+          `UPDATE outbox
+             SET status = 'claimed',
+                 attempt_count = attempt_count + 1,
+                 available_at = ?,
+                 claimed_at = ?
+           WHERE event_id = ?`,
+          [claim.leaseExpiresAt, claim.now, entry.record.eventId],
+        );
+      }
+      return this.#clone(
+        due.map(({ record, event }) => ({
+          record: {
+            ...record,
+            status: 'claimed' as const,
+            attemptCount: record.attemptCount + 1,
+            availableAt: claim.leaseExpiresAt,
+            claimedAt: claim.now,
+          },
+          event,
+        })),
+      );
+    });
+  }
+
+  async markOutboxDelivered(entry: DeliveredOutboxEntry): Promise<void> {
+    requireText(entry.eventId, 'eventId');
+    this.#immediate(() => {
+      const record = this.#requireOutbox(entry.eventId);
+      if (record.status === 'delivered') {
+        return;
+      }
+      assertClaimedOutbox(record);
+      this.#run(
+        `UPDATE outbox
+           SET status = 'delivered', delivered_at = ?, last_error_json = NULL
+         WHERE event_id = ?`,
+        [entry.deliveredAt, entry.eventId],
+      );
+    });
+  }
+
+  async markOutboxFailed(entry: FailedOutboxEntry): Promise<void> {
+    requireText(entry.eventId, 'eventId');
+    this.#immediate(() => {
+      const record = this.#requireOutbox(entry.eventId);
+      if (record.status === 'delivered') {
+        corruption('A delivered outbox entry cannot fail.', {
+          eventId: entry.eventId,
+        });
+      }
+      if (record.status === 'failed' && entry.retryAt === undefined) {
+        return;
+      }
+      assertClaimedOutbox(record);
+      this.#run(
+        `UPDATE outbox
+           SET status = ?, available_at = ?, last_error_json = ?
+         WHERE event_id = ?`,
+        [
+          entry.retryAt === undefined ? 'failed' : 'pending',
+          entry.retryAt ?? entry.failedAt,
+          this.#json(entry.error),
+          entry.eventId,
+        ],
+      );
+    });
+  }
+
+  async listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]> {
+    requireLimit(query.limit);
+    const rows =
+      query.status === undefined
+        ? this.#outboxRows('', [], query.limit)
+        : this.#outboxRows(
+            'WHERE outbox.status = ?',
+            [query.status],
+            query.limit,
+          );
+    return this.#clone(rows);
+  }
+
+  /** Claim order is `occurred_at` then `event_id`, fixed by ADR-0018. */
+  #outboxRows(
+    where: string,
+    params: readonly SqlValue[],
+    limit: number,
+  ): readonly LeasedOutboxEntry[] {
+    return this.#all<OutboxRow & DomainEventRow>(
+      `SELECT outbox.*, domain_events.*
+         FROM outbox
+         JOIN domain_events ON domain_events.event_id = outbox.event_id
+         ${where}
+        ORDER BY domain_events.occurred_at, outbox.event_id
+        LIMIT ?`,
+      [...params, limit],
+    ).map((row) => ({
+      record: toOutboxRecord(row),
+      event: toDomainEventRecord(row),
+    }));
+  }
+
+  #requireOutbox(eventId: string): OutboxRecord {
+    const row = this.#one<OutboxRow>(
+      'SELECT * FROM outbox WHERE event_id = ?',
+      [eventId],
+    );
+    if (row === undefined) {
+      invalid('Unknown outbox entry.', { eventId });
+    }
+    return toOutboxRecord(row);
   }
 
   async markTerminal(input: NonCommitTerminalRecord): Promise<void> {

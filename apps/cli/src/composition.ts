@@ -71,6 +71,8 @@ function payloadEncryptorFromEnv(): PayloadEncryptor | undefined {
 
 export interface Composition {
   readonly repository: InspectableRepository;
+  /** The selected clock, so commands that need time do not invent one. */
+  readonly clock: Clock;
   readonly close: () => void;
   engine(gateway: ModelGateway): ExecutionEngine;
 }
@@ -133,6 +135,7 @@ export function createComposition(
 
   return {
     repository,
+    clock,
     close,
     engine(gateway) {
       return createExecutionEngine({

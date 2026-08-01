@@ -16,6 +16,11 @@ import {
   type ExecutionReplayEvidence,
   type ExecutionRepository,
   type ExecutionResumeState,
+  type LeasedOutboxEntry,
+  type DeliveredOutboxEntry,
+  type FailedOutboxEntry,
+  type OutboxLease,
+  type OutboxQuery,
   type FailedModelCall,
   type Hashing,
   type IdGenerator,
@@ -173,6 +178,21 @@ function corruption(message: string, details?: JsonValue): never {
     retryable: false,
     ...(details === undefined ? {} : { details }),
   });
+}
+
+function requireLimit(value: number): void {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    invalid('limit must be a positive safe integer.');
+  }
+}
+
+function assertClaimedOutbox(record: OutboxRecord): void {
+  if (record.status !== 'claimed') {
+    invalid('Outbox entry is not claimed.', {
+      eventId: record.eventId,
+      status: record.status,
+    });
+  }
 }
 
 function stateConflict(expected: number, actual: number): never {
@@ -905,6 +925,129 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
       return call;
     }
     return { ...call, response };
+  }
+
+  async leaseOutbox(claim: OutboxLease): Promise<readonly LeasedOutboxEntry[]> {
+    requireLimit(claim.limit);
+    const due = this.#orderedOutbox().filter(
+      ({ record }) =>
+        record.status !== 'delivered' &&
+        record.status !== 'failed' &&
+        record.availableAt <= claim.now,
+    );
+    if (due.length === 0) {
+      return clone([], this.#hashing);
+    }
+    const staged = stageStore(this.#store);
+    const claimed = due.slice(0, claim.limit).map(({ record, event }) => {
+      const updated: OutboxRecord = clone(
+        {
+          ...record,
+          status: 'claimed',
+          attemptCount: record.attemptCount + 1,
+          availableAt: claim.leaseExpiresAt,
+          claimedAt: claim.now,
+        },
+        this.#hashing,
+      );
+      staged.outbox.set(record.eventId, updated);
+      return { record: updated, event };
+    });
+    this.#store = staged;
+    return clone(claimed, this.#hashing);
+  }
+
+  async markOutboxDelivered(entry: DeliveredOutboxEntry): Promise<void> {
+    const record = this.#requireOutbox(entry.eventId);
+    if (record.status === 'delivered') {
+      return;
+    }
+    assertClaimedOutbox(record);
+    const staged = stageStore(this.#store);
+    staged.outbox.set(
+      record.eventId,
+      clone(
+        {
+          eventId: record.eventId,
+          status: 'delivered',
+          attemptCount: record.attemptCount,
+          availableAt: record.availableAt,
+          ...(record.claimedAt === undefined
+            ? {}
+            : { claimedAt: record.claimedAt }),
+          deliveredAt: entry.deliveredAt,
+        },
+        this.#hashing,
+      ),
+    );
+    this.#store = staged;
+  }
+
+  async markOutboxFailed(entry: FailedOutboxEntry): Promise<void> {
+    const record = this.#requireOutbox(entry.eventId);
+    if (record.status === 'delivered') {
+      corruption('A delivered outbox entry cannot fail.', {
+        eventId: entry.eventId,
+      });
+    }
+    if (record.status === 'failed' && entry.retryAt === undefined) {
+      return;
+    }
+    assertClaimedOutbox(record);
+    const staged = stageStore(this.#store);
+    staged.outbox.set(
+      record.eventId,
+      clone(
+        {
+          eventId: record.eventId,
+          status: entry.retryAt === undefined ? 'failed' : 'pending',
+          attemptCount: record.attemptCount,
+          availableAt: entry.retryAt ?? entry.failedAt,
+          ...(record.claimedAt === undefined
+            ? {}
+            : { claimedAt: record.claimedAt }),
+          lastError: entry.error,
+        },
+        this.#hashing,
+      ),
+    );
+    this.#store = staged;
+  }
+
+  async listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]> {
+    requireLimit(query.limit);
+    const matching = this.#orderedOutbox().filter(
+      ({ record }) =>
+        query.status === undefined || record.status === query.status,
+    );
+    return clone(matching.slice(0, query.limit), this.#hashing);
+  }
+
+  #orderedOutbox(): readonly LeasedOutboxEntry[] {
+    const entries: LeasedOutboxEntry[] = [];
+    for (const record of this.#store.outbox.values()) {
+      const event = this.#store.events.get(record.eventId);
+      if (event === undefined) {
+        corruption('Outbox entry references a missing domain event.', {
+          eventId: record.eventId,
+        });
+      }
+      entries.push({ record, event });
+    }
+    return entries.sort(
+      (left, right) =>
+        compareText(left.event.occurredAt, right.event.occurredAt) ||
+        compareText(left.record.eventId, right.record.eventId),
+    );
+  }
+
+  #requireOutbox(eventId: string): OutboxRecord {
+    requireText(eventId, 'eventId');
+    const record = this.#store.outbox.get(eventId);
+    if (record === undefined) {
+      invalid('Unknown outbox entry.', { eventId });
+    }
+    return record;
   }
 
   async markTerminal(input: NonCommitTerminalRecord): Promise<void> {

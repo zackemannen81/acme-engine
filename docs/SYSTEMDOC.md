@@ -530,6 +530,35 @@ Both repository adapters prove the same behavior, and the SQLite proof
 survives a real close and reopen of the database file: the resumed run reaches
 the same operation digest as an uninterrupted run of the same request.
 
+## Implemented Outbox Delivery
+
+Committed domain events leave the outbox through an explicit bounded drain
+(ADR-0018). This repository starts no timer and no worker: a composition root
+calls `drainOutbox`, which performs exactly one leased batch per call.
+
+- `leaseOutbox` atomically leases due entries — `pending`, or leased past
+  their expiry, with `availableAt <= now` — ordered by event `occurredAt` then
+  `eventId`, incrementing the attempt count and setting the lease expiry. The
+  API says lease because `claim` is Research vocabulary the core guard
+  forbids; the persisted status value stays `claimed`
+- the lease is a visibility timeout rather than a lock, so a holder that dies
+  strands nothing; the entry returns by itself
+- `markOutboxDelivered` and `markOutboxFailed` settle a leased entry; a
+  failure carries `lastError` and either a `retryAt` that returns the entry to
+  `pending` or, without one, the terminal `failed` status
+- the repository owns no retry policy: backoff and giving up are an injected
+  function of the attempt count
+- delivery is at-least-once. A crash between a successful delivery and its
+  settlement re-delivers after the lease expires, and consumers must
+  deduplicate on `eventId`
+- `OutboxDispatcher` carries no transport, network or provider vocabulary, and
+  `drainOutbox` returns a versioned `acme-outbox-drain-report/1`
+
+`acme outbox inspect` and `acme outbox drain` expose this to an operator. The
+CLI dispatcher hands events to the operator through the drain report rather
+than inventing a transport; a real transport is a composition-root change.
+`failed` entries have no redrive path.
+
 ## System Purpose
 
 ACME coordinates typed, model-backed tasks while keeping model communication,
@@ -741,8 +770,9 @@ layers.
 - Structured logs redact content by default.
 - An interrupted execution resumes from recorded evidence without a second
   provider call (ADR-0017).
-- ScenarioRunner live provider steps, outbox drain and fault injection remain
-  open.
+- Committed events leave the outbox through an explicit drain (ADR-0018);
+  nothing drains on its own.
+- ScenarioRunner live provider steps remain open.
 
 ## Deliberately Deferred Decisions
 

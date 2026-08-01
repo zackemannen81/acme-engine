@@ -52,3 +52,4 @@ current architecture.
 - [`0015-strict-structured-output-schema-lowering.md`](0015-strict-structured-output-schema-lowering.md)
 - [`0016-encrypted-payload-retention.md`](0016-encrypted-payload-retention.md)
 - [`0017-durable-execution-resume.md`](0017-durable-execution-resume.md)
+- [`0018-outbox-delivery-boundary.md`](0018-outbox-delivery-boundary.md)

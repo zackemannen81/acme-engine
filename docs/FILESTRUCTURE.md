@@ -91,6 +91,7 @@ acme-engine/
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
 │   │   │   ├── modules.ts
+│   │   │   ├── outbox.ts
 │   │   │   ├── payload-encryptor.ts
 │   │   │   ├── registries.ts
 │   │   │   ├── response-pipeline.ts
@@ -105,6 +106,7 @@ acme-engine/
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
 │   │   │   ├── model-request-hash.test.ts
+│   │   │   ├── outbox.test.ts
 │   │   │   ├── payload-encryptor.test.ts
 │   │   │   ├── repository-digest.test.ts
 │   │   │   ├── registries.test.ts
@@ -195,6 +197,7 @@ acme-engine/
 │   │   └── openai-responses.test.ts
 │   ├── integration/
 │   │   ├── durability-sqlite.test.ts
+│   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   └── execution-engine-sqlite.test.ts
 │   └── scenario/
@@ -238,6 +241,7 @@ acme-engine/
 │   │   ├── 0015-strict-structured-output-schema-lowering.md
 │   │   ├── 0016-encrypted-payload-retention.md
 │   │   ├── 0017-durable-execution-resume.md
+│   │   ├── 0018-outbox-delivery-boundary.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -290,6 +294,7 @@ acme-engine/
 │   │   ├── ACME-0032_cli-live-openai-gateway.md
 │   │   ├── ACME-0033_durable-execution-resume.md
 │   │   ├── ACME-0034_milestone-2-durability-proofs.md
+│   │   ├── ACME-0035_outbox-delivery-boundary.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
