@@ -71,6 +71,7 @@ tooling/                   Shared configuration and repository checks
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
 `docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(Domain Test UI decision gates, outbox redrive and real transports, ambiguous
-call reconciliation, key lifecycle, optional parameter-capability gating). The
-next task must be explicitly approved before activation.
+(Domain Test UI proposed gate freezes awaiting implementation charter, outbox
+redrive and real transports, ambiguous call reconciliation, key lifecycle,
+optional parameter-capability gating). The next task must be explicitly
+approved before activation.

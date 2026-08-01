@@ -138,15 +138,15 @@ adapter does not read in v1 and is deferred.
 
 ### Retention
 
-Live executions use `retention: 'hash-only'` until real encrypted retention
-exists. The payload is deliberately not persisted, so `replayVerify()` returns
-`unavailable` for those executions rather than `failed`. That distinction is
-load-bearing: the evidence is absent by policy, not lost by error.
+Live executions used `retention: 'hash-only'` until real encrypted retention
+existed. The payload was deliberately not persisted, so `replayVerify()`
+returned `unavailable` rather than `failed`. That distinction is load-bearing:
+the evidence is absent by policy, not lost by error.
 
-`retention: 'encrypted-payload'` remains implemented as plaintext retention
-and must not be used for live provider data. Closing that gap is proposed in
-`docs/backlog/encrypted-payload-retention.md` and is not part of this
-decision beyond forbidding its use for real payloads.
+`retention: 'encrypted-payload'` is implemented by ADR-0016 / ACME-0030
+(injected `PayloadEncryptor`, ciphertext at rest). Live composition roots may
+use it when they supply an encryptor; the opt-in live gate may still default
+to `hash-only` until that wiring is normal.
 
 ## Alternatives Considered
 
@@ -239,5 +239,5 @@ does not inherit correctness by resembling this one.
 - [ADR-0003 SQLite revisioned Unit of Work](0003-sqlite-revisioned-unit-of-work.md)
 - [ADR-0007 deterministic model mock and gateway conformance](0007-deterministic-model-mock-and-gateway-conformance.md)
 - [ADR-0012 Milestone 1 execution identity and replay](0012-milestone-1-execution-identity-and-replay.md)
-- [Encrypted payload retention proposal](../backlog/encrypted-payload-retention.md)
+- [ADR-0016 encrypted payload retention](0016-encrypted-payload-retention.md)
 - [ACME specification, model gateway](../design/acme-design-and-development-spec.md)

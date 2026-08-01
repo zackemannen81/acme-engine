@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TestRegistry Workbench - Professional Test Engineering Suite</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-pass": "#107C10",
+                        "on-secondary-container": "#606366",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-tint": "#5f5e5f",
+                        "surface": "#fdf8f8",
+                        "on-primary-fixed": "#1b1b1c",
+                        "tertiary-fixed": "#e6e2de",
+                        "on-tertiary-fixed-variant": "#484644",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#858384",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#e5e2e3",
+                        "on-tertiary-container": "#868380",
+                        "surface-container-low": "#f7f3f2",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#c8c6c7",
+                        "border-subtle": "#E1E1E1",
+                        "surface-bright": "#fdf8f8",
+                        "outline-variant": "#c7c6ca",
+                        "on-surface": "#1c1b1b",
+                        "on-tertiary-fixed": "#1c1b19",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#dee0e3",
+                        "status-warning": "#FFB900",
+                        "on-background": "#1c1b1b",
+                        "status-blocked": "#323130",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#46474a",
+                        "outline": "#76777b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#ddd9d9",
+                        "surface-variant": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#1c1b19",
+                        "surface-container": "#f1edec",
+                        "status-info": "#0078D4",
+                        "on-primary-fixed-variant": "#474647",
+                        "background": "#fdf8f8",
+                        "surface-muted": "#F3F2F1",
+                        "surface-container-highest": "#e5e2e1",
+                        "surface-container-high": "#ebe7e7",
+                        "primary": "#000000",
+                        "status-ambiguous": "#797775",
+                        "secondary-fixed": "#e1e2e6",
+                        "secondary": "#5c5f62",
+                        "inverse-primary": "#c8c6c7",
+                        "tertiary-fixed-dim": "#cac6c2",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1b1b1c",
+                        "status-fail": "#D83B01",
+                        "inverse-on-surface": "#f4f0ef",
+                        "inverse-surface": "#313030",
+                        "on-secondary-fixed": "#191c1f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-gap": "8px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "unit": "4px",
+                        "panel-padding": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "code-sm": ["JetBrains Mono"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "code-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "code-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e1e1e1; border-radius: 2px; }
+        .redacted-overlay {
+            position: relative;
+            filter: blur(4px);
+            user-select: none;
+            cursor: pointer;
+            transition: filter 0.2s ease;
+        }
+        .redacted-overlay:hover { filter: blur(0px); }
+        .registry-panel { border: 1px solid #E1E1E1; background: #ffffff; }
+        .diff-line-added { background-color: rgba(16, 124, 16, 0.1); border-left: 2px solid #107C10; }
+        .diff-line-removed { background-color: rgba(216, 59, 1, 0.1); border-left: 2px solid #D83B01; }
+        .redacted { position: relative; color: transparent !important; user-select: none; }
+        .redacted::after { content: ""; position: absolute; inset: 0; background: #e1e1e1; border-radius: 2px; }
+        .reveal-btn:hover ~ .redacted { color: inherit !important; }
+        .reveal-btn:hover ~ .redacted::after { display: none; }
+        .grid-bg {
+            background-image: radial-gradient(circle, #E1E1E1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const TopNavBar = () => {
+            const location = useLocation();
+            const isPath = (path) => location.pathname === path;
+
+            return (
+                <header className="bg-surface border-b border-border-subtle flex justify-between items-center w-full px-gutter h-14 z-50 fixed top-0 left-0">
+                    <div className="flex items-center gap-6">
+                        <Link to="/" className="font-headline-md text-headline-md font-bold text-on-background">TestRegistry-v1.2</Link>
+                        <div className="hidden md:flex gap-4">
+                            <nav className="flex items-center gap-4 h-14">
+                                <Link to="/catalog" className={`${isPath('/catalog') ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant'} px-1 h-full flex items-center transition-colors font-body-md text-body-md`}>Catalog</Link>
+                                <Link to="/test-plans" className={`${isPath('/test-plans') ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant'} px-1 h-full flex items-center transition-colors font-body-md text-body-md`}>Test Plans</Link>
+                                <Link to="/results" className={`${isPath('/results') ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant'} px-1 h-full flex items-center transition-colors font-body-md text-body-md`}>Analytics</Link>
+                            </nav>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative hidden sm:block">
+                            <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                            <input className="bg-surface-container-low border border-border-subtle pl-9 pr-4 py-1.5 text-body-sm w-64 focus:outline-none focus:ring-1 focus:ring-primary rounded" placeholder="Search registry..." type="text"/>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 transition-colors rounded-full">notifications</button>
+                            <button className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 transition-colors rounded-full">help</button>
+                            <button className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 transition-colors rounded-full">settings</button>
+                            <div className="w-8 h-8 rounded-full bg-surface-container-high ml-2 border border-border-subtle overflow-hidden">
+                                <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALyVATd0D5sltJgX_eSTX-S7URFuxUXKUuGJfMK_9SK2jPZKkH1c2gUNIS9gRa9QS7YOtu-MzRyD09xG4sSfz9fHDNJ7aR6K6Wn2jj6v7u7ynMLQZMEwWcTz_aOaR4wfpO8vZg6kdfZIwVC7d5GRxdr0a_VIeOH6B-NGMIjeXn6eX6RhhwGA6wwHLwrkjnr0SHFuH8NoqnjW_Nww5J2IEv9HNF-EXjg7YqRyT_a0VdkR8X53fLwB6k" alt="Profile" />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+        };
+
+        const SideNavBar = () => {
+            const location = useLocation();
+            const isPath = (path) => location.pathname === path;
+            const navLinkClass = (path) => `flex items-center gap-3 px-3 py-2.5 transition-all duration-150 ease-in-out font-label-caps text-label-caps ${isPath(path) ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`;
+
+            return (
+                <aside className="flex flex-col h-screen fixed left-0 top-0 pt-14 pb-4 bg-surface-container-low border-r border-border-subtle w-64 z-40 hidden md:flex">
+                    <div className="p-4 mb-4">
+                        <div className="flex items-center gap-3 mb-1">
+                            <div className="w-2 h-2 rounded-full bg-status-pass"></div>
+                            <span className="font-headline-md text-headline-md text-on-surface">Workbench</span>
+                        </div>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant opacity-70">Env: Production-Alpha</p>
+                    </div>
+                    <nav className="flex-grow flex flex-col px-2 gap-1">
+                        <Link to="/catalog" className={navLinkClass('/catalog')}>
+                            <span className="material-symbols-outlined">inventory_2</span>
+                            <span>Catalog</span>
+                        </Link>
+                        <Link to="/test-plans" className={navLinkClass('/test-plans')}>
+                            <span className="material-symbols-outlined">assignment_turned_in</span>
+                            <span>Test Plans</span>
+                        </Link>
+                        <Link to="/history" className={navLinkClass('/history')}>
+                            <span className="material-symbols-outlined">history</span>
+                            <span>Run History</span>
+                        </Link>
+                        <Link to="/results" className={navLinkClass('/results')}>
+                            <span className="material-symbols-outlined">analytics</span>
+                            <span>Results</span>
+                        </Link>
+                        <div className="mt-6 pt-4 border-t border-border-subtle/50 px-2 flex flex-col gap-1">
+                            <button className="bg-primary text-on-primary py-2 px-4 mb-4 flex items-center justify-center gap-2 hover:opacity-90 active:opacity-80 transition-all font-label-caps text-label-caps">
+                                <span className="material-symbols-outlined text-[18px]">add</span>
+                                New Test Run
+                            </button>
+                            <a className="text-on-surface-variant hover:bg-surface-container-high flex items-center gap-3 px-3 py-2 transition-all font-label-caps text-label-caps" href="#">
+                                <span className="material-symbols-outlined text-[18px]">menu_book</span>
+                                <span>Docs</span>
+                            </a>
+                        </div>
+                    </nav>
+                </aside>
+            );
+        };
+
+        // --- Screen Components ---
+
+        // Screen 1: Fixture Review
+        const FixtureReviewPage = () => {
+            const [rationale, setRationale] = useState('');
+            return (
+                <div className="p-container-margin max-w-[1440px] mx-auto">
+                    <div className="flex items-center h-1 bg-surface-muted mb-6 w-full rounded-full overflow-hidden">
+                        <div className="h-full bg-status-pass w-[70%]"></div>
+                        <div className="h-full bg-status-fail w-[5%]"></div>
+                        <div className="h-full bg-status-warning w-[25%]"></div>
+                    </div>
+                    <div className="flex justify-between items-end mb-8">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="bg-status-warning text-on-background px-2 py-0.5 font-label-caps text-label-caps flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[12px]">pending</span> PENDING APPROVAL
+                                </span>
+                                <span className="text-on-surface-variant font-code-sm text-code-sm">ID: RUN-2023-9981-TX</span>
+                            </div>
+                            <h1 className="font-headline-lg text-headline-lg text-on-surface">narrative-001.json</h1>
+                            <p className="text-on-surface-variant text-body-sm mt-1">Proposed change to deterministic golden fixture registry.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button className="px-6 py-2 border border-error text-error font-label-caps text-label-caps hover:bg-error-container transition-colors">Reject Proposal</button>
+                            <button className={`px-6 py-2 bg-primary text-white font-label-caps text-label-caps hover:opacity-90 transition-opacity ${rationale.length < 10 ? 'opacity-50 cursor-not-allowed' : ''}`}>Approve Change</button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-12 gap-gutter">
+                        <div className="col-span-12 registry-panel p-panel-padding">
+                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-border-subtle">
+                                <h2 className="font-label-caps text-label-caps text-on-surface">State Transition Fingerprints</h2>
+                                <span className="font-code-sm text-code-sm text-on-surface-variant">Method: SHA-256 / Deterministic Drift</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="font-label-caps text-label-caps text-on-surface-variant block uppercase">Current Version (Golden)</label>
+                                    <div className="bg-surface-muted p-4 font-code-md text-code-md border border-border-subtle flex items-center justify-between">
+                                        <span className="text-on-surface truncate">9f86d081884c7d659a2feaa0c55ad015a3bf4f1b...</span>
+                                        <span className="material-symbols-outlined text-status-pass text-[18px]">verified</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="font-label-caps text-label-caps text-on-surface-variant block uppercase">Proposed Version</label>
+                                    <div className="bg-surface-muted p-4 font-code-md text-code-md border border-status-warning flex items-center justify-between">
+                                        <span className="text-on-surface truncate">e3b0c44298fc1c149afbf4c8996fb92427ae41e4...</span>
+                                        <span className="material-symbols-outlined text-status-warning text-[18px]">new_releases</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-span-12 registry-panel">
+                            <div className="bg-surface-muted px-panel-padding py-2 border-b border-border-subtle flex justify-between items-center">
+                                <span className="font-label-caps text-label-caps text-on-surface">Structural Diff @v2.1.0-delta</span>
+                                <div className="flex gap-4">
+                                    <span className="flex items-center gap-1 text-status-pass font-code-sm text-code-sm"><span className="w-2 h-2 bg-status-pass"></span> +12 Additions</span>
+                                    <span className="flex items-center gap-1 text-status-fail font-code-sm text-code-sm"><span className="w-2 h-2 bg-status-fail"></span> -4 Deletions</span>
+                                </div>
+                            </div>
+                            <div className="p-0 font-code-md text-code-md overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <tbody>
+                                        <tr className="hover:bg-surface-container transition-colors"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">10</td><td className="pl-4 py-1 whitespace-pre">{"{"}</td></tr>
+                                        <tr className="hover:bg-surface-container transition-colors"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">11</td><td className="pl-4 py-1 whitespace-pre">  "meta": {"{"}</td></tr>
+                                        <tr className="diff-line-removed"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">12</td><td className="pl-4 py-1 whitespace-pre">-   "schema_version": "1.0.4",</td></tr>
+                                        <tr className="diff-line-added"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">12</td><td className="pl-4 py-1 whitespace-pre">+   "schema_version": "2.0.0",</td></tr>
+                                        <tr className="hover:bg-surface-container transition-colors"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">13</td><td className="pl-4 py-1 whitespace-pre">    "author": "system-agent-09",</td></tr>
+                                        <tr className="hover:bg-surface-container transition-colors"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">14</td><td className="pl-4 py-1 whitespace-pre">    "determinism_score": 0.998</td></tr>
+                                        <tr className="hover:bg-surface-container transition-colors"><td className="w-12 text-right pr-4 text-on-surface-variant bg-surface-container-low select-none">15</td><td className="pl-4 py-1 whitespace-pre">  {"}"},</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="col-span-8 registry-panel p-panel-padding">
+                            <h3 className="font-label-caps text-label-caps text-on-surface mb-4">Rationale for Update</h3>
+                            <textarea value={rationale} onChange={(e) => setRationale(e.target.value)} className="w-full h-48 bg-surface-muted border border-border-subtle p-4 font-body-md text-body-md focus:ring-1 focus:ring-primary focus:border-primary resize-none" placeholder="Provide detailed reasoning (min 10 chars)..."></textarea>
+                            <div className="mt-4 flex items-center gap-2 text-on-surface-variant italic text-body-sm">
+                                <span className="material-symbols-outlined text-[16px]">info</span>
+                                This entry will be persisted in the audit log for 7 years.
+                            </div>
+                        </div>
+                        <div className="col-span-4 flex flex-col gap-gutter">
+                            <div className="bg-error-container text-on-error-container p-panel-padding border border-error">
+                                <div className="flex items-start gap-3">
+                                    <span className="material-symbols-outlined text-error">warning</span>
+                                    <div><h4 className="font-bold text-body-md mb-1">Human Review Mandate</h4><p className="text-body-sm">Manual verification is required for S9 mutations.</p></div>
+                                </div>
+                            </div>
+                            <div className="registry-panel p-panel-padding flex-1">
+                                <h4 className="font-label-caps text-label-caps text-on-surface mb-3">Reviewer Identity</h4>
+                                <div className="flex items-center gap-3 p-3 bg-surface-muted border border-border-subtle rounded">
+                                    <img className="w-10 h-10 rounded bg-white p-1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPY_7rpAJcSIm0sfGNahQLZsrWi92K-NcGvlEqK_9UJKmCfyZDHzLoRtybCGA_FEOojfMYsMUrb0WnbzUh772LxNc9Mrj_bBaL-TivQQWkjPA_BjixVymUjlHSK4nJ_Blpq37aJJAZ4K3BeinSspQ7KlSCL-4i4pYIAziejtmzXF9_fvQH7P3SVR2uWFnB-x41-oI-wZaPQUYC_H99sYUtq_mV9r3sJSWqslJ9nymRzphMBm9uIonT" />
+                                    <div><p className="font-bold text-body-md">Lead Test Engineer</p><p className="text-body-sm text-on-surface-variant">Auth Level: S9-Admin</p></div>
+                                </div>
+                                <button className="w-full mt-6 py-3 bg-primary text-white font-headline-md text-headline-md flex items-center justify-center gap-2 hover:opacity-90">Approve Change</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Screen 2: Catalog
+        const CatalogPage = () => {
+            return (
+                <div className="max-w-[1440px] mx-auto grid grid-cols-12 gap-gutter p-container-margin">
+                    <div className="col-span-12 flex items-center justify-between bg-surface-muted p-2 border border-border-subtle">
+                        <div className="flex gap-4 items-center">
+                            <span className="font-label-caps text-label-caps text-on-secondary-container px-2 py-0.5 border border-border-subtle bg-surface-container-lowest">ROOT</span>
+                            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                            <span className="font-label-caps text-label-caps text-primary">MODULE_CATALOG</span>
+                        </div>
+                        <div className="flex gap-1 h-2 w-48">
+                            <div className="flex-grow bg-status-pass"></div>
+                            <div className="w-4 bg-status-warning"></div>
+                            <div className="w-2 bg-status-fail"></div>
+                        </div>
+                    </div>
+                    <div className="col-span-9 flex flex-col gap-gutter">
+                        <section className="bg-surface border border-border-subtle">
+                            <header className="border-b border-border-subtle px-panel-padding py-2 flex justify-between items-center bg-surface-container-low">
+                                <span className="font-label-caps text-label-caps text-on-surface">Registry Overview</span>
+                                <span className="font-label-caps text-label-caps px-2 py-0.5 bg-status-info text-white">UP-TO-DATE</span>
+                            </header>
+                            <div className="p-panel-padding grid grid-cols-4 gap-4">
+                                <div><p className="font-label-caps text-[10px] text-on-secondary-container mb-1 uppercase">MODULES</p><p className="font-headline-lg text-headline-lg text-primary">42</p></div>
+                                <div><p className="font-label-caps text-[10px] text-on-secondary-container mb-1 uppercase">CONTRACTS</p><p className="font-headline-lg text-headline-lg text-primary">128</p></div>
+                                <div><p className="font-label-caps text-[10px] text-on-secondary-container mb-1 uppercase">LATENCY</p><p className="font-headline-lg text-headline-lg text-primary">12ms</p></div>
+                                <div><p className="font-label-caps text-[10px] text-on-secondary-container mb-1 uppercase">HEALTH</p><p className="font-headline-lg text-headline-lg text-status-pass">99.4%</p></div>
+                            </div>
+                        </section>
+                        <section className="bg-surface border border-border-subtle overflow-hidden">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-surface-container-low border-b border-border-subtle">
+                                        <th className="font-label-caps text-label-caps p-panel-padding text-on-surface">Module</th>
+                                        <th className="font-label-caps text-label-caps p-panel-padding text-on-surface">Fingerprint</th>
+                                        <th className="font-label-caps text-label-caps p-panel-padding text-on-surface text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border-subtle">
+                                    <tr className="hover:bg-surface-container-lowest transition-colors">
+                                        <td className="p-panel-padding">
+                                            <p className="font-code-md text-code-md font-bold text-primary">narrative</p>
+                                            <p className="font-code-sm text-code-sm text-on-surface-variant">com.acme.core.narrative</p>
+                                        </td>
+                                        <td className="p-panel-padding">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[14px] reveal-btn cursor-pointer">visibility</span>
+                                                <span className="font-code-sm text-code-sm redacted">0x88e1...4a2b</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-panel-padding text-right">
+                                            <Link to="/fixture-review" className="font-label-caps text-label-caps text-primary border border-border-subtle px-3 py-1 hover:bg-surface-container-high transition-colors">REVIEW_DIFF</Link>
+                                        </td>
+                                    </tr>
+                                    <tr className="hover:bg-surface-container-lowest transition-colors">
+                                        <td className="p-panel-padding">
+                                            <p className="font-code-md text-code-md font-bold text-primary">security-gate</p>
+                                            <p className="font-code-sm text-code-sm text-on-surface-variant">com.acme.infra.sec</p>
+                                        </td>
+                                        <td className="p-panel-padding">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[14px] reveal-btn cursor-pointer">visibility</span>
+                                                <span className="font-code-sm text-code-sm redacted">0xbc11...8eef</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-panel-padding text-right">
+                                            <button className="font-label-caps text-label-caps text-primary border border-border-subtle px-3 py-1 hover:bg-surface-container-high transition-colors">VIEW_JSON</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
+                    </div>
+                    <div className="col-span-3 flex flex-col gap-gutter">
+                        <section className="bg-surface border border-border-subtle h-fit">
+                            <header className="border-b border-border-subtle px-panel-padding py-2 flex justify-between items-center bg-surface-container-low">
+                                <span className="font-label-caps text-label-caps text-on-surface">Scenarios</span>
+                            </header>
+                            <div className="p-4 flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-on-surface"><span className="material-symbols-outlined text-[18px]">folder_open</span><span className="font-code-sm">root/</span></div>
+                                <div className="ml-4 border-l border-border-subtle pl-4 space-y-1">
+                                    <div className="flex items-center gap-2 text-on-surface-variant hover:text-primary cursor-pointer"><span className="material-symbols-outlined text-[18px]">description</span><span className="font-code-sm">auth_flow.yaml</span></div>
+                                    <div className="flex items-center gap-2 text-on-surface-variant hover:text-primary cursor-pointer"><span className="material-symbols-outlined text-[18px]">description</span><span className="font-code-sm">data_sync.yaml</span></div>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="bg-primary text-on-primary p-4 border border-primary">
+                            <p class="font-label-caps text-label-caps opacity-70 mb-2">QUICK_ACTION</p>
+                            <p class="font-body-sm text-body-sm mb-4">Validate all registered modules.</p>
+                            <button className="w-full bg-on-primary text-primary font-label-caps text-label-caps py-2 hover:bg-secondary-fixed transition-colors">RUN_FULL_VALIDATION</button>
+                        </section>
+                    </div>
+                </div>
+            );
+        };
+
+        // Screen 3: Results & Analytics
+        const ResultsPage = () => {
+            return (
+                <div className="max-w-7xl mx-auto space-y-6 p-container-margin grid-bg">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <h1 className="font-headline-lg text-headline-lg text-on-background tracking-tight">Workbench — Results Analytics</h1>
+                            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 uppercase tracking-widest">Aggregated Analysis: SESSION_ID_F442</p>
+                        </div>
+                        <button className="border border-border-subtle bg-surface px-4 py-2 font-label-caps text-label-caps flex items-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
+                            <span className="material-symbols-outlined text-[14px]">file_download</span> Export Report
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <div className="md:col-span-8 bg-surface border border-border-subtle overflow-hidden flex flex-col">
+                            <div className="p-panel-padding border-b border-border-subtle bg-surface-container-low/30">
+                                <h3 className="font-label-caps text-label-caps text-on-surface">Determinism Dashboard</h3>
+                            </div>
+                            <div className="p-gutter grid grid-cols-2 gap-8">
+                                <div>
+                                    <div className="h-48 w-full bg-surface-container-low flex items-end gap-1 px-4 py-2 border border-border-subtle">
+                                        <div className="w-full bg-status-pass/40 h-[92%] relative"><div className="absolute inset-x-0 bottom-0 h-1 bg-status-pass"></div></div>
+                                        <div className="w-full bg-status-pass/40 h-[98%] relative"><div className="absolute inset-x-0 bottom-0 h-1 bg-status-pass"></div></div>
+                                        <div className="w-full bg-status-fail/40 h-[12%] relative"><div className="absolute inset-x-0 bottom-0 h-1 bg-status-fail"></div></div>
+                                        <div className="w-full bg-status-pass/40 h-[94%] relative"><div className="absolute inset-x-0 bottom-0 h-1 bg-status-pass"></div></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="p-3 bg-surface-container-low border border-border-subtle"><span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">AGGREGATE MATCH RATE</span><span className="font-headline-lg text-headline-lg">99.42%</span></div>
+                                    <div className="p-3 bg-surface-container-low border border-border-subtle"><span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">STABILITY DRIFT</span><span className="font-headline-lg text-headline-lg text-status-pass">-0.04%</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="md:col-span-4 bg-surface border border-border-subtle p-gutter flex flex-col gap-4">
+                            <h3 className="font-label-caps text-label-caps text-on-surface">Token Cost Analysis</h3>
+                            <div><div className="flex justify-between items-baseline mb-2"><span className="font-label-caps text-label-caps text-on-surface-variant">Aggregation</span><span className="font-code-md text-code-md font-bold">4.2M</span></div><div className="h-2 bg-surface-container-highest rounded-full overflow-hidden"><div className="h-full bg-primary w-[72%]"></div></div></div>
+                            <div className="border-t border-border-subtle pt-4"><span className="font-label-caps text-label-caps text-on-surface-variant block mb-2">Provider Cost</span><div className="flex items-baseline gap-2"><span className="font-headline-lg text-headline-lg text-on-background">$142.42</span><span className="font-code-sm text-code-sm text-status-fail">▲ 12.5%</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Screen 4: Inspector
+        const InspectorPage = () => {
+            const [isRevealed, setIsRevealed] = useState(false);
+            return (
+                <div className="flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+                    <div className="flex flex-col border-b border-border-subtle bg-surface z-40">
+                        <div className="flex w-full">
+                            <div className="health-bar-segment h-1 flex-grow bg-status-pass"></div>
+                            <div className="health-bar-segment h-1 flex-grow bg-status-pass"></div>
+                            <div className="health-bar-segment h-1 flex-grow bg-status-warning"></div>
+                            <div className="health-bar-segment h-1 flex-grow bg-status-fail"></div>
+                        </div>
+                        <div className="px-gutter py-4 flex justify-between items-end">
+                            <div><h1 className="font-headline-lg text-headline-lg">Execution Inspector</h1><p className="font-code-sm text-code-sm text-on-tertiary-container">ID: RUN-9928-AX-00412</p></div>
+                            <div className="flex gap-2">
+                                <button className="px-4 py-2 border border-border-subtle font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">EXPORT_LOGS</button>
+                                <button className="px-4 py-2 bg-primary text-on-primary font-label-caps text-label-caps">RE-RUN</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 flex overflow-hidden">
+                        <aside className="w-72 border-r border-border-subtle bg-surface-container-lowest flex flex-col p-4 custom-scrollbar">
+                            <h3 className="font-label-caps text-label-caps mb-4">Timeline</h3>
+                            <div className="space-y-4">
+                                <div className="pl-4 border-l-2 border-status-pass">
+                                    <p className="font-code-sm text-[10px] text-on-tertiary-container">14:20:01</p>
+                                    <p className="font-label-caps text-label-caps font-bold">SESSION_START</p>
+                                </div>
+                                <div className="pl-4 border-l-2 border-primary bg-surface-container-high/50 p-2">
+                                    <p className="font-code-sm text-[10px] text-on-tertiary-container">14:21:12</p>
+                                    <p className="font-label-caps text-label-caps font-bold">STATE_COMMIT</p>
+                                </div>
+                            </div>
+                        </aside>
+                        <main className="flex-1 bg-surface-muted p-gutter space-y-gutter overflow-y-auto">
+                             <div className="bg-surface border border-border-subtle">
+                                <div className="p-3 border-b border-border-subtle flex justify-between items-center bg-surface-container-low">
+                                    <span className="font-label-caps text-label-caps font-bold">INPUT_PROMPT_BLOB</span>
+                                    <button onClick={() => setIsRevealed(!isRevealed)} className="px-2 py-1 bg-primary text-on-primary rounded font-label-caps text-[9px]">
+                                        {isRevealed ? 'HIDE' : 'REVEAL'}
+                                    </button>
+                                </div>
+                                <div className={`p-4 bg-surface-container-lowest font-code-md text-code-md ${isRevealed ? '' : 'filter blur-sm select-none'}`}>
+                                    {"{ \"system\": \"deterministic supervisor\", \"context\": \"0x881273\" }"}
+                                </div>
+                             </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        // Screen 5: Test Plans
+        const TestPlansPage = () => {
+            return (
+                <div className="grid grid-cols-12 h-[calc(100vh-3.5rem)] overflow-hidden">
+                    <section className="col-span-3 border-r border-border-subtle flex flex-col bg-surface">
+                        <div className="h-10 border-b border-border-subtle flex items-center px-4 bg-surface-container-low font-label-caps text-label-caps">Configuration</div>
+                        <div className="p-4 space-y-4">
+                            <div><label className="text-[10px] font-label-caps text-on-surface-variant">NAMESPACE</label><input className="w-full bg-surface-container-low border-border-subtle p-2 font-code-md" value="acme-test-plan" readOnly/></div>
+                            <div><label className="text-[10px] font-label-caps text-on-surface-variant">STRATEGY</label><select className="w-full bg-surface-container-low border-border-subtle p-2"><option>Sequential</option></select></div>
+                        </div>
+                    </section>
+                    <section className="col-span-6 flex flex-col bg-surface-muted overflow-y-auto p-4 space-y-4">
+                        <div className="bg-surface border border-border-subtle group">
+                            <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-surface-container-low"><span className="font-code-md font-bold">CASE_001_AUTH</span></div>
+                            <div className="p-3 space-y-2">
+                                <div><label className="text-[9px] font-label-caps">TARGET</label><div className="font-code-sm bg-surface-container p-1">https://api.internal/auth</div></div>
+                                <button className="w-full py-2 border border-dashed border-primary text-primary font-label-caps text-[10px]">REVEAL PAYLOAD</button>
+                            </div>
+                        </div>
+                        <button className="w-full py-8 border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant flex flex-col items-center justify-center hover:bg-surface-container transition-all">
+                            <span className="material-symbols-outlined text-[32px]">add_task</span>
+                            <span className="font-label-caps">APPEND NEW UNIT</span>
+                        </button>
+                    </section>
+                    <section className="col-span-3 bg-tertiary-container flex flex-col text-on-tertiary-container">
+                         <div className="h-10 border-b border-outline-variant flex justify-between items-center px-4 font-label-caps">Compiled YAML</div>
+                         <pre className="flex-1 p-4 font-code-md text-[12px] whitespace-pre-wrap">
+                            {`version: "1.0.0"
+spec:
+  strategy: sequential
+  cases:
+    - id: CASE_001_AUTH
+      target: "/auth/verify"
+      expected: 200`}
+                         </pre>
+                         <div className="p-4 border-t border-outline-variant">
+                             <button className="w-full bg-white text-tertiary py-3 font-label-caps text-label-caps hover:bg-surface-container-highest">COMMIT TO REGISTRY</button>
+                         </div>
+                    </section>
+                </div>
+            );
+        };
+
+        // Screen 6: History
+        const HistoryPage = () => {
+            const rows = [
+                { id: "#TX-9902-A", plan: "DeepScan Regression", target: "core-api", status: "COMMITTED", color: "status-pass" },
+                { id: "#TX-9901-B", plan: "Stress-Test Cluster-7", target: "infra-net", status: "FAILED", color: "status-fail" },
+                { id: "#TX-9899-X", plan: "Latency Verification", target: "edge-dist", status: "IN-PROGRESS", color: "status-info" }
+            ];
+
+            return (
+                <div className="max-w-7xl mx-auto space-y-6 p-container-margin grid-bg">
+                    <div className="flex justify-between items-end">
+                        <div><h1 className="font-headline-lg text-headline-lg">Run History</h1><p className="text-on-surface-variant text-body-sm">Index: R_LOG_0944</p></div>
+                        <button className="bg-primary text-on-primary px-6 py-2 font-label-caps text-label-caps">Launch New Run</button>
+                    </div>
+                    <div className="bg-surface border border-border-subtle">
+                        <table className="w-full border-collapse">
+                            <thead><tr className="bg-surface-container-low border-b border-border-subtle"><th className="p-4 text-left font-label-caps">Run ID</th><th className="p-4 text-left font-label-caps">Plan</th><th className="p-4 text-left font-label-caps">Status</th><th className="p-4 text-right"></th></tr></thead>
+                            <tbody className="divide-y divide-border-subtle">
+                                {rows.map(row => (
+                                    <tr key={row.id} className="hover:bg-surface-container-low/30 transition-colors group">
+                                        <td className="p-4 font-code-md">{row.id}</td>
+                                        <td className="p-4 font-bold">{row.plan}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-0.5 border text-[11px] font-bold border-${row.color}/20 bg-${row.color}/10 text-${row.color}`}>
+                                                {row.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <Link to="/inspector" className="text-primary hover:underline text-body-sm">Inspect</Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <div className="min-h-screen bg-background">
+                        <TopNavBar />
+                        <SideNavBar />
+                        
+                        <main className="ml-0 md:ml-64 pt-14 min-h-screen">
+                            <Routes>
+                                <Route path="/" element={<CatalogPage />} />
+                                <Route path="/catalog" element={<CatalogPage />} />
+                                <Route path="/test-plans" element={<TestPlansPage />} />
+                                <Route path="/history" element={<HistoryPage />} />
+                                <Route path="/results" element={<ResultsPage />} />
+                                <Route path="/fixture-review" element={<FixtureReviewPage />} />
+                                <Route path="/inspector" element={<InspectorPage />} />
+                            </Routes>
+                        </main>
+                        
+                        {/* Mobile Navigation */}
+                        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface border-t border-border-subtle flex justify-around items-center z-50 px-gutter">
+                            <Link to="/catalog" className="flex flex-col items-center gap-1 text-on-surface-variant">
+                                <span className="material-symbols-outlined">inventory_2</span>
+                                <span className="text-[10px] font-label-caps">Catalog</span>
+                            </Link>
+                            <Link to="/fixture-review" className="flex flex-col items-center gap-1 text-on-surface-variant">
+                                <span className="material-symbols-outlined">assignment_turned_in</span>
+                                <span className="text-[10px] font-label-caps">Review</span>
+                            </Link>
+                            <Link to="/history" className="flex flex-col items-center gap-1 text-on-surface-variant">
+                                <span className="material-symbols-outlined">history</span>
+                                <span className="text-[10px] font-label-caps">History</span>
+                            </Link>
+                            <Link to="/results" className="flex flex-col items-center gap-1 text-on-surface-variant">
+                                <span className="material-symbols-outlined">analytics</span>
+                                <span className="text-[10px] font-label-caps">Results</span>
+                            </Link>
+                        </nav>
+                    </div>
+                </MemoryRouter>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

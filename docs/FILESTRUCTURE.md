@@ -250,9 +250,7 @@ acme-engine/
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
-│   │   ├── driver-error-classification.md
-│   │   ├── strict-structured-output-schema-subset.md
-│   │   └── encrypted-payload-retention.md
+│   │   └── driver-error-classification.md
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
@@ -395,18 +393,17 @@ later architecture decisions. ADR-0008 resolves their post-memory
 state-projection gate, ADR-0009 resolves their identity/provenance gate and
 ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
-composition-root application for configuring, executing, inspecting,
-validating and measuring domain tests. No such package exists; the file is a
-specification only. Engine prerequisites (ExecutionEngine, both reference
-domains, SQLite, ScenarioRunner, CLI) exist; activation is blocked by the
-specification’s decision gates, not by missing runtime layers.
+composition-root application (module and adapter workbenches, view contracts,
+optional `acme-test-plan/1`). No such package exists; the file is a
+specification only. Engine prerequisites exist. ACME-0038 records proposed gate
+freezes and a view-contract-first build order; implementation still needs an
+explicit charter. A non-authority workbench mock may live under
+`docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
 is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
 
-The `docs/backlog/` proposals record the domain-test-UI implementation and the
-`encrypted-payload` retention gap. The first must remain separate until its
-explicit prerequisites exist and its own decision gates are resolved. The
-second must be resolved by the live-provider ADR before any real provider
-payload is stored.
+The `docs/backlog/` proposals record open residual work (Domain Test UI
+implementation; driver-error classification). Resolved proposals
+(encrypted-payload, strict structured-output) are removed once finished.

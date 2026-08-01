@@ -174,5 +174,4 @@ never production live data.
 ## References
 
 - [ADR-0014 live provider boundary](0014-live-provider-boundary-and-transport-port.md)
-- [Backlog: encrypted payload retention](../backlog/encrypted-payload-retention.md)
-- [ACME-0030 draft charter](../CURRENT_TASK.md)
+- [ACME-0030 encrypted payload retention (finished)](../finished/ACME-0030_encrypted-payload-retention.md)

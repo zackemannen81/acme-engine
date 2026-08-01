@@ -13,7 +13,10 @@ Team implementation guides:
 
 Proposed application surfaces, not activated:
 
-- [`domain-test-ui-specification.md`](domain-test-ui-specification.md)
+- [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
+  Domain Test UI / TestRegistry Workbench; revised ACME-0038 with proposed gate
+  freezes and view-contract-first build order. Implementation backlog:
+  [`../backlog/domain-test-ui-implementation.md`](../backlog/domain-test-ui-implementation.md).
 
 Design documents describe the integrated system. Individual durable decisions
 that constrain future change belong in `docs/adr/`.

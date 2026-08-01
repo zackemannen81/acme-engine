@@ -733,32 +733,29 @@ fixed source-backed context policy.
 ## Proposed Domain Test Surface
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
-describes a proposed human surface for configuring, executing, inspecting,
-validating and measuring domain tests. It is a reviewed specification only. No
-interface, package or view contract exists, and no implementation is
-chartered.
+describes a proposed local human workbench for configuring, launching and
+inspecting **module** tests (ScenarioRunner / ExecutionEngine) and **adapter**
+kit runs (existing conformance suites). It is documentation only. No
+interface package or view contract is implemented. ACME-0038 rewrote the
+specification after Milestone 2 and recorded **proposed gate freezes**; it does
+not authorize code.
 
-The specification constrains any future implementation to the existing
-boundaries:
+Constraints on any future implementation:
 
-- the interface is a composition-root application under `apps/`, subject to the
-  approved `apps → adapters → core` and `apps → modules → core` direction
-- it reads execution, attempt, model-call, read-set, prepared-commit and
-  terminal evidence through the aggregate `ExecutionRepository` port, plus
-  engine and runner reports
-- it launches runs and stores its own disposable artifacts, but never commits,
-  marks terminal, mutates canonical records or computes a verdict itself
-- it compiles configuration into the approved `acme-scenario/1` format and
-  `ExecutionRequest` rather than becoming a second source of truth
-- it enforces the section 21 data classes, retention modes and environment
-  gating at the presentation boundary, and exposes no scripting, shell,
-  credential or destructive surface
+- composition-root app under `apps/`, subject to
+  `apps → adapters → core` and `apps → modules → core`
+- reads evidence through repository ports and runner/kit reports only
+- launches runs and stores disposable interface artifacts; never commits,
+  marks terminal, mutates canonical records or invents verdicts
+- optional thin `acme-test-plan/1` compiles only to `acme-scenario/1` and
+  `ExecutionRequest` (ADR required at first export)
+- view-contract-first build order; CLI remains the CI/automation entry point
+- section 21 data classes, retention modes and live gating at the presentation
+  boundary; no scripting, shell, credential or destructive surface
+- concepts_sandbox mocks are non-authority
 
-Its unresolved decisions, including whether the interface belongs in version 1
-at all, remain decision gates inside the specification. Engine prerequisites
-(ExecutionEngine, both reference domains, SQLite, ScenarioRunner, CLI) are
-satisfied; activation is blocked by those gates, not by missing runtime
-layers.
+Engine prerequisites are satisfied. Activation needs an explicit
+implementation charter that accepts the proposed freezes.
 
 ## Remaining Implementation Baseline
 
