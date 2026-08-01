@@ -1310,3 +1310,20 @@ Add one dated, signed entry for every meaningful work session or handoff.
   (CLI live gateway, Domain Test UI phase 1 after gates, M2 residual, or
   temperature capability).
 - Signature: Grok
+
+## 2026-08-01 — ACME-0032 CLI live OpenAI gateway
+
+- Date: 2026-08-01
+- Author: Grok
+- Task: ACME-0032
+- Summary: Wired the OpenAI Responses gateway into `@acme/cli`. `execute`
+  accepts either `--script` (mock) or `--gateway openai` (live fetch transport).
+  Credentials from OPENAI_API_KEY only in the composition root; model from
+  ACME_OPENAI_MODEL / ACME_LIVE_MODEL (default gpt-4.1-mini).
+- Verification: unit 349 / 42 files; conformance 50; integration 13; scenario
+  19; typecheck, lint, format, boundaries, build, docs:check. Offline CLI
+  tests cover mutual exclusion, missing key, and openai path with injected
+  transport (no network in default suite).
+- Follow-ups: remaining gaps Domain Test UI decision gates, M2 outbox/fault
+  injection, optional temperature capability. ScenarioRunner has no live step.
+- Signature: Grok

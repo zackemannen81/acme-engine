@@ -14,6 +14,9 @@
       "path": "../../packages/adapter-model-mock"
     },
     {
+      "path": "../../packages/adapter-model-openai"
+    },
+    {
       "path": "../../packages/adapter-sqlite"
     },
     {

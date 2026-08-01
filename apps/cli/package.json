@@ -19,6 +19,7 @@
   "dependencies": {
     "@acme/adapter-memory": "workspace:*",
     "@acme/adapter-model-mock": "workspace:*",
+    "@acme/adapter-model-openai": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/module-narrative": "workspace:*",

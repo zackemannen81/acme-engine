@@ -4,6 +4,11 @@ export class UsageError extends Error {}
 
 export type AdapterName = 'memory' | 'sqlite';
 
+/** How `execute` obtains a ModelGateway. */
+export type ExecuteGateway =
+  | { readonly kind: 'script'; readonly script: string }
+  | { readonly kind: 'openai' };
+
 export interface CommonOptions {
   readonly adapter: AdapterName;
   readonly database?: string;
@@ -16,7 +21,7 @@ export type Command =
   | {
       readonly kind: 'execute';
       readonly request: string;
-      readonly script: string;
+      readonly gateway: ExecuteGateway;
       readonly common: CommonOptions;
     }
   | {
@@ -53,6 +58,8 @@ export const USAGE = `acme — ACME composition root
 
   acme execute --request <file> --script <file> [--adapter memory|sqlite]
                [--database <path>] [--json]
+  acme execute --request <file> --gateway openai [--adapter memory|sqlite]
+               [--database <path>] [--json]
   acme scenario run <file> [--adapter memory|sqlite] [--database <path>] [--json]
   acme execution replay <execution-id> --mode verify [--adapter ...] [--database <path>] [--json]
   acme execution inspect <execution-id> [--show-payloads] [--adapter ...] [--database <path>] [--json]
@@ -61,11 +68,15 @@ export const USAGE = `acme — ACME composition root
 
   --adapter        memory (default) or sqlite
   --database       required with --adapter sqlite
-  --script         deterministic model-call script (CLI mock gateway only)
+  --script         deterministic model-call script (mock gateway)
+  --gateway        openai for a live Responses call (requires OPENAI_API_KEY;
+                   model from ACME_OPENAI_MODEL or ACME_LIVE_MODEL)
   --show-payloads  print document, memory and state values instead of redacting
   --json           versioned JSON on stdout instead of a text summary
 
-Payloads are redacted unless --show-payloads is supplied.`;
+Exactly one of --script or --gateway is required for execute.
+Payloads are redacted unless --show-payloads is supplied.
+Live calls may spend money; credentials are read only from the environment.`;
 
 function requirePositional(
   positionals: readonly string[],
@@ -115,6 +126,7 @@ export function parseCommand(argv: readonly string[]): Command {
       options: {
         request: { type: 'string' },
         script: { type: 'string' },
+        gateway: { type: 'string' },
         adapter: { type: 'string' },
         database: { type: 'string' },
         mode: { type: 'string' },
@@ -139,15 +151,39 @@ export function parseCommand(argv: readonly string[]): Command {
   if (group === 'execute') {
     const request = values['request'] as string | undefined;
     const script = values['script'] as string | undefined;
+    const gatewayFlag = values['gateway'] as string | undefined;
     if (request === undefined) {
       throw new UsageError('execute requires --request <file>.');
     }
-    if (script === undefined) {
+    if (script !== undefined && gatewayFlag !== undefined) {
       throw new UsageError(
-        'execute requires --script <file>; the CLI composition root does not yet select a live provider gateway.',
+        'execute accepts either --script or --gateway, not both.',
       );
     }
-    return { kind: 'execute', request, script, common: options };
+    if (script !== undefined) {
+      return {
+        kind: 'execute',
+        request,
+        gateway: { kind: 'script', script },
+        common: options,
+      };
+    }
+    if (gatewayFlag !== undefined) {
+      if (gatewayFlag !== 'openai') {
+        throw new UsageError(
+          '--gateway must be openai (the only live provider wired today).',
+        );
+      }
+      return {
+        kind: 'execute',
+        request,
+        gateway: { kind: 'openai' },
+        common: options,
+      };
+    }
+    throw new UsageError(
+      'execute requires --script <file> or --gateway openai.',
+    );
   }
 
   if (group === 'scenario') {

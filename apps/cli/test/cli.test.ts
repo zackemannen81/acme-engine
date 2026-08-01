@@ -8,6 +8,7 @@ import {
   deriveExecutionId,
   type IdGenerator,
 } from '@acme/core';
+import type { ProviderTransport } from '@acme/adapter-model-openai';
 import {
   narrativeObserveDocumentContract,
   narrativeObserveDocumentTask,
@@ -187,7 +188,26 @@ describe('acme CLI usage', () => {
   it.each([
     [['nonsense'], 'Unknown command'],
     [['execute'], 'requires --request'],
-    [['execute', '--request', 'r.json'], 'requires --script'],
+    [
+      ['execute', '--request', 'r.json'],
+      'requires --script <file> or --gateway',
+    ],
+    [
+      [
+        'execute',
+        '--request',
+        'r.json',
+        '--script',
+        's.json',
+        '--gateway',
+        'openai',
+      ],
+      'either --script or --gateway',
+    ],
+    [
+      ['execute', '--request', 'r.json', '--gateway', 'nope'],
+      '--gateway must be openai',
+    ],
     [['execution', 'replay'], 'Missing required argument'],
     [['execution', 'wander', 'x'], 'Unknown execution action'],
     [['state', 'inspect', 'ns'], 'Missing required argument'],
@@ -241,6 +261,42 @@ describe('acme CLI usage', () => {
       run(['execution', 'inspect', 'missing'], io.options),
     ).resolves.toBe(EXIT_USAGE);
     expect(io.err.join('\n')).toContain('No execution found');
+  });
+
+  it('refuses --gateway openai when OPENAI_API_KEY is absent', async () => {
+    const root = workspace();
+    const requestPath = join(root, 'live-request.json');
+    writeFileSync(
+      requestPath,
+      JSON.stringify({
+        requestKey: 'cli-live-missing-key',
+        namespace,
+        task: 'observe-document',
+        entityId,
+        expectedRevision: 0,
+        input,
+        model: selection,
+      }),
+    );
+    const io = capture();
+    const previous = process.env['OPENAI_API_KEY'];
+    delete process.env['OPENAI_API_KEY'];
+    try {
+      await expect(
+        run(
+          ['execute', '--request', requestPath, '--gateway', 'openai'],
+          io.options,
+        ),
+      ).resolves.toBe(EXIT_USAGE);
+      expect(io.err.join('\n')).toContain('OPENAI_API_KEY');
+      expect(io.out).toEqual([]);
+    } finally {
+      if (previous === undefined) {
+        delete process.env['OPENAI_API_KEY'];
+      } else {
+        process.env['OPENAI_API_KEY'] = previous;
+      }
+    }
   });
 });
 
@@ -336,6 +392,75 @@ describe('acme CLI execute', () => {
       ),
     ).resolves.toBe(EXIT_USAGE);
     expect(io.err.join('\n')).toContain('Could not read the request file');
+  });
+
+  it('commits through --gateway openai with an injected offline transport', async () => {
+    const root = workspace();
+    const requestPath = join(root, 'openai-request.json');
+    writeFileSync(
+      requestPath,
+      JSON.stringify({
+        requestKey: 'cli-openai-offline',
+        namespace,
+        task: 'observe-document',
+        entityId,
+        expectedRevision: 0,
+        input,
+        model: selection,
+        policy: { retention: 'encrypted-payload' },
+      }),
+    );
+
+    const body = JSON.stringify({
+      id: 'resp_cli_offline',
+      model: 'gpt-fixture-1',
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'output_text', text: JSON.stringify(output) }],
+        },
+      ],
+      usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+    });
+    const transport: ProviderTransport = {
+      async send() {
+        return { kind: 'response', status: 200, headers: {}, body };
+      },
+    };
+
+    const io = capture();
+    const previous = process.env['OPENAI_API_KEY'];
+    process.env['OPENAI_API_KEY'] = 'test-not-a-real-key';
+    try {
+      await expect(
+        run(
+          [
+            'execute',
+            '--request',
+            requestPath,
+            '--gateway',
+            'openai',
+            '--json',
+          ],
+          {
+            ...io.options,
+            openAiTransport: transport,
+            openAiModel: 'gpt-fixture-1',
+          },
+        ),
+      ).resolves.toBe(EXIT_OK);
+      const report = JSON.parse(io.out.join('\n')) as {
+        result: { status: string; revision: number };
+      };
+      expect(report.result).toMatchObject({ status: 'committed', revision: 1 });
+    } finally {
+      if (previous === undefined) {
+        delete process.env['OPENAI_API_KEY'];
+      } else {
+        process.env['OPENAI_API_KEY'] = previous;
+      }
+    }
   });
 });
 

@@ -50,6 +50,9 @@ importers:
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
+      '@acme/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
       '@acme/adapter-sqlite':
         specifier: workspace:*
         version: link:../../packages/adapter-sqlite
