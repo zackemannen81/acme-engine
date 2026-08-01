@@ -49,3 +49,4 @@ current architecture.
 - [`0012-milestone-1-execution-identity-and-replay.md`](0012-milestone-1-execution-identity-and-replay.md)
 - [`0013-durable-sqlite-schema-and-driver.md`](0013-durable-sqlite-schema-and-driver.md)
 - [`0014-live-provider-boundary-and-transport-port.md`](0014-live-provider-boundary-and-transport-port.md)
+- [`0015-strict-structured-output-schema-lowering.md`](0015-strict-structured-output-schema-lowering.md)

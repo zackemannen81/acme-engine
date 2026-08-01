@@ -1,10 +1,10 @@
 # System Documentation
 
-Last updated: 2026-07-31
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an offline OpenAI Responses mapping, a ScenarioRunner, a CLI composition root and a proposed domain-test surface
+Last updated: 2026-08-01
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a proposed domain-test surface
 
-This document describes long-lived system boundaries. It does not claim that
-multi-step orchestration or live provider behavior exists.
+This document describes long-lived system boundaries. Live provider calls are
+opt-in only (`pnpm test:live`) and are not part of default CI.
 Exact contracts, storage schema, protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
@@ -28,8 +28,8 @@ Exact contracts, storage schema, protocols and milestones are defined in
   boundaries, tests and builds
 
 This substrate implements bounded single-task execution, durable local
-persistence, two offline acceptance scenarios and declarative multi-step
-scenarios. It does not implement live provider behavior.
+persistence, two offline acceptance scenarios, declarative multi-step
+scenarios and an opt-in live provider gate.
 
 ## Implemented Contract Layer
 
@@ -411,6 +411,13 @@ never parses a body, never classifies a failure and never sees an ACME type.
 
 - request mapping turns system messages into instructions and preserves the
   supplied order, so the stable part of a call stays ahead of the changing part
+- output JSON Schema is lowered into the provider's strict structured-output
+  subset before dispatch: discriminated `oneOf` becomes nested `anyOf`, every
+  property is required (optionals as required-and-nullable), and unlowerable
+  constructs raise `UNSUPPORTED_CAPABILITY` with no network call
+- a separate `providerWireSchemaHash` (`acme-provider-wire-schema-hash-1`)
+  records the lowered wire schema without changing
+  `acme-model-request-hash-1`, which still digests the canonical request
 - content the adapter cannot honor is rejected rather than silently dropped,
   including stop sequences and non-text parts
 - classification asks first whether the provider responded at all: a received
@@ -429,7 +436,9 @@ The adapter passes the unchanged shared `ModelGateway` conformance suite, so
 the scripted mock and a real provider mapping satisfy one contract. Boundary
 rules and a negative fixture prove provider wire shapes are unreachable from
 core, modules, apps and other adapters, and the core vocabulary guard now
-rejects provider names outright.
+rejects provider names outright. A live `200` has been observed for both
+reference-domain contracts under the lowered schema; live executions use
+`hash-only` retention and therefore replay as `unavailable`.
 
 ## Implemented Durable Unit of Work
 
@@ -653,12 +662,12 @@ at all, remain decision gates inside the specification.
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- A network transport for the implemented provider mapping.
 - Core, testing, in-memory, SQLite, model adapters and reference modules are
   separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.
 - Retry, repair and revision are bounded and ledgered.
 - Replay uses recorded model results and never invokes a live provider.
+  Live `hash-only` executions report `unavailable` rather than failing replay.
 - Structured logs redact content by default.
 
 ## Deliberately Deferred Decisions

@@ -48,12 +48,14 @@ acme-engine/
 │   │   │   ├── immutable.ts
 │   │   │   ├── index.ts
 │   │   │   ├── request.ts
+│   │   │   ├── schema-lower.ts
 │   │   │   ├── transport.ts
 │   │   │   ├── transport-fetch.ts
 │   │   │   └── wire.ts
 │   │   └── test/
 │   │       ├── fixtures.ts
 │   │       ├── gateway.test.ts
+│   │       ├── schema-lower.test.ts
 │   │       └── transport-fetch.test.ts
 │   ├── adapter-sqlite/
 │   │   ├── package.json
@@ -225,6 +227,7 @@ acme-engine/
 │   │   ├── 0012-milestone-1-execution-identity-and-replay.md
 │   │   ├── 0013-durable-sqlite-schema-and-driver.md
 │   │   ├── 0014-live-provider-boundary-and-transport-port.md
+│   │   ├── 0015-strict-structured-output-schema-lowering.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -270,6 +273,7 @@ acme-engine/
 │   │   ├── ACME-0026_cli-composition-root.md
 │   │   ├── ACME-0027_scenario-runner.md
 │   │   ├── ACME-0028_first-live-provider-calls.md
+│   │   ├── ACME-0029_strict-structured-output-schema-lowering.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -324,9 +328,11 @@ content remains intentionally omitted here.
   immutable normalized outcomes and read-only invocation evidence.
 - `@acme/adapter-model-openai`: the OpenAI Responses mapping behind an
   injected transport port, so request construction, normalization and failure
-  classification are exercised offline. A `fetch` transport is published from
-  the separate `./transport-fetch` entry point, so the default surface stays
-  network-free.
+  classification are exercised offline. Canonical JSON Schemas are lowered into
+  the provider's strict structured-output subset before dispatch, with local
+  preflight refusal for unlowerable constructs. A `fetch` transport is
+  published from the separate `./transport-fetch` entry point, so the default
+  surface stays network-free.
 - `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
   checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
   `better-sqlite3` is its only external runtime dependency.

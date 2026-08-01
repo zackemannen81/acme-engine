@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 
 ## Repository
 
@@ -39,6 +39,7 @@ implementation baseline:
 - ADR-0012: Milestone 1 execution identity and replay
 - ADR-0013: Durable SQLite schema and driver
 - ADR-0014: Live provider boundary and transport port
+- ADR-0015: Strict structured-output schema lowering
 
 ACME has a build substrate, pure contract layer, pure StateEngine, pure
 MemoryEngine, post-memory state projection, a deterministic in-memory Unit of
@@ -257,24 +258,17 @@ Every committed execution replay-verifies offline with an unchanged operation
 digest. Both reference domains now have executable end-to-end acceptance
 evidence.
 
-ACME-0029 is chartered and its first step has landed. The model-facing output
-schemas of both reference domains now express an unknown value as `null`
-rather than as an absent key, because a provider under strict structured
-output must emit every property. State does not follow: `acme-cjson-1`
-distinguishes `null` from an absent key, so one value would otherwise have two
-canonical forms and two identities. The two narrative schemas that were
-reachable from both paths are therefore split, and each module narrows the
-reported value before anything reaches a delta or a memory record. The
-narrowing is a domain rule applied in the module, not a transport fix in the
-adapter, which keeps the recorded model call identical to what the model
-produced.
-
-The change moved exactly the identities derived from the request: a model
-request hash and a request fingerprint in each domain, plus the narrative
-contract fingerprint. Every identity derived from state stood still, including
-each `acme-operation-digest-1`, each state hash and every memory identity key.
-Both domains carry a test asserting that a reported `null` and an omitted
-field interpret identically and that no `null` survives into the result.
+ACME-0029 is complete pending archival. The model-facing output schemas of both
+reference domains express an unknown value as `null`, and the OpenAI adapter
+lowers those canonical schemas into the provider's strict structured-output
+subset before any network call. Discriminated `oneOf` becomes nested `anyOf`;
+every property is required; unlowerable constructs raise
+`UNSUPPORTED_CAPABILITY` locally. `providerWireSchemaHash` records the wire
+form without contaminating `acme-model-request-hash-1`. Live calls with
+`research.observe-evidence` and `narrative.observe-document` both reached a
+committed `200` under the lowered schema. State still does not accept `null`
+for those fields: shared narrative schemas remain split, and modules narrow
+reported nulls before deltas or memory.
 
 ## Persistent Gaps
 
@@ -307,22 +301,19 @@ field interpret identically and that no `null` survives into the result.
   `unavailable`. Retaining a live provider response and replaying it are
   therefore not simultaneously available under an honest reading, which the
   live-provider ADR must resolve before any real payload is stored.
-- No ACME prompt contract satisfies OpenAI's strict structured-output schema
-  subset, so no live call has yet reached a `200`. Two independent rules are
-  broken: `oneOf` is not permitted, and every key in `properties` must appear
-  in `required`, which forbids optional fields. The root cause is that the
-  adapter passes the canonical JSON Schema to the provider verbatim while
-  translating every other request field. ACME-0029 owns the fix. Its first
-  step has landed: the output-facing schemas now accept `null` for an unknown
-  value, so the optional-field rule is satisfiable, but the adapter still
-  performs no lowering, so `oneOf` still breaks and a live call would still be
-  rejected.
-- The success-path provider fixtures remain unconfirmed. Two live calls
-  confirmed the failure classification and the provider error-body schema, but
-  both were rejected at schema validation before token generation, so
-  `OpenAiResponseSchema`, the `hash-only` retention behavior and the
-  `unavailable` replay verdict have never been exercised against real
-  provider data.
+- ACME-0029 completed the offline lowering and confirmed a live success path.
+  Output-facing schemas accept `null` for unknown values; the adapter lowers
+  the canonical JSON Schema into the provider strict subset before dispatch;
+  unlowerable constructs raise `UNSUPPORTED_CAPABILITY` with no network call;
+  `providerWireSchemaHash` records the wire form without changing
+  `acme-model-request-hash-1`. Live evidence: research and narrative contracts
+  both reached HTTP `200` and committed under the lowered schema; nested
+  `anyOf` is accepted; `OpenAiResponseSchema` matched a real completed body;
+  `hash-only` retained no payload; `replayVerify()` reported `unavailable`.
+  Offline fixtures remain simplified samples (unknown fields tolerated).
+  Some models (e.g. `gpt-5.6-terra`) reject `temperature` after accepting the
+  schema; the live gate default is a chat model that accepts the parameters
+  the contracts emit.
 - Reconciling an ambiguous model call against provider-side history is not
   implemented. ADR-0014 makes such a call terminal and never automatically
   retried.

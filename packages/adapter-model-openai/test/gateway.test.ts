@@ -42,7 +42,7 @@ function gateway(transport: ProviderTransport) {
 
 describe('OpenAI Responses request mapping', () => {
   it('maps system messages to instructions and keeps supplied order', () => {
-    const body = buildResponsesBody(fixtureRequest, fixtureModel);
+    const { body } = buildResponsesBody(fixtureRequest, fixtureModel);
     expect(body).toEqual({
       model: fixtureModel,
       instructions: 'Return only JSON.',
@@ -67,8 +67,10 @@ describe('OpenAI Responses request mapping', () => {
 
   it('is deterministic for the same request', () => {
     expect(
-      canonicalJson(buildResponsesBody(fixtureRequest, fixtureModel)),
-    ).toBe(canonicalJson(buildResponsesBody(fixtureRequest, fixtureModel)));
+      canonicalJson(buildResponsesBody(fixtureRequest, fixtureModel).body),
+    ).toBe(
+      canonicalJson(buildResponsesBody(fixtureRequest, fixtureModel).body),
+    );
   });
 
   it('rejects stop sequences rather than silently dropping them', () => {
@@ -103,6 +105,36 @@ describe('OpenAI Responses request mapping', () => {
       }),
     );
   });
+
+  it('refuses an unlowerable schema before any transport call', async () => {
+    const transport = fixtureTransport(ok(completedResponseBody));
+    const unlowerable = {
+      ...fixtureRequest,
+      output: {
+        ...fixtureRequest.output,
+        jsonSchema: {
+          type: 'object',
+          properties: {
+            value: {
+              oneOf: [{ type: 'string' }, { type: 'number' }],
+            },
+          },
+          required: ['value'],
+          additionalProperties: false,
+        },
+      },
+    };
+
+    await expect(
+      gateway(transport).generate(unlowerable, callContext()),
+    ).rejects.toMatchObject({
+      data: {
+        code: 'UNSUPPORTED_CAPABILITY',
+        details: { construct: 'oneOf' },
+      },
+    });
+    expect(transport.sent).toHaveLength(0);
+  });
 });
 
 describe('OpenAI Responses normalization', () => {
@@ -113,6 +145,10 @@ describe('OpenAI Responses normalization', () => {
       callContext(),
     );
 
+    const { providerWireSchemaHash } = buildResponsesBody(
+      fixtureRequest,
+      fixtureModel,
+    );
     expect(response).toEqual({
       provider: 'openai',
       model: fixtureModel,
@@ -121,7 +157,10 @@ describe('OpenAI Responses normalization', () => {
       finishReason: 'stop',
       text: '{"ok":true}',
       usage: { inputTokens: 120, outputTokens: 8, totalTokens: 128 },
-      metadata: { providerStatus: 'completed' },
+      metadata: {
+        providerStatus: 'completed',
+        providerWireSchemaHash,
+      },
     });
     expect(Object.isFrozen(response)).toBe(true);
     expect(transport.sent).toHaveLength(1);
@@ -133,10 +172,15 @@ describe('OpenAI Responses normalization', () => {
       fixtureTransport(ok(truncatedResponseBody)),
     ).generate(fixtureRequest, callContext());
 
+    const { providerWireSchemaHash } = buildResponsesBody(
+      fixtureRequest,
+      fixtureModel,
+    );
     expect(response.finishReason).toBe('length');
     expect(response.text).toBe('{"ok":tr');
     expect(response.metadata).toEqual({
       providerStatus: 'incomplete',
+      providerWireSchemaHash,
       incompleteReason: 'max_output_tokens',
     });
   });

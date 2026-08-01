@@ -1,5 +1,7 @@
 # Make prompt-contract output schemas satisfy the strict structured-output subset
 
+Status: Resolved by ACME-0029 (adapter lowering + output `.nullish()`), ADR-0015.
+
 ## Discovery context
 
 Found by the first two real provider calls in ACME-0028, not by any offline
