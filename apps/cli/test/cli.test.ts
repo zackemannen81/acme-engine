@@ -4,11 +4,17 @@ import { join } from 'node:path';
 
 import {
   computeModelRequestHash,
+  computeOperationDigest,
   createAes256GcmPayloadEncryptor,
   deriveExecutionId,
   type IdGenerator,
+  type PreparedCommitContent,
 } from '@acme/core';
 import type { ProviderTransport } from '@acme/adapter-model-openai';
+import {
+  createSqliteExecutionRepository,
+  openDatabase,
+} from '@acme/adapter-sqlite';
 import {
   narrativeObserveDocumentContract,
   narrativeObserveDocumentTask,
@@ -176,6 +182,69 @@ async function fixtureFiles(root: string): Promise<{
   );
 
   return { requestPath, scriptPath, executionId };
+}
+
+/**
+ * Commits one domain event straight into a database file, because neither
+ * reference module emits events yet. The CLI then opens the same file.
+ */
+async function seedOutbox(database: string): Promise<void> {
+  const connection = openDatabase({ location: database, appliedAt: now });
+  try {
+    const repository = createSqliteExecutionRepository({
+      database: connection,
+      ids: createIds(),
+    });
+    const accepted = {
+      executionId: 'execution-cli-outbox',
+      request: {
+        requestKey: 'cli-outbox-1',
+        namespace,
+        task: 'observe-document',
+        entityId,
+        expectedRevision: 0,
+        input: { seeded: true },
+        model: selection,
+      },
+      requestFingerprint: 'fingerprint-cli-outbox',
+      inputHash: 'input-cli-outbox',
+      contract: { id: 'narrative.observe-document', version: '1.0.0' },
+      contractFingerprint: 'contract-fingerprint',
+      effectivePolicy: {
+        timeoutMs: 1_000,
+        maxModelCalls: 1,
+        maxRepairCalls: 0,
+        maxRevisionCalls: 0,
+        retention: 'hash-only' as const,
+      },
+      createdAt: now,
+    };
+    const content: PreparedCommitContent = {
+      executionId: accepted.executionId,
+      expectedRevision: 0,
+      documents: [],
+      memoryCandidates: [],
+      memory: { decisions: [], mutations: [] },
+      state: null,
+      evaluatorRuns: [],
+      events: [
+        {
+          key: 'cli-observed-1',
+          type: 'cli.observed',
+          schemaVersion: '1.0.0',
+          payload: { seeded: true },
+        },
+      ],
+      committedAt: now,
+    };
+    await repository.accept(accepted);
+    await repository.commit({
+      ...content,
+      operationDigest: computeOperationDigest(content),
+    });
+  } finally {
+    connection.close();
+  }
 }
 
 describe('acme CLI usage', () => {
@@ -582,6 +651,66 @@ describe('acme CLI durable round trip', () => {
     expect(memory.records.length).toBeGreaterThan(0);
     expect(memory.records[0]?.status).toBe('active');
     expect(memory.records[0]?.value).toBe(REDACTED);
+  });
+
+  it('inspects and drains the outbox of one SQLite database', async () => {
+    const root = workspace();
+    const database = join(root, 'outbox.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    await seedOutbox(database);
+
+    const inspectIo = capture();
+    await expect(
+      run(['outbox', 'inspect', '--json', ...sqlite], inspectIo.options),
+    ).resolves.toBe(EXIT_OK);
+    const inspected = JSON.parse(inspectIo.out.join('\n')) as {
+      version: string;
+      entries: { status: string; type: string; payload: unknown }[];
+    };
+    expect(inspected.version).toBe(CLI_OUTPUT_VERSION);
+    expect(inspected.entries).toHaveLength(1);
+    expect(inspected.entries[0]).toMatchObject({
+      status: 'pending',
+      type: 'cli.observed',
+      payload: REDACTED,
+    });
+
+    const drainIo = capture();
+    await expect(
+      run(
+        ['outbox', 'drain', '--json', '--show-payloads', ...sqlite],
+        drainIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const drained = JSON.parse(drainIo.out.join('\n')) as {
+      report: string;
+      leased: number;
+      delivered: number;
+      events: { payload: unknown }[];
+    };
+    expect(drained.report).toBe('acme-outbox-drain-report/1');
+    expect(drained).toMatchObject({ leased: 1, delivered: 1 });
+    expect(drained.events[0]?.payload).toEqual({ seeded: true });
+
+    // A second drain finds nothing due and says so through the outcome code.
+    const emptyIo = capture();
+    await expect(
+      run(['outbox', 'drain', ...sqlite], emptyIo.options),
+    ).resolves.toBe(EXIT_OUTCOME);
+    expect(emptyIo.out.join('\n')).toContain('no outbox entries were due');
+  });
+
+  it.each([
+    [['outbox', 'redrive'], 'Unknown outbox action'],
+    [['outbox', 'drain', '--limit', '0'], '--limit must be a positive integer'],
+    [
+      ['outbox', 'drain', '--lease-timeout-ms', 'soon'],
+      '--lease-timeout-ms must be a positive integer',
+    ],
+  ])('rejects %j as a usage error', async (argv, expected) => {
+    const io = capture();
+    await expect(run(argv, io.options)).resolves.toBe(EXIT_USAGE);
+    expect(io.err.join('\n')).toContain(expected);
   });
 
   it('reports the outcome code when nothing matches an inspection filter', async () => {

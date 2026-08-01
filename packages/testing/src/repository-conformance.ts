@@ -140,6 +140,17 @@ function faultOnFirstEventId(): IdGenerator {
   };
 }
 
+function countingIds(): IdGenerator {
+  const counts = new Map<string, number>();
+  return {
+    next(kind) {
+      const count = (counts.get(kind) ?? 0) + 1;
+      counts.set(kind, count);
+      return `${kind}-${count}`;
+    },
+  };
+}
+
 async function expectCode(
   operation: Promise<unknown>,
   code: AcmeError['data']['code'],
@@ -455,6 +466,137 @@ export function executionRepositoryConformance(
       expect(retried.operationDigest).toBe(commit.operationDigest);
       expect(retried.documentKeys).toEqual(expected.documentKeys);
       expect(retried.revision).toBe(expected.revision);
+    });
+
+    it('claims, settles and re-claims outbox entries (ADR-0018)', async () => {
+      const repository = options.createRepository({ ids: countingIds() });
+      await repository.accept(accepted('execution-outbox'));
+      await repository.commit(
+        prepared('execution-outbox', {
+          events: [
+            {
+              key: 'event-b',
+              type: 'conformance.observed',
+              schemaVersion: '1.0.0',
+              payload: { order: 2 },
+            },
+            {
+              key: 'event-a',
+              type: 'conformance.observed',
+              schemaVersion: '1.0.0',
+              payload: { order: 1 },
+            },
+          ],
+        }),
+      );
+      await expect(repository.listOutbox({ limit: 10 })).resolves.toMatchObject(
+        [{ record: { status: 'pending', attemptCount: 0 } }, { record: {} }],
+      );
+
+      // The limit is honored and the claim increments the attempt count.
+      const claim = {
+        now: timestamp,
+        limit: 1,
+        leaseExpiresAt: '2026-07-29T12:00:30.000Z',
+      };
+      const first = await repository.leaseOutbox(claim);
+      expect(first).toHaveLength(1);
+      expect(first[0]?.record).toMatchObject({
+        status: 'claimed',
+        attemptCount: 1,
+        availableAt: claim.leaseExpiresAt,
+        claimedAt: timestamp,
+      });
+      expect(first[0]?.event).toMatchObject({
+        executionId: 'execution-outbox',
+        type: 'conformance.observed',
+      });
+
+      // A claimed entry is exclusive until its claim expires.
+      const second = await repository.leaseOutbox(claim);
+      expect(second.map((entry) => entry.record.eventId)).not.toContain(
+        first[0]?.record.eventId,
+      );
+
+      const claimedId = first[0]?.record.eventId ?? '';
+      await repository.markOutboxDelivered({
+        eventId: claimedId,
+        deliveredAt: '2026-07-29T12:00:05.000Z',
+      });
+      await repository.markOutboxDelivered({
+        eventId: claimedId,
+        deliveredAt: '2026-07-29T12:00:05.000Z',
+      });
+      await expect(
+        repository.listOutbox({ status: 'delivered', limit: 10 }),
+      ).resolves.toMatchObject([
+        {
+          record: {
+            eventId: claimedId,
+            status: 'delivered',
+            deliveredAt: '2026-07-29T12:00:05.000Z',
+          },
+        },
+      ]);
+
+      // The second entry fails, retries, and is claimable again at its retry
+      // time with the attempt count still rising.
+      const other = second[0]?.record.eventId ?? '';
+      const error = {
+        code: 'INTERNAL' as const,
+        message: 'fixture dispatcher failure',
+        stage: 'committed' as const,
+        retryable: true,
+      };
+      await repository.markOutboxFailed({
+        eventId: other,
+        error,
+        failedAt: timestamp,
+        retryAt: '2026-07-29T12:00:10.000Z',
+      });
+      await expect(
+        repository.listOutbox({ status: 'pending', limit: 10 }),
+      ).resolves.toMatchObject([
+        { record: { eventId: other, attemptCount: 1, lastError: error } },
+      ]);
+      await expect(
+        repository.leaseOutbox({ ...claim, limit: 10 }),
+      ).resolves.toEqual([]);
+      const retried = await repository.leaseOutbox({
+        now: '2026-07-29T12:00:10.000Z',
+        limit: 10,
+        leaseExpiresAt: '2026-07-29T12:00:40.000Z',
+      });
+      expect(retried).toMatchObject([
+        { record: { eventId: other, status: 'claimed', attemptCount: 2 } },
+      ]);
+
+      // Giving up is terminal for the drain and keeps the recorded error.
+      await repository.markOutboxFailed({
+        eventId: other,
+        error,
+        failedAt: '2026-07-29T12:00:11.000Z',
+      });
+      await expect(
+        repository.listOutbox({ status: 'failed', limit: 10 }),
+      ).resolves.toMatchObject([
+        { record: { eventId: other, status: 'failed', lastError: error } },
+      ]);
+      await expect(
+        repository.leaseOutbox({
+          now: '2026-07-30T00:00:00.000Z',
+          limit: 10,
+          leaseExpiresAt: '2026-07-30T00:00:30.000Z',
+        }),
+      ).resolves.toEqual([]);
+
+      // Settling something that was never claimed is a classified error.
+      await expect(
+        repository.markOutboxDelivered({
+          eventId: 'event-unknown',
+          deliveredAt: timestamp,
+        }),
+      ).rejects.toMatchObject({ data: { code: 'INVALID_REQUEST' } });
     });
 
     it('loads immutable aggregate replay evidence and honors hash-only retention', async () => {

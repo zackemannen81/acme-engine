@@ -204,6 +204,39 @@ export interface OutboxRecord {
   readonly lastError?: AcmeErrorData;
 }
 
+/** One leased outbox entry and the committed event it carries (ADR-0018). */
+export interface LeasedOutboxEntry {
+  readonly record: OutboxRecord;
+  readonly event: DomainEventRecord;
+}
+
+export interface OutboxLease {
+  /** Entries due at or before this instant may be leased. */
+  readonly now: IsoTimestamp;
+  /** Maximum entries to lease. Must be greater than zero. */
+  readonly limit: number;
+  /** When the lease expires and the entry becomes available again. */
+  readonly leaseExpiresAt: IsoTimestamp;
+}
+
+export interface DeliveredOutboxEntry {
+  readonly eventId: string;
+  readonly deliveredAt: IsoTimestamp;
+}
+
+export interface FailedOutboxEntry {
+  readonly eventId: string;
+  readonly error: AcmeErrorData;
+  readonly failedAt: IsoTimestamp;
+  /** Present to retry later; absent to give up and mark the entry `failed`. */
+  readonly retryAt?: IsoTimestamp;
+}
+
+export interface OutboxQuery {
+  readonly status?: OutboxRecord['status'];
+  readonly limit: number;
+}
+
 export interface ExecutionRepository {
   accept(request: AcceptedExecution): Promise<AcceptResult>;
   get(executionId: ExecutionId): Promise<ExecutionRecord | null>;
@@ -225,6 +258,20 @@ export interface ExecutionRepository {
   loadReplayEvidence(
     executionId: ExecutionId,
   ): Promise<ExecutionReplayEvidence | null>;
+  /**
+   * Atomically lease due outbox entries (ADR-0018). Entries are `pending`, or
+   * already leased past their expiry, with `availableAt <= now`. Ordering is
+   * `event.occurredAt` then `eventId`, and each lease increments the attempt
+   * count. The persisted status value stays `claimed` from the original
+   * schema; the API says lease because domain vocabulary owns the other word.
+   */
+  leaseOutbox(lease: OutboxLease): Promise<readonly LeasedOutboxEntry[]>;
+  /** Settle a leased entry as delivered. Idempotent. */
+  markOutboxDelivered(entry: DeliveredOutboxEntry): Promise<void>;
+  /** Settle a leased entry for retry, or as `failed` without `retryAt`. */
+  markOutboxFailed(entry: FailedOutboxEntry): Promise<void>;
+  /** Read outbox entries and their events in lease order, leasing nothing. */
+  listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]>;
 }
 
 export interface RepositoryStateEvidence {

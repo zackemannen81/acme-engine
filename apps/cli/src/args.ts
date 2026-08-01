@@ -47,6 +47,18 @@ export type Command =
       readonly common: CommonOptions;
     }
   | {
+      readonly kind: 'outbox-inspect';
+      readonly status?: string;
+      readonly limit: number;
+      readonly common: CommonOptions;
+    }
+  | {
+      readonly kind: 'outbox-drain';
+      readonly limit: number;
+      readonly leaseTimeoutMs: number;
+      readonly common: CommonOptions;
+    }
+  | {
       readonly kind: 'memory-inspect';
       readonly namespace: string;
       readonly entityId: string;
@@ -65,12 +77,17 @@ export const USAGE = `acme — ACME composition root
   acme execution inspect <execution-id> [--show-payloads] [--adapter ...] [--database <path>] [--json]
   acme state inspect <namespace> <entity-id> [--revision <n>] [--adapter ...] [--database <path>] [--json]
   acme memory inspect <namespace> <entity-id> [--status <status>] [--adapter ...] [--database <path>] [--json]
+  acme outbox inspect [--status <status>] [--limit <n>] [--adapter ...] [--database <path>] [--json]
+  acme outbox drain [--limit <n>] [--lease-timeout-ms <n>] [--adapter ...] [--database <path>] [--json]
 
   --adapter        memory (default) or sqlite
   --database       required with --adapter sqlite
   --script         deterministic model-call script (mock gateway)
   --gateway        openai for a live Responses call (requires OPENAI_API_KEY;
                    model from ACME_OPENAI_MODEL or ACME_LIVE_MODEL)
+  --limit          maximum outbox entries to read or claim (default 50)
+  --lease-timeout-ms
+                   how long an outbox claim stays exclusive (default 30000)
   --show-payloads  print document, memory and state values instead of redacting
   --json           versioned JSON on stdout instead of a text summary
 
@@ -86,6 +103,17 @@ function requirePositional(
   const value = positionals[index];
   if (value === undefined || value.length === 0) {
     throw new UsageError(`Missing required argument <${name}>.`);
+  }
+  return value;
+}
+
+function positiveInteger(raw: unknown, flag: string, fallback: number): number {
+  if (raw === undefined) {
+    return fallback;
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new UsageError(`${flag} must be a positive integer.`);
   }
   return value;
 }
@@ -132,6 +160,8 @@ export function parseCommand(argv: readonly string[]): Command {
         mode: { type: 'string' },
         revision: { type: 'string' },
         status: { type: 'string' },
+        limit: { type: 'string' },
+        'lease-timeout-ms': { type: 'string' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -210,6 +240,33 @@ export function parseCommand(argv: readonly string[]): Command {
     throw new UsageError(
       'Unknown execution action; expected replay or inspect.',
     );
+  }
+
+  if (group === 'outbox') {
+    const action = positionals[1];
+    if (action !== 'inspect' && action !== 'drain') {
+      throw new UsageError('Unknown outbox action; expected inspect or drain.');
+    }
+    const limit = positiveInteger(values['limit'], '--limit', 50);
+    if (action === 'inspect') {
+      const status = values['status'] as string | undefined;
+      return {
+        kind: 'outbox-inspect',
+        ...(status === undefined ? {} : { status }),
+        limit,
+        common: options,
+      };
+    }
+    return {
+      kind: 'outbox-drain',
+      limit,
+      leaseTimeoutMs: positiveInteger(
+        values['lease-timeout-ms'],
+        '--lease-timeout-ms',
+        30_000,
+      ),
+      common: options,
+    };
   }
 
   if (group === 'state' || group === 'memory') {

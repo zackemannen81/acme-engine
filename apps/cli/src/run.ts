@@ -2,10 +2,12 @@ import { readFile } from 'node:fs/promises';
 
 import {
   AcmeError,
+  drainOutbox,
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
   type ModelSelection,
+  type OutboxRecord,
 } from '@acme/core';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
 import {
@@ -19,10 +21,12 @@ import {
   UsageError,
   USAGE,
   type Command,
+  type CommonOptions,
   type ExecuteGateway,
 } from './args.js';
 import {
   createComposition,
+  type Composition,
   type CompositionOverrides,
   type InspectableRepository,
 } from './composition.js';
@@ -445,6 +449,118 @@ function inspectMemory(
   }
 }
 
+async function withComposition(
+  common: CommonOptions,
+  options: RunOptions,
+  work: (composition: Composition) => Promise<number>,
+): Promise<number> {
+  const composition = createComposition(
+    common.adapter,
+    common.database,
+    options,
+  );
+  try {
+    return await work(composition);
+  } finally {
+    composition.close();
+  }
+}
+
+function inspectOutbox(
+  command: Extract<Command, { kind: 'outbox-inspect' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const entries = await composition.repository.listOutbox({
+      ...(command.status === undefined
+        ? {}
+        : { status: command.status as OutboxRecord['status'] }),
+      limit: command.limit,
+    });
+    const body = {
+      entries: entries.map(({ record, event }) => ({
+        eventId: record.eventId,
+        status: record.status,
+        attemptCount: record.attemptCount,
+        availableAt: record.availableAt,
+        type: event.type,
+        namespace: event.namespace,
+        entityId: event.entityId,
+        occurredAt: event.occurredAt,
+        payload: payload(event.payload, command.common.showPayloads),
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'outbox inspect',
+      body,
+      command.common.json,
+      entries.length === 0
+        ? ['no outbox entries found']
+        : entries.map(
+            ({ record, event }) =>
+              `${record.eventId} ${record.status} ${event.type}`,
+          ),
+    );
+    return entries.length === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
+function drainOutboxCommand(
+  command: Extract<Command, { kind: 'outbox-drain' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const delivered: JsonValue[] = [];
+    // The v1 consumer hands events to the operator through the report rather
+    // than inventing a transport (ADR-0018).
+    const report = await drainOutbox({
+      repository: composition.repository,
+      clock: composition.clock,
+      limit: command.limit,
+      leaseTimeoutMs: command.leaseTimeoutMs,
+      dispatcher: {
+        async deliver(event) {
+          delivered.push({
+            eventId: event.eventId,
+            executionId: event.executionId,
+            type: event.type,
+            namespace: event.namespace,
+            entityId: event.entityId,
+            occurredAt: event.occurredAt,
+            payload: payload(event.payload, command.common.showPayloads),
+          });
+        },
+      },
+    });
+    const body = {
+      report: report.report,
+      leasedAt: report.leasedAt,
+      leased: report.leased,
+      delivered: report.delivered,
+      retryScheduled: report.retryScheduled,
+      failed: report.failed,
+      entries: report.entries.map((entry) => ({
+        eventId: entry.eventId,
+        attemptCount: entry.attemptCount,
+        outcome: entry.outcome,
+        ...(entry.retryAt === undefined ? {} : { retryAt: entry.retryAt }),
+      })),
+      events: delivered,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'outbox drain',
+      body,
+      command.common.json,
+      report.leased === 0
+        ? ['no outbox entries were due']
+        : report.entries.map((entry) => `${entry.eventId} ${entry.outcome}`),
+    );
+    return report.failed > 0 || report.leased === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
 export async function run(
   argv: readonly string[],
   options: RunOptions,
@@ -467,6 +583,10 @@ export async function run(
         return inspectState(command, options);
       case 'memory-inspect':
         return inspectMemory(command, options);
+      case 'outbox-inspect':
+        return await inspectOutbox(command, options);
+      case 'outbox-drain':
+        return await drainOutboxCommand(command, options);
     }
   } catch (error: unknown) {
     if (error instanceof UsageError) {

@@ -1423,3 +1423,46 @@ Add one dated, signed entry for every meaningful work session or handoff.
   written atomically and never drained. Driver error classification is a
   backlog proposal.
 - Signature: Claude
+
+## 2026-08-01 — ACME-0035 outbox delivery boundary
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0035
+- Summary: Gave committed domain events a way out of the outbox and closed the
+  last Milestone 2 work package. Events are leased, delivered through an
+  injected dispatcher and settled as delivered, retryable or failed. ADR-0018
+  fixes the contract.
+- Decision that sized the task: v1 owns no background worker. A drain is a
+  function a composition root calls, because a library that drains on its own
+  has timing-dependent tests and failures nobody receives. Delivery is
+  at-least-once, stated rather than implied: a crash between delivery and
+  settlement re-delivers once the lease expires, and consumers deduplicate on
+  `eventId`.
+- Implementation: `leaseOutbox`, `markOutboxDelivered`, `markOutboxFailed` and
+  `listOutbox` on the core port and both adapters; a domain-neutral
+  `drainOutbox` coordinator over an `OutboxDispatcher` port returning a
+  versioned `acme-outbox-drain-report/1`; `acme outbox inspect` and
+  `acme outbox drain` in the composition root.
+- Naming seam: the core vocabulary guard rejected the obvious word. `claim` is
+  Research-domain vocabulary, so the API says lease — `leaseOutbox`,
+  `OutboxLease`, `leaseExpiresAt` — while the persisted status value stays
+  `claimed` from the original schema. Renaming stored data to satisfy a naming
+  rule would have been the worse trade, so the seam is documented in ADR-0018
+  instead of hidden. The guard was right to fire: a reader of `claimOutbox` in
+  core cannot tell which kind of claim is meant.
+- Verification: `pnpm docs:check` 80 Markdown files after archival; `format:check`, `lint`, `typecheck`,
+  `boundaries` and `build` passed. `pnpm test:unit` 384 tests in 45 files,
+  `pnpm test:conformance` 58 in 7, `pnpm test:integration` 29 in 4,
+  `pnpm test:scenario` 19 in 3. `git diff --check` passed. No live provider
+  call; `tests/live` was not run.
+- Honest limits: neither reference module emits domain events yet, so the
+  outbox is exercised by committed fixtures rather than by production traffic.
+  The CLI dispatcher hands events to the operator through the report; no real
+  transport exists. `failed` entries have no redrive path, and nothing alarms
+  on a growing outbox.
+- Spend: none. Offline only.
+- Follow-ups: a redrive decision for `failed` entries, real transports as
+  composition roots, whether a drain belongs in ScenarioRunner steps, and
+  outbox-depth metrics. Milestone 2 is complete.
+- Signature: Claude

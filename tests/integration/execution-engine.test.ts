@@ -418,6 +418,10 @@ describe('ExecutionEngine neutral integration', () => {
       loadResumeState: base.loadResumeState.bind(base),
       markTerminal: base.markTerminal.bind(base),
       loadReplayEvidence: base.loadReplayEvidence.bind(base),
+      leaseOutbox: base.leaseOutbox.bind(base),
+      markOutboxDelivered: base.markOutboxDelivered.bind(base),
+      markOutboxFailed: base.markOutboxFailed.bind(base),
+      listOutbox: base.listOutbox.bind(base),
       async commit() {
         throw new AcmeError({
           code: 'CONFLICT_MEMORY_VERSION',
