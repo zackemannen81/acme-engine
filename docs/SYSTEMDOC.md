@@ -737,16 +737,17 @@ specifies a local human workbench for configuring, launching and inspecting
 **module** tests (ScenarioRunner / ExecutionEngine) and **adapter** kit runs
 (existing conformance suites). ACME-0039 accepted the seven gate freezes in
 ADR-0019 and delivered phases 0 and 1: the `@acme/test-ui` package boundary
-and a pure read model with versioned view contracts.
+and a pure read model with versioned view contracts. ACME-0040 added phase 2,
+the catalog.
 
 Implemented today:
 
 - `apps/test-ui` (`@acme/test-ui`), a leaf app. It may read public package
   entry points; it may not import a package internal, and nothing imports it.
   Both directions fail a dependency-cruiser fixture
-- four versioned view contracts — `acme-view-execution/1` (S4),
-  `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6) and
-  `acme-view-replay/1` (S7)
+- five versioned view contracts — `acme-view-execution/1` (S4),
+  `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6),
+  `acme-view-replay/1` (S7) and `acme-view-catalog/1` (S1)
 - pure builders from recorded evidence to those views. No I/O, no clock, no
   network, no browser; every contract is asserted as JSON
 - absence as an explicit value: each optional section is `available` or
@@ -765,6 +766,22 @@ Implemented today:
   decision that produced it
 - replay in the engine's exact vocabulary (`match | different | unavailable`).
   "No replay was run" is a missing section, not a fourth verdict
+- a catalog (S1) over the static registries plus discovered scenarios and
+  fixtures: registry order preserved verbatim, full contract fingerprints,
+  contract-to-task cross-links, and scenario steps checked against registered
+  namespaces and tasks
+- a catalog that owns no schema: scenario validity is decided by the runner's
+  own `parseScenario`, injected by the caller. Without it the section is
+  `unavailable`, so the interface cannot grow a competing validator
+- broken things stay visible and labelled: an invalid scenario keeps the
+  validator's own message, a reference that escapes the root is refused, a
+  reference with no file is missing, an unreferenced fixture is an orphan, an
+  unrecognized conformance kit is unknown
+- no evaluator registry is invented. Core enumerates no evaluators, so the
+  catalog's evaluator section is `unavailable` rather than an empty list
+- bounded Node discovery on a separate entry point (`@acme/test-ui/node-source`)
+  that refuses to follow symbolic links, reports depth and file bounds instead
+  of truncating silently, and keeps the default surface free of I/O
 
 Constraints that continue to bind later phases:
 
@@ -780,10 +797,10 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: the catalog (S1), plan designer (S2), run console (S3),
-measurement (S8), fixture review (S9), live evaluation (S10), the
-`acme-test-plan/1` schema and compiler, interface-owned storage, the
-composition process that loads evidence, and any browser surface.
+Not implemented: the plan designer (S2), run console (S3), measurement (S8),
+fixture review (S9), live evaluation (S10), the `acme-test-plan/1` schema and
+compiler, interface-owned storage, the composition process that loads
+execution evidence, and any browser surface.
 
 ## Remaining Implementation Baseline
 

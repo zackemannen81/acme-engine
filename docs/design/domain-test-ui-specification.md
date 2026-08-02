@@ -1,11 +1,12 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes accepted and phases
-0–1 delivered by ACME-0039 / [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md);
-phases 2–6 remain unimplemented and each needs its own charter.
+0–2 delivered by ACME-0039 and ACME-0040 under
+[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md);
+phases 3–6 remain unimplemented and each needs its own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-01 (ACME-0039 — gate freezes accepted, phases 0–1 implemented)
+Last revised: 2026-08-02 (ACME-0040 — phase 2 catalog implemented)
 
 ## Executive summary
 
@@ -271,6 +272,21 @@ kit entry points.
 - Fingerprints are shown in full and are copyable.
 - Discovery stays below the configured root; reject traversal and include
   cycles.
+
+**Implemented by ACME-0040.** Two constraints the specification did not
+anticipate are recorded here rather than worked around:
+
+- Core registers no evaluators. It owns `EvaluationDecision` and records
+  `PreparedEvaluatorRun` evidence per run, but nothing enumerates evaluators,
+  so the catalog's evaluator section is `unavailable`. An empty list would
+  claim the system has none.
+- Nothing registers adapter implementations either; the CLI composition root
+  hard-codes them. Adapter targets are therefore declared by the caller, and
+  the catalog validates only the kit name against the kits `@acme/testing`
+  publishes.
+
+Cycles are excluded by never following symbolic links, which also keeps the
+walk inside the root.
 
 ### S2 — Test plan designer
 
@@ -544,12 +560,24 @@ code; `none` and `hash-only` model payloads render `not-retained`; content is
 redacted unless a build reveals it. An integration test proves the same
 contracts over evidence a real offline engine run recorded.
 
-### Phase 2 — Catalog and adapter kit listing
+### Phase 2 — Catalog and adapter kit listing — **done (ACME-0040)**
 
 1. S1 over registries + scenario discovery + adapter kit targets.
 2. Optional read-only health strip for unit/type (external report ingest only).
 
 **Exit:** catalog is complete and deterministically ordered in tests.
+
+**Met for item 1.** `acme-view-catalog/1` renders modules and contracts in
+registry order with task declaration order preserved, full fingerprints,
+contract-to-task cross-links, discovered scenarios classified by the runner's
+own `parseScenario`, fixture references resolved or refused, orphan fixtures
+labelled and declared adapter targets validated against the published kits.
+Discovery is bounded, refuses symlinks and lives on a separate entry point.
+
+**Item 2 deliberately not built.** The health strip is optional in this
+specification and depends on ingesting an external unit/type report that
+nothing in the repository produces. Building a strip with no report to read
+would mean inventing the report, which the boundary forbids.
 
 ### Phase 3 — Plan schema and compiler
 

@@ -213,11 +213,24 @@ There is currently:
   `execution inspect`, `state inspect` and `memory inspect`, with versioned
   JSON on stdout, diagnostics on stderr, payload redaction by default and exit
   codes separating success, a non-committed outcome and a usage error
-- an `@acme/test-ui` Domain Test UI package (ADR-0019) holding phase-1 read
-  model only: four versioned view contracts (`acme-view-execution/1`,
-  `acme-view-memory-decisions/1`, `acme-view-state/1`, `acme-view-replay/1`)
-  and pure builders over recorded evidence, with no I/O, clock, network or
-  browser
+- an `@acme/test-ui` Domain Test UI package (ADR-0019) holding phases 1 and 2:
+  five versioned view contracts (`acme-view-execution/1`,
+  `acme-view-memory-decisions/1`, `acme-view-state/1`, `acme-view-replay/1`,
+  `acme-view-catalog/1`) and pure builders over recorded evidence, with no
+  clock, network or browser, and no I/O on the default entry point
+- a catalog (S1) over the static registries plus discovered scenarios and
+  fixtures, preserving registry and task declaration order, rendering full
+  contract fingerprints, cross-linking contracts to tasks, and marking broken
+  things rather than hiding them: invalid scenarios keep the runner
+  validator's own message, references that escape the configured root are
+  refused, missing references and orphan fixtures are labelled, and an
+  unrecognized conformance kit is `unknown`
+- a catalog that owns no schema and invents no registry: scenario validity
+  comes from the injected `parseScenario`, and the evaluator section is
+  `unavailable` because core enumerates no evaluators
+- bounded Node discovery on the separate `@acme/test-ui/node-source` entry
+  point: no symlink following, deterministic ordering, and depth and file
+  bounds reported as diagnostics instead of silent truncation
 - explicit absence in every view: an unread section is `unavailable` with a
   reason code rather than an empty array; content is redacted unless a build
   reveals it; a model payload absent under `none` or `hash-only` retention
@@ -229,8 +242,8 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 421 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (49 files), with separate conformance (58),
+- 446 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (51 files), with separate conformance (58),
   integration (35) and scenario (19) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
@@ -276,8 +289,12 @@ template until the next charter is explicitly approved.
   `apps/test-ui` boundary enforced in both directions, and phase-1 view
   contracts for S4–S7 proven over handcrafted fixtures and over evidence a
   real offline engine run recorded.
+- **ACME-0040:** Domain Test UI phase 2: the `acme-view-catalog/1` surface over
+  registries, discovered scenarios and fixtures and declared adapter kit
+  targets, with bounded traversal-refusing Node discovery on a separate entry
+  point and the repository's own scenario tree discovered under test.
 
-### Domain Test UI (activated, phases 0 and 1 delivered)
+### Domain Test UI (activated, phases 0–2 delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -287,13 +304,18 @@ evidence). One deviation is recorded rather than hidden: S7 uses the engine's
 exact `match | different | unavailable` vocabulary and adds no `forked`
 outcome, because the engine cannot produce one.
 
-Delivered: `apps/test-ui`, four versioned view contracts for S4–S7, pure
-builders, redaction and retention presentation rules, and boundary fixtures in
-both directions.
+Delivered by ACME-0039: `apps/test-ui`, four versioned view contracts for
+S4–S7, pure builders, redaction and retention presentation rules, and boundary
+fixtures in both directions.
 
-Not delivered: S1, S2, S3, S8, S9, S10, the `acme-test-plan/1` schema and
+Delivered by ACME-0040 (phase 2): `acme-view-catalog/1` for S1 over the static
+registries, discovered scenarios and fixtures, and caller-declared adapter kit
+targets, plus bounded Node discovery on a separate entry point.
+
+Not delivered: S2, S3, S8, S9, S10, the `acme-test-plan/1` schema and
 compiler, interface-owned storage, the evidence-loading composition process
-and any browser surface. The next slice is phase 2 (catalog).
+and any browser surface. The next slice is phase 3 (`acme-test-plan/1` schema
+and compiler), which needs the gate-3 ADR at first export.
 Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
 visual mock lives under `docs/concepts_sandbox/temp/`.
 
@@ -315,12 +337,16 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **Domain Test UI is a read model, not a workbench yet.** Phases 0 and 1 are
-  delivered (ACME-0039 / ADR-0019): boundaries and S4–S7 view contracts over
-  recorded evidence. Nothing loads that evidence for a human yet — there is no
-  catalog, no plan, no launcher, no history and no browser surface, and the
-  package is a leaf that no composition root wires up. Phase 2 (catalog) is
-  the next slice.
+- **Domain Test UI is a read model and a catalog, not a workbench yet.**
+  Phases 0–2 are delivered (ACME-0039 / ACME-0040 / ADR-0019): boundaries,
+  S4–S7 view contracts over recorded evidence, and S1 over the registries and
+  a discovered scenario tree. There is still no plan, no launcher, no history
+  and no browser surface, and the package remains a leaf that no composition
+  root wires up. Phase 3 (`acme-test-plan/1`) is the next slice.
+- **Adapter targets are declared, not discovered.** Nothing in the workspace
+  registers adapter implementations; the CLI composition root hard-codes them.
+  The catalog therefore renders targets a caller declares and only validates
+  the kit name, so a workspace adapter nobody declares is invisible to it.
 - **Trust pipeline granularity.** `preparing-commit` owns the memory,
   projection and state substages, and a failure there reports `reached` for
   all three because the recorded error does not name one. Finer resolution

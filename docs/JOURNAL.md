@@ -1651,3 +1651,66 @@ Add one dated, signed entry for every meaningful work session or handoff.
   resolution requires the engine to record finer evidence, not the interface
   to infer it.
 - Signature: Claude
+
+## 2026-08-02 — ACME-0040 Domain Test UI catalog (phase 2)
+
+- Date: 2026-08-02
+- Author: Claude
+- Task: ACME-0040
+- Summary: Delivered phase 2 of the Domain Test UI build order: the S1
+  catalog. It answers "what exists?" from the static registries plus a
+  discovered scenario tree, and it enumerates without deciding.
+- Code: `acme-view-catalog/1` and `buildCatalogView` in
+  `apps/test-ui/src/read-model/catalog.ts`; pure reference-path rules in
+  `src/catalog/paths.ts`; bounded Node discovery in `src/node-source.ts`,
+  published on the separate `@acme/test-ui/node-source` entry point so the
+  default surface keeps the ADR-0019 no-I/O property.
+- Rendered: modules and contracts in registry order with task declaration
+  order preserved, full contract fingerprints, contract-to-task cross-links,
+  discovered scenarios and fixtures, and caller-declared adapter kit targets.
+- Broken things stay visible and labelled rather than dropped: an invalid
+  scenario keeps the validator's own message, a reference that escapes the
+  configured root is refused, a reference with no file is missing, an
+  unreferenced fixture is an orphan, an unrecognized kit is unknown, and a
+  step naming an unregistered namespace or task is marked.
+- The catalog owns no schema. Scenario validity comes from `parseScenario`,
+  injected by the caller, because `@acme/testing` imports vitest at module
+  scope from the same barrel and an application package should not pull a
+  test framework. Without a validator the section is `unavailable`, which
+  makes a competing schema structurally impossible rather than merely
+  discouraged.
+- Two absences recorded instead of faked. Core registers no evaluators, so the
+  evaluator section is `unavailable` rather than an empty list that would read
+  as "this system has no evaluators". Nothing registers adapter
+  implementations either — the CLI composition root hard-codes them — so
+  targets are declared by the caller and only the kit name is validated,
+  against the kits `@acme/testing` actually exports (asserted by test).
+- Discovery is bounded and refuses to follow symbolic links, which is what
+  keeps the walk both cycle-free and inside the root. Depth and file bounds
+  are reported as diagnostics; nothing truncates silently. A file that is not
+  decodable YAML is a discovery diagnostic, not a scenario the validator
+  judged.
+- Not built: the optional unit/type health strip. It ingests an external
+  report that nothing in this repository produces, so building it would have
+  meant inventing the report. Recorded in the specification, not skipped
+  quietly.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 446 unit (51 files, up from 421/49), 58
+  conformance, 35 integration, 19 scenario; `pnpm docs:check` 83 Markdown
+  files; `pnpm build`; `git diff --check` clean. No network call, no
+  wall-clock read and no browser in any gate.
+- Evidence beyond fixtures: `apps/test-ui/test/node-source.test.ts` discovers
+  the repository's own `tests/scenario/files` tree and renders it as a
+  catalog. Every reference in `narrative-phase-5.yaml` resolves and no fixture
+  is an orphan, so the reference rules are proven against a real scenario
+  rather than only against a constructed one.
+- Docs: design specification restatused with phase 2 marked done and the two
+  recorded absences added to the S1 section; backlog proposal, `CURRENT_STATUS`,
+  `SYSTEMDOC`, `FILESTRUCTURE`, `AGENTS.md`, root `README` and the
+  design/backlog READMEs synchronized.
+- Spend: none.
+- Follow-ups: phase 3 (`acme-test-plan/1` schema and compiler) as its own
+  charter, with the gate-3 ADR required at first export. The catalog still
+  has no composition root wiring it to a live workspace, and adapter targets
+  stay caller-declared until something registers implementations.
+- Signature: Claude

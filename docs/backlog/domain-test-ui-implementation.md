@@ -1,6 +1,6 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — activated 2026-08-01 (ACME-0039); phases 2–6 open**
+Status: **Partially resolved — phases 0–2 delivered (ACME-0039, ACME-0040); phases 3–6 open**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
 Decision: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
@@ -47,8 +47,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | Charter slice | Content | State |
 | --- | --- | --- |
 | **First** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 | **Done — ACME-0039 / ADR-0019** |
-| Second | Phase 2 catalog (modules, contracts, adapters, scenarios) | Open — next slice |
-| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | Open |
+| **Second** | Phase 2 catalog (modules, contracts, adapters, scenarios) | **Done — ACME-0040** |
+| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | Open — next slice |
 | Fourth | Phase 4 offline authoring, launch, history | Open |
 | Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open |
 
@@ -70,6 +70,21 @@ contracts made the Execution Inspector real and testable without a browser.
 - one deviation, recorded in ADR-0019: S7 keeps the engine's exact
   `match | different | unavailable` vocabulary and adds no `forked`
 
+## What ACME-0040 delivered
+
+- `acme-view-catalog/1` for S1: modules and contracts in registry order with
+  task declaration order preserved, full fingerprints, contract-to-task
+  cross-links, discovered scenarios, fixtures and declared adapter targets
+- scenario validity decided by the injected `parseScenario`, so the catalog
+  owns no competing schema; without a validator the section is `unavailable`
+- broken things stay visible: invalid scenarios keep the validator's message,
+  references that escape the root are refused, missing references and orphan
+  fixtures are labelled, unknown conformance kits are marked
+- bounded Node discovery on `@acme/test-ui/node-source`: no symlink following,
+  deterministic ordering, depth and file bounds reported as diagnostics
+- two absences recorded rather than faked: core registers no evaluators, and
+  nothing registers adapter implementations
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -85,7 +100,8 @@ verification story and must not expand an unrelated frozen charter.
 - ScenarioRunner, CLI composition (including live execute)
 - encrypted-payload when encryptor supplied
 - durable resume, rollback/CAS proofs, outbox boundary
-- gate freezes accepted (ADR-0019) and the phase-1 view contracts
+- gate freezes accepted (ADR-0019), the phase-1 view contracts and the
+  phase-2 catalog
 
 **Blocks the remaining phases (decisions, not missing code):**
 
@@ -111,8 +127,17 @@ Phase 1 verification is delivered:
 - package imports no core internal; nothing imports the app
 - no test performs a network call or reads wall-clock time for run identity
 
-Later charters add catalog ordering, plan goldens, launch paths,
-fixture-approval rules and live gating proofs.
+Phase 2 verification is delivered:
+
+- registry and task declaration order preserved, with tested tie-breakers
+- invalid scenarios reported with the validator's own error, never dropped
+- references resolved, missing and refused kept distinct
+- orphan fixtures and unknown kits visible
+- discovery bounded, symlinks skipped, bounds reported not truncated
+- the repository's own scenario tree discovered and rendered under test
+
+Later charters add plan goldens, launch paths, fixture-approval rules and live
+gating proofs.
 
 ## Explicit non-goals for v1
 

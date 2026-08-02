@@ -15,6 +15,7 @@ export const MEMORY_DECISION_VIEW_VERSION =
   'acme-view-memory-decisions/1' as const;
 export const STATE_VIEW_VERSION = 'acme-view-state/1' as const;
 export const REPLAY_VIEW_VERSION = 'acme-view-replay/1' as const;
+export const CATALOG_VIEW_VERSION = 'acme-view-catalog/1' as const;
 
 /**
  * Reason codes for an unavailable section. They are part of the view
@@ -41,6 +42,27 @@ export const VIEW_UNAVAILABLE = {
   taskInput: 'TASK_INPUT_UNAVAILABLE',
   /** A decision references a candidate the prepared commit does not hold. */
   memoryCandidate: 'MEMORY_CANDIDATE_UNAVAILABLE',
+  /** No module registry was supplied to the catalog. */
+  moduleRegistry: 'MODULE_REGISTRY_UNAVAILABLE',
+  /** No contract registry was supplied to the catalog. */
+  contractRegistry: 'CONTRACT_REGISTRY_UNAVAILABLE',
+  /**
+   * The engine has no evaluator registry. Evaluator evidence exists per run
+   * (`PreparedEvaluatorRun`), but nothing enumerates evaluators, so the
+   * catalog states that rather than rendering an empty list.
+   */
+  evaluatorRegistry: 'EVALUATOR_REGISTRY_UNAVAILABLE',
+  /** Scenario discovery did not run. */
+  scenarioDiscovery: 'SCENARIO_DISCOVERY_UNAVAILABLE',
+  /** Fixture discovery did not run. */
+  fixtureDiscovery: 'FIXTURE_DISCOVERY_UNAVAILABLE',
+  /**
+   * No scenario validator was supplied. The catalog owns no schema of its
+   * own, so without the runner's validator it cannot classify a document.
+   */
+  scenarioValidator: 'SCENARIO_VALIDATOR_UNAVAILABLE',
+  /** The caller declared no adapter kit targets. */
+  adapterTargets: 'ADAPTER_TARGETS_UNAVAILABLE',
 } as const;
 
 export interface ViewUnavailable {

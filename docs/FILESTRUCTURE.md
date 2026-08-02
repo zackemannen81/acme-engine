@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-01
+Last updated: 2026-08-02
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -28,16 +28,23 @@ acme-engine/
 │       ├── tsconfig.json
 │       ├── src/
 │       │   ├── index.ts
+│       │   ├── node-source.ts
 │       │   ├── redaction.ts
 │       │   ├── view.ts
+│       │   ├── catalog/
+│       │   │   └── paths.ts
 │       │   └── read-model/
+│       │       ├── catalog.ts
 │       │       ├── execution.ts
 │       │       ├── memory.ts
 │       │       ├── replay.ts
 │       │       ├── shared.ts
 │       │       └── state.ts
 │       └── test/
+│           ├── catalog-fixtures.ts
+│           ├── catalog.test.ts
 │           ├── fixtures.ts
+│           ├── node-source.test.ts
 │           ├── read-model.test.ts
 │           ├── redaction.test.ts
 │           └── view-contract.test.ts
@@ -321,6 +328,7 @@ acme-engine/
 │   │   ├── ACME-0037_omit-default-temperature.md
 │   │   ├── ACME-0038_domain-test-ui-specification-rewrite.md
 │   │   ├── ACME-0039_domain-test-ui-read-model.md
+│   │   ├── ACME-0040_domain-test-ui-catalog.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -398,10 +406,12 @@ content remains intentionally omitted here.
   `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
-- `@acme/test-ui`: the Domain Test UI (ADR-0019). Phase 1 is the read model
-  only — versioned view contracts for the execution, memory decision, state
-  and replay surfaces, built by pure functions over recorded evidence. It
-  performs no I/O and is a leaf: nothing in the workspace imports it.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019). Phases 1 and 2 are the read
+  model and the catalog — versioned view contracts for the execution, memory
+  decision, state, replay and catalog surfaces, built by pure functions over
+  recorded evidence and discovered sources. The default entry point performs
+  no I/O; bounded filesystem discovery lives on the separate `./node-source`
+  entry point. It is a leaf: nothing in the workspace imports it.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -426,9 +436,9 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1, so the package exists but holds only the read
-model: no catalog, plan compiler, launcher, interface storage or browser
-surface. A non-authority workbench mock lives under
+and delivered phases 0 and 1; ACME-0040 added phase 2. The package therefore
+holds the read model and the catalog: no plan compiler, launcher, interface
+storage or browser surface. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it

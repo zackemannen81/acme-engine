@@ -13,6 +13,7 @@
 export const ACME_TEST_UI_PACKAGE = '@acme/test-ui' as const;
 
 export {
+  CATALOG_VIEW_VERSION,
   EXECUTION_VIEW_VERSION,
   MEMORY_DECISION_VIEW_VERSION,
   REPLAY_VIEW_VERSION,
@@ -99,3 +100,37 @@ export {
   type ReplayView,
   type ReplayViewOptions,
 } from './read-model/replay.js';
+
+export {
+  ADAPTER_KITS,
+  buildCatalogView,
+  type AdapterKit,
+  type AdapterTargetDeclaration,
+  type AdapterTargetView,
+  type CatalogDiagnostic,
+  type CatalogDiagnosticView,
+  type CatalogEvidence,
+  type CatalogView,
+  type CatalogViewOptions,
+  type ContractCatalogView,
+  type DiscoveredFixtureFile,
+  type DiscoveredScenarioFile,
+  type FixtureCatalogView,
+  type ModuleCatalogView,
+  type ReferenceResolutionStatus,
+  type ScenarioCatalogView,
+  type ScenarioDocumentShape,
+  type ScenarioReferenceView,
+  type ScenarioTargetView,
+  type ScenarioValidator,
+  type TaskCatalogView,
+} from './read-model/catalog.js';
+
+export {
+  comparePaths,
+  normalizeDiscoveredPath,
+  resolveReference,
+  PATH_REFUSAL,
+  type PathRefusalReason,
+  type ResolvedReference,
+} from './catalog/paths.js';
