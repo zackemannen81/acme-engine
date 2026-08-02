@@ -44,6 +44,7 @@ implementation baseline:
 - ADR-0017: Durable execution resume
 - ADR-0018: Outbox delivery boundary
 - ADR-0019: Domain Test UI boundary and versioned view contracts
+- ADR-0020: `acme-test-plan/1` schema and compiler
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -231,6 +232,14 @@ There is currently:
 - bounded Node discovery on the separate `@acme/test-ui/node-source` entry
   point: no symlink following, deterministic ordering, and depth and file
   bounds reported as diagnostics instead of silent truncation
+- `acme-test-plan/1` and a pure compiler (ADR-0020): a case expands into
+  `acme-scenario/1` steps, identical plans compile to byte-identical canonical
+  JSON pinned by a golden, and the compiler touches no filesystem, network or
+  clock. Policies are validated by the engine's own `resolveExecutionPolicy`,
+  so the interface owns no second policy schema
+- proof that a compiled plan is a runnable artifact: a plan equivalent to the
+  Narrative Phase 5 scenario runs through the existing CLI path and reaches
+  the same operation digest the hand-written acceptance test pins
 - explicit absence in every view: an unread section is `unavailable` with a
   reason code rather than an empty array; content is redacted unless a build
   reveals it; a model payload absent under `none` or `hash-only` retention
@@ -242,9 +251,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 446 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (51 files), with separate conformance (58),
-  integration (35) and scenario (19) gates
+- 466 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (53 files), with separate conformance (58),
+  integration (35) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -293,8 +302,12 @@ template until the next charter is explicitly approved.
   registries, discovered scenarios and fixtures and declared adapter kit
   targets, with bounded traversal-refusing Node discovery on a separate entry
   point and the repository's own scenario tree discovered under test.
+- **ACME-0041:** Domain Test UI phase 3 (ADR-0020): `acme-test-plan/1`, a
+  strict validator that refuses before emitting, and a pure deterministic
+  compiler whose output reaches the pinned Narrative Phase 5 digest through
+  the existing runner.
 
-### Domain Test UI (activated, phases 0–2 delivered)
+### Domain Test UI (activated, phases 0–3 delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -312,10 +325,12 @@ Delivered by ACME-0040 (phase 2): `acme-view-catalog/1` for S1 over the static
 registries, discovered scenarios and fixtures, and caller-declared adapter kit
 targets, plus bounded Node discovery on a separate entry point.
 
-Not delivered: S2, S3, S8, S9, S10, the `acme-test-plan/1` schema and
-compiler, interface-owned storage, the evidence-loading composition process
-and any browser surface. The next slice is phase 3 (`acme-test-plan/1` schema
-and compiler), which needs the gate-3 ADR at first export.
+Delivered by ACME-0041 (phase 3): `acme-test-plan/1` and `compileTestPlan`
+under ADR-0020, which discharges the gate-3 ADR requirement.
+
+Not delivered: S2, S3, S8, S9, S10, interface-owned storage, the
+evidence-loading composition process and any browser surface. The next slice
+is phase 4 (offline authoring, launch and history).
 Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
 visual mock lives under `docs/concepts_sandbox/temp/`.
 
@@ -337,12 +352,19 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **Domain Test UI is a read model and a catalog, not a workbench yet.**
-  Phases 0–2 are delivered (ACME-0039 / ACME-0040 / ADR-0019): boundaries,
-  S4–S7 view contracts over recorded evidence, and S1 over the registries and
-  a discovered scenario tree. There is still no plan, no launcher, no history
-  and no browser surface, and the package remains a leaf that no composition
-  root wires up. Phase 3 (`acme-test-plan/1`) is the next slice.
+- **Domain Test UI still launches nothing.** Phases 0–3 are delivered
+  (ACME-0039 / ACME-0040 / ACME-0041, ADR-0019 / ADR-0020): boundaries, S4–S7
+  view contracts, S1 over the registries and a discovered tree, and a plan
+  format that compiles to runnable scenarios. Nothing wires it up — no
+  launcher, no history, no browser surface — and the package remains a leaf
+  that no composition root imports. A compiled plan runs today only because a
+  test writes it to disk and calls the CLI. Phase 4 is the next slice.
+- **Plans cannot pin a model.** `acme-scenario/1` reads the `ModelSelection`
+  from the mock-response fixture, so `acme-test-plan/1` has no model field and
+  an `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020).
+- **`measurements` is not in `acme-test-plan/1`.** It is rejected as an
+  unknown field until S8 in phase 5 can enforce a threshold; a plan stating a
+  threshold nothing checks would promise more than the system does.
 - **Adapter targets are declared, not discovered.** Nothing in the workspace
   registers adapter implementations; the CLI composition root hard-codes them.
   The catalog therefore renders targets a caller declares and only validates

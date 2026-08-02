@@ -1,12 +1,13 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes accepted and phases
-0–2 delivered by ACME-0039 and ACME-0040 under
-[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md);
-phases 3–6 remain unimplemented and each needs its own charter.
+0–3 delivered by ACME-0039, ACME-0040 and ACME-0041 under
+[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md) and
+[ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md);
+phases 4–6 remain unimplemented and each needs its own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-02 (ACME-0040 — phase 2 catalog implemented)
+Last revised: 2026-08-02 (ACME-0041 — phase 3 plan compiler implemented)
 
 ## Executive summary
 
@@ -42,8 +43,8 @@ See [Visual mock (non-authority)](#visual-mock-non-authority).
   changing a public contract.
 - **Proposed freeze (ACME-0038)** recorded a recommended irreversible decision
   for maintainers. **All seven were accepted unchanged by ACME-0039 in
-  ADR-0019**, which remains the authority for them. Gate 3 still requires its
-  own ADR when `acme-test-plan/1` is first exported.
+  ADR-0019**, which remains the authority for them. Gate 3's own ADR
+  requirement is discharged by ADR-0020 (ACME-0041).
 
 Each remaining phase still requires its own explicit task charter. Acceptance
 of the gates authorized the build order, not the whole application.
@@ -382,10 +383,14 @@ this phase ships.
 
 ## Test plan configuration model
 
-**Proposed freeze (gate 3).** Adopt a thin `acme-test-plan/1` as pure input to
-compilation. Activation of the schema is a versioned contract and **requires an
-ADR** in the first implementation charter that introduces the package export.
-Until then, the shape below is normative *intent* only.
+**Freeze accepted; schema shipped (ACME-0041).** `acme-test-plan/1` is
+exported from `@acme/test-ui` and governed by
+[ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md), which discharges
+the gate-3 ADR requirement. Two deviations from the sketch below are recorded
+there rather than hidden: a plan carries no `measurements` block, because
+nothing enforces a threshold until S8 in phase 5; and a plan names no model,
+because `acme-scenario/1` reads the `ModelSelection` from the mock-response
+fixture. The illustrative shape below is retained as intent.
 
 ```yaml
 schemaVersion: acme-test-plan/1
@@ -579,13 +584,21 @@ specification and depends on ingesting an external unit/type report that
 nothing in the repository produces. Building a strip with no report to read
 would mean inventing the report, which the boundary forbids.
 
-### Phase 3 — Plan schema and compiler
+### Phase 3 — Plan schema and compiler — **done (ACME-0041)**
 
 1. `acme-test-plan/1` schema + ADR at activation.
 2. Pure deterministic compile to `acme-scenario/1` / `ExecutionRequest`.
 3. Golden-test compiled output.
 
 **Exit:** valid plans compile byte-identically; invalid plans cannot compile.
+
+**Met.** [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) governs
+the schema. The compiler is pure and total, a golden pins the compiled bytes,
+and unknown fields, missing seeds, bad policies, duplicate identities, an
+invalid request hash and traversing references all refuse before emitting.
+A compiled plan equivalent to the Narrative Phase 5 scenario runs through the
+existing CLI path and reaches the digest the hand-written acceptance test
+pins.
 
 ### Phase 4 — Authoring, launch and history (offline)
 

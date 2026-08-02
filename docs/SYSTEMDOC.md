@@ -738,7 +738,8 @@ specifies a local human workbench for configuring, launching and inspecting
 (existing conformance suites). ACME-0039 accepted the seven gate freezes in
 ADR-0019 and delivered phases 0 and 1: the `@acme/test-ui` package boundary
 and a pure read model with versioned view contracts. ACME-0040 added phase 2,
-the catalog.
+the catalog. ACME-0041 added phase 3, `acme-test-plan/1` and its compiler
+(ADR-0020).
 
 Implemented today:
 
@@ -782,6 +783,20 @@ Implemented today:
 - bounded Node discovery on a separate entry point (`@acme/test-ui/node-source`)
   that refuses to follow symbolic links, reports depth and file bounds instead
   of truncating silently, and keeps the default surface free of I/O
+- `acme-test-plan/1` (ADR-0020): a thin authoring format whose cases expand
+  into `acme-scenario/1` steps. The plan is convenience; the compiled scenario
+  is the reviewable unit, and scenarios stay the canonical executable artifact
+- a pure, total compiler — no filesystem, network, clock or environment.
+  Identical plans produce byte-identical canonical JSON, pinned by a golden
+- one policy validator, the engine's own `resolveExecutionPolicy`. A plan
+  cannot express a policy the engine would reject, and the compiled step
+  carries the complete effective policy rather than a fragment
+- refusal before emission: an unknown field, a missing seed, a duplicate case
+  id or request key, a request hash that is not a lowercase SHA-256 digest,
+  and any reference that escapes the scenario root all fail to compile
+- `ExecutionRequest` values only when the caller supplies loaded fixtures,
+  because a request needs the task input and the model selection and both are
+  file contents the plan only references
 
 Constraints that continue to bind later phases:
 
@@ -798,9 +813,10 @@ Constraints that continue to bind later phases:
 - concepts_sandbox mocks are non-authority
 
 Not implemented: the plan designer (S2), run console (S3), measurement (S8),
-fixture review (S9), live evaluation (S10), the `acme-test-plan/1` schema and
-compiler, interface-owned storage, the composition process that loads
-execution evidence, and any browser surface.
+fixture review (S9), live evaluation (S10), interface-owned storage, the
+composition process that loads execution evidence, and any browser surface.
+The plan format's `measurements` block is deliberately absent until S8 can
+enforce a threshold.
 
 ## Remaining Implementation Baseline
 

@@ -63,6 +63,11 @@ export const VIEW_UNAVAILABLE = {
   scenarioValidator: 'SCENARIO_VALIDATOR_UNAVAILABLE',
   /** The caller declared no adapter kit targets. */
   adapterTargets: 'ADAPTER_TARGETS_UNAVAILABLE',
+  /**
+   * A compiled plan could not materialize requests because the fixture
+   * contents were not supplied. The compiler reads no file itself.
+   */
+  planFixtures: 'PLAN_FIXTURES_UNAVAILABLE',
 } as const;
 
 export interface ViewUnavailable {

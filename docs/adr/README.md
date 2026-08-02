@@ -54,3 +54,4 @@ current architecture.
 - [`0017-durable-execution-resume.md`](0017-durable-execution-resume.md)
 - [`0018-outbox-delivery-boundary.md`](0018-outbox-delivery-boundary.md)
 - [`0019-domain-test-ui-boundary-and-view-contracts.md`](0019-domain-test-ui-boundary-and-view-contracts.md)
+- [`0020-acme-test-plan-schema-and-compiler.md`](0020-acme-test-plan-schema-and-compiler.md)

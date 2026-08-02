@@ -1714,3 +1714,63 @@ Add one dated, signed entry for every meaningful work session or handoff.
   has no composition root wiring it to a live workspace, and adapter targets
   stay caller-declared until something registers implementations.
 - Signature: Claude
+
+## 2026-08-02 — ACME-0041 `acme-test-plan/1` and its compiler (phase 3)
+
+- Date: 2026-08-02
+- Author: Claude
+- Task: ACME-0041
+- Summary: Delivered phase 3 of the Domain Test UI. ADR-0019 gate 3 required
+  an ADR when the plan schema is first exported; ADR-0020 is it, and this task
+  ships the schema and a pure compiler behind it.
+- Decision (ADR-0020): the plan is authoring convenience and the compiled
+  scenario is the reviewable unit; compilation is pure, total and
+  byte-deterministic; there is exactly one policy validator and it is the
+  engine's `resolveExecutionPolicy`; the compiler reads nothing; invalid plans
+  cannot compile.
+- Code: `apps/test-ui/src/plan/schema.ts` (`parseTestPlan`) and
+  `apps/test-ui/src/plan/compile.ts` (`compileTestPlan`). A case expands into
+  `execute → assert → replay → assertDigest`, aliases are the case id so
+  cross-references cannot drift, and `requestKey` defaults to
+  `<plan name>-<case id>`.
+- Refusals, all before anything is emitted: unknown field, missing or
+  malformed seed, a policy the engine rejects, empty case list, duplicate case
+  id, duplicate request key, an invalid request hash, and any fixture
+  reference that is absolute or escapes the scenario root. Path rules are the
+  phase-2 ones, so the compiler and the catalog agree on "below the root".
+- Two deviations from the specification sketch, recorded rather than hidden.
+  A plan carries no `measurements` block: nothing enforces a threshold until
+  S8 exists in phase 5, and a plan stating one would promise more than the
+  system does. A plan names no model, because `acme-scenario/1` reads the
+  `ModelSelection` from the mock-response fixture — which also means an
+  `ExecutionRequest` cannot be materialized from a plan alone, so requests are
+  emitted only when the caller supplies loaded fixtures.
+- Two things the tests found rather than the design. `parseScenario` requires
+  `expectedRequestHash` to be a lowercase SHA-256 digest, so the plan
+  validator now enforces the same rule and the refusal names the plan field
+  instead of surfacing at run time. And the default policy is
+  `maxRepairCalls: 0` / `maxRevisionCalls: 0`, not `1` — the golden caught the
+  wrong guess on its first run, which is the whole reason to pin bytes.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 466 unit (53 files, up from 446/51), 58
+  conformance, 35 integration, 21 scenario (up from 19); `pnpm docs:check` 88
+  Markdown files; `pnpm build`; `git diff --check` clean. No network call, no
+  wall-clock read and no browser in any gate.
+- Load-bearing evidence: `tests/scenario/test-ui-plan-compile.test.ts`
+  compiles a plan equivalent to the Narrative Phase 5 scenario, writes the
+  compiler's own bytes to a temporary workspace and runs them through the
+  existing `acme scenario run` path. It reaches
+  `15f143ba7991e04065ad1ed6bc9f2df6942e05372d18f5d4469b2eba4ae5c94f`, the
+  operation digest the hand-written acceptance test pins. That is what makes
+  "compiles into approved artifacts" a checked claim rather than an intention.
+- Docs: ADR-0020 added and indexed; design specification restatused with phase
+  3 marked done and the plan-configuration section rewritten from proposed
+  intent to shipped schema; backlog proposal, `CURRENT_STATUS`, `SYSTEMDOC`,
+  `FILESTRUCTURE`, `AGENTS.md`, root `README` and the design/backlog READMEs
+  synchronized.
+- Spend: none.
+- Follow-ups: phase 4 (offline authoring, launch and history) as its own
+  charter. Nothing wires the compiler up yet — a compiled plan runs today only
+  because a test writes it to disk and calls the CLI. `measurements` returns
+  as an optional field when S8 can enforce it, with no version bump needed.
+- Signature: Claude

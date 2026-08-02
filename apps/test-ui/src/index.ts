@@ -134,3 +134,28 @@ export {
   type PathRefusalReason,
   type ResolvedReference,
 } from './catalog/paths.js';
+
+export {
+  defaultRequestKey,
+  parseTestPlan,
+  TEST_PLAN_SCHEMA_VERSION,
+  type TestPlan,
+  type TestPlanCase,
+  type TestPlanComposition,
+  type TestPlanExpectation,
+  type TestPlanReplay,
+  type TestPlanSeed,
+} from './plan/schema.js';
+
+export {
+  compileTestPlan,
+  SCENARIO_SCHEMA_VERSION,
+  type CompileOptions,
+  type CompiledAssertDigestStep,
+  type CompiledAssertStep,
+  type CompiledExecuteStep,
+  type CompiledPlan,
+  type CompiledReplayStep,
+  type CompiledScenario,
+  type CompiledStep,
+} from './plan/compile.js';

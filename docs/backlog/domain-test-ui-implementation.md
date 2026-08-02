@@ -1,9 +1,9 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — phases 0–2 delivered (ACME-0039, ACME-0040); phases 3–6 open**
+Status: **Partially resolved — phases 0–3 delivered (ACME-0039, ACME-0040, ACME-0041); phases 4–6 open**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
-Decision: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
+Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md)
 
 ## Discovery context
 
@@ -16,7 +16,8 @@ were satisfied through ACME-0035 / ACME-0036, leaving two activation blockers:
    ports, ScenarioRunner and conformance kits
 
 Both blockers on the first slice are now cleared. ACME-0039 accepted all seven
-gate freezes in ADR-0019 and delivered phases 0 and 1.
+gate freezes in ADR-0019 and delivered phases 0 and 1; ACME-0040 and ACME-0041
+followed with phases 2 and 3.
 
 A visual mock (non-authority) exists at:
 
@@ -48,8 +49,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | --- | --- | --- |
 | **First** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 | **Done — ACME-0039 / ADR-0019** |
 | **Second** | Phase 2 catalog (modules, contracts, adapters, scenarios) | **Done — ACME-0040** |
-| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | Open — next slice |
-| Fourth | Phase 4 offline authoring, launch, history | Open |
+| **Third** | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | **Done — ACME-0041 / ADR-0020** |
+| Fourth | Phase 4 offline authoring, launch, history | Open — next slice |
 | Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
@@ -85,6 +86,22 @@ contracts made the Execution Inspector real and testable without a browser.
 - two absences recorded rather than faked: core registers no evaluators, and
   nothing registers adapter implementations
 
+## What ACME-0041 delivered
+
+- `acme-test-plan/1` exported under ADR-0020, which discharges the gate-3 ADR
+  requirement
+- a pure, total compiler to `acme-scenario/1`; identical plans produce
+  byte-identical canonical JSON, pinned by a golden
+- refusal before emission for unknown fields, a missing seed, a policy the
+  engine rejects, duplicate case ids or request keys, a request hash that is
+  not a lowercase SHA-256 digest, and any reference that escapes the root
+- one policy validator, the engine's own `resolveExecutionPolicy`
+- proof that the output is runnable: a compiled plan reaches the pinned
+  Narrative Phase 5 operation digest through the existing CLI path
+- two recorded deviations: no `measurements` block until S8 exists, and no
+  model field because `acme-scenario/1` keeps the selection in the mock
+  fixture
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -100,14 +117,13 @@ verification story and must not expand an unrelated frozen charter.
 - ScenarioRunner, CLI composition (including live execute)
 - encrypted-payload when encryptor supplied
 - durable resume, rollback/CAS proofs, outbox boundary
-- gate freezes accepted (ADR-0019), the phase-1 view contracts and the
-  phase-2 catalog
+- gate freezes accepted (ADR-0019), the phase-1 view contracts, the phase-2
+  catalog and the phase-3 plan compiler (ADR-0020)
 
 **Blocks the remaining phases (decisions, not missing code):**
 
 - an explicit charter per phase; ADR-0019 authorized the build order, not the
   whole application
-- an ADR for `acme-test-plan/1` at first export (gate 3)
 
 **Residuals that shape later phases only:**
 
@@ -136,8 +152,15 @@ Phase 2 verification is delivered:
 - discovery bounded, symlinks skipped, bounds reported not truncated
 - the repository's own scenario tree discovered and rendered under test
 
-Later charters add plan goldens, launch paths, fixture-approval rules and live
-gating proofs.
+Phase 3 verification is delivered:
+
+- valid minimal and full plans compile; the compiled bytes are pinned
+- every refusal class fails with a structured error naming the plan field
+- the compiled document is accepted by the runner's own `parseScenario`
+- a compiled plan reproduces the pinned Narrative Phase 5 digest
+
+Later charters add launch paths, fixture-approval rules and live gating
+proofs.
 
 ## Explicit non-goals for v1
 
