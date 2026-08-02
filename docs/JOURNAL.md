@@ -1774,3 +1774,62 @@ Add one dated, signed entry for every meaningful work session or handoff.
   because a test writes it to disk and calls the CLI. `measurements` returns
   as an optional field when S8 can enforce it, with no version bump needed.
 - Signature: Claude
+
+## 2026-08-02 — ACME-0042 Domain Test UI launch and history (phase 4)
+
+- Date: 2026-08-02
+- Author: Claude
+- Task: ACME-0042
+- Summary: Delivered phase 4. The Domain Test UI stops being a library and
+  becomes something that can be used: a plan is previewed, launched through
+  the existing ScenarioRunner, recorded, found again and inspected — offline,
+  without a browser and without the CLI.
+- Decision (ADR-0021): the workspace is a directory of files the interface
+  owns; the history index is derived from the records rather than maintained
+  beside them; a run identifier is validated as a file name before any path is
+  built; launch is synchronous and the console says so; the interface writes
+  no ledger state; composition lives on a separate entry point.
+- Code: `acme-view-plan/1` (S2) and `acme-view-runs/1` (S3) in the pure
+  surface; `run-record.ts` with `acme-run-record/1`; and, behind the new
+  `@acme/test-ui/local` entry point, a file workspace, the app's own
+  composition and `launchPlan`.
+- Two honest absences rather than filled-in fields. S3's live-progress section
+  is `unavailable`: launch is a function call, nothing runs in the background,
+  and a queue of depth one with progress pinned at complete would describe a
+  system that does not exist. And the S2 designer reports an invalid plan
+  instead of throwing, because a designer that crashes on a typo cannot show
+  the author where the typo is.
+- The workspace shares nothing with the ledger. A test asserts the root
+  contains exactly `runs/` and one record file; evidence stays in whichever
+  repository the composition selected. Deleting the workspace loses run
+  history and no canonical fact.
+- Found while building: `runScenario` builds the scripted gateway itself from
+  each step's mock fixture and hands it to `composition.engine()`. The launch
+  path therefore needs no gateway at all, and `@acme/adapter-model-mock` was
+  removed from the package before it was ever used.
+- `launchPlan` returns the composition it built rather than hiding it, so the
+  caller can read evidence back through the repository port and close it.
+  Hiding it would have forced either a second composition for inspection or an
+  evidence copy the interface does not own.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 481 unit (55 files, up from 466/53), 58
+  conformance, 39 integration (up from 35), 21 scenario; `pnpm docs:check`;
+  `pnpm build`; `git diff --check` clean. No network call, no wall-clock read
+  and no browser in any gate; the run record's timestamps come from an
+  injected clock.
+- Phase exit, executed: `tests/integration/test-ui-launch.test.ts` previews a
+  plan through S2, launches it, reads it back through S3 history, follows the
+  recorded execution id into the S4 inspector and finds a committed execution
+  with every trust stage passed. It also proves a failed run is recorded
+  rather than discarded, and that an unsafe run identifier is refused.
+- Docs: ADR-0021 added and indexed; design specification restatused with phase
+  4 marked done and both deviations named; backlog proposal, `CURRENT_STATUS`,
+  `SYSTEMDOC`, `FILESTRUCTURE`, `AGENTS.md`, root `README` and the
+  design/backlog READMEs synchronized.
+- Spend: none.
+- Follow-ups: phase 5 (measurement and fixture review) as its own charter.
+  Worth stating plainly: there is still no user interface. Every surface is a
+  JSON contract and a function call, so a person uses this today only by
+  writing TypeScript. A rendering surface is not chartered, and the
+  specification's gate 2 (local SPA) remains unbuilt.
+- Signature: Claude

@@ -1,13 +1,14 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes accepted and phases
-0–3 delivered by ACME-0039, ACME-0040 and ACME-0041 under
-[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md) and
-[ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md);
-phases 4–6 remain unimplemented and each needs its own charter.
+0–4 delivered by ACME-0039 through ACME-0042 under
+[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
+[ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
+[ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md);
+phases 5–6 remain unimplemented and each needs its own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-02 (ACME-0041 — phase 3 plan compiler implemented)
+Last revised: 2026-08-02 (ACME-0042 — phase 4 launch and history implemented)
 
 ## Executive summary
 
@@ -600,7 +601,7 @@ A compiled plan equivalent to the Narrative Phase 5 scenario runs through the
 existing CLI path and reaches the digest the hand-written acceptance test
 pins.
 
-### Phase 4 — Authoring, launch and history (offline)
+### Phase 4 — Authoring, launch and history (offline) — **done (ACME-0042)**
 
 1. S2/S3 over mock gateway + memory/SQLite composition.
 2. Launch via ScenarioRunner / engine entry points only.
@@ -608,6 +609,17 @@ pins.
 
 **Exit:** a domain engineer can configure, launch and inspect an offline module
 run end to end.
+
+**Met**, and proven as one test:
+`tests/integration/test-ui-launch.test.ts` previews a plan through S2, launches
+it through `runScenario`, finds it again through S3 history, and inspects the
+recorded execution through the S4 read model — offline, without the CLI.
+
+Two deviations from the S3 field list are recorded in
+[ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md). Launch is
+synchronous, so the live-progress section is `unavailable` rather than a
+simulated queue; and the history index is derived by reading the run records
+rather than maintained beside them, so it cannot drift.
 
 ### Phase 5 — Measurement, fixture review
 

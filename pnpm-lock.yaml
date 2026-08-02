@@ -74,16 +74,31 @@ importers:
 
   apps/test-ui:
     dependencies:
+      '@acme/adapter-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-memory
+      '@acme/adapter-sqlite':
+        specifier: workspace:*
+        version: link:../../packages/adapter-sqlite
       '@acme/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@acme/module-narrative':
+        specifier: workspace:*
+        version: link:../../packages/module-narrative
+      '@acme/module-research':
+        specifier: workspace:*
+        version: link:../../packages/module-research
+      '@acme/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       yaml:
         specifier: 2.8.1
         version: 2.8.1
     devDependencies:
-      '@acme/testing':
-        specifier: workspace:*
-        version: link:../../packages/testing
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   packages/adapter-memory:
     dependencies:

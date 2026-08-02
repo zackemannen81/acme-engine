@@ -16,7 +16,9 @@ export {
   CATALOG_VIEW_VERSION,
   EXECUTION_VIEW_VERSION,
   MEMORY_DECISION_VIEW_VERSION,
+  PLAN_VIEW_VERSION,
   REPLAY_VIEW_VERSION,
+  RUNS_VIEW_VERSION,
   STATE_VIEW_VERSION,
   VIEW_UNAVAILABLE,
   available,
@@ -146,6 +148,32 @@ export {
   type TestPlanReplay,
   type TestPlanSeed,
 } from './plan/schema.js';
+
+export {
+  buildPlanView,
+  type PlanCaseView,
+  type PlanDetailView,
+  type PlanView,
+  type PlanViewOptions,
+} from './read-model/plan.js';
+
+export {
+  buildRunDetailView,
+  buildRunsView,
+  type RunDetailView,
+  type RunSummaryView,
+  type RunsEvidence,
+  type RunsView,
+} from './read-model/runs.js';
+
+export {
+  isSafeRunId,
+  parseRunRecord,
+  RUN_RECORD_VERSION,
+  type RunCaseRecord,
+  type RunRecord,
+  type RunStepRecord,
+} from './run-record.js';
 
 export {
   compileTestPlan,

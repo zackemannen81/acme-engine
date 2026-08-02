@@ -1,6 +1,6 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — phases 0–3 delivered (ACME-0039, ACME-0040, ACME-0041); phases 4–6 open**
+Status: **Partially resolved — phases 0–4 delivered (ACME-0039 to ACME-0042); phases 5–6 open**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
 Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md)
@@ -50,8 +50,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **First** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 | **Done — ACME-0039 / ADR-0019** |
 | **Second** | Phase 2 catalog (modules, contracts, adapters, scenarios) | **Done — ACME-0040** |
 | **Third** | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | **Done — ACME-0041 / ADR-0020** |
-| Fourth | Phase 4 offline authoring, launch, history | Open — next slice |
-| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open |
+| **Fourth** | Phase 4 offline authoring, launch, history | **Done — ACME-0042 / ADR-0021** |
+| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open — next slice |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -101,6 +101,19 @@ contracts made the Execution Inspector real and testable without a browser.
 - two recorded deviations: no `measurements` block until S8 exists, and no
   model field because `acme-scenario/1` keeps the selection in the mock
   fixture
+
+## What ACME-0042 delivered
+
+- `acme-view-plan/1` (S2), which previews the compiled scenario rather than
+  the plan and reports an invalid plan instead of throwing
+- `acme-view-runs/1` (S3): history available and ordered, live progress
+  `unavailable` because launch is synchronous and no queue exists
+- an interface-owned workspace of `runs/<runId>.json` files, sharing no table,
+  file or directory with the ledger, with the index derived by reading them
+- an app composition beside `@acme/cli` and a `launchPlan` that compiles, runs
+  through the existing ScenarioRunner and records, writing no ledger state
+- run identifiers validated as safe file names before any path is built
+- the phase exit proven as one test: configure, launch, find, inspect
 
 ## Why the rest stays outside any non-UI active task
 

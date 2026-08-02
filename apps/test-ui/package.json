@@ -14,6 +14,10 @@
     "./node-source": {
       "types": "./dist/node-source.d.ts",
       "default": "./dist/node-source.js"
+    },
+    "./local": {
+      "types": "./dist/local.d.ts",
+      "default": "./dist/local.js"
     }
   },
   "scripts": {
@@ -21,11 +25,15 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@acme/adapter-memory": "workspace:*",
+    "@acme/adapter-sqlite": "workspace:*",
     "@acme/core": "workspace:*",
+    "@acme/module-narrative": "workspace:*",
+    "@acme/module-research": "workspace:*",
+    "@acme/testing": "workspace:*",
     "yaml": "2.8.1"
   },
   "devDependencies": {
-    "@acme/testing": "workspace:*",
     "zod": "4.4.3"
   }
 }

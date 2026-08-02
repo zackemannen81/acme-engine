@@ -28,11 +28,17 @@ acme-engine/
 │       ├── tsconfig.json
 │       ├── src/
 │       │   ├── index.ts
+│       │   ├── local.ts
 │       │   ├── node-source.ts
 │       │   ├── redaction.ts
+│       │   ├── run-record.ts
 │       │   ├── view.ts
 │       │   ├── catalog/
 │       │   │   └── paths.ts
+│       │   ├── local/
+│       │   │   ├── composition.ts
+│       │   │   ├── launch.ts
+│       │   │   └── workspace.ts
 │       │   ├── plan/
 │       │   │   ├── compile.ts
 │       │   │   └── schema.ts
@@ -40,7 +46,9 @@ acme-engine/
 │       │       ├── catalog.ts
 │       │       ├── execution.ts
 │       │       ├── memory.ts
+│       │       ├── plan.ts
 │       │       ├── replay.ts
+│       │       ├── runs.ts
 │       │       ├── shared.ts
 │       │       └── state.ts
 │       └── test/
@@ -49,6 +57,7 @@ acme-engine/
 │           ├── fixtures.ts
 │           ├── node-source.test.ts
 │           ├── plan-compile.test.ts
+│           ├── plan-view.test.ts
 │           ├── read-model.test.ts
 │           ├── redaction.test.ts
 │           └── view-contract.test.ts
@@ -229,6 +238,7 @@ acme-engine/
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
+│   │   ├── test-ui-launch.test.ts
 │   │   └── test-ui-read-model.test.ts
 │   └── scenario/
 │       ├── files/
@@ -277,6 +287,7 @@ acme-engine/
 │   │   ├── 0018-outbox-delivery-boundary.md
 │   │   ├── 0019-domain-test-ui-boundary-and-view-contracts.md
 │   │   ├── 0020-acme-test-plan-schema-and-compiler.md
+│   │   ├── 0021-interface-workspace-and-launch-boundary.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -336,6 +347,7 @@ acme-engine/
 │   │   ├── ACME-0039_domain-test-ui-read-model.md
 │   │   ├── ACME-0040_domain-test-ui-catalog.md
 │   │   ├── ACME-0041_domain-test-ui-plan-compiler.md
+│   │   ├── ACME-0042_domain-test-ui-launch-and-history.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -413,13 +425,13 @@ content remains intentionally omitted here.
   `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
-- `@acme/test-ui`: the Domain Test UI (ADR-0019, ADR-0020). Phases 1–3 are the
-  read model, the catalog and the plan compiler — versioned view contracts for
-  the execution, memory decision, state, replay and catalog surfaces, plus
-  `acme-test-plan/1` and a pure compiler to `acme-scenario/1`. The default
-  entry point performs no I/O; bounded filesystem discovery lives on the
-  separate `./node-source` entry point. It is a leaf: nothing in the workspace
-  imports it.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0021). Phases 1–4 are
+  the read model, catalog, plan compiler and launch path — view contracts for
+  the S1–S7 surfaces, `acme-test-plan/1` with a pure compiler, and a local
+  launch path that records runs under an interface-owned workspace. The
+  default entry point performs no I/O; discovery lives on `./node-source` and
+  everything that selects an adapter or touches a disk lives on `./local`. It
+  is a leaf: nothing in the workspace imports it.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -444,10 +456,10 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1; ACME-0040 added phase 2 and ACME-0041 added
-phase 3 under ADR-0020. The package therefore holds the read model, the
-catalog and the plan compiler: no launcher, interface storage or browser
-surface. A non-authority workbench mock lives under
+and delivered phases 0 and 1; ACME-0040, ACME-0041 and ACME-0042 added phases
+2, 3 and 4 under ADR-0020 and ADR-0021. The package therefore holds the read
+model, the catalog, the plan compiler and the launch path: no measurement, no
+fixture review and no browser surface. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it

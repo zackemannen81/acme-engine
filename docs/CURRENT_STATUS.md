@@ -45,6 +45,7 @@ implementation baseline:
 - ADR-0018: Outbox delivery boundary
 - ADR-0019: Domain Test UI boundary and versioned view contracts
 - ADR-0020: `acme-test-plan/1` schema and compiler
+- ADR-0021: Interface workspace storage and launch boundary
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -240,6 +241,18 @@ There is currently:
 - proof that a compiled plan is a runnable artifact: a plan equivalent to the
   Narrative Phase 5 scenario runs through the existing CLI path and reaches
   the same operation digest the hand-written acceptance test pins
+- a plan designer (S2) that previews the compiled scenario and reports an
+  invalid plan instead of throwing, and a run console (S3) whose history is
+  available and whose live-progress half is `unavailable` because launch is
+  synchronous and nothing runs in the background (ADR-0021)
+- an interface-owned file workspace (`runs/<runId>.json`) that shares no
+  table, file or directory with the ledger, with the history index derived by
+  reading the records and run identifiers validated as safe file names
+- an app composition beside `@acme/cli` selecting the in-memory or SQLite
+  repository, and a `launchPlan` that compiles, runs through the existing
+  ScenarioRunner and records the outcome, writing nothing to the ledger
+- a proven end-to-end loop: configure, launch, find in history and inspect the
+  recorded execution through the S4 read model, offline and without the CLI
 - explicit absence in every view: an unread section is `unavailable` with a
   reason code rather than an empty array; content is redacted unless a build
   reveals it; a model payload absent under `none` or `hash-only` retention
@@ -251,9 +264,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 466 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (53 files), with separate conformance (58),
-  integration (35) and scenario (21) gates
+- 481 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (55 files), with separate conformance (58),
+  integration (39) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -306,8 +319,12 @@ template until the next charter is explicitly approved.
   strict validator that refuses before emitting, and a pure deterministic
   compiler whose output reaches the pinned Narrative Phase 5 digest through
   the existing runner.
+- **ACME-0042:** Domain Test UI phase 4 (ADR-0021): the S2 designer, the S3
+  console and history, an interface-owned workspace whose index is derived
+  from its records, an app composition and a synchronous `launchPlan`, proven
+  by an end-to-end configure-launch-find-inspect test.
 
-### Domain Test UI (activated, phases 0–3 delivered)
+### Domain Test UI (activated, phases 0–4 delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -328,9 +345,13 @@ targets, plus bounded Node discovery on a separate entry point.
 Delivered by ACME-0041 (phase 3): `acme-test-plan/1` and `compileTestPlan`
 under ADR-0020, which discharges the gate-3 ADR requirement.
 
-Not delivered: S2, S3, S8, S9, S10, interface-owned storage, the
-evidence-loading composition process and any browser surface. The next slice
-is phase 4 (offline authoring, launch and history).
+Delivered by ACME-0042 (phase 4, ADR-0021): the S2 designer, the S3 console
+and history, an interface-owned file workspace, an app composition and
+`launchPlan`. A plan can now be previewed, launched and inspected offline
+without the CLI.
+
+Not delivered: S8, S9, S10 and any browser surface. The next slice is phase 5
+(measurement and fixture review).
 Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
 visual mock lives under `docs/concepts_sandbox/temp/`.
 
@@ -352,13 +373,16 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **Domain Test UI still launches nothing.** Phases 0–3 are delivered
-  (ACME-0039 / ACME-0040 / ACME-0041, ADR-0019 / ADR-0020): boundaries, S4–S7
-  view contracts, S1 over the registries and a discovered tree, and a plan
-  format that compiles to runnable scenarios. Nothing wires it up — no
-  launcher, no history, no browser surface — and the package remains a leaf
-  that no composition root imports. A compiled plan runs today only because a
-  test writes it to disk and calls the CLI. Phase 4 is the next slice.
+- **The Domain Test UI has no user interface.** Phases 0–4 are delivered
+  (ACME-0039 through ACME-0042): boundaries, view contracts for S1–S7, a plan
+  compiler, a launch path and run history. Every surface is a JSON contract
+  and a function call — there is no browser, no server and no command. A
+  person uses it today only by writing TypeScript. Phase 5 adds measurement
+  and fixture review; a rendering surface is not yet chartered.
+- **Launching blocks its caller.** `launchPlan` is synchronous by decision
+  (ADR-0021). There is no queue, no background worker and no cancellation, so
+  S3's live-progress section stays `unavailable` and a long run holds the
+  caller until it finishes.
 - **Plans cannot pin a model.** `acme-scenario/1` reads the `ModelSelection`
   from the mock-response fixture, so `acme-test-plan/1` has no model field and
   an `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020).

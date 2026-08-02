@@ -739,16 +739,17 @@ specifies a local human workbench for configuring, launching and inspecting
 ADR-0019 and delivered phases 0 and 1: the `@acme/test-ui` package boundary
 and a pure read model with versioned view contracts. ACME-0040 added phase 2,
 the catalog. ACME-0041 added phase 3, `acme-test-plan/1` and its compiler
-(ADR-0020).
+(ADR-0020). ACME-0042 added phase 4, authoring, launch and history (ADR-0021).
 
 Implemented today:
 
 - `apps/test-ui` (`@acme/test-ui`), a leaf app. It may read public package
   entry points; it may not import a package internal, and nothing imports it.
   Both directions fail a dependency-cruiser fixture
-- five versioned view contracts — `acme-view-execution/1` (S4),
+- seven versioned view contracts — `acme-view-execution/1` (S4),
   `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6),
-  `acme-view-replay/1` (S7) and `acme-view-catalog/1` (S1)
+  `acme-view-replay/1` (S7), `acme-view-catalog/1` (S1),
+  `acme-view-plan/1` (S2) and `acme-view-runs/1` (S3)
 - pure builders from recorded evidence to those views. No I/O, no clock, no
   network, no browser; every contract is asserted as JSON
 - absence as an explicit value: each optional section is `available` or
@@ -797,6 +798,23 @@ Implemented today:
 - `ExecutionRequest` values only when the caller supplies loaded fixtures,
   because a request needs the task input and the model selection and both are
   file contents the plan only references
+- a designer (S2) that previews the compiled scenario rather than the plan,
+  and reports an invalid plan instead of throwing, so an author can see where
+  the mistake is
+- a launch path (ADR-0021) that compiles, runs through the existing
+  ScenarioRunner and records the run. It is synchronous: no worker, no queue,
+  no retry, no cancellation
+- an interface-owned workspace of files — `runs/<runId>.json` — sharing no
+  table, file or directory with the execution ledger. Deleting it loses run
+  history and no canonical fact
+- a history index derived by reading the records, so it cannot disagree with
+  them, and a run identifier validated as a safe file name before any path is
+  built
+- a run console (S3) whose live-progress half is `unavailable`, because
+  nothing runs in the background. A queue of depth one would describe a system
+  that does not exist
+- run records that link each case to its execution id, so history reaches the
+  S4 inspector and the evidence the repository already owns
 
 Constraints that continue to bind later phases:
 
@@ -812,11 +830,10 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: the plan designer (S2), run console (S3), measurement (S8),
-fixture review (S9), live evaluation (S10), interface-owned storage, the
-composition process that loads execution evidence, and any browser surface.
-The plan format's `measurements` block is deliberately absent until S8 can
-enforce a threshold.
+Not implemented: measurement (S8), fixture review (S9), live evaluation (S10)
+and any browser surface. The plan format's `measurements` block is
+deliberately absent until S8 can enforce a threshold, and S3's live-progress
+section stays unavailable until something runs in the background.
 
 ## Remaining Implementation Baseline
 

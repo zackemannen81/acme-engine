@@ -16,6 +16,8 @@ export const MEMORY_DECISION_VIEW_VERSION =
 export const STATE_VIEW_VERSION = 'acme-view-state/1' as const;
 export const REPLAY_VIEW_VERSION = 'acme-view-replay/1' as const;
 export const CATALOG_VIEW_VERSION = 'acme-view-catalog/1' as const;
+export const PLAN_VIEW_VERSION = 'acme-view-plan/1' as const;
+export const RUNS_VIEW_VERSION = 'acme-view-runs/1' as const;
 
 /**
  * Reason codes for an unavailable section. They are part of the view
@@ -68,6 +70,16 @@ export const VIEW_UNAVAILABLE = {
    * contents were not supplied. The compiler reads no file itself.
    */
   planFixtures: 'PLAN_FIXTURES_UNAVAILABLE',
+  /** The plan did not validate, so there is nothing to compile or preview. */
+  planInvalid: 'PLAN_INVALID',
+  /**
+   * Launch is synchronous and nothing runs in the background, so there is no
+   * queue to project. The section becomes available if a runner ever exists
+   * (ADR-0021); it is never simulated.
+   */
+  runProgress: 'RUN_PROGRESS_UNAVAILABLE',
+  /** A recorded run file could not be read or decoded. */
+  runRecordUnreadable: 'RUN_RECORD_UNREADABLE',
 } as const;
 
 export interface ViewUnavailable {

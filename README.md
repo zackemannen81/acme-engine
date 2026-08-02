@@ -56,7 +56,7 @@ docs/paused/              Paused parent tasks
 docs/backlog/             Non-activated work proposals
 docs/finished/            Completed task archive
 apps/cli/                 Composition root: execute, replay, inspect
-apps/test-ui/             Domain Test UI read model, catalog and plan compiler
+apps/test-ui/             Domain Test UI read model, catalog, plans and launch
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
@@ -72,7 +72,7 @@ tooling/                   Shared configuration and repository checks
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
 `docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(Domain Test UI phases 4–6 awaiting their own charters, outbox redrive and
+(Domain Test UI phases 5–6 awaiting their own charters, outbox redrive and
 real transports, ambiguous call reconciliation, key lifecycle, optional
 parameter-capability gating). The next task must be explicitly approved before
 activation.

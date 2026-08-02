@@ -15,11 +15,11 @@ Application surfaces:
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
-  continued by ACME-0040 and ACME-0041: the gate freezes are accepted in
+  continued through ACME-0042: the gate freezes are accepted in
   [`../adr/0019-domain-test-ui-boundary-and-view-contracts.md`](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
-  and phases 0–3 (boundary, the S4–S7 read model, the S1 catalog and the
-  `acme-test-plan/1` compiler under ADR-0020) are implemented. Phases 4–6 each
-  need their own charter. Implementation backlog:
+  and phases 0–4 (boundary, the S1–S7 view contracts, the `acme-test-plan/1`
+  compiler under ADR-0020, and launch and history under ADR-0021) are
+  implemented. Phases 5–6 each need their own charter. Implementation backlog:
   [`../backlog/domain-test-ui-implementation.md`](../backlog/domain-test-ui-implementation.md).
 
 Design documents describe the integrated system. Individual durable decisions
