@@ -1,4 +1,10 @@
-import { cpSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import {
+  cpSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,8 +13,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   buildExecutionView,
+  buildFixtureReviewView,
+  buildMeasurementView,
   buildPlanView,
   buildRunsView,
+  captureBaseline,
+  decideFixtureChange,
   isAvailable,
 } from '../../apps/test-ui/src/index.js';
 import {
@@ -245,5 +255,96 @@ describe('Domain Test UI launch loop', () => {
     }
     expect(history.history.failedCount).toBe(1);
     expect(history.history.runs[0]?.failure?.message).toContain('blocked');
+  });
+
+  it('measures the recorded runs and stores a baseline', async () => {
+    const workspaceRoot = temporary('acme-ui-workspace-');
+    const workspace = createFileWorkspace({ root: workspaceRoot });
+    const { composition } = await launchPlan({
+      plan,
+      scenarioRoot: fixtureRoot(),
+      workspace,
+      runId: 'run-measured',
+      clock: clockFrom(['2026-08-02T09:00:00.000Z']),
+      payloadEncryptor: createTestPayloadEncryptor(),
+    });
+    composition.close();
+
+    const { records } = await workspace.listRuns();
+    const view = buildMeasurementView({
+      records,
+      thresholds: { runPassRate: { min: 1 }, replayMatchRate: { min: 1 } },
+    });
+
+    // Measured over real recorded runs, not constructed records.
+    expect(view.deterministic.runCount).toBe(1);
+    expect(view.live.runCount).toBe(0);
+    for (const measure of view.deterministic.measures) {
+      expect(measure.sampleSize).toBeGreaterThan(0);
+      if (!isAvailable(measure.rate)) {
+        throw new Error(`${measure.id} should have a rate`);
+      }
+      expect(measure.rate.value).toBe(1);
+    }
+    expect(
+      view.deterministic.measures
+        .filter((measure) => measure.threshold !== null)
+        .map((measure) => measure.outcome),
+    ).toStrictEqual(['met', 'met']);
+
+    // A baseline is taken deliberately and read back the same.
+    const baseline = captureBaseline({
+      name: 'nightly',
+      capturedAt: '2026-08-02T09:00:05.000Z',
+      view,
+    });
+    await workspace.saveBaseline(baseline);
+    expect(await workspace.loadBaseline('nightly')).toStrictEqual(baseline);
+  });
+
+  it('records a fixture decision without touching the fixture', async () => {
+    const scenarioRoot = fixtureRoot();
+    const fixture = join(scenarioRoot, 'digests', 'narrative-phase-5.json');
+    const before = readFileSync(fixture, 'utf8');
+
+    const workspace = createFileWorkspace({
+      root: temporary('acme-ui-workspace-'),
+    });
+    const approval = decideFixtureChange({
+      proposal: {
+        proposalId: 'proposal-0001',
+        fixturePath: 'digests/narrative-phase-5.json',
+        expectedDigest: 'aaa',
+        proposedDigest: 'bbb',
+        runId: 'run-measured',
+        executionId: 'execution_a',
+      },
+      decision: 'approved',
+      approver: 'mrwhite',
+      rationale: 'confirmed the new digest against the recorded evidence',
+      decidedAt: '2026-08-02T09:10:00.000Z',
+    });
+    await workspace.recordApproval(approval);
+
+    // The decision is stored; the golden is untouched.
+    expect(readFileSync(fixture, 'utf8')).toBe(before);
+
+    const { records, unreadable } = await workspace.listApprovals();
+    expect(unreadable).toStrictEqual([]);
+    const review = buildFixtureReviewView({
+      proposals: [
+        {
+          proposalId: approval.proposalId,
+          fixturePath: approval.fixturePath,
+          expectedDigest: approval.expectedDigest,
+          proposedDigest: approval.proposedDigest,
+          runId: approval.runId,
+          executionId: approval.executionId,
+        },
+      ],
+      approvals: records,
+    });
+    expect(review.approvedCount).toBe(1);
+    expect(review.proposals[0]?.change.applied).toBe(false);
   });
 });

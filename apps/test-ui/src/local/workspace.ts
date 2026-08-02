@@ -1,6 +1,14 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
+import {
+  parseFixtureApproval,
+  type FixtureApprovalRecord,
+} from '../fixture-approval.js';
+import {
+  BASELINE_VERSION,
+  type MeasurementBaseline,
+} from '../read-model/measurement.js';
 import { isSafeRunId, parseRunRecord, type RunRecord } from '../run-record.js';
 
 /**
@@ -8,8 +16,12 @@ import { isSafeRunId, parseRunRecord, type RunRecord } from '../run-record.js';
  *
  * ```text
  * <root>/
- * └── runs/
- *     └── <runId>.json
+ * ├── runs/
+ * │   └── <runId>.json
+ * ├── baselines/
+ * │   └── <name>.json
+ * └── approvals/
+ *     └── <proposalId>.json
  * ```
  *
  * Nothing here is canonical. The engine never reads these files and the
@@ -28,55 +40,125 @@ export interface WorkspaceHistory {
   readonly unreadable: readonly string[];
 }
 
+export interface WorkspaceApprovals {
+  readonly records: readonly FixtureApprovalRecord[];
+  /** File names that exist but did not parse as a known record version. */
+  readonly unreadable: readonly string[];
+}
+
 export interface Workspace {
   readonly root: string;
   recordRun(record: RunRecord): Promise<void>;
   loadRun(runId: string): Promise<RunRecord | null>;
   listRuns(): Promise<WorkspaceHistory>;
+  saveBaseline(baseline: MeasurementBaseline): Promise<void>;
+  loadBaseline(name: string): Promise<MeasurementBaseline | null>;
+  recordApproval(approval: FixtureApprovalRecord): Promise<void>;
+  listApprovals(): Promise<WorkspaceApprovals>;
 }
 
 const RUNS_DIRECTORY = 'runs';
+const BASELINES_DIRECTORY = 'baselines';
+const APPROVALS_DIRECTORY = 'approvals';
 
-function runFileName(runId: string): string {
-  if (!isSafeRunId(runId)) {
-    // Refused before a path exists, so a crafted identifier cannot escape.
+/**
+ * Every identifier the interface turns into a file name goes through here
+ * (ADR-0021). Refused before a path exists, so a crafted value cannot escape
+ * the root.
+ */
+function safeFileName(id: string, label: string): string {
+  if (!isSafeRunId(id)) {
     throw new Error(
-      `A run identifier must be a safe file name: ${JSON.stringify(runId)}`,
+      `A ${label} must be a safe file name: ${JSON.stringify(id)}`,
     );
   }
-  return `${runId}.json`;
+  return `${id}.json`;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseBaseline(raw: unknown): MeasurementBaseline | null {
+  if (!isObject(raw) || raw['version'] !== BASELINE_VERSION) {
+    return null;
+  }
+  const name = raw['name'];
+  const capturedAt = raw['capturedAt'];
+  const values = raw['values'];
+  if (
+    typeof name !== 'string' ||
+    name.length === 0 ||
+    typeof capturedAt !== 'string' ||
+    capturedAt.length === 0 ||
+    !isObject(values)
+  ) {
+    return null;
+  }
+  const parsed: Record<string, number> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return null;
+    }
+    parsed[key] = value;
+  }
+  return {
+    version: BASELINE_VERSION,
+    name,
+    capturedAt,
+    values: parsed as MeasurementBaseline['values'],
+  };
 }
 
 export function createFileWorkspace(options: WorkspaceOptions): Workspace {
   const root = resolve(options.root);
   const runsDirectory = join(root, RUNS_DIRECTORY);
+  const baselinesDirectory = join(root, BASELINES_DIRECTORY);
+  const approvalsDirectory = join(root, APPROVALS_DIRECTORY);
+
+  async function write(
+    directory: string,
+    name: string,
+    value: unknown,
+  ): Promise<void> {
+    await mkdir(directory, { recursive: true });
+    await writeFile(
+      join(directory, name),
+      `${JSON.stringify(value, null, 2)}\n`,
+      'utf8',
+    );
+  }
+
+  async function readJson(
+    directory: string,
+    name: string,
+  ): Promise<unknown | undefined> {
+    try {
+      return JSON.parse(
+        await readFile(join(directory, name), 'utf8'),
+      ) as unknown;
+    } catch {
+      return undefined;
+    }
+  }
 
   return {
     root,
 
     async recordRun(record) {
-      const name = runFileName(record.runId);
-      await mkdir(runsDirectory, { recursive: true });
-      await writeFile(
-        join(runsDirectory, name),
-        `${JSON.stringify(record, null, 2)}\n`,
-        'utf8',
+      await write(
+        runsDirectory,
+        safeFileName(record.runId, 'run identifier'),
+        record,
       );
     },
 
     async loadRun(runId) {
-      const name = runFileName(runId);
-      let raw: string;
-      try {
-        raw = await readFile(join(runsDirectory, name), 'utf8');
-      } catch {
-        return null;
-      }
-      try {
-        return parseRunRecord(JSON.parse(raw) as unknown);
-      } catch {
-        return null;
-      }
+      const raw = await readJson(
+        runsDirectory,
+        safeFileName(runId, 'run identifier'),
+      );
+      return raw === undefined ? null : parseRunRecord(raw);
     },
 
     /**
@@ -84,32 +166,75 @@ export function createFileWorkspace(options: WorkspaceOptions): Workspace {
      * disagree with what was written. There is no separate index to update.
      */
     async listRuns() {
-      let entries: string[];
-      try {
-        entries = (await readdir(runsDirectory, { withFileTypes: true }))
-          .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-          .map((entry) => entry.name);
-      } catch {
-        return { records: [], unreadable: [] };
-      }
+      const { records, unreadable } = await collect(
+        runsDirectory,
+        parseRunRecord,
+      );
+      return { records, unreadable };
+    },
 
-      const records: RunRecord[] = [];
-      const unreadable: string[] = [];
-      for (const name of [...entries].sort()) {
-        let parsed: RunRecord | null;
-        try {
-          const raw = await readFile(join(runsDirectory, name), 'utf8');
-          parsed = parseRunRecord(JSON.parse(raw) as unknown);
-        } catch {
-          parsed = null;
-        }
-        if (parsed === null) {
-          unreadable.push(name);
-        } else {
-          records.push(parsed);
-        }
-      }
+    async saveBaseline(baseline) {
+      await write(
+        baselinesDirectory,
+        safeFileName(baseline.name, 'baseline name'),
+        baseline,
+      );
+    },
+
+    async loadBaseline(name) {
+      const raw = await readJson(
+        baselinesDirectory,
+        safeFileName(name, 'baseline name'),
+      );
+      return raw === undefined ? null : parseBaseline(raw);
+    },
+
+    async recordApproval(approval) {
+      await write(
+        approvalsDirectory,
+        safeFileName(approval.proposalId, 'proposal identifier'),
+        approval,
+      );
+    },
+
+    async listApprovals() {
+      const { records, unreadable } = await collect(
+        approvalsDirectory,
+        parseFixtureApproval,
+      );
       return { records, unreadable };
     },
   };
+
+  /**
+   * Read every record in a directory. A file that will not parse is named
+   * rather than skipped, so a format change shows up instead of silently
+   * shortening what a reviewer sees.
+   */
+  async function collect<T>(
+    directory: string,
+    parse: (raw: unknown) => T | null,
+  ): Promise<{ readonly records: T[]; readonly unreadable: string[] }> {
+    let entries: string[];
+    try {
+      entries = (await readdir(directory, { withFileTypes: true }))
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+        .map((entry) => entry.name);
+    } catch {
+      return { records: [], unreadable: [] };
+    }
+
+    const records: T[] = [];
+    const unreadable: string[] = [];
+    for (const name of [...entries].sort()) {
+      const raw = await readJson(directory, name);
+      const parsed = raw === undefined ? null : parse(raw);
+      if (parsed === null) {
+        unreadable.push(name);
+      } else {
+        records.push(parsed);
+      }
+    }
+    return { records, unreadable };
+  }
 }

@@ -18,6 +18,9 @@ export const REPLAY_VIEW_VERSION = 'acme-view-replay/1' as const;
 export const CATALOG_VIEW_VERSION = 'acme-view-catalog/1' as const;
 export const PLAN_VIEW_VERSION = 'acme-view-plan/1' as const;
 export const RUNS_VIEW_VERSION = 'acme-view-runs/1' as const;
+export const MEASUREMENT_VIEW_VERSION = 'acme-view-measurement/1' as const;
+export const FIXTURE_REVIEW_VIEW_VERSION =
+  'acme-view-fixture-review/1' as const;
 
 /**
  * Reason codes for an unavailable section. They are part of the view
@@ -80,6 +83,19 @@ export const VIEW_UNAVAILABLE = {
   runProgress: 'RUN_PROGRESS_UNAVAILABLE',
   /** A recorded run file could not be read or decoded. */
   runRecordUnreadable: 'RUN_RECORD_UNREADABLE',
+  /**
+   * The series held no sample, so there is no rate. A rate of one over zero
+   * observations is the arithmetic form of rendering absence as a value
+   * (ADR-0022).
+   */
+  measurementSampleEmpty: 'MEASUREMENT_SAMPLE_EMPTY',
+  /**
+   * No baseline was supplied. A series measured for the first time has not
+   * improved and has not regressed.
+   */
+  baseline: 'BASELINE_UNAVAILABLE',
+  /** A proposed golden change nobody has decided on yet. Not a soft yes. */
+  proposalPending: 'PROPOSAL_PENDING_DECISION',
 } as const;
 
 export interface ViewUnavailable {

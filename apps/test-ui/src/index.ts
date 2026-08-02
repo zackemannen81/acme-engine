@@ -1,13 +1,19 @@
 /**
- * `@acme/test-ui` — Domain Test UI (ADR-0019).
+ * `@acme/test-ui` — Domain Test UI (ADR-0019 to ADR-0022).
  *
- * Phase 1 is the read model only: pure functions from recorded evidence to
- * versioned view contracts. This package performs no I/O, opens no database,
- * reads no clock and makes no network call. It is a leaf — nothing in the
- * workspace imports it, and deleting it loses no canonical fact.
+ * This entry point is pure: functions from recorded evidence and configured
+ * rules to versioned view contracts. It performs no I/O, opens no database,
+ * reads no clock and makes no network call, which is what keeps every surface
+ * assertable as JSON without a browser or a disk.
  *
- * Later phases add the catalog (S1), the plan compiler, the composition
- * process that loads evidence, and the browser surface.
+ * Anything that touches a filesystem or selects an adapter lives elsewhere:
+ * `@acme/test-ui/node-source` for catalog discovery, `@acme/test-ui/local`
+ * for the workspace, the composition and launching.
+ *
+ * Surfaces: S1 catalog, S2 plan designer, S3 run console and history, S4–S7
+ * execution, memory, state and replay inspection, S8 measurement and S9
+ * fixture review. It is a leaf — nothing in the workspace imports it, and
+ * deleting it loses no canonical fact.
  */
 
 export const ACME_TEST_UI_PACKAGE = '@acme/test-ui' as const;
@@ -15,6 +21,8 @@ export const ACME_TEST_UI_PACKAGE = '@acme/test-ui' as const;
 export {
   CATALOG_VIEW_VERSION,
   EXECUTION_VIEW_VERSION,
+  FIXTURE_REVIEW_VIEW_VERSION,
+  MEASUREMENT_VIEW_VERSION,
   MEMORY_DECISION_VIEW_VERSION,
   PLAN_VIEW_VERSION,
   REPLAY_VIEW_VERSION,
@@ -165,6 +173,43 @@ export {
   type RunsEvidence,
   type RunsView,
 } from './read-model/runs.js';
+
+export {
+  buildMeasurementView,
+  captureBaseline,
+  BASELINE_VERSION,
+  MEASURE_IDS,
+  type BaselineComparison,
+  type MeasureId,
+  type MeasureThreshold,
+  type MeasureView,
+  type MeasurementBaseline,
+  type MeasurementEvidence,
+  type MeasurementSeriesView,
+  type MeasurementThresholds,
+  type MeasurementView,
+  type ThresholdOutcome,
+} from './read-model/measurement.js';
+
+export {
+  buildFixtureReviewView,
+  type FixtureProposalView,
+  type FixtureReviewEvidence,
+  type FixtureReviewView,
+  type ReviewableChangeView,
+} from './read-model/fixture-review.js';
+
+export {
+  decideFixtureChange,
+  parseFixtureApproval,
+  ApprovalRefused,
+  APPROVAL_REFUSAL,
+  FIXTURE_APPROVAL_VERSION,
+  type ApprovalDecision,
+  type ApprovalInput,
+  type FixtureApprovalRecord,
+  type FixtureChangeProposal,
+} from './fixture-approval.js';
 
 export {
   isSafeRunId,

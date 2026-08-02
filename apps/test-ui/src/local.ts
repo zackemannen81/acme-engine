@@ -9,6 +9,7 @@
 export {
   createFileWorkspace,
   type Workspace,
+  type WorkspaceApprovals,
   type WorkspaceHistory,
   type WorkspaceOptions,
 } from './local/workspace.js';
