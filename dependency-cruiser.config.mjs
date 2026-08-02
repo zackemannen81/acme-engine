@@ -108,6 +108,31 @@ export default {
       },
     },
     {
+      name: 'test-ui-imports-only-public-package-entry-points',
+      severity: 'error',
+      comment:
+        'The Domain Test UI app reads packages through their published entry point; it must never reach a package internal (ADR-0019).',
+      from: {
+        path: '(?:^|/)apps/test-ui/src',
+      },
+      to: {
+        path: '^packages/[^/]+/src/(?!index\\.ts$)',
+      },
+    },
+    {
+      name: 'nothing-imports-the-test-ui-app',
+      severity: 'error',
+      comment:
+        'The Domain Test UI app is a leaf. Nothing may depend on it, so deleting it can lose no canonical fact (ADR-0019).',
+      from: {
+        path: '(?:^|/)(?:packages|apps)/[^/]+/src',
+        pathNot: '(?:^|/)apps/test-ui/src',
+      },
+      to: {
+        path: '^apps/test-ui/src',
+      },
+    },
+    {
       name: 'domain-modules-do-not-depend-on-apps-adapters-or-testing',
       severity: 'error',
       comment:

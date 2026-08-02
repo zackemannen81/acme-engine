@@ -53,3 +53,4 @@ current architecture.
 - [`0016-encrypted-payload-retention.md`](0016-encrypted-payload-retention.md)
 - [`0017-durable-execution-resume.md`](0017-durable-execution-resume.md)
 - [`0018-outbox-delivery-boundary.md`](0018-outbox-delivery-boundary.md)
+- [`0019-domain-test-ui-boundary-and-view-contracts.md`](0019-domain-test-ui-boundary-and-view-contracts.md)

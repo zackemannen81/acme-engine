@@ -56,6 +56,7 @@ docs/paused/              Paused parent tasks
 docs/backlog/             Non-activated work proposals
 docs/finished/            Completed task archive
 apps/cli/                 Composition root: execute, replay, inspect
+apps/test-ui/             Domain Test UI read model and view contracts
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
@@ -71,7 +72,7 @@ tooling/                   Shared configuration and repository checks
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
 `docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(Domain Test UI proposed gate freezes awaiting implementation charter, outbox
-redrive and real transports, ambiguous call reconciliation, key lifecycle,
-optional parameter-capability gating). The next task must be explicitly
-approved before activation.
+(Domain Test UI phases 2–6 awaiting their own charters, outbox redrive and
+real transports, ambiguous call reconciliation, key lifecycle, optional
+parameter-capability gating). The next task must be explicitly approved before
+activation.

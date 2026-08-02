@@ -43,6 +43,7 @@ implementation baseline:
 - ADR-0016: Encrypted payload retention
 - ADR-0017: Durable execution resume
 - ADR-0018: Outbox delivery boundary
+- ADR-0019: Domain Test UI boundary and versioned view contracts
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -212,11 +213,25 @@ There is currently:
   `execution inspect`, `state inspect` and `memory inspect`, with versioned
   JSON on stdout, diagnostics on stderr, payload redaction by default and exit
   codes separating success, a non-committed outcome and a usage error
+- an `@acme/test-ui` Domain Test UI package (ADR-0019) holding phase-1 read
+  model only: four versioned view contracts (`acme-view-execution/1`,
+  `acme-view-memory-decisions/1`, `acme-view-state/1`, `acme-view-replay/1`)
+  and pure builders over recorded evidence, with no I/O, clock, network or
+  browser
+- explicit absence in every view: an unread section is `unavailable` with a
+  reason code rather than an empty array; content is redacted unless a build
+  reveals it; a model payload absent under `none` or `hash-only` retention
+  reports `not-retained` instead of looking empty by defect
+- trust pipeline outcomes derived only from recorded evidence, reporting
+  `reached` instead of guessing when the failing execution stage owns several
+  substages, and replay rendered in the engine's exact
+  `match | different | unavailable` vocabulary
 - automated dependency rules, a core vocabulary guard and negative core,
-  module, cross-module and SQLite-driver boundary fixtures
-- 384 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (45 files), with separate conformance (58),
-  integration (29) and scenario (19) gates
+  module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
+  (both "the app imports no package internal" and "nothing imports the app")
+- 421 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (49 files), with separate conformance (58),
+  integration (35) and scenario (19) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -257,19 +272,30 @@ template until the next charter is explicitly approved.
 - **ACME-0035:** Outbox delivery boundary (ADR-0018): claim, deliver and
   settle through an explicit bounded drain, with at-least-once semantics and
   an `acme outbox` command.
+- **ACME-0039:** Domain Test UI activation (ADR-0019): gate freezes accepted,
+  `apps/test-ui` boundary enforced in both directions, and phase-1 view
+  contracts for S4–S7 proven over handcrafted fixtures and over evidence a
+  real offline engine run recorded.
 
-### Domain Test UI (not active)
+### Domain Test UI (activated, phases 0 and 1 delivered)
 
-[`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
-remains documentation only (revised ACME-0038). Engine prerequisites are
-satisfied. The specification records **proposed gate freezes** (local SPA +
-composition process, thin `acme-test-plan/1` with ADR at export, file-based
-interface storage, CLI remains CI entry, live UI late and gated) and a
-**view-contract-first** build order with separate module and adapter
-workbenches. Activation still requires an explicit implementation charter;
-ACME-0038 does not authorize code. Proposal:
-`docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
-lives under `docs/concepts_sandbox/temp/`.
+[`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
+activated. ACME-0039 accepted the seven proposed gate freezes in
+[ADR-0019](adr/0019-domain-test-ui-boundary-and-view-contracts.md) and
+delivered phase 0 (package boundary) and phase 1 (read model over recorded
+evidence). One deviation is recorded rather than hidden: S7 uses the engine's
+exact `match | different | unavailable` vocabulary and adds no `forked`
+outcome, because the engine cannot produce one.
+
+Delivered: `apps/test-ui`, four versioned view contracts for S4–S7, pure
+builders, redaction and retention presentation rules, and boundary fixtures in
+both directions.
+
+Not delivered: S1, S2, S3, S8, S9, S10, the `acme-test-plan/1` schema and
+compiler, interface-owned storage, the evidence-loading composition process
+and any browser surface. The next slice is phase 2 (catalog).
+Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
+visual mock lives under `docs/concepts_sandbox/temp/`.
 
 ## Persistent Gaps
 
@@ -289,10 +315,16 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **Domain Test UI:** specification only; proposed gate freezes recorded
-  (ACME-0038) but not implementation-accepted. First code charter should accept
-  gates, add package boundaries, and deliver phase 1 read-model view contracts
-  — not the full UI and not plan-compiler-first.
+- **Domain Test UI is a read model, not a workbench yet.** Phases 0 and 1 are
+  delivered (ACME-0039 / ADR-0019): boundaries and S4–S7 view contracts over
+  recorded evidence. Nothing loads that evidence for a human yet — there is no
+  catalog, no plan, no launcher, no history and no browser surface, and the
+  package is a leaf that no composition root wires up. Phase 2 (catalog) is
+  the next slice.
+- **Trust pipeline granularity.** `preparing-commit` owns the memory,
+  projection and state substages, and a failure there reports `reached` for
+  all three because the recorded error does not name one. Finer resolution
+  requires the engine to record finer evidence, not the interface to guess.
 - **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
   `temperature` after accepting the schema. Reference contracts no longer emit
   a default `temperature` (ACME-0037); core and the OpenAI adapter already treat

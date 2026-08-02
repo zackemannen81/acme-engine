@@ -1,19 +1,22 @@
 # Domain Test UI implementation
 
-Status: **Open — rewrite 2026-08-01 (ACME-0038)**
+Status: **Partially resolved — activated 2026-08-01 (ACME-0039); phases 2–6 open**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
+Decision: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
 
 ## Discovery context
 
 ACME-0014 specified a Domain Test UI when ExecutionEngine, ScenarioRunner,
 SQLite and the reference modules did not yet exist. Those engine prerequisites
-are now satisfied (through ACME-0035 / ACME-0036). What remains is not "build
-the missing engine" but:
+were satisfied through ACME-0035 / ACME-0036, leaving two activation blockers:
 
 1. accept or amend the **proposed gate freezes** in the design specification
 2. implement a **local-only** workbench as a lens and launcher over existing
    ports, ScenarioRunner and conformance kits
+
+Both blockers on the first slice are now cleared. ACME-0039 accepted all seven
+gate freezes in ADR-0019 and delivered phases 0 and 1.
 
 A visual mock (non-authority) exists at:
 
@@ -37,27 +40,41 @@ Ship a Domain Test UI application beside `@acme/cli` that:
   `ExecutionRequest` only (ADR at first export)
 - never becomes a second source of truth or a CI replacement
 
-## Recommended activation sequence
+## Activation sequence
 
-Do **not** charter the full UI in one task. Follow the design-spec phases:
+Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 
-| Charter slice | Content |
-| --- | --- |
-| **First implementation charter** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 over fixtures |
-| Second | Phase 2 catalog (modules, contracts, adapters, scenarios) |
-| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens |
-| Fourth | Phase 4 offline authoring, launch, history |
-| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) |
+| Charter slice | Content | State |
+| --- | --- | --- |
+| **First** | Accept gate freezes; package skeleton + boundary rules; **Phase 1** read model + view contracts for S4–S7 | **Done — ACME-0039 / ADR-0019** |
+| Second | Phase 2 catalog (modules, contracts, adapters, scenarios) | Open — next slice |
+| Third | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | Open |
+| Fourth | Phase 4 offline authoring, launch, history | Open |
+| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open |
 
-**Why phase 1 is read model, not plan compiler:** CLI and ScenarioRunner already
-run offline domain tests. The human gap is inspectable evidence. View contracts
-make the Execution Inspector real and testable without a browser.
+**Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
+already run offline domain tests. The human gap is inspectable evidence. View
+contracts made the Execution Inspector real and testable without a browser.
 
-## Why this stays outside any non-UI active task
+## What ACME-0039 delivered
 
-Cross-package application work: new app package, optional versioned plan
-contract, read models, rendering, redaction UX and approval workflow. It needs
-its own verification story and must not expand an unrelated frozen charter.
+- `apps/test-ui` (`@acme/test-ui`) as a leaf app, with a dependency-cruiser
+  rule and negative fixture in each direction
+- `acme-view-execution/1`, `acme-view-memory-decisions/1`,
+  `acme-view-state/1`, `acme-view-replay/1`
+- pure builders over recorded evidence; no I/O, clock, network or browser
+- explicit `unavailable` sections, `not-retained` model payloads under `none`
+  and `hash-only`, and redaction by default
+- trust pipeline outcomes `passed | failed | reached | not-reached`, with
+  `reached` where the recorded error cannot name the failing substage
+- one deviation, recorded in ADR-0019: S7 keeps the engine's exact
+  `match | different | unavailable` vocabulary and adds no `forked`
+
+## Why the rest stays outside any non-UI active task
+
+Cross-package application work: optional versioned plan contract, catalog
+discovery, rendering, redaction UX and approval workflow. It needs its own
+verification story and must not expand an unrelated frozen charter.
 
 ## Dependencies
 
@@ -68,31 +85,34 @@ its own verification story and must not expand an unrelated frozen charter.
 - ScenarioRunner, CLI composition (including live execute)
 - encrypted-payload when encryptor supplied
 - durable resume, rollback/CAS proofs, outbox boundary
+- gate freezes accepted (ADR-0019) and the phase-1 view contracts
 
-**Blocks activation (decisions, not missing code):**
+**Blocks the remaining phases (decisions, not missing code):**
 
-- maintainer acceptance of the proposed gate freezes (design spec table)
-- explicit implementation charter (docs-only ACME-0038 does not authorize code)
+- an explicit charter per phase; ADR-0019 authorized the build order, not the
+  whole application
+- an ADR for `acme-test-plan/1` at first export (gate 3)
 
 **Residuals that shape later phases only:**
 
 - ScenarioRunner has no live step (S10 / CLI live until then)
 - no auto outbox drain (UI must not imply silent delivery)
+- `preparing-commit` trust substages report `reached`; finer resolution needs
+  finer engine evidence, not interface inference
 
 ## Suggested verification
 
-From the design specification verification plan, at minimum for first code
-charter:
+Phase 1 verification is delivered:
 
 - every S4–S7 view contract asserted as JSON without rendering
 - missing evidence renders unavailable, not zero
 - redaction defaults under every retention mode
-- prepared memory decision order and registry order preserved
+- prepared memory decision order preserved
 - package imports no core internal; nothing imports the app
 - no test performs a network call or reads wall-clock time for run identity
 
-Later charters add plan goldens, launch paths, fixture-approval rules and live
-gating proofs.
+Later charters add catalog ordering, plan goldens, launch paths,
+fixture-approval rules and live gating proofs.
 
 ## Explicit non-goals for v1
 

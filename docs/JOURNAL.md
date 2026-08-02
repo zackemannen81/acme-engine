@@ -1591,3 +1591,63 @@ Add one dated, signed entry for every meaningful work session or handoff.
   choices unchanged (Domain Test UI gates, outbox redrive, driver errors, eval
   harness).
 - Signature: Grok
+
+## 2026-08-01 — ACME-0039 Domain Test UI activation and phase-1 read model
+
+- Date: 2026-08-01
+- Author: Claude
+- Task: ACME-0039
+- Summary: Activated the Domain Test UI and delivered the first charter slice
+  the design specification names: phase 0 (gate freeze and package boundary)
+  and phase 1 (read model over recorded evidence). No workbench chrome, no
+  plan compiler, no launcher, no catalog.
+- Decision (ADR-0019): accepted all seven ACME-0038 gate freezes unchanged;
+  fixed the app as a leaf; made phase-1 builders pure; introduced four
+  versioned view contracts; made absence an explicit value; derived trust
+  pipeline outcomes only from recorded evidence; kept replay in the engine's
+  exact vocabulary.
+- Deviation, stated rather than hidden: the specification's S7 lists a
+  `forked` outcome "(or the engine's exact vocabulary)". `ReplayReport`
+  produces `match | different | unavailable` only, so the view adds no fourth
+  outcome. "No replay was run" is a missing section (`REPLAY_NOT_RUN`),
+  distinct from the engine's own `unavailable` verdict.
+- Code: new `apps/test-ui` (`@acme/test-ui`) with `view.ts`, `redaction.ts`
+  and `read-model/{execution,memory,state,replay,shared}.ts`. Exports
+  `acme-view-execution/1`, `acme-view-memory-decisions/1`,
+  `acme-view-state/1` and `acme-view-replay/1`. Depends on `@acme/core` for
+  types only; it has no runtime import of any package.
+- Honesty rules encoded, not documented: every optional section is
+  `available` or `unavailable` with a reason code, so unread evidence can
+  never render as zero; a model payload absent under `retention: 'none'` or
+  `'hash-only'` renders `not-retained` rather than empty (ADR-0016); content
+  is redacted unless a build explicitly reveals it; `preparing-commit`
+  failures report `reached` for memory, projection and state because the
+  recorded error does not name which one failed.
+- Boundaries: two new dependency-cruiser rules with one negative fixture each
+  — `test-ui-imports-only-public-package-entry-points` and
+  `nothing-imports-the-test-ui-app`. Both were confirmed to fail for exactly
+  their own rule, not incidentally.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 421 unit (49 files, up from 384/45), 58
+  conformance, 35 integration (up from 29), 19 scenario; `pnpm docs:check` 83
+  Markdown files; `pnpm build`; `git diff --check` clean. No network call, no
+  wall-clock read and no browser in any gate. Live provider gate untouched.
+- Evidence beyond fixtures: `tests/integration/test-ui-read-model.test.ts`
+  drives the real `ExecutionEngine` over the in-memory repository and the
+  scripted mock gateway, then feeds the recorded evidence through all four
+  views. It also proves the `hash-only` case end to end: the engine reports
+  replay `unavailable` because no response was retained, which the view shows
+  as the engine's verdict rather than as a missing section.
+- Docs: ADR-0019 added and indexed; design specification restatused with
+  phases 0–1 marked done and the S7 deviation resolved inline; backlog
+  proposal restatused to partially resolved with the remaining phase table;
+  `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`, `AGENTS.md`, root `README`
+  and the design/backlog READMEs synchronized.
+- Spend: none.
+- Follow-ups: phase 2 (S1 catalog over registries, scenario discovery and
+  adapter kit targets) as its own charter. Gate 3 still requires its own ADR
+  when `acme-test-plan/1` is first exported. Nothing loads evidence into the
+  read model yet; that composition process is phase 4. Finer trust-stage
+  resolution requires the engine to record finer evidence, not the interface
+  to infer it.
+- Signature: Claude

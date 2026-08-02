@@ -18,7 +18,7 @@ as `docs/CURRENT_TASK.md`.
 
 | Proposal | Status |
 | --- | --- |
-| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Open; rewritten ACME-0038 (gates proposed; code not authorized) |
+| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Partially resolved; activated by ACME-0039 (phases 0–1 delivered, phases 2–6 open) |
 | [`driver-error-classification.md`](driver-error-classification.md) | Open; discovered by ACME-0034 |
 
 Resolved proposals are removed from this directory once archived under

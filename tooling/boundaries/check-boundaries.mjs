@@ -33,6 +33,14 @@ const providerFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/core/src/forbidden-provider.ts',
 );
+const testUiInternalFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/apps/test-ui/src/forbidden-core-internal.ts',
+);
+const testUiLeafFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/apps/cli/src/forbidden-test-ui.ts',
+);
 const forbiddenTerms = [
   'narrative',
   'research',
@@ -143,7 +151,15 @@ verifyForbiddenFixture(
   driverFixturePath,
   'sqlite-driver-stays-behind-its-adapter',
 );
+verifyForbiddenFixture(
+  testUiInternalFixturePath,
+  'test-ui-imports-only-public-package-entry-points',
+);
+verifyForbiddenFixture(
+  testUiLeafFixturePath,
+  'nothing-imports-the-test-ui-app',
+);
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/provider/driver fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/provider/driver/test-ui fixture checks passed.\n',
 );

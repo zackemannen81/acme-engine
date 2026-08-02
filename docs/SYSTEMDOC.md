@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-08-01
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a proposed domain-test surface
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI read model
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -16,14 +16,14 @@ Exact contracts, storage schema, protocols and milestones are defined in
   `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
   `@acme/adapter-model-openai`, `@acme/module-narrative`,
   `@acme/module-research`, reusable
-  repository/gateway/module conformance support in `@acme/testing` and the
-  `@acme/cli` composition root
+  repository/gateway/module conformance support in `@acme/testing`, the
+  `@acme/cli` composition root and the `@acme/test-ui` read model
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
 - negative fixtures proving forbidden core-to-app, module-to-adapter,
-  module-to-module, core-to-provider-wire and core-to-SQLite-driver
-  dependencies fail
+  module-to-module, core-to-provider-wire, core-to-SQLite-driver,
+  test-UI-to-package-internal and anything-to-test-UI dependencies fail
 - secret-free CI gates for documentation, formatting, lint, typecheck,
   boundaries, tests and builds
 
@@ -730,17 +730,43 @@ forbid domain branches in core or concrete adapter dependencies in a module.
 Narrative additionally follows ADR-0011's exclusive knowledge ownership and
 fixed source-backed context policy.
 
-## Proposed Domain Test Surface
+## Implemented Domain Test Surface
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md)
-describes a proposed local human workbench for configuring, launching and
-inspecting **module** tests (ScenarioRunner / ExecutionEngine) and **adapter**
-kit runs (existing conformance suites). It is documentation only. No
-interface package or view contract is implemented. ACME-0038 rewrote the
-specification after Milestone 2 and recorded **proposed gate freezes**; it does
-not authorize code.
+specifies a local human workbench for configuring, launching and inspecting
+**module** tests (ScenarioRunner / ExecutionEngine) and **adapter** kit runs
+(existing conformance suites). ACME-0039 accepted the seven gate freezes in
+ADR-0019 and delivered phases 0 and 1: the `@acme/test-ui` package boundary
+and a pure read model with versioned view contracts.
 
-Constraints on any future implementation:
+Implemented today:
+
+- `apps/test-ui` (`@acme/test-ui`), a leaf app. It may read public package
+  entry points; it may not import a package internal, and nothing imports it.
+  Both directions fail a dependency-cruiser fixture
+- four versioned view contracts — `acme-view-execution/1` (S4),
+  `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6) and
+  `acme-view-replay/1` (S7)
+- pure builders from recorded evidence to those views. No I/O, no clock, no
+  network, no browser; every contract is asserted as JSON
+- absence as an explicit value: each optional section is `available` or
+  `unavailable` with a reason code, so missing evidence never renders as zero
+- disclosure rules: content is `redacted` unless a build explicitly reveals
+  it, and a model payload absent under `retention: 'none'` or `'hash-only'`
+  reports `not-retained` rather than looking empty by defect (ADR-0016)
+- trust pipeline outcomes `passed | failed | reached | not-reached`, derived
+  only from recorded attempt stages, current stage, terminal status and
+  `AcmeErrorData`. Where the failing execution stage owns several substages
+  and the error does not name one, every substage reports `reached`
+- contract-input failures stay distinct from response validation (ADR-0010),
+  read from `details.pipelineStage`
+- prepared memory decision order preserved, with ignored and reject-candidate
+  decisions kept visible as audit evidence and each mutation correlated to the
+  decision that produced it
+- replay in the engine's exact vocabulary (`match | different | unavailable`).
+  "No replay was run" is a missing section, not a fourth verdict
+
+Constraints that continue to bind later phases:
 
 - composition-root app under `apps/`, subject to
   `apps → adapters → core` and `apps → modules → core`
@@ -749,13 +775,15 @@ Constraints on any future implementation:
   marks terminal, mutates canonical records or invents verdicts
 - optional thin `acme-test-plan/1` compiles only to `acme-scenario/1` and
   `ExecutionRequest` (ADR required at first export)
-- view-contract-first build order; CLI remains the CI/automation entry point
+- CLI remains the CI/automation entry point; the UI is local-only
 - section 21 data classes, retention modes and live gating at the presentation
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Engine prerequisites are satisfied. Activation needs an explicit
-implementation charter that accepts the proposed freezes.
+Not implemented: the catalog (S1), plan designer (S2), run console (S3),
+measurement (S8), fixture review (S9), live evaluation (S10), the
+`acme-test-plan/1` schema and compiler, interface-owned storage, the
+composition process that loads evidence, and any browser surface.
 
 ## Remaining Implementation Baseline
 
@@ -773,6 +801,8 @@ implementation charter that accepts the proposed freezes.
   provider call (ADR-0017).
 - Committed events leave the outbox through an explicit drain (ADR-0018);
   nothing drains on its own.
+- The Domain Test UI read model renders recorded evidence and computes no
+  verdict (ADR-0019). It is a leaf; deleting it loses no canonical fact.
 - ScenarioRunner live provider steps remain open.
 
 ## Deliberately Deferred Decisions

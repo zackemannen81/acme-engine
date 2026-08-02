@@ -1,9 +1,11 @@
 # Domain Test UI — Specification
 
-Status: Proposed application specification (documentation only; not activated)
+Status: Activated application specification. Gate freezes accepted and phases
+0–1 delivered by ACME-0039 / [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md);
+phases 2–6 remain unimplemented and each needs its own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-01 (ACME-0038 — post–Milestone 2 reality + proposed gate freeze)
+Last revised: 2026-08-01 (ACME-0039 — gate freezes accepted, phases 0–1 implemented)
 
 ## Executive summary
 
@@ -37,13 +39,13 @@ See [Visual mock (non-authority)](#visual-mock-non-authority).
   `@acme/core` contracts and accepted ADRs.
 - **Recommended** translates that baseline into interface behavior without
   changing a public contract.
-- **Proposed freeze (ACME-0038)** records a recommended irreversible decision
-  for maintainers. It is documentation, not an activated product commitment
-  and not a substitute for an implementation ADR where one is required
-  (notably `acme-test-plan/1`).
+- **Proposed freeze (ACME-0038)** recorded a recommended irreversible decision
+  for maintainers. **All seven were accepted unchanged by ACME-0039 in
+  ADR-0019**, which remains the authority for them. Gate 3 still requires its
+  own ADR when `acme-test-plan/1` is first exported.
 
-Nothing in this document authorizes implementation. Implementation requires an
-explicit task charter after maintainers accept the proposed freezes.
+Each remaining phase still requires its own explicit task charter. Acceptance
+of the gates authorized the build order, not the whole application.
 
 ## Outcome and boundaries
 
@@ -121,8 +123,9 @@ import fails.
 ## Readiness prerequisites
 
 **As of 2026-08-01**, engine-side prerequisites are **satisfied**. Milestone 1
-and Milestone 2 are delivered. What remains is product priority and the
-proposed freezes below — not missing ScenarioRunner or durability.
+and Milestone 2 are delivered, and the gate freezes below are accepted
+(ADR-0019). What remains is product priority and a charter per phase — not
+missing ScenarioRunner or durability.
 
 | Prerequisite | Status | Why the interface needs it |
 | --- | --- | --- |
@@ -333,9 +336,14 @@ and identity, not domain policy.
 
 ### S7 — Replay and digest comparison
 
-Distinct outcomes: `match`, `different`, `unavailable`, `forked` (or the
-engine's exact vocabulary), with hash/digest diffs. Never invent a match from
-partial evidence.
+Distinct outcomes in the engine's exact vocabulary, with hash/digest diffs.
+Never invent a match from partial evidence.
+
+**Resolved by ADR-0019.** `ReplayReport.status` is `match | different |
+unavailable`. The implemented view uses exactly those three and adds no
+`forked` outcome, because the engine cannot produce one and the interface must
+not compute a verdict. "No replay was run" is a missing section
+(`REPLAY_NOT_RUN`), which is distinct from the engine's own `unavailable`.
 
 ### S8 — Results and measurement
 
@@ -507,11 +515,9 @@ the app package back.
 
 ## Ordered build plan
 
-Each phase has an exit condition. **No application phase begins** until
-maintainers accept the [proposed gate freezes](#proposed-gate-freezes) and an
-implementation charter is activated.
+Each phase has an exit condition. Each phase needs its own activated charter.
 
-### Phase 0 — Gate freeze and package skeleton (docs + boundaries only)
+### Phase 0 — Gate freeze and package skeleton (docs + boundaries only) — **done (ACME-0039)**
 
 1. Accept or amend the proposed freezes in an implementation charter.
 2. Add `apps/test-ui` skeleton and dependency-cruiser rules (no UI chrome
@@ -519,13 +525,24 @@ implementation charter is activated.
 
 **Exit:** gates recorded as accepted in the charter; boundaries enforced.
 
-### Phase 1 — Read model over fixture evidence
+**Met.** ADR-0019 accepts all seven gates. `apps/test-ui` exists with two
+dependency-cruiser rules and a negative fixture for each: the app may not
+import a package internal, and nothing may import the app.
+
+### Phase 1 — Read model over fixture evidence — **done (ACME-0039)**
 
 1. Versioned view contracts for S4, S5, S6 and S7.
 2. Read model against recorded evidence fixtures (no live engine required).
 3. Redaction and retention-mode presentation rules.
 
 **Exit:** every view contract asserted by tests with no network and no browser.
+
+**Met.** `acme-view-execution/1`, `acme-view-memory-decisions/1`,
+`acme-view-state/1` and `acme-view-replay/1` are built by pure functions and
+asserted as JSON. Absence renders as an `unavailable` section with a reason
+code; `none` and `hash-only` model payloads render `not-retained`; content is
+redacted unless a build reveals it. An integration test proves the same
+contracts over evidence a real offline engine run recorded.
 
 ### Phase 2 — Catalog and adapter kit listing
 
@@ -596,8 +613,10 @@ updates.
 
 ## Proposed gate freezes
 
-These replace the open "decision gates" list from the 2026-07-30 draft. They are
-**proposed** until an implementation charter accepts them.
+These replaced the open "decision gates" list from the 2026-07-30 draft. All
+seven were **accepted unchanged** by ACME-0039 and are now recorded in
+[ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), which is
+their authority. The table is retained as the rationale.
 
 | # | Gate | Proposed freeze |
 | --- | --- | --- |
@@ -642,4 +661,5 @@ These replace the open "decision gates" list from the 2026-07-30 draft. They are
 - [ADR-0016 Encrypted payload retention](../adr/0016-encrypted-payload-retention.md)
 - [ADR-0017 Durable execution resume](../adr/0017-durable-execution-resume.md)
 - [ADR-0018 Outbox delivery boundary](../adr/0018-outbox-delivery-boundary.md)
+- [ADR-0019 Domain Test UI boundary and view contracts](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
 - Narrative / Research module build plans in this directory

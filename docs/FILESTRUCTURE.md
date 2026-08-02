@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -10,19 +10,37 @@ acme-engine/
 │   └── workflows/
 │       └── ci.yml
 ├── apps/
-│   └── cli/
+│   ├── cli/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── args.ts
+│   │   │   ├── composition.ts
+│   │   │   ├── index.ts
+│   │   │   ├── main.ts
+│   │   │   ├── output.ts
+│   │   │   ├── run.ts
+│   │   │   └── scenario.ts
+│   │   └── test/
+│   │       └── cli.test.ts
+│   └── test-ui/
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── src/
-│       │   ├── args.ts
-│       │   ├── composition.ts
 │       │   ├── index.ts
-│       │   ├── main.ts
-│       │   ├── output.ts
-│       │   ├── run.ts
-│       │   └── scenario.ts
+│       │   ├── redaction.ts
+│       │   ├── view.ts
+│       │   └── read-model/
+│       │       ├── execution.ts
+│       │       ├── memory.ts
+│       │       ├── replay.ts
+│       │       ├── shared.ts
+│       │       └── state.ts
 │       └── test/
-│           └── cli.test.ts
+│           ├── fixtures.ts
+│           ├── read-model.test.ts
+│           ├── redaction.test.ts
+│           └── view-contract.test.ts
 ├── packages/
 │   ├── adapter-memory/
 │   │   ├── package.json
@@ -199,7 +217,8 @@ acme-engine/
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
-│   │   └── execution-engine-sqlite.test.ts
+│   │   ├── execution-engine-sqlite.test.ts
+│   │   └── test-ui-read-model.test.ts
 │   └── scenario/
 │       ├── files/
 │       │   ├── digests/narrative-phase-5.json
@@ -213,6 +232,8 @@ acme-engine/
 │   ├── boundaries/
 │   │   ├── check-boundaries.mjs
 │   │   └── fixtures/
+│   │       ├── apps/cli/src/forbidden-test-ui.ts
+│   │       ├── apps/test-ui/src/forbidden-core-internal.ts
 │   │       ├── packages/core/src/forbidden.ts
 │   │       ├── packages/core/src/forbidden-driver.ts
 │   │       ├── packages/core/src/forbidden-provider.ts
@@ -242,11 +263,14 @@ acme-engine/
 │   │   ├── 0016-encrypted-payload-retention.md
 │   │   ├── 0017-durable-execution-resume.md
 │   │   ├── 0018-outbox-delivery-boundary.md
+│   │   ├── 0019-domain-test-ui-boundary-and-view-contracts.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
 │   │   ├── README.md
-│   │   └── POC_interfacing.md
+│   │   ├── POC_interfacing.md
+│   │   └── temp/
+│   │       └── testregistry_workbench_professional_test_engineering_suite.html
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
@@ -294,6 +318,9 @@ acme-engine/
 │   │   ├── ACME-0034_milestone-2-durability-proofs.md
 │   │   ├── ACME-0035_outbox-delivery-boundary.md
 │   │   ├── ACME-0036_documentation-reality-sync.md
+│   │   ├── ACME-0037_omit-default-temperature.md
+│   │   ├── ACME-0038_domain-test-ui-specification-rewrite.md
+│   │   ├── ACME-0039_domain-test-ui-read-model.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -371,6 +398,10 @@ content remains intentionally omitted here.
   `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019). Phase 1 is the read model
+  only — versioned view contracts for the execution, memory decision, state
+  and replay surfaces, built by pure functions over recorded evidence. It
+  performs no I/O and is a leaf: nothing in the workspace imports it.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -392,12 +423,12 @@ are ACME-0010 review snapshots; the Markdown guides remain normative after
 later architecture decisions. ADR-0008 resolves their post-memory
 state-projection gate, ADR-0009 resolves their identity/provenance gate and
 ACME-0015 supplies their shared executable DomainModule-conformance gate.
-`docs/design/domain-test-ui-specification.md` proposes an `apps/test-ui`
+`docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
-optional `acme-test-plan/1`). No such package exists; the file is a
-specification only. Engine prerequisites exist. ACME-0038 records proposed gate
-freezes and a view-contract-first build order; implementation still needs an
-explicit charter. A non-authority workbench mock may live under
+optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
+and delivered phases 0 and 1, so the package exists but holds only the read
+model: no catalog, plan compiler, launcher, interface storage or browser
+surface. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
