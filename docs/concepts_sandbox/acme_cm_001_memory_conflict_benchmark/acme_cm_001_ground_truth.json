@@ -1,0 +1,251 @@
+{
+  "benchmark_id": "ACME-CM-001",
+  "title": "When Correction Competes with Repetition",
+  "document_status": "synthetic benchmark; not a real empirical study",
+  "canonicalization_policy": [
+    "Prefer explicit author corrections and post-lock audit notes over unrevised manuscript text.",
+    "Distinguish event time, document version, and ingestion time.",
+    "Do not treat claims with different scope, cohort, modality, or planned-versus-implemented status as contradictions.",
+    "Preserve rejected and superseded claims with provenance rather than deleting their history.",
+    "Do not force compatible theoretical interpretations into a single winner."
+  ],
+  "canonical_facts": {
+    "recruited_sample_size": 192,
+    "pre_audit_analyzed_sample_size": 186,
+    "final_sample_size": 184,
+    "final_cell_size": 46,
+    "primary_outcome": "misinformation endorsement at the delayed test",
+    "secondary_outcome": "source-attribution accuracy",
+    "high_reliability_source": "forensic video analyst",
+    "low_reliability_source": "graduate assistant",
+    "handedness_used_as_exclusion": false,
+    "planned_retention_interval_hours": 48,
+    "implemented_retention_interval_hours_approx": 24,
+    "implemented_retention_interval_range_hours": [
+      22.1,
+      27.8
+    ],
+    "critical_item_count": 8,
+    "filler_item_count": 2,
+    "bicycle_event_coding": "red",
+    "bicycle_perceptually_accepted_free_recall": "orange-red",
+    "bicycle_misinformation": "blue",
+    "planned_contrast_p": 0.018,
+    "repetition_effect_conclusion": "attenuated by high-reliability correction, not eliminated",
+    "room_by_cohort": {
+      "participant_ids_001_096": "Room 214",
+      "participant_ids_097_192": "Room 318"
+    },
+    "theoretical_interpretations": [
+      "source-monitoring account",
+      "reconsolidation account"
+    ]
+  },
+  "conflicts": [
+    {
+      "id": "C01",
+      "memory_key": "study.final_sample_size",
+      "claims": [
+        186,
+        184
+      ],
+      "canonical": 184,
+      "resolution": "supersede",
+      "reason": "Post-lock identity audit has higher version priority than the unrevised participant section."
+    },
+    {
+      "id": "C02",
+      "memory_key": "study.primary_outcome",
+      "claims": [
+        "source-attribution accuracy",
+        "misinformation endorsement at delayed test"
+      ],
+      "canonical": "misinformation endorsement at the delayed test",
+      "resolution": "supersede",
+      "reason": "Amendment 1 was timestamped before data collection and superseded Protocol Version 1."
+    },
+    {
+      "id": "C03",
+      "memory_key": "conditions.high_reliability_source",
+      "claims": [
+        "forensic video analyst",
+        "graduate assistant"
+      ],
+      "canonical": "forensic video analyst",
+      "resolution": "reject",
+      "reason": "The reversed Table 2 note is explicitly identified as a template error."
+    },
+    {
+      "id": "C04",
+      "memory_key": "exclusions.left_handedness",
+      "claims": [
+        true,
+        false
+      ],
+      "canonical": false,
+      "resolution": "supersede",
+      "reason": "The pilot criterion was accidentally retained in Section 2.1 but was not implemented."
+    },
+    {
+      "id": "C05",
+      "memory_key": "statistics.repeated_misinformation_reliability_contrast.p",
+      "claims": [
+        0.081,
+        0.018
+      ],
+      "canonical": 0.018,
+      "resolution": "supersede",
+      "reason": "The narrative value transposed the final two digits; the corrected value is explicit."
+    },
+    {
+      "id": "C06",
+      "memory_key": "conclusion.repetition_effect",
+      "claims": [
+        "eliminated",
+        "attenuated but not eliminated"
+      ],
+      "canonical": "attenuated but not eliminated",
+      "resolution": "supersede",
+      "reason": "The interaction was nonsignificant and the author correction explicitly narrows the claim."
+    },
+    {
+      "id": "C07",
+      "memory_key": "materials.critical_item_count",
+      "claims": [
+        10,
+        8
+      ],
+      "canonical": 8,
+      "resolution": "merge",
+      "reason": "There were 10 test rows: 8 critical items and 2 fillers. The apparent conflict is resolved by set membership."
+    }
+  ],
+  "non_conflicts": [
+    {
+      "id": "N01",
+      "topic": "retention interval",
+      "claims": [
+        "48 hours",
+        "approximately 24 hours"
+      ],
+      "interpretation": "Both are true: 48 hours was planned; approximately 24 hours was implemented.",
+      "expected_behavior": "merge with scope; do not overwrite"
+    },
+    {
+      "id": "N02",
+      "topic": "testing room",
+      "claims": [
+        "Room 214",
+        "Room 318"
+      ],
+      "interpretation": "Both are true for different participant cohorts.",
+      "expected_behavior": "merge by cohort"
+    },
+    {
+      "id": "N03",
+      "topic": "bicycle color",
+      "claims": [
+        "red",
+        "orange-red",
+        "blue"
+      ],
+      "interpretation": "Red is the coded event fact; orange-red is an accepted perceptual description; blue is misinformation.",
+      "expected_behavior": "preserve role and provenance"
+    },
+    {
+      "id": "N04",
+      "topic": "theoretical explanation",
+      "claims": [
+        "source monitoring",
+        "reconsolidation"
+      ],
+      "interpretation": "The paper treats these as compatible behavioral interpretations, not mutually exclusive facts.",
+      "expected_behavior": "retain alternatives without forced resolution"
+    },
+    {
+      "id": "N05",
+      "topic": "sample counts",
+      "claims": [
+        192,
+        186,
+        184
+      ],
+      "interpretation": "192 recruited, 186 pre-audit analyzed, 184 canonical final analyzed.",
+      "expected_behavior": "preserve lifecycle rather than reduce all counts to one predicate"
+    }
+  ],
+  "evaluation_queries": [
+    {
+      "id": "Q01",
+      "question": "How many participants were in the canonical final analysis?",
+      "expected_answer": "184",
+      "required_provenance": "Author Correction and Post-Lock Data Note"
+    },
+    {
+      "id": "Q02",
+      "question": "Who was the high-reliability correction source?",
+      "expected_answer": "The forensic video analyst.",
+      "required_provenance": "Method body plus author correction; reject reversed Table 2 note"
+    },
+    {
+      "id": "Q03",
+      "question": "Were left-handed participants excluded?",
+      "expected_answer": "No. Handedness was a pilot criterion accidentally retained in one paragraph.",
+      "required_provenance": "Data exclusions and author correction"
+    },
+    {
+      "id": "Q04",
+      "question": "What was the canonical primary outcome?",
+      "expected_answer": "Misinformation endorsement at the delayed test.",
+      "required_provenance": "Preregistered Amendment 1"
+    },
+    {
+      "id": "Q05",
+      "question": "What is the corrected p-value for the planned contrast?",
+      "expected_answer": ".018",
+      "required_provenance": "Results correction and author correction"
+    },
+    {
+      "id": "Q06",
+      "question": "Did a high-reliability correction eliminate the repetition effect?",
+      "expected_answer": "No. It attenuated the effect; elimination was an overstatement.",
+      "required_provenance": "Nonsignificant interaction, limitations, and author correction"
+    },
+    {
+      "id": "Q07",
+      "question": "What color was the bicycle?",
+      "expected_answer": "It was coded red; orange-red was accepted in free recall. Blue was the misinformation detail.",
+      "required_provenance": "Materials, results, and author correction"
+    },
+    {
+      "id": "Q08",
+      "question": "Was the retention interval 24 or 48 hours?",
+      "expected_answer": "The study planned 48 hours but implemented approximately 24 hours.",
+      "required_provenance": "Procedure and author correction"
+    },
+    {
+      "id": "Q09",
+      "question": "Which theory explained the findings?",
+      "expected_answer": "Both source-monitoring and reconsolidation accounts were presented as compatible possibilities; the design could not distinguish them.",
+      "required_provenance": "Discussion"
+    },
+    {
+      "id": "Q10",
+      "question": "How many critical test items were used?",
+      "expected_answer": "Eight critical items, plus two noncritical fillers.",
+      "required_provenance": "Materials, procedure, and author correction"
+    },
+    {
+      "id": "Q11",
+      "question": "In which room was the study conducted?",
+      "expected_answer": "Cohort A was tested in Room 214 and Cohort B in Room 318.",
+      "required_provenance": "Procedure and author correction"
+    },
+    {
+      "id": "Q12",
+      "question": "Describe the sample-size lifecycle.",
+      "expected_answer": "192 were recruited, 186 remained after preregistered exclusions, and a post-lock duplicate audit produced a canonical final N of 184.",
+      "required_provenance": "Participants and post-lock audit"
+    }
+  ]
+}
