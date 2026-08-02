@@ -51,7 +51,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Second** | Phase 2 catalog (modules, contracts, adapters, scenarios) | **Done — ACME-0040** |
 | **Third** | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | **Done — ACME-0041 / ADR-0020** |
 | **Fourth** | Phase 4 offline authoring, launch, history | **Done — ACME-0042 / ADR-0021** |
-| Later | Phase 5 measurement + fixture review; Phase 6 gated live (optional) | Open — next slice |
+| **Fifth** | Phase 5 measurement + fixture review | **Done — ACME-0043 / ADR-0022** |
+| Later | Phase 6 gated live (optional); rendering surface (unchartered) | Open — next optional slices |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -98,9 +99,9 @@ contracts made the Execution Inspector real and testable without a browser.
 - one policy validator, the engine's own `resolveExecutionPolicy`
 - proof that the output is runnable: a compiled plan reaches the pinned
   Narrative Phase 5 operation digest through the existing CLI path
-- two recorded deviations: no `measurements` block until S8 exists, and no
-  model field because `acme-scenario/1` keeps the selection in the mock
-  fixture
+- two recorded deviations: no `measurements` block in the plan (S8 measures
+  at measurement time instead), and no model field because `acme-scenario/1`
+  keeps the selection in the mock fixture
 
 ## What ACME-0042 delivered
 
@@ -114,6 +115,20 @@ contracts made the Execution Inspector real and testable without a browser.
   through the existing ScenarioRunner and records, writing no ledger state
 - run identifiers validated as safe file names before any path is built
 - the phase exit proven as one test: configure, launch, find, inspect
+
+## What ACME-0043 delivered
+
+- ADR-0022: measurement semantics and the fixture-approval boundary
+- `acme-view-measurement/1` (S8): run / step / replay rates with sample sizes;
+  empty sample `unavailable`; thresholds optional; baseline comparison only
+  when a baseline is stored; deterministic and live partitions
+- `acme-view-fixture-review/1` (S9): proposals, pending vs decided status,
+  reviewable change description with `applied: false`
+- `decideFixtureChange`: refuses empty approver, empty rationale, unsafe
+  proposal id, path escape and identical digests
+- workspace `baselines/` and `approvals/` beside `runs/`, same safe-name rule
+- unit and integration coverage of refusals, unavailable cases and end-to-end
+  measure-after-launch
 
 ## Why the rest stays outside any non-UI active task
 
@@ -131,7 +146,8 @@ verification story and must not expand an unrelated frozen charter.
 - encrypted-payload when encryptor supplied
 - durable resume, rollback/CAS proofs, outbox boundary
 - gate freezes accepted (ADR-0019), the phase-1 view contracts, the phase-2
-  catalog and the phase-3 plan compiler (ADR-0020)
+  catalog, the phase-3 plan compiler (ADR-0020), the phase-4 launch path
+  (ADR-0021) and phase-5 measurement / fixture review (ADR-0022)
 
 **Blocks the remaining phases (decisions, not missing code):**
 
@@ -144,6 +160,7 @@ verification story and must not expand an unrelated frozen charter.
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
+- no browser / SPA; every surface is still a JSON contract and a function call
 
 ## Suggested verification
 
@@ -172,8 +189,7 @@ Phase 3 verification is delivered:
 - the compiled document is accepted by the runner's own `parseScenario`
 - a compiled plan reproduces the pinned Narrative Phase 5 digest
 
-Later charters add launch paths, fixture-approval rules and live gating
-proofs.
+Later charters may add gated live evaluation (S10) and a rendering surface.
 
 ## Explicit non-goals for v1
 

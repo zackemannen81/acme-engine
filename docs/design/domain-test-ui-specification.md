@@ -365,15 +365,20 @@ not compute a verdict. "No replay was run" is a missing section
 
 ### S8 — Results and measurement
 
-Aggregates only against configured thresholds and baselines. No baseline ⇒ no
-regression claim. Case counts always stated. Live and deterministic series are
-never mixed into one deterministic score.
+**Shipped (ACME-0043 / ADR-0022).** `acme-view-measurement/1` aggregates only
+against configured thresholds and baselines over recorded run records:
+`runPassRate`, `stepPassRate`, `replayMatchRate`, each with `sampleSize`. An
+empty sample is `unavailable`, never a rate of one or zero. No baseline ⇒ no
+regression claim. Live and deterministic series are partitioned at the source
+and never mixed into one deterministic score. No composite score or weighting.
 
 ### S9 — Fixture review
 
-Human approval of a proposed golden change. Approve/reject requires an
-approver identity (local config) and a non-empty rationale. No automatic
-acceptance. Produces a reviewable repo change path, not a silent fixture write.
+**Shipped (ACME-0043 / ADR-0022).** `acme-view-fixture-review/1` shows proposed
+golden changes and recorded decisions. Approve/reject requires a non-empty
+approver identity and a non-empty rationale. No automatic acceptance. The
+approval record describes a reviewable repository change (`applied: false`);
+it never writes, edits or deletes a fixture file.
 
 ### S10 — Live evaluation
 
@@ -388,10 +393,12 @@ this phase ships.
 exported from `@acme/test-ui` and governed by
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md), which discharges
 the gate-3 ADR requirement. Two deviations from the sketch below are recorded
-there rather than hidden: a plan carries no `measurements` block, because
-nothing enforces a threshold until S8 in phase 5; and a plan names no model,
-because `acme-scenario/1` reads the `ModelSelection` from the mock-response
-fixture. The illustrative shape below is retained as intent.
+there rather than hidden: a plan carries no `measurements` block (S8 measures
+recorded runs with thresholds supplied at measurement time; embedding them in
+the plan is a separate charter); and a plan names no model, because
+`acme-scenario/1` reads the `ModelSelection` from the mock-response fixture.
+The illustrative shape below is retained as intent; the `measurements` block
+in the sketch is not part of the shipped schema.
 
 ```yaml
 schemaVersion: acme-test-plan/1
@@ -621,13 +628,19 @@ synchronous, so the live-progress section is `unavailable` rather than a
 simulated queue; and the history index is derived by reading the run records
 rather than maintained beside them, so it cannot drift.
 
-### Phase 5 — Measurement, fixture review
+### Phase 5 — Measurement, fixture review — **done (ACME-0043 / ADR-0022)**
 
 1. S8 thresholds and baselines.
 2. S9 approval with mandatory rationale.
 
 **Exit:** measurements reproducible from stored evidence; no silent golden
 updates.
+
+**Met.** `apps/test-ui` exports `buildMeasurementView`, `captureBaseline`,
+`decideFixtureChange` and `buildFixtureReviewView`. Unit tests cover every
+refusal and unavailable case; the launch integration test measures real
+recorded runs, stores a baseline and records an approval without writing a
+fixture. Workspace layout: `runs/`, `baselines/`, `approvals/`.
 
 ### Phase 6 — Gated live evaluation (optional)
 

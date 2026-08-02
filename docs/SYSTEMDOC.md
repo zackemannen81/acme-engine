@@ -1,7 +1,7 @@
 # System Documentation
 
-Last updated: 2026-08-01
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI read model
+Last updated: 2026-08-02
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through phase 5 (measurement and fixture review)
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -804,9 +804,10 @@ Implemented today:
 - a launch path (ADR-0021) that compiles, runs through the existing
   ScenarioRunner and records the run. It is synchronous: no worker, no queue,
   no retry, no cancellation
-- an interface-owned workspace of files — `runs/<runId>.json` — sharing no
-  table, file or directory with the execution ledger. Deleting it loses run
-  history and no canonical fact
+- an interface-owned workspace of files — `runs/<runId>.json`,
+  `baselines/<name>.json`, `approvals/<proposalId>.json` — sharing no table,
+  file or directory with the execution ledger. Deleting it loses interface
+  state and no canonical fact
 - a history index derived by reading the records, so it cannot disagree with
   them, and a run identifier validated as a safe file name before any path is
   built
@@ -815,6 +816,15 @@ Implemented today:
   that does not exist
 - run records that link each case to its execution id, so history reaches the
   S4 inspector and the evidence the repository already owns
+- measurement (S8, ADR-0022): rates over recorded run records only —
+  `runPassRate`, `stepPassRate`, `replayMatchRate` — each with `sampleSize`.
+  An empty sample is `unavailable`, never a perfect rate. Threshold outcomes
+  exist only where a threshold was configured; baseline comparison is
+  `unavailable` without a stored baseline. Deterministic and live series are
+  partitioned at the source so a live run cannot enter a deterministic number
+- fixture review (S9, ADR-0022): proposals and approval records with mandatory
+  non-empty approver and rationale. Approval describes a reviewable repository
+  change (`applied: false`); it never writes, edits or deletes a fixture file
 
 Constraints that continue to bind later phases:
 
@@ -822,7 +832,7 @@ Constraints that continue to bind later phases:
   `apps → adapters → core` and `apps → modules → core`
 - reads evidence through repository ports and runner/kit reports only
 - launches runs and stores disposable interface artifacts; never commits,
-  marks terminal, mutates canonical records or invents verdicts
+  marks terminal, mutates canonical records or invents quality scores
 - optional thin `acme-test-plan/1` compiles only to `acme-scenario/1` and
   `ExecutionRequest` (ADR required at first export)
 - CLI remains the CI/automation entry point; the UI is local-only
@@ -830,10 +840,10 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: measurement (S8), fixture review (S9), live evaluation (S10)
-and any browser surface. The plan format's `measurements` block is
-deliberately absent until S8 can enforce a threshold, and S3's live-progress
-section stays unavailable until something runs in the background.
+Not implemented: live evaluation (S10) and any browser surface. The plan
+format's `measurements` block remains absent (thresholds are supplied when
+measuring, not embedded in `acme-test-plan/1`). S3's live-progress section
+stays unavailable until something runs in the background.
 
 ## Remaining Implementation Baseline
 
@@ -851,8 +861,10 @@ section stays unavailable until something runs in the background.
   provider call (ADR-0017).
 - Committed events leave the outbox through an explicit drain (ADR-0018);
   nothing drains on its own.
-- The Domain Test UI read model renders recorded evidence and computes no
-  verdict (ADR-0019). It is a leaf; deleting it loses no canonical fact.
+- The Domain Test UI read model projects recorded evidence and, for S8 only,
+  aggregates rates against configured thresholds (ADR-0019, ADR-0022). It
+  invents no quality score and writes no golden fixture. It is a leaf;
+  deleting it loses no canonical fact.
 - ScenarioRunner live provider steps remain open.
 
 ## Deliberately Deferred Decisions

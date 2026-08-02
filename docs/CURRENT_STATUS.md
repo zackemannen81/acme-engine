@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-01
+Last updated: 2026-08-02
 
 ## Repository
 
@@ -46,6 +46,7 @@ implementation baseline:
 - ADR-0019: Domain Test UI boundary and versioned view contracts
 - ADR-0020: `acme-test-plan/1` schema and compiler
 - ADR-0021: Interface workspace storage and launch boundary
+- ADR-0022: Measurement semantics and fixture-approval boundary
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -350,8 +351,15 @@ and history, an interface-owned file workspace, an app composition and
 `launchPlan`. A plan can now be previewed, launched and inspected offline
 without the CLI.
 
-Not delivered: S8, S9, S10 and any browser surface. The next slice is phase 5
-(measurement and fixture review).
+Delivered by ACME-0043 (phase 5, ADR-0022): `acme-view-measurement/1` (S8)
+over recorded run records with sample sizes, optional thresholds and optional
+baselines, and `acme-view-fixture-review/1` (S9) with mandatory approver and
+rationale, producing a described reviewable change rather than a fixture
+write. Workspace stores `baselines/` and `approvals/` beside `runs/`.
+Deterministic and live series are partitioned; live is always empty today.
+
+Not delivered: S10 (gated live evaluation) and any browser surface. The next
+optional slice is phase 6, or a rendering surface which is not yet chartered.
 Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
 visual mock lives under `docs/concepts_sandbox/temp/`.
 
@@ -373,12 +381,12 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has no user interface.** Phases 0–4 are delivered
-  (ACME-0039 through ACME-0042): boundaries, view contracts for S1–S7, a plan
-  compiler, a launch path and run history. Every surface is a JSON contract
-  and a function call — there is no browser, no server and no command. A
-  person uses it today only by writing TypeScript. Phase 5 adds measurement
-  and fixture review; a rendering surface is not yet chartered.
+- **The Domain Test UI has no user interface.** Phases 0–5 are delivered
+  (ACME-0039 through ACME-0043): boundaries, view contracts for S1–S9, a plan
+  compiler, a launch path, run history, measurement and fixture review. Every
+  surface is a JSON contract and a function call — there is no browser, no
+  server and no command. A person uses it today only by writing TypeScript. A
+  rendering surface is not yet chartered.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision
   (ADR-0021). There is no queue, no background worker and no cancellation, so
   S3's live-progress section stays `unavailable` and a long run holds the
@@ -386,9 +394,10 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Plans cannot pin a model.** `acme-scenario/1` reads the `ModelSelection`
   from the mock-response fixture, so `acme-test-plan/1` has no model field and
   an `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020).
-- **`measurements` is not in `acme-test-plan/1`.** It is rejected as an
-  unknown field until S8 in phase 5 can enforce a threshold; a plan stating a
-  threshold nothing checks would promise more than the system does.
+- **`measurements` is not in `acme-test-plan/1`.** S8 (ACME-0043) measures
+  recorded runs with thresholds supplied at measurement time; the plan format
+  still rejects a `measurements` block (ADR-0020). Embedding thresholds in the
+  plan would be a separate charter.
 - **Adapter targets are declared, not discovered.** Nothing in the workspace
   registers adapter implementations; the CLI composition root hard-codes them.
   The catalog therefore renders targets a caller declares and only validates

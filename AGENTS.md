@@ -25,12 +25,13 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   than assumed; and committed events leave the outbox through an explicit
   bounded drain with at-least-once delivery (ADR-0018). Nothing drains on its
   own, and neither reference module emits domain events yet.
-- The Domain Test UI is activated (ADR-0019 to ADR-0021). `apps/test-ui` holds
-  phases 1–4: versioned view contracts for surfaces S1–S7, `acme-test-plan/1`
-  with a pure compiler, and a local launch path that records runs under an
-  interface-owned workspace. It is a leaf, its default entry point performs no
-  I/O, and measurement, fixture review and any browser surface each need their
-  own charter.
+- The Domain Test UI is activated (ADR-0019 to ADR-0022). `apps/test-ui` holds
+  phases 1–5: versioned view contracts for surfaces S1–S9, `acme-test-plan/1`
+  with a pure compiler, a local launch path that records runs under an
+  interface-owned workspace, measurement over recorded runs, and fixture
+  review that never writes a golden. It is a leaf, its default entry point
+  performs no I/O, and gated live evaluation (S10) or any browser surface
+  each need their own charter.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

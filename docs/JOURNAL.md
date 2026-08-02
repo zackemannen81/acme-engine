@@ -2,6 +2,42 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-02 — ACME-0043 phase 5 verified and archived
+
+- Date: 2026-08-02
+- Author: Grok
+- Task: ACME-0043
+- Summary: Closed Domain Test UI phase 5 (measurement S8 and fixture review
+  S9). The implementation and ADR-0022 were already on `main` after a prior
+  session that died mid-verification. This session re-ran every minimum gate,
+  confirmed Definition of Done against the shipped code, synchronized
+  long-lived docs that still described phase 4 as the tip, archived the task
+  and restored `docs/CURRENT_TASK.md` from the template.
+- Delivered (already present; verified):
+  - ADR-0022 measurement semantics and fixture-approval boundary
+  - `acme-view-measurement/1`: run/step/replay rates with sample sizes;
+    empty sample `unavailable`; optional thresholds; baseline comparison only
+    when stored; deterministic vs live partition
+  - `acme-view-fixture-review/1` and `decideFixtureChange`: approver +
+    rationale required; no fixture file write; reviewable change with
+    `applied: false`
+  - workspace `baselines/` and `approvals/` beside `runs/`
+  - unit tests (`apps/test-ui/test/measurement.test.ts`) and integration
+    measure-after-launch path in `tests/integration/test-ui-launch.test.ts`
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (500 tests / 56 files); `pnpm
+  test:conformance` (58); `pnpm test:integration` (41); `pnpm test:scenario`
+  (21); `pnpm docs:check`; `pnpm build`; `git diff --check` clean. No network
+  call, no wall-clock identity and no browser in any gate.
+- Docs: `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`, `AGENTS.md`, design
+  specification phase 5 marked done, backlog proposal updated; task archived
+  as `docs/finished/ACME-0043_domain-test-ui-measurement-and-fixture-review.md`.
+- Spend: none.
+- Follow-ups: phase 6 (gated live evaluation) as its own charter, or a
+  rendering surface (not yet chartered). There is still no browser UI; every
+  surface remains a JSON contract and a function call.
+- Signature: Grok
+
 ## 2026-07-29 — Docs-first foundation created
 
 - Date: 2026-07-29
