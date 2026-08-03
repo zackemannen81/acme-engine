@@ -48,6 +48,7 @@ implementation baseline:
 - ADR-0021: Interface workspace storage and launch boundary
 - ADR-0022: Measurement semantics and fixture-approval boundary
 - ADR-0023: Live evaluation gate for the Domain Test UI
+- ADR-0024: Local SPA shell and loopback workbench serve
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -366,10 +367,13 @@ local entry point. Live requires `ACME_TEST_UI_LIVE` plus confirmation
 ExecutionRequest path (not multi-step ScenarioRunner). Offline transport tests
 prove the path without network.
 
-Not delivered: multi-step live scenarios, browser/SPA surface. A rendering
-surface is not yet chartered. Proposal:
-`docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
-lives under `docs/concepts_sandbox/temp/`.
+In progress (ACME-0045 / ADR-0024): localhost workbench shell with pure HTML
+renderers for S3 and S4, stub navigation for other surfaces, loopback-only
+HTTP serve. Not a full SPA product polish.
+
+Not delivered: multi-step live scenarios; complete renderers for S1/S2/S5–S10;
+remote hosting. Proposal: `docs/backlog/domain-test-ui-implementation.md`. A
+non-authority visual mock lives under `docs/concepts_sandbox/temp/`.
 
 ## Persistent Gaps
 
@@ -389,12 +393,10 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has no user interface.** Phases 0–6 are delivered
-  (ACME-0039 through ACME-0044): boundaries, view contracts for S1–S10, a plan
-  compiler, a launch path, run history, measurement, fixture review and gated
-  live evaluation. Every surface is a JSON contract and a function call —
-  there is no browser, no server and no command. A person uses it today only
-  by writing TypeScript. A rendering surface is not yet chartered.
+- **The Domain Test UI has a minimal local workbench (ACME-0045 in progress).**
+  Phases 0–6 delivered S1–S10 as JSON contracts. ACME-0045 adds loopback HTML
+  for S3/S4 plus shell stubs. Full surface polish and plan-launch chrome remain
+  open. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision

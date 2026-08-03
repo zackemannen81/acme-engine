@@ -58,3 +58,4 @@ current architecture.
 - [`0021-interface-workspace-and-launch-boundary.md`](0021-interface-workspace-and-launch-boundary.md)
 - [`0022-measurement-and-fixture-approval.md`](0022-measurement-and-fixture-approval.md)
 - [`0023-live-evaluation-gate.md`](0023-live-evaluation-gate.md)
+- [`0024-local-spa-loopback-workbench.md`](0024-local-spa-loopback-workbench.md)

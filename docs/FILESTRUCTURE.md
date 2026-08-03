@@ -41,7 +41,16 @@ acme-engine/
 │       │   │   ├── composition.ts
 │       │   │   ├── launch.ts
 │       │   │   ├── live-launch.ts
+│       │   │   ├── server.ts
+│       │   │   ├── workbench-main.ts
 │       │   │   └── workspace.ts
+│       │   ├── web/
+│       │   │   ├── escape.ts
+│       │   │   ├── index.ts
+│       │   │   ├── render-execution.ts
+│       │   │   ├── render-runs.ts
+│       │   │   ├── shell.ts
+│       │   │   └── styles.ts
 │       │   ├── plan/
 │       │   │   ├── compile.ts
 │       │   │   └── schema.ts
@@ -63,6 +72,7 @@ acme-engine/
 │           ├── fixtures.ts
 │           ├── live-evaluation.test.ts
 │           ├── measurement.test.ts
+│           ├── web-render.test.ts
 │           ├── node-source.test.ts
 │           ├── plan-compile.test.ts
 │           ├── plan-view.test.ts
@@ -248,6 +258,7 @@ acme-engine/
 │   │   ├── execution-engine-sqlite.test.ts
 │   │   ├── test-ui-launch.test.ts
 │   │   ├── test-ui-live-launch.test.ts
+│   │   ├── test-ui-workbench.test.ts
 │   │   └── test-ui-read-model.test.ts
 │   └── scenario/
 │       ├── files/
@@ -299,6 +310,7 @@ acme-engine/
 │   │   ├── 0021-interface-workspace-and-launch-boundary.md
 │   │   ├── 0022-measurement-and-fixture-approval.md
 │   │   ├── 0023-live-evaluation-gate.md
+│   │   ├── 0024-local-spa-loopback-workbench.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/

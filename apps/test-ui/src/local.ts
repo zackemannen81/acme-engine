@@ -32,3 +32,11 @@ export {
   type LiveLaunchOptions,
   type LiveLaunchResult,
 } from './local/live-launch.js';
+
+export {
+  startWorkbenchServer,
+  WorkbenchServeRefused,
+  WORKBENCH_SERVE_REFUSAL,
+  type WorkbenchServer,
+  type WorkbenchServerOptions,
+} from './local/server.js';

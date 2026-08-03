@@ -12,8 +12,10 @@
  *
  * Surfaces: S1 catalog, S2 plan designer, S3 run console and history, S4–S7
  * execution, memory, state and replay inspection, S8 measurement, S9 fixture
- * review and S10 live evaluation. It is a leaf — nothing in the workspace
- * imports it, and deleting it loses no canonical fact.
+ * review and S10 live evaluation. Pure HTML renderers for the local workbench
+ * live under `./web` exports. I/O and the loopback server live on `./local`.
+ * It is a leaf — nothing in the workspace imports it, and deleting it loses
+ * no canonical fact.
  */
 
 export const ACME_TEST_UI_PACKAGE = '@acme/test-ui' as const;
@@ -242,6 +244,16 @@ export {
   type RunRecord,
   type RunStepRecord,
 } from './run-record.js';
+
+export {
+  escapeHtml,
+  renderExecutionViewHtml,
+  renderRunsViewHtml,
+  renderShell,
+  renderStubSurface,
+  WORKBENCH_CSS,
+  type WorkbenchSurface,
+} from './web/index.js';
 
 export {
   compileTestPlan,
