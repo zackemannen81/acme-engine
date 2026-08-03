@@ -33,12 +33,14 @@ acme-engine/
 │       │   ├── redaction.ts
 │       │   ├── run-record.ts
 │       │   ├── fixture-approval.ts
+│       │   ├── live-gate.ts
 │       │   ├── view.ts
 │       │   ├── catalog/
 │       │   │   └── paths.ts
 │       │   ├── local/
 │       │   │   ├── composition.ts
 │       │   │   ├── launch.ts
+│       │   │   ├── live-launch.ts
 │       │   │   └── workspace.ts
 │       │   ├── plan/
 │       │   │   ├── compile.ts
@@ -47,6 +49,7 @@ acme-engine/
 │       │       ├── catalog.ts
 │       │       ├── execution.ts
 │       │       ├── fixture-review.ts
+│       │       ├── live-evaluation.ts
 │       │       ├── measurement.ts
 │       │       ├── memory.ts
 │       │       ├── plan.ts
@@ -58,6 +61,7 @@ acme-engine/
 │           ├── catalog-fixtures.ts
 │           ├── catalog.test.ts
 │           ├── fixtures.ts
+│           ├── live-evaluation.test.ts
 │           ├── measurement.test.ts
 │           ├── node-source.test.ts
 │           ├── plan-compile.test.ts
@@ -243,6 +247,7 @@ acme-engine/
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
 │   │   ├── test-ui-launch.test.ts
+│   │   ├── test-ui-live-launch.test.ts
 │   │   └── test-ui-read-model.test.ts
 │   └── scenario/
 │       ├── files/
@@ -293,6 +298,7 @@ acme-engine/
 │   │   ├── 0020-acme-test-plan-schema-and-compiler.md
 │   │   ├── 0021-interface-workspace-and-launch-boundary.md
 │   │   ├── 0022-measurement-and-fixture-approval.md
+│   │   ├── 0023-live-evaluation-gate.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -354,6 +360,7 @@ acme-engine/
 │   │   ├── ACME-0041_domain-test-ui-plan-compiler.md
 │   │   ├── ACME-0042_domain-test-ui-launch-and-history.md
 │   │   ├── ACME-0043_domain-test-ui-measurement-and-fixture-review.md
+│   │   ├── ACME-0044_domain-test-ui-live-evaluation.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -431,15 +438,16 @@ content remains intentionally omitted here.
   `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
-- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0022). Phases 1–5 are
-  the read model, catalog, plan compiler, launch path, measurement and fixture
-  review — view contracts for the S1–S9 surfaces, `acme-test-plan/1` with a
-  pure compiler, a local launch path that records runs under an
-  interface-owned workspace, rates over recorded runs against configured
-  thresholds, and fixture approvals that never write a golden. The default
-  entry point performs no I/O; discovery lives on `./node-source` and
-  everything that selects an adapter or touches a disk lives on `./local`. It
-  is a leaf: nothing in the workspace imports it.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0023). Phases 1–6 are
+  the read model, catalog, plan compiler, launch path, measurement, fixture
+  review and gated live evaluation — view contracts for the S1–S10 surfaces,
+  `acme-test-plan/1` with a pure compiler, a local launch path that records
+  runs under an interface-owned workspace, rates over recorded runs against
+  configured thresholds, fixture approvals that never write a golden, and
+  single-execute live launch behind `ACME_TEST_UI_LIVE` plus confirmation.
+  The default entry point performs no I/O; discovery lives on `./node-source`
+  and everything that selects an adapter or touches a disk lives on
+  `./local`. It is a leaf: nothing in the workspace imports it.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -464,11 +472,11 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1; ACME-0040 through ACME-0043 added phases 2–5
-under ADR-0020, ADR-0021 and ADR-0022. The package therefore holds the read
-model, the catalog, the plan compiler, the launch path, measurement and
-fixture review: no gated live evaluation (S10) and no browser surface. A
-non-authority workbench mock lives under `docs/concepts_sandbox/temp/`.
+and delivered phases 0 and 1; ACME-0040 through ACME-0044 added phases 2–6
+under ADR-0020 through ADR-0023. The package therefore holds the full S1–S10
+read/launch path including gated live evaluation: no multi-step live scenarios
+and no browser surface. A non-authority workbench mock lives under
+`docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
 is decided architecture, roadmap or current scope, and no task may cite it as

@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-08-02
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through phase 5 (measurement and fixture review)
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through phase 6 (gated live evaluation)
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -825,6 +825,12 @@ Implemented today:
 - fixture review (S9, ADR-0022): proposals and approval records with mandatory
   non-empty approver and rationale. Approval describes a reviewable repository
   change (`applied: false`); it never writes, edits or deletes a fixture file
+- live evaluation (S10, ADR-0023): `acme-view-live-evaluation/1` is a live-only
+  series surface. Launch requires process opt-in (`ACME_TEST_UI_LIVE`) plus
+  `acme-live-confirmation/1` (confirmer, rationale, budget). Credentials are
+  read only from the environment in `@acme/test-ui/local`. Path is single
+  `ExecutionRequest` via ExecutionEngine and OpenAI Responses — not multi-step
+  ScenarioRunner. Usage/cost is reported when retained on the live run record
 
 Constraints that continue to bind later phases:
 
@@ -840,7 +846,7 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: live evaluation (S10) and any browser surface. The plan
+Not implemented: multi-step live scenarios and any browser surface. The plan
 format's `measurements` block remains absent (thresholds are supplied when
 measuring, not embedded in `acme-test-plan/1`). S3's live-progress section
 stays unavailable until something runs in the background.
@@ -862,10 +868,11 @@ stays unavailable until something runs in the background.
 - Committed events leave the outbox through an explicit drain (ADR-0018);
   nothing drains on its own.
 - The Domain Test UI read model projects recorded evidence and, for S8 only,
-  aggregates rates against configured thresholds (ADR-0019, ADR-0022). It
-  invents no quality score and writes no golden fixture. It is a leaf;
-  deleting it loses no canonical fact.
-- ScenarioRunner live provider steps remain open.
+  aggregates rates against configured thresholds (ADR-0019, ADR-0022). Live
+  evaluation is gated (ADR-0023). It invents no quality score and writes no
+  golden fixture. It is a leaf; deleting it loses no canonical fact.
+- ScenarioRunner multi-step live provider steps remain open; single-execute
+  live is available via CLI and test-ui `launchLiveExecution`.
 
 ## Deliberately Deferred Decisions
 

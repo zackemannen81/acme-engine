@@ -52,7 +52,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Third** | Phase 3 `acme-test-plan/1` + compiler ADR + goldens | **Done — ACME-0041 / ADR-0020** |
 | **Fourth** | Phase 4 offline authoring, launch, history | **Done — ACME-0042 / ADR-0021** |
 | **Fifth** | Phase 5 measurement + fixture review | **Done — ACME-0043 / ADR-0022** |
-| Later | Phase 6 gated live (optional); rendering surface (unchartered) | Open — next optional slices |
+| **Sixth** | Phase 6 gated live evaluation | **Done — ACME-0044 / ADR-0023** |
+| Later | Rendering surface (unchartered); multi-step live scenarios | Open — optional |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -130,6 +131,17 @@ contracts made the Execution Inspector real and testable without a browser.
 - unit and integration coverage of refusals, unavailable cases and end-to-end
   measure-after-launch
 
+## What ACME-0044 delivered
+
+- ADR-0023: live evaluation gate (env opt-in + confirmation + budget)
+- `acme-view-live-evaluation/1` (S10): live series only; cost when retained
+- `acme-live-confirmation/1` with refusals for credentials, missing opt-in,
+  empty confirmer/rationale and invalid budget
+- `launchLiveExecution`: single ExecutionRequest via OpenAI Responses gateway;
+  transport injectable for offline tests; credentials from environment only
+- run records may carry optional `live` metadata (never secrets)
+- S8 live partition receives non-mock gateway runs only
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -147,16 +159,16 @@ verification story and must not expand an unrelated frozen charter.
 - durable resume, rollback/CAS proofs, outbox boundary
 - gate freezes accepted (ADR-0019), the phase-1 view contracts, the phase-2
   catalog, the phase-3 plan compiler (ADR-0020), the phase-4 launch path
-  (ADR-0021) and phase-5 measurement / fixture review (ADR-0022)
+  (ADR-0021), phase-5 measurement / fixture review (ADR-0022) and phase-6
+  gated live evaluation (ADR-0023)
 
 **Blocks the remaining phases (decisions, not missing code):**
 
-- an explicit charter per phase; ADR-0019 authorized the build order, not the
-  whole application
+- an explicit charter per residual (browser, multi-step live scenarios)
 
-**Residuals that shape later phases only:**
+**Residuals that shape later work only:**
 
-- ScenarioRunner has no live step (S10 / CLI live until then)
+- ScenarioRunner has no multi-step live step (S10 is single-execute)
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
@@ -189,7 +201,7 @@ Phase 3 verification is delivered:
 - the compiled document is accepted by the runner's own `parseScenario`
 - a compiled plan reproduces the pinned Narrative Phase 5 digest
 
-Later charters may add gated live evaluation (S10) and a rendering surface.
+Later charters may add a rendering surface or multi-step live scenarios.
 
 ## Explicit non-goals for v1
 

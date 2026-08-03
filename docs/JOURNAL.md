@@ -2,6 +2,38 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-02 — ACME-0044 phase 6 gated live evaluation archived
+
+- Date: 2026-08-02
+- Author: Grok
+- Task: ACME-0044
+- Summary: Closed Domain Test UI phase 6 (S10 gated live evaluation).
+  Implementation (ADR-0023, pure confirmation gate, S10 view, local
+  `launchLiveExecution`) was checkpointed after a power interruption; this
+  session re-ran every minimum gate, finished long-lived docs, archived the
+  task and restored `docs/CURRENT_TASK.md`.
+- Delivered:
+  - ADR-0023: env opt-in (`ACME_TEST_UI_LIVE`) + `acme-live-confirmation/1`
+    + budget; credentials forbidden on confirmation and views
+  - `acme-view-live-evaluation/1`: live series only; cost when retained
+  - `launchLiveExecution`: single ExecutionRequest via OpenAI Responses;
+    transport injectable for offline tests; run records with
+    `gateway !== mock` and optional `live` metadata
+  - S8 live partition proven with offline transport integration test
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (514 tests / 58 files); `pnpm
+  test:conformance` (58); `pnpm test:integration` (44); `pnpm test:scenario`
+  (21); `pnpm docs:check`; `pnpm build`; `git diff --check` clean. Default
+  gates perform no live network call.
+- Docs: CURRENT_STATUS, SYSTEMDOC, FILESTRUCTURE, AGENTS.md, design
+  specification phase 6 marked done, backlog updated; task archived as
+  `docs/finished/ACME-0044_domain-test-ui-live-evaluation.md`.
+- Spend: none.
+- Follow-ups: rendering surface (unchartered); multi-step live scenarios
+  (ScenarioRunner remains mock-only). Domain Test UI phases 0–6 complete as
+  JSON contracts + function calls — still no browser.
+- Signature: Grok
+
 ## 2026-08-02 — ACME-0043 phase 5 verified and archived
 
 - Date: 2026-08-02

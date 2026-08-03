@@ -382,10 +382,14 @@ it never writes, edits or deletes a fixture file.
 
 ### S10 — Live evaluation
 
-Absent unless environment opt-in. Confirmation names provider, case count and
-cost ceiling. Credentials never enter the UI. Live results are visually
-separated and never feed deterministic verdicts. Prefer CLI live execute until
-this phase ships.
+**Shipped (ACME-0044 / ADR-0023).** `acme-view-live-evaluation/1` is a live-only
+series surface. Launch requires process opt-in (`ACME_TEST_UI_LIVE`) plus
+`acme-live-confirmation/1` naming provider, model, case count (v1: 1),
+`maxModelCalls`, optional cost ceiling, confirmer and rationale. Credentials
+never enter the confirmation or the view — `OPENAI_API_KEY` is read only in
+`@acme/test-ui/local`. Path is single `ExecutionRequest` (not multi-step
+ScenarioRunner). Live results never enter the deterministic measurement
+partition (ADR-0022).
 
 ## Test plan configuration model
 
@@ -642,12 +646,17 @@ refusal and unavailable case; the launch integration test measures real
 recorded runs, stores a baseline and records an approval without writing a
 fixture. Workspace layout: `runs/`, `baselines/`, `approvals/`.
 
-### Phase 6 — Gated live evaluation (optional)
+### Phase 6 — Gated live evaluation (optional) — **done (ACME-0044 / ADR-0023)**
 
 1. S10 behind env opt-in, confirmation and budget.
 2. Visual separation from deterministic results.
 
 **Exit:** live runs impossible without explicit opt-in; credentials never in UI.
+
+**Met.** Pure gate (`parseLiveConfirmation` / `requireLiveGate`),
+`buildLiveEvaluationView`, and `launchLiveExecution` on the local entry point.
+Unit tests cover refusals; integration proves offline-transport launch and
+S8 live-partition isolation without network.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI
