@@ -21,6 +21,8 @@ export const RUNS_VIEW_VERSION = 'acme-view-runs/1' as const;
 export const MEASUREMENT_VIEW_VERSION = 'acme-view-measurement/1' as const;
 export const FIXTURE_REVIEW_VIEW_VERSION =
   'acme-view-fixture-review/1' as const;
+export const LIVE_EVALUATION_VIEW_VERSION =
+  'acme-view-live-evaluation/1' as const;
 
 /**
  * Reason codes for an unavailable section. They are part of the view
@@ -96,6 +98,19 @@ export const VIEW_UNAVAILABLE = {
   baseline: 'BASELINE_UNAVAILABLE',
   /** A proposed golden change nobody has decided on yet. Not a soft yes. */
   proposalPending: 'PROPOSAL_PENDING_DECISION',
+  /**
+   * No live confirmation was supplied. S10 does not invent an opt-in.
+   */
+  liveConfirmation: 'LIVE_CONFIRMATION_UNAVAILABLE',
+  /**
+   * No live-series run records were present. Distinct from a deterministic
+   * empty history (ADR-0023).
+   */
+  liveRunsEmpty: 'LIVE_RUNS_EMPTY',
+  /**
+   * Usage/cost was not retained on the live run record.
+   */
+  liveCost: 'LIVE_COST_UNAVAILABLE',
 } as const;
 
 export interface ViewUnavailable {

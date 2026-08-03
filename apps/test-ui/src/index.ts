@@ -1,5 +1,5 @@
 /**
- * `@acme/test-ui` — Domain Test UI (ADR-0019 to ADR-0022).
+ * `@acme/test-ui` — Domain Test UI (ADR-0019 to ADR-0023).
  *
  * This entry point is pure: functions from recorded evidence and configured
  * rules to versioned view contracts. It performs no I/O, opens no database,
@@ -8,12 +8,12 @@
  *
  * Anything that touches a filesystem or selects an adapter lives elsewhere:
  * `@acme/test-ui/node-source` for catalog discovery, `@acme/test-ui/local`
- * for the workspace, the composition and launching.
+ * for the workspace, the composition and launching (including gated live).
  *
  * Surfaces: S1 catalog, S2 plan designer, S3 run console and history, S4–S7
- * execution, memory, state and replay inspection, S8 measurement and S9
- * fixture review. It is a leaf — nothing in the workspace imports it, and
- * deleting it loses no canonical fact.
+ * execution, memory, state and replay inspection, S8 measurement, S9 fixture
+ * review and S10 live evaluation. It is a leaf — nothing in the workspace
+ * imports it, and deleting it loses no canonical fact.
  */
 
 export const ACME_TEST_UI_PACKAGE = '@acme/test-ui' as const;
@@ -22,6 +22,7 @@ export {
   CATALOG_VIEW_VERSION,
   EXECUTION_VIEW_VERSION,
   FIXTURE_REVIEW_VIEW_VERSION,
+  LIVE_EVALUATION_VIEW_VERSION,
   MEASUREMENT_VIEW_VERSION,
   MEMORY_DECISION_VIEW_VERSION,
   PLAN_VIEW_VERSION,
@@ -212,9 +213,31 @@ export {
 } from './fixture-approval.js';
 
 export {
+  buildLiveEvaluationView,
+  type LiveConfirmationView,
+  type LiveCostView,
+  type LiveEvaluationEvidence,
+  type LiveEvaluationView,
+  type LiveRunSummaryView,
+} from './read-model/live-evaluation.js';
+
+export {
+  assertWithinBudget,
+  isLiveOptInEnv,
+  LIVE_CONFIRMATION_VERSION,
+  LIVE_GATE_REFUSAL,
+  LiveGateRefused,
+  parseLiveConfirmation,
+  requireLiveGate,
+  type LiveEvaluationConfirmation,
+  type LiveProvider,
+} from './live-gate.js';
+
+export {
   isSafeRunId,
   parseRunRecord,
   RUN_RECORD_VERSION,
+  type LiveRunMetadata,
   type RunCaseRecord,
   type RunRecord,
   type RunStepRecord,

@@ -47,6 +47,7 @@ implementation baseline:
 - ADR-0020: `acme-test-plan/1` schema and compiler
 - ADR-0021: Interface workspace storage and launch boundary
 - ADR-0022: Measurement semantics and fixture-approval boundary
+- ADR-0023: Live evaluation gate for the Domain Test UI
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -356,18 +357,25 @@ over recorded run records with sample sizes, optional thresholds and optional
 baselines, and `acme-view-fixture-review/1` (S9) with mandatory approver and
 rationale, producing a described reviewable change rather than a fixture
 write. Workspace stores `baselines/` and `approvals/` beside `runs/`.
-Deterministic and live series are partitioned; live is always empty today.
+Deterministic and live series are partitioned.
 
-Not delivered: S10 (gated live evaluation) and any browser surface. The next
-optional slice is phase 6, or a rendering surface which is not yet chartered.
-Proposal: `docs/backlog/domain-test-ui-implementation.md`. A non-authority
-visual mock lives under `docs/concepts_sandbox/temp/`.
+Delivered by ACME-0044 (phase 6, ADR-0023): `acme-view-live-evaluation/1`
+(S10), pure `acme-live-confirmation/1` gate, and `launchLiveExecution` on the
+local entry point. Live requires `ACME_TEST_UI_LIVE` plus confirmation
+(confirmer, rationale, budget); credentials stay in the environment. Single
+ExecutionRequest path (not multi-step ScenarioRunner). Offline transport tests
+prove the path without network.
+
+Not delivered: multi-step live scenarios, browser/SPA surface. A rendering
+surface is not yet chartered. Proposal:
+`docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
+lives under `docs/concepts_sandbox/temp/`.
 
 ## Persistent Gaps
 
 - **ScenarioRunner has no live provider step.** `acme execute --gateway openai`
-  reaches a live model (ACME-0032), but a scenario file cannot; scenario runs
-  are mock-only.
+  and test-ui `launchLiveExecution` (ACME-0044) reach a live model, but a
+  multi-step scenario file cannot; ScenarioRunner remains mock-only.
 - **Nothing drains the outbox automatically.** A composition root must call the
   drain, and no alarm exists for a growing outbox (ADR-0018).
 - **Outbox residuals:** `failed` entries have no redrive path, no real
@@ -381,12 +389,14 @@ visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has no user interface.** Phases 0–5 are delivered
-  (ACME-0039 through ACME-0043): boundaries, view contracts for S1–S9, a plan
-  compiler, a launch path, run history, measurement and fixture review. Every
-  surface is a JSON contract and a function call — there is no browser, no
-  server and no command. A person uses it today only by writing TypeScript. A
-  rendering surface is not yet chartered.
+- **The Domain Test UI has no user interface.** Phases 0–6 are delivered
+  (ACME-0039 through ACME-0044): boundaries, view contracts for S1–S10, a plan
+  compiler, a launch path, run history, measurement, fixture review and gated
+  live evaluation. Every surface is a JSON contract and a function call —
+  there is no browser, no server and no command. A person uses it today only
+  by writing TypeScript. A rendering surface is not yet chartered.
+- **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
+  ExecutionEngine (ADR-0023), not multi-step live scenarios.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision
   (ADR-0021). There is no queue, no background worker and no cancellation, so
   S3's live-progress section stays `unavailable` and a long run holds the

@@ -57,3 +57,4 @@ current architecture.
 - [`0020-acme-test-plan-schema-and-compiler.md`](0020-acme-test-plan-schema-and-compiler.md)
 - [`0021-interface-workspace-and-launch-boundary.md`](0021-interface-workspace-and-launch-boundary.md)
 - [`0022-measurement-and-fixture-approval.md`](0022-measurement-and-fixture-approval.md)
+- [`0023-live-evaluation-gate.md`](0023-live-evaluation-gate.md)

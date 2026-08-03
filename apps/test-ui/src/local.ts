@@ -26,3 +26,9 @@ export {
   type LaunchOptions,
   type LaunchResult,
 } from './local/launch.js';
+
+export {
+  launchLiveExecution,
+  type LiveLaunchOptions,
+  type LiveLaunchResult,
+} from './local/live-launch.js';

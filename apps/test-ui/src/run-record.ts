@@ -20,6 +20,25 @@ export interface RunStepRecord {
   readonly status: 'passed' | 'failed' | 'skipped';
 }
 
+/**
+ * Optional metadata for a live (non-mock) run (ADR-0023).
+ * Never holds credentials.
+ */
+export interface LiveRunMetadata {
+  readonly provider: string;
+  readonly model: string;
+  readonly confirmer: string;
+  readonly maxModelCalls: number;
+  readonly costCeilingMinor: number | null;
+  readonly usage?: {
+    readonly inputTokens?: number;
+    readonly outputTokens?: number;
+    readonly totalTokens?: number;
+    readonly estimatedCostMinor?: number;
+    readonly currency?: string;
+  };
+}
+
 export interface RunRecord {
   readonly version: typeof RUN_RECORD_VERSION;
   readonly runId: string;
@@ -38,6 +57,8 @@ export interface RunRecord {
     readonly stepIndex: number;
     readonly message: string;
   } | null;
+  /** Present only for live-series runs. */
+  readonly live?: LiveRunMetadata;
 }
 
 /**
@@ -150,6 +171,63 @@ export function parseRunRecord(raw: unknown): RunRecord | null {
     parsedFailure = { stepIndex, message };
   }
 
+  const liveRaw = raw['live'];
+  let live: LiveRunMetadata | undefined;
+  if (liveRaw !== undefined) {
+    if (!isObject(liveRaw)) {
+      return null;
+    }
+    const provider = text(liveRaw['provider']);
+    const model = text(liveRaw['model']);
+    const confirmer = text(liveRaw['confirmer']);
+    const maxModelCalls = liveRaw['maxModelCalls'];
+    const costCeilingMinor = liveRaw['costCeilingMinor'];
+    if (
+      provider === null ||
+      model === null ||
+      confirmer === null ||
+      typeof maxModelCalls !== 'number' ||
+      (costCeilingMinor !== null && typeof costCeilingMinor !== 'number')
+    ) {
+      return null;
+    }
+    const usageRaw = liveRaw['usage'];
+    let usage: LiveRunMetadata['usage'];
+    if (usageRaw !== undefined) {
+      if (!isObject(usageRaw)) {
+        return null;
+      }
+      usage = {
+        ...(typeof usageRaw['inputTokens'] === 'number'
+          ? { inputTokens: usageRaw['inputTokens'] }
+          : {}),
+        ...(typeof usageRaw['outputTokens'] === 'number'
+          ? { outputTokens: usageRaw['outputTokens'] }
+          : {}),
+        ...(typeof usageRaw['totalTokens'] === 'number'
+          ? { totalTokens: usageRaw['totalTokens'] }
+          : {}),
+        ...(typeof usageRaw['estimatedCostMinor'] === 'number'
+          ? { estimatedCostMinor: usageRaw['estimatedCostMinor'] }
+          : {}),
+        ...(typeof usageRaw['currency'] === 'string'
+          ? { currency: usageRaw['currency'] }
+          : {}),
+      };
+    }
+    live = {
+      provider,
+      model,
+      confirmer,
+      maxModelCalls,
+      costCeilingMinor:
+        costCeilingMinor === null || costCeilingMinor === undefined
+          ? null
+          : costCeilingMinor,
+      ...(usage === undefined ? {} : { usage }),
+    };
+  }
+
   return {
     version: RUN_RECORD_VERSION,
     runId,
@@ -162,5 +240,6 @@ export function parseRunRecord(raw: unknown): RunRecord | null {
     steps: parsedSteps,
     cases: parsedCases,
     failure: parsedFailure,
+    ...(live === undefined ? {} : { live }),
   };
 }
