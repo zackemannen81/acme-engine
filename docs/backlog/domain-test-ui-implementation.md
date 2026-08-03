@@ -53,7 +53,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Fourth** | Phase 4 offline authoring, launch, history | **Done — ACME-0042 / ADR-0021** |
 | **Fifth** | Phase 5 measurement + fixture review | **Done — ACME-0043 / ADR-0022** |
 | **Sixth** | Phase 6 gated live evaluation | **Done — ACME-0044 / ADR-0023** |
-| Later | Rendering surface (unchartered); multi-step live scenarios | Open — optional |
+| **Seventh** | Local loopback workbench (S3/S4 HTML) | **Done — ACME-0045 / ADR-0024** |
+| Later | Remaining surface renderers; plan-launch UI; multi-step live | Open — optional |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -142,6 +143,14 @@ contracts made the Execution Inspector real and testable without a browser.
 - run records may carry optional `live` metadata (never secrets)
 - S8 live partition receives non-mock gateway runs only
 
+## What ACME-0045 delivered
+
+- ADR-0024: pure HTML renderers + loopback-only workbench serve
+- `src/web/`: shell, S3 runs renderer, S4 execution renderer, stubs, in-package CSS
+- `startWorkbenchServer` / `workbench-main` on `@acme/test-ui/local`
+- Unit tests for pure renderers; integration test for loopback HTTP
+- Non-loopback hosts refused
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -160,11 +169,12 @@ verification story and must not expand an unrelated frozen charter.
 - gate freezes accepted (ADR-0019), the phase-1 view contracts, the phase-2
   catalog, the phase-3 plan compiler (ADR-0020), the phase-4 launch path
   (ADR-0021), phase-5 measurement / fixture review (ADR-0022) and phase-6
-  gated live evaluation (ADR-0023)
+  gated live evaluation (ADR-0023) and the first workbench shell (ADR-0024)
 
-**Blocks the remaining phases (decisions, not missing code):**
+**Blocks remaining polish (decisions, not missing code):**
 
-- an explicit charter per residual (browser, multi-step live scenarios)
+- an explicit charter per residual (full surface renderers, plan-launch UI,
+  multi-step live scenarios)
 
 **Residuals that shape later work only:**
 
@@ -172,7 +182,7 @@ verification story and must not expand an unrelated frozen charter.
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
-- no browser / SPA; every surface is still a JSON contract and a function call
+- workbench is minimal: S3/S4 HTML only; S1/S2/S5–S10 remain stubs
 
 ## Suggested verification
 
@@ -201,7 +211,8 @@ Phase 3 verification is delivered:
 - the compiled document is accepted by the runner's own `parseScenario`
 - a compiled plan reproduces the pinned Narrative Phase 5 digest
 
-Later charters may add a rendering surface or multi-step live scenarios.
+Later charters may deepen remaining HTML surfaces, plan-launch chrome or
+multi-step live scenarios.
 
 ## Explicit non-goals for v1
 

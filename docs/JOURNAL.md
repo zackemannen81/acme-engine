@@ -2,6 +2,27 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-02 — ACME-0045 local workbench shell archived
+
+- Date: 2026-08-02
+- Author: Grok
+- Task: ACME-0045
+- Summary: First visual slice of the Domain Test UI. Pure HTML renderers for
+  S3 runs and S4 execution, shell navigation with stubs for other surfaces,
+  loopback-only HTTP serve (ADR-0024), unit and integration tests, docs
+  synchronized, task archived.
+- Delivered:
+  - ADR-0024 local SPA / loopback workbench boundary
+  - `apps/test-ui/src/web/*` pure renderers + in-package CSS (no CDN)
+  - `startWorkbenchServer`, `workbench-main` on `@acme/test-ui/local`
+  - Non-loopback host refused
+  - Tests: `web-render.test.ts`, `test-ui-workbench.test.ts`
+- Verification: full gates green in this session (typecheck, lint, format,
+  boundaries, unit/conformance/integration/scenario, docs:check, build).
+- Follow-ups: render remaining surfaces; optional plan-launch UI chrome;
+  multi-step live scenarios remain open.
+- Signature: Grok
+
 ## 2026-08-02 — ACME-0044 phase 6 gated live evaluation archived
 
 - Date: 2026-08-02

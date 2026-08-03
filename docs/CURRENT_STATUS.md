@@ -367,13 +367,14 @@ local entry point. Live requires `ACME_TEST_UI_LIVE` plus confirmation
 ExecutionRequest path (not multi-step ScenarioRunner). Offline transport tests
 prove the path without network.
 
-In progress (ACME-0045 / ADR-0024): localhost workbench shell with pure HTML
+Delivered by ACME-0045 (ADR-0024): localhost workbench shell with pure HTML
 renderers for S3 and S4, stub navigation for other surfaces, loopback-only
-HTTP serve. Not a full SPA product polish.
+HTTP serve (`startWorkbenchServer` / `workbench-main`). Not full SPA polish.
 
 Not delivered: multi-step live scenarios; complete renderers for S1/S2/S5–S10;
-remote hosting. Proposal: `docs/backlog/domain-test-ui-implementation.md`. A
-non-authority visual mock lives under `docs/concepts_sandbox/temp/`.
+plan-launch UI chrome; remote hosting. Proposal:
+`docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
+lives under `docs/concepts_sandbox/temp/`.
 
 ## Persistent Gaps
 
@@ -393,10 +394,10 @@ non-authority visual mock lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a minimal local workbench (ACME-0045 in progress).**
-  Phases 0–6 delivered S1–S10 as JSON contracts. ACME-0045 adds loopback HTML
-  for S3/S4 plus shell stubs. Full surface polish and plan-launch chrome remain
-  open. CI still uses CLI/`pnpm` gates, not the browser.
+- **The Domain Test UI has a minimal local workbench (ACME-0045).** Phases 0–6
+  delivered S1–S10 as JSON contracts. ACME-0045 adds loopback HTML for S3/S4
+  plus shell stubs for other surfaces. Full surface polish and plan-launch
+  chrome remain open. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision

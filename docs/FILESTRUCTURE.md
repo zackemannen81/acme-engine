@@ -373,6 +373,7 @@ acme-engine/
 │   │   ├── ACME-0042_domain-test-ui-launch-and-history.md
 │   │   ├── ACME-0043_domain-test-ui-measurement-and-fixture-review.md
 │   │   ├── ACME-0044_domain-test-ui-live-evaluation.md
+│   │   ├── ACME-0045_domain-test-ui-local-workbench.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -450,16 +451,12 @@ content remains intentionally omitted here.
   `--gateway openai`), and it exposes `execute`, `execution replay`,
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
-- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0023). Phases 1–6 are
-  the read model, catalog, plan compiler, launch path, measurement, fixture
-  review and gated live evaluation — view contracts for the S1–S10 surfaces,
-  `acme-test-plan/1` with a pure compiler, a local launch path that records
-  runs under an interface-owned workspace, rates over recorded runs against
-  configured thresholds, fixture approvals that never write a golden, and
-  single-execute live launch behind `ACME_TEST_UI_LIVE` plus confirmation.
-  The default entry point performs no I/O; discovery lives on `./node-source`
-  and everything that selects an adapter or touches a disk lives on
-  `./local`. It is a leaf: nothing in the workspace imports it.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024). Phases 1–6 are
+  view contracts for S1–S10; ACME-0045 adds pure HTML renderers (`src/web/`)
+  and a loopback workbench serve on `./local` for S3/S4 (other surfaces
+  stubbed). Includes plan compiler, launch path, measurement, fixture review
+  and gated live evaluation. Default entry performs no I/O; discovery on
+  `./node-source`. Leaf package.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -484,11 +481,10 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1; ACME-0040 through ACME-0044 added phases 2–6
-under ADR-0020 through ADR-0023. The package therefore holds the full S1–S10
-read/launch path including gated live evaluation: no multi-step live scenarios
-and no browser surface. A non-authority workbench mock lives under
-`docs/concepts_sandbox/temp/`.
+and delivered phases 0 and 1; ACME-0040 through ACME-0045 added phases 2–6
+plus the first loopback HTML workbench (S3/S4) under ADR-0020 through
+ADR-0024. Remaining HTML surfaces and multi-step live scenarios are open. A
+non-authority workbench mock lives under `docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
 is decided architecture, roadmap or current scope, and no task may cite it as

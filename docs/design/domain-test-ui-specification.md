@@ -658,6 +658,20 @@ fixture. Workspace layout: `runs/`, `baselines/`, `approvals/`.
 Unit tests cover refusals; integration proves offline-transport launch and
 S8 live-partition isolation without network.
 
+### Phase 7 — Local workbench shell (first visual slice) — **done (ACME-0045 / ADR-0024)**
+
+1. Pure HTML renderers for S3 and S4 from existing view contracts.
+2. Loopback-only HTTP process; refuse non-loopback hosts.
+3. Shell navigation with honest stubs for S1/S2/S5–S10.
+
+**Exit:** a developer can open `http://127.0.0.1:<port>/s3` against a workspace
+and see run history without inventing rows; S4 renders when a ledger path is
+configured.
+
+**Met.** `renderRunsViewHtml`, `renderExecutionViewHtml`, `startWorkbenchServer`,
+`workbench-main`. Unit and integration tests cover render purity and loopback
+serve. Remaining surface paint and plan-launch UI are later charters.
+
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI
 > and ScenarioRunner already do that). View contracts unlock the inspector and
