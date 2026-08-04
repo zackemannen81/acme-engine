@@ -2,6 +2,41 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-04 — ACME-0048 browser memory decisions archived
+
+- Date: 2026-08-04
+- Author: Codex
+- Task: ACME-0048
+- Summary: Rendered `acme-view-memory-decisions/1` as S5 in the loopback
+  workbench. A durable S4 execution now links to ordered candidate → decision
+  → mutation evidence without exposing payloads or changing memory.
+- Delivered:
+  - pure `renderMemoryDecisionsViewHtml` with recorded counts, provenance,
+    domain action/disposition/reason, applied state and correlated mutations
+  - explicit missing candidate, unavailable prepared commit, empty mutation
+    and unattributed mutation presentation
+  - read-only `/s5?executionId=...` and
+    `/api/memory-decisions?executionId=...` over repository replay evidence
+  - exact S4→S5 execution-id navigation; honest missing-id, missing-ledger and
+    unknown-execution states
+  - payloads redacted by default with no browser disclosure or mutation path
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (533 tests / 60 files); `pnpm
+  test:conformance` (58 / 7); `pnpm test:integration` (51 / 8); `pnpm
+  test:scenario` (21 / 4); `pnpm docs:check` (115 Markdown files after archive); `pnpm
+  build`; `git diff --check`.
+- Browser: followed one durable S4 execution to S5, where three decisions and
+  three mutations appeared in order, six payload presentations were redacted
+  and no reveal controls existed. Guidance/not-found pages were explicit,
+  console errors were empty, and both 998 px and 390 px layouts had no
+  document overflow after long execution identifiers were made wrappable.
+- Spend/network: no live-provider call; existing local mock/SQLite evidence
+  only.
+- Follow-ups: S6–S10 HTML remain stubs. S6 state inspection is the nearest
+  bounded renderer continuation; live browser controls and multi-step live
+  scenarios still require separate approved charters.
+- Signature: Codex
+
 ## 2026-08-04 — ACME-0047 browser catalog renderer archived
 
 - Date: 2026-08-04

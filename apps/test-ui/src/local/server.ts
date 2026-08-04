@@ -24,6 +24,7 @@ import {
   STATE_VIEW_VERSION,
   buildCatalogView,
   buildExecutionView,
+  buildMemoryDecisionsView,
   buildPlanView,
   buildRunsView,
   isSafeRunId,
@@ -31,7 +32,9 @@ import {
 } from '../index.js';
 import { discoverCatalogSources } from '../node-source.js';
 import { renderCatalogViewHtml } from '../web/render-catalog.js';
+import { escapeHtml } from '../web/escape.js';
 import { renderExecutionViewHtml } from '../web/render-execution.js';
+import { renderMemoryDecisionsViewHtml } from '../web/render-memory-decisions.js';
 import {
   renderPlanViewHtml,
   type PlanWorkbenchNotice,
@@ -96,11 +99,6 @@ const STUBS: readonly {
   readonly title: string;
   readonly contractVersion: string;
 }[] = [
-  {
-    id: 's5',
-    title: 'S5 Memory decisions',
-    contractVersion: MEMORY_DECISION_VIEW_VERSION,
-  },
   { id: 's6', title: 'S6 State', contractVersion: STATE_VIEW_VERSION },
   { id: 's7', title: 'S7 Replay', contractVersion: REPLAY_VIEW_VERSION },
   {
@@ -360,6 +358,7 @@ export async function startWorkbenchServer(
             plan: PLAN_VIEW_VERSION,
             runs: RUNS_VIEW_VERSION,
             execution: EXECUTION_VIEW_VERSION,
+            memoryDecisions: MEMORY_DECISION_VIEW_VERSION,
           },
         });
         return;
@@ -377,6 +376,48 @@ export async function startWorkbenchServer(
           unreadable: history.unreadable,
         });
         sendJson(response, 200, view);
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/memory-decisions') {
+        const executionId = url.searchParams.get('executionId');
+        if (executionId === null || executionId.length === 0) {
+          sendJson(response, 400, {
+            error: 'executionId is required.',
+            view: MEMORY_DECISION_VIEW_VERSION,
+          });
+          return;
+        }
+        if (composition === undefined) {
+          sendJson(response, 409, {
+            error: 'S5 requires a configured durable ledger.',
+            view: MEMORY_DECISION_VIEW_VERSION,
+          });
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        const execution = evidence.executions.find(
+          (entry) => entry.executionId === executionId,
+        );
+        if (execution === undefined) {
+          sendJson(response, 404, {
+            error: 'Execution not found.',
+            executionId,
+            view: MEMORY_DECISION_VIEW_VERSION,
+          });
+          return;
+        }
+        const replayEvidence =
+          (await composition.repository.loadReplayEvidence(executionId)) ??
+          null;
+        sendJson(
+          response,
+          200,
+          buildMemoryDecisionsView({
+            executionId,
+            preparedCommit: replayEvidence?.preparedCommit ?? null,
+          }),
+        );
         return;
       }
 
@@ -690,6 +731,70 @@ export async function startWorkbenchServer(
           response,
           200,
           renderExecutionViewHtml(view),
+          'text/html; charset=utf-8',
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/s5') {
+        const executionId = url.searchParams.get('executionId');
+        if (executionId === null || executionId.length === 0) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's5',
+              title: 'S5 Memory decisions',
+              subtitle: `View ${MEMORY_DECISION_VIEW_VERSION}`,
+              body: '<section class="card"><p>Choose an execution in S4, then follow <strong>Inspect memory decisions</strong>.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        if (composition === undefined) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's5',
+              title: 'S5 needs a ledger path',
+              subtitle: `View ${MEMORY_DECISION_VIEW_VERSION}`,
+              body: '<section class="card"><p>Start the workbench with <code>--ledger &lt;sqlite-file&gt;</code> to inspect durable memory evidence.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        const execution = evidence.executions.find(
+          (entry) => entry.executionId === executionId,
+        );
+        if (execution === undefined) {
+          send(
+            response,
+            404,
+            renderShell({
+              surface: 's5',
+              title: 'Execution not found',
+              subtitle: `View ${MEMORY_DECISION_VIEW_VERSION}`,
+              body: `<section class="card"><p>No durable execution matched <code>${escapeHtml(executionId)}</code>.</p></section>`,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        const replayEvidence =
+          (await composition.repository.loadReplayEvidence(executionId)) ??
+          null;
+        const view = buildMemoryDecisionsView({
+          executionId,
+          preparedCommit: replayEvidence?.preparedCommit ?? null,
+        });
+        send(
+          response,
+          200,
+          renderMemoryDecisionsViewHtml(view),
           'text/html; charset=utf-8',
         );
         return;

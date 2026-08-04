@@ -50,7 +50,12 @@ nav a:hover, nav a[aria-current="page"] {
 }
 main { min-width: 0; padding: 1.25rem 1.5rem 2rem; }
 header.page h2 { margin: 0 0 0.25rem; font-size: 1.35rem; }
-header.page p { margin: 0 0 1rem; color: var(--muted); font-size: 0.95rem; }
+header.page p {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
 .card {
   min-width: 0;
   background: var(--surface);
@@ -121,6 +126,13 @@ textarea {
   line-height: 1.45;
 }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.button-link {
+  display: inline-block;
+  border: 1px solid var(--info);
+  border-radius: 0.2rem;
+  padding: 0.4rem 0.75rem;
+  text-decoration: none;
+}
 button {
   border: 1px solid #605e5c;
   border-radius: 0.2rem;

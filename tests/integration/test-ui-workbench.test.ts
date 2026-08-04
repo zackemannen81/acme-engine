@@ -293,6 +293,75 @@ describe('test-ui local workbench server', () => {
     const detailHtml = await detail.text();
     expect(detailHtml).toContain('story-browser-launch');
     expect(detailHtml).toContain('Trust pipeline');
+    expect(detailHtml).toContain('/s5?executionId=');
+
+    const executionId = new URL(detail.url).searchParams.get('executionId');
+    if (executionId === null) {
+      throw new Error('S4 redirect did not preserve the execution id.');
+    }
+    const memoryApi = await fetch(
+      `${server.url}/api/memory-decisions?executionId=${encodeURIComponent(executionId)}`,
+    );
+    expect(memoryApi.status).toBe(200);
+    const memoryView = (await memoryApi.json()) as {
+      view: string;
+      executionId: string;
+      decisions:
+        | { availability: 'unavailable'; reason: string }
+        | {
+            availability: 'available';
+            candidateCount: number;
+            decisionCount: number;
+            mutationCount: number;
+            decisions: readonly {
+              action: string;
+              candidate: {
+                availability: string;
+                candidate?: { value: { disclosure: string } };
+              };
+              mutations: readonly { value: { disclosure: string } }[];
+            }[];
+          };
+    };
+    expect(memoryView).toMatchObject({
+      view: 'acme-view-memory-decisions/1',
+      executionId,
+      decisions: { availability: 'available' },
+    });
+    if (memoryView.decisions.availability !== 'available') {
+      throw new Error('Prepared memory evidence should be available.');
+    }
+    expect(memoryView.decisions.candidateCount).toBeGreaterThan(0);
+    expect(memoryView.decisions.decisionCount).toBeGreaterThan(0);
+    for (const decision of memoryView.decisions.decisions) {
+      if (decision.candidate.availability === 'available') {
+        expect(decision.candidate.candidate?.value.disclosure).toBe('redacted');
+      }
+      for (const mutation of decision.mutations) {
+        expect(mutation.value.disclosure).toBe('redacted');
+      }
+    }
+
+    const memoryPage = await fetch(
+      `${server.url}/s5?executionId=${encodeURIComponent(executionId)}`,
+    );
+    expect(memoryPage.status).toBe(200);
+    const memoryHtml = await memoryPage.text();
+    expect(memoryHtml).toContain('S5 Memory decisions');
+    expect(memoryHtml).toContain('acme-view-memory-decisions/1');
+    expect(memoryHtml).toContain('redacted');
+    expect(memoryHtml).not.toContain('The chapter opens');
+
+    const missingSelection = await fetch(`${server.url}/s5`);
+    expect(missingSelection.status).toBe(200);
+    expect(await missingSelection.text()).toContain(
+      'Choose an execution in S4',
+    );
+    const unknownExecution = await fetch(
+      `${server.url}/api/memory-decisions?executionId=does-not-exist`,
+    );
+    expect(unknownExecution.status).toBe(404);
+    expect(await unknownExecution.text()).toContain('Execution not found');
 
     const duplicate = await fetch(`${server.url}/s2/launch`, {
       method: 'POST',
@@ -365,6 +434,18 @@ describe('test-ui local workbench server', () => {
     });
     expect(unsafe.status).toBe(400);
     expect(await unsafe.text()).toContain('safe file name');
+
+    const missingMemoryId = await fetch(
+      `${configured.url}/api/memory-decisions`,
+    );
+    expect(missingMemoryId.status).toBe(400);
+    expect(await missingMemoryId.text()).toContain('executionId is required');
+
+    const noLedger = await fetch(
+      `${configured.url}/api/memory-decisions?executionId=unknown`,
+    );
+    expect(noLedger.status).toBe(409);
+    expect(await noLedger.text()).toContain('configured durable ledger');
   });
 
   it('bounds S2 form bodies and labels memory evidence as non-durable', async () => {

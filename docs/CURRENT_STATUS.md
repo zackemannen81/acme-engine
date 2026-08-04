@@ -335,8 +335,11 @@ template until the next charter is explicitly approved.
 - **ACME-0047:** S1 browser catalog over the existing static registries,
   runner validator and bounded scenario/fixture discovery, with full contract
   fingerprints, broken references and unavailable sections kept visible.
+- **ACME-0048:** S5 browser memory-decision inspector over durable replay
+  evidence, linked from S4 with ordered candidate → decision → mutation cards,
+  explicit absence/correlation states and payloads redacted by default.
 
-### Domain Test UI (phases 0–6 and S1–S4 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S5 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -394,7 +397,14 @@ under the process-configured scenario root. Full fingerprints, invalid
 scenarios, missing/refused references, orphan fixtures, diagnostics and
 unavailable sections remain explicit; no browser path input exists.
 
-Not delivered: multi-step live scenarios; complete renderers for S5–S10;
+Delivered by ACME-0048: the pure S5 memory-decision renderer plus
+`/s5?executionId=...` and `/api/memory-decisions?executionId=...`. S4 carries
+the exact execution id into the new view; the route reads the repository's
+durable replay evidence, preserves recorded counts and decision order, keeps
+ignored/missing/unattributed evidence visible, and never enables payload
+disclosure or memory mutation.
+
+Not delivered: multi-step live scenarios; complete renderers for S6–S10;
 live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
@@ -417,10 +427,10 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0047).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0048).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S4, including registry/discovery catalog and protected offline plan
-  preview and launch; S5–S10 remain stubs and live browser launch remains
+  S1–S5, including registry/discovery catalog, protected offline plan
+  preview/launch and durable memory-decision inspection; S6–S10 remain stubs and live browser launch remains
   absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.

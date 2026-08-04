@@ -8,10 +8,12 @@ import {
   VIEW_UNAVAILABLE,
   buildCatalogView,
   buildExecutionView,
+  buildMemoryDecisionsView,
   buildPlanView,
   buildRunsView,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
+  renderMemoryDecisionsViewHtml,
   renderPlanViewHtml,
   renderRunsViewHtml,
   renderStubSurface,
@@ -29,6 +31,7 @@ import {
   committedExecution,
   executionId,
   hashOnlyModelCall,
+  preparedCommit,
   replayEvidence,
 } from './fixtures.js';
 
@@ -207,6 +210,44 @@ describe('pure HTML renderers', () => {
     expect(html).toContain('Trust pipeline');
     expect(html).toContain('commit');
     expect(html).toContain('passed');
+    expect(html).toContain(
+      `/s5?executionId=${encodeURIComponent(executionId)}`,
+    );
+  });
+
+  it('renders ordered S5 decisions, reasons and correlated mutations without revealing payloads', () => {
+    const html = renderMemoryDecisionsViewHtml(
+      buildMemoryDecisionsView({ executionId, preparedCommit }),
+    );
+
+    expect(html).toContain('acme-view-memory-decisions/1');
+    expect(html).toContain(executionId);
+    expect(html).toContain('Candidates</dt><dd>3');
+    expect(html).toContain('Decisions</dt><dd>3');
+    expect(html).toContain('Mutations</dt><dd>2');
+    expect(html.indexOf('candidate-created')).toBeLessThan(
+      html.indexOf('candidate-ignored'),
+    );
+    expect(html.indexOf('candidate-ignored')).toBeLessThan(
+      html.indexOf('candidate-reinforced'),
+    );
+    expect(html).toContain('below domain confidence floor');
+    expect(html).toContain('memory-created-1');
+    expect(html).toContain('memory-existing-1');
+    expect(html).toContain('No mutation prepared.');
+    expect(html).toContain('No unattributed mutations.');
+    expect(html).toContain('redacted');
+    expect(html).not.toContain('confidential source text');
+    expect(html).not.toContain('&quot;fact&quot;');
+  });
+
+  it('renders unavailable prepared commit evidence explicitly on S5', () => {
+    const html = renderMemoryDecisionsViewHtml(
+      buildMemoryDecisionsView({ executionId, preparedCommit: null }),
+    );
+
+    expect(html).toContain('Memory decisions unavailable');
+    expect(html).toContain('PREPARED_COMMIT_UNAVAILABLE');
   });
 
   it('names the contract on stub surfaces', () => {

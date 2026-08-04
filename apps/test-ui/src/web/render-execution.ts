@@ -54,6 +54,7 @@ export function renderExecutionViewHtml(view: ExecutionView): string {
 <code>${escapeHtml(header.currentStage)}</code> · id
 <code>${escapeHtml(header.executionId)}</code></p>
 ${terminalBlock}
+<p class="actions"><a class="button-link" href="/s5?executionId=${encodeURIComponent(header.executionId)}">Inspect memory decisions</a></p>
 </section>
 <section class="card">
 <h3>Trust pipeline</h3>

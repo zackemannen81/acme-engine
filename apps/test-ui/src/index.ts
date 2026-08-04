@@ -249,6 +249,7 @@ export {
   escapeHtml,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
+  renderMemoryDecisionsViewHtml,
   renderPlanViewHtml,
   renderRunsViewHtml,
   renderShell,

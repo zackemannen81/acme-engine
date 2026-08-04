@@ -49,6 +49,7 @@ acme-engine/
 │       │   │   ├── index.ts
 │       │   │   ├── render-catalog.ts
 │       │   │   ├── render-execution.ts
+│       │   │   ├── render-memory-decisions.ts
 │       │   │   ├── render-plan.ts
 │       │   │   ├── render-runs.ts
 │       │   │   ├── shell.ts
@@ -378,6 +379,7 @@ acme-engine/
 │   │   ├── ACME-0045_domain-test-ui-local-workbench.md
 │   │   ├── ACME-0046_browser-offline-plan-launch.md
 │   │   ├── ACME-0047_browser-catalog-renderer.md
+│   │   ├── ACME-0048_browser-memory-decisions.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -456,8 +458,8 @@ content remains intentionally omitted here.
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
 - `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024). Phases 1–6 are
-  view contracts for S1–S10; ACME-0045–0047 add pure HTML renderers
-  (`src/web/`) and a loopback workbench serve on `./local` for S1–S4 (other
+  view contracts for S1–S10; ACME-0045–0048 add pure HTML renderers
+  (`src/web/`) and a loopback workbench serve on `./local` for S1–S5 (other
   surfaces stubbed), including bounded registry/scenario/fixture catalog and
   protected offline browser preview and launch. Includes plan compiler,
   launch path, measurement, fixture review and gated live evaluation. Default
@@ -486,9 +488,9 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1; ACME-0040 through ACME-0047 added phases 2–6,
+and delivered phases 0 and 1; ACME-0040 through ACME-0048 added phases 2–6,
 the loopback HTML workbench, protected offline plan preview/launch and catalog
-rendering for S1–S4 under ADR-0020 through ADR-0024. Remaining HTML surfaces and
+rendering for S1–S5 under ADR-0020 through ADR-0024. Remaining HTML surfaces and
 multi-step live scenarios are open. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 

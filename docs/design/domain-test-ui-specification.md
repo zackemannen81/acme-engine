@@ -1,17 +1,17 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes, phases 0–6 and the
-first three browser rendering slices are delivered by ACME-0039 through
-ACME-0047 under
+first four browser rendering slices are delivered by ACME-0039 through
+ACME-0048 under
 [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
 [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
-[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S5–S10 HTML and
+[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S6–S10 HTML and
 multi-step live scenarios remain optional residuals requiring their own
 charters.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-04 (ACME-0047 — browser catalog renderer implemented)
+Last revised: 2026-08-04 (ACME-0048 — browser memory decisions implemented)
 
 ## Executive summary
 
@@ -709,7 +709,24 @@ registry or browser-supplied filesystem path.
 
 **Met.** `renderCatalogViewHtml`, shared `createInterfaceRegistries`, bounded
 catalog composition, HTML/JSON routes and unit/integration/browser verification.
-S5–S10 remain honest stubs.
+S5–S10 remained honest stubs at this exit; ACME-0048 resolves S5 below.
+
+### Phase 10 — Browser memory-decision renderer — **done (ACME-0048)**
+
+1. Pure S5 HTML renderer over `acme-view-memory-decisions/1`.
+2. Read-only `/s5?executionId=...` and
+   `/api/memory-decisions?executionId=...` routes over durable replay evidence.
+3. Contextual S4→S5 navigation with default-redacted candidate and mutation
+   payloads, preserved decision order and explicit unavailable/correlation
+   states.
+
+**Exit:** a developer can follow one recorded candidate through its
+domain-owned decision to correlated prepared mutations without changing
+memory or requesting payload disclosure.
+
+**Met.** `renderMemoryDecisionsViewHtml`, durable repository evidence loading,
+HTML/JSON routes and unit/integration/responsive browser verification. S6–S10
+remain honest stubs.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI
