@@ -2,6 +2,70 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-04 — ACME-0047 browser catalog renderer archived
+
+- Date: 2026-08-04
+- Author: Codex
+- Task: ACME-0047
+- Summary: Rendered the existing `acme-view-catalog/1` contract as S1 in the
+  loopback workbench. The page now makes the static Narrative and Research
+  registries, full prompt-contract fingerprints, bounded scenario discovery
+  and fixture-reference classifications navigable without raw JSON.
+- Delivered:
+  - pure `renderCatalogViewHtml` with section navigation, responsive tables
+    and explicit invalid, missing, refused, orphan and unavailable states
+  - shared `createInterfaceRegistries`, so S1 and execution use one static
+    registry declaration
+  - read-only `/s1` and `/api/catalog` routes using `parseScenario` and bounded
+    `discoverCatalogSources` under the process-configured scenario root
+  - no browser path input, file-content display, mutation or adapter launch
+  - focused renderer and HTTP integration coverage, including missing
+    discovery configuration and HTML escaping
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (531 tests / 60 files); `pnpm
+  test:conformance` (58 / 7); `pnpm test:integration` (51 / 8); `pnpm
+  test:scenario` (21 / 4); `pnpm docs:check` (114 Markdown files); `pnpm
+  build`; `git diff --check`.
+- Browser: S1 showed two modules, two contracts, one valid scenario and three
+  referenced fixtures; full fingerprints remained 64 characters. S2
+  navigation worked, no console/overlay errors appeared, and both 998 px and
+  390 px viewport checks had no document overflow after the CSS min-width fix.
+- Spend/network: no live-provider call; local mock evidence and discovery only.
+- Follow-ups: S5–S10 HTML remain stubs; S5 memory decisions is the nearest
+  bounded renderer continuation. Live browser controls and multi-step live
+  scenarios still require separate approved charters.
+- Signature: Codex
+
+## 2026-08-04 — ACME-0046 browser offline plan launch archived
+
+- Date: 2026-08-04
+- Author: Codex
+- Task: ACME-0046
+- Summary: Connected the delivered S2 plan contract and synchronous
+  `launchPlan` boundary to the local loopback workbench. A developer can now
+  paste bounded YAML/JSON, preview the compiled canonical scenario, launch one
+  mock-backed offline plan and follow its recorded result from S3 to durable
+  S4 evidence when SQLite is configured.
+- Delivered:
+  - pure `renderPlanViewHtml` plus accessible in-package form styling
+  - `/s2/preview` and `/s2/launch`, fixed 256 KiB body bound, per-process CSRF
+    token, same-server checks and safe/duplicate run-id refusal
+  - explicit process-side scenario-root configuration; no browser-supplied
+    paths, credentials, live-provider selection or shell surface
+  - honest memory-run evidence page and durable S4 link when a ledger exists
+  - unit and integration coverage for success, redirect and refusal paths
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (527 tests / 60 files); `pnpm
+  test:conformance` (58 / 7); `pnpm test:integration` (49 / 8); `pnpm
+  test:scenario` (21 / 4); `pnpm docs:check` (112 Markdown files); `pnpm
+  build`; `git diff --check`. Browser verification covered S2 preview,
+  `303` launch, one S3 run link and committed S4 trust evidence without
+  console errors or layout overflow.
+- Spend/network: no live-provider call in ACME-0046; mock fixtures only.
+- Follow-ups: S1 and S5–S10 HTML remain stubs; live browser controls and
+  multi-step live scenarios require separate approved charters.
+- Signature: Codex
+
 ## 2026-08-02 — ACME-0045 local workbench shell archived
 
 - Date: 2026-08-02

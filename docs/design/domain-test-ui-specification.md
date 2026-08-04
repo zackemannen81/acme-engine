@@ -1,14 +1,17 @@
 # Domain Test UI — Specification
 
-Status: Activated application specification. Gate freezes accepted and phases
-0–4 delivered by ACME-0039 through ACME-0042 under
+Status: Activated application specification. Gate freezes, phases 0–6 and the
+first three browser rendering slices are delivered by ACME-0039 through
+ACME-0047 under
 [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
-[ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md);
-phases 5–6 remain unimplemented and each needs its own charter.
+[ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
+[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S5–S10 HTML and
+multi-step live scenarios remain optional residuals requiring their own
+charters.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-02 (ACME-0042 — phase 4 launch and history implemented)
+Last revised: 2026-08-04 (ACME-0047 — browser catalog renderer implemented)
 
 ## Executive summary
 
@@ -670,7 +673,43 @@ configured.
 
 **Met.** `renderRunsViewHtml`, `renderExecutionViewHtml`, `startWorkbenchServer`,
 `workbench-main`. Unit and integration tests cover render purity and loopback
-serve. Remaining surface paint and plan-launch UI are later charters.
+serve. Remaining surface paint was left to later charters; ACME-0046 then
+implemented the bounded offline plan-launch slice.
+
+### Phase 8 — Browser offline plan preview and launch — **done (ACME-0046)**
+
+1. Pure S2 HTML renderer over `acme-view-plan/1`, including invalid-plan
+   feedback and the compiled canonical scenario.
+2. Bounded YAML/JSON form handling with CSRF and same-server checks, fixed
+   body limit, safe run identifiers and a process-configured scenario root.
+3. Synchronous mock-only launch through the existing `launchPlan`, followed
+   by S3 history and S4 durable evidence when a SQLite ledger is configured.
+
+**Exit:** a developer can preview and launch one offline plan from loopback
+without new plan, scenario, execution or verdict semantics; memory-backed
+runs never pretend durable S4 evidence exists.
+
+**Met.** `renderPlanViewHtml`, `/s2/preview`, `/s2/launch`, explicit
+`--scenario-root`, protected form handling and unit/integration/browser-flow
+verification. At the ACME-0046 exit S1/S5–S10 were honest stubs; ACME-0047
+resolves S1 below. Live browser launch remains absent.
+
+### Phase 9 — Browser catalog renderer — **done (ACME-0047)**
+
+1. Pure S1 HTML renderer over `acme-view-catalog/1`.
+2. Read-only `/s1` and `/api/catalog` routes composed from the existing static
+   registries, runner validator and bounded Node discovery source.
+3. Process-configured scenario root only; full fingerprints, invalid scenarios,
+   missing/refused references, orphans, diagnostics and unavailable sections
+   remain visible.
+
+**Exit:** a developer can navigate registered modules, contracts, scenarios
+and fixtures in the loopback browser without a second validator, dynamic
+registry or browser-supplied filesystem path.
+
+**Met.** `renderCatalogViewHtml`, shared `createInterfaceRegistries`, bounded
+catalog composition, HTML/JSON routes and unit/integration/browser verification.
+S5–S10 remain honest stubs.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI

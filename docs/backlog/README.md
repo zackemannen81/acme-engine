@@ -18,7 +18,7 @@ as `docs/CURRENT_TASK.md`.
 
 | Proposal | Status |
 | --- | --- |
-| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Partially resolved; phases 0–4 delivered (ACME-0039–0042), phases 5–6 open |
+| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Core phases 0–6 and S1–S4 browser flow delivered through ACME-0047; residual surfaces and multi-step live remain optional |
 | [`driver-error-classification.md`](driver-error-classification.md) | Open; discovered by ACME-0034 |
 
 Resolved proposals are removed from this directory once archived under

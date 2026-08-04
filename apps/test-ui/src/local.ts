@@ -16,8 +16,10 @@ export {
 
 export {
   createInterfaceComposition,
+  createInterfaceRegistries,
   type CompositionOptions,
   type InterfaceComposition,
+  type InterfaceRegistries,
   type InterfaceRepository,
 } from './local/composition.js';
 

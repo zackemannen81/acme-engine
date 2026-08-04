@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-02
+Last updated: 2026-08-04
 
 ## Repository
 
@@ -267,9 +267,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 481 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (55 files), with separate conformance (58),
-  integration (39) and scenario (21) gates
+- 531 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (60 files), with separate conformance (58),
+  integration (51) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -326,8 +326,17 @@ template until the next charter is explicitly approved.
   console and history, an interface-owned workspace whose index is derived
   from its records, an app composition and a synchronous `launchPlan`, proven
   by an end-to-end configure-launch-find-inspect test.
+- **ACME-0043–0045:** measurement and fixture review (ADR-0022), gated live
+  single-execute evaluation (ADR-0023), and the loopback S3/S4 HTML workbench
+  (ADR-0024).
+- **ACME-0046:** protected browser-side offline plan preview and launch: S2
+  renders the compiled canonical scenario, launch reuses `launchPlan`, and the
+  recorded result links through S3 to durable S4 evidence when configured.
+- **ACME-0047:** S1 browser catalog over the existing static registries,
+  runner validator and bounded scenario/fixture discovery, with full contract
+  fingerprints, broken references and unavailable sections kept visible.
 
-### Domain Test UI (activated, phases 0–4 delivered)
+### Domain Test UI (phases 0–6 and S1–S4 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -371,8 +380,22 @@ Delivered by ACME-0045 (ADR-0024): localhost workbench shell with pure HTML
 renderers for S3 and S4, stub navigation for other surfaces, loopback-only
 HTTP serve (`startWorkbenchServer` / `workbench-main`). Not full SPA polish.
 
-Not delivered: multi-step live scenarios; complete renderers for S1/S2/S5–S10;
-plan-launch UI chrome; remote hosting. Proposal:
+Delivered by ACME-0046: the pure S2 renderer and a bounded YAML/JSON form flow
+with CSRF and same-server checks, a fixed body limit, safe run identifiers and
+an explicitly configured scenario root. Offline launch reuses synchronous
+`launchPlan`, refuses duplicate run ids, redirects to S3, reaches S4 for a
+configured SQLite ledger and describes memory-run evidence honestly as
+non-durable.
+
+Delivered by ACME-0047: the pure S1 catalog renderer plus `/s1` and
+`/api/catalog`. The loopback process composes the existing Narrative and
+Research registries, `parseScenario` and bounded `discoverCatalogSources`
+under the process-configured scenario root. Full fingerprints, invalid
+scenarios, missing/refused references, orphan fixtures, diagnostics and
+unavailable sections remain explicit; no browser path input exists.
+
+Not delivered: multi-step live scenarios; complete renderers for S5–S10;
+live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
 
@@ -394,10 +417,11 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a minimal local workbench (ACME-0045).** Phases 0–6
-  delivered S1–S10 as JSON contracts. ACME-0045 adds loopback HTML for S3/S4
-  plus shell stubs for other surfaces. Full surface polish and plan-launch
-  chrome remain open. CI still uses CLI/`pnpm` gates, not the browser.
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0047).**
+  Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
+  S1–S4, including registry/discovery catalog and protected offline plan
+  preview and launch; S5–S10 remain stubs and live browser launch remains
+  absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision

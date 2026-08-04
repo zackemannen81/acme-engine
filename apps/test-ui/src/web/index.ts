@@ -13,3 +13,9 @@ export {
 } from './shell.js';
 export { renderRunsViewHtml } from './render-runs.js';
 export { renderExecutionViewHtml } from './render-execution.js';
+export { renderCatalogViewHtml } from './render-catalog.js';
+export {
+  renderPlanViewHtml,
+  type PlanWorkbenchNotice,
+  type PlanWorkbenchRenderOptions,
+} from './render-plan.js';

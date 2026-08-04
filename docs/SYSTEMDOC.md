@@ -1,7 +1,7 @@
 # System Documentation
 
-Last updated: 2026-08-02
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S3/S4 rendered)
+Last updated: 2026-08-04
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S1–S4 rendered)
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -740,6 +740,10 @@ ADR-0019 and delivered phases 0 and 1: the `@acme/test-ui` package boundary
 and a pure read model with versioned view contracts. ACME-0040 added phase 2,
 the catalog. ACME-0041 added phase 3, `acme-test-plan/1` and its compiler
 (ADR-0020). ACME-0042 added phase 4, authoring, launch and history (ADR-0021).
+ACME-0043 and ACME-0044 added measurement, fixture review and gated live
+evaluation (ADRs 0022–0023). ACME-0045 added the loopback shell (ADR-0024),
+ACME-0046 connected S2 to protected offline preview and launch, and ACME-0047
+rendered the existing catalog contract as S1.
 
 Implemented today:
 
@@ -833,9 +837,16 @@ Implemented today:
   ScenarioRunner. Usage/cost is reported when retained on the live run record
 - local workbench (ADR-0024): pure HTML renderers under `src/web/` turn view
   contracts into accessible markup without recomputing verdicts. A loopback-only
-  HTTP process (`startWorkbenchServer`, `workbench-main`) serves S3 history and
-  S4 execution pages plus navigation stubs for other surfaces. Non-loopback
-  hosts are refused. No CDN; CSS is in-package
+  HTTP process (`startWorkbenchServer`, `workbench-main`) serves S1 catalog,
+  S2 authoring, S3 history and S4 execution pages plus navigation stubs for
+  other surfaces. S1 reuses the composition's static registries, the runner's
+  validator and bounded discovery under the configured scenario root; it
+  accepts no browser path and keeps invalid, missing, refused, orphan and
+  unavailable classifications visible.
+  The S2 form accepts bounded YAML/JSON, requires a per-process token and
+  same-server request proof, uses a process-configured scenario root, refuses
+  unsafe or duplicate run ids, and calls the existing synchronous `launchPlan`
+  only. Non-loopback hosts are refused. No CDN; CSS is in-package
 
 Constraints that continue to bind later phases:
 
@@ -851,8 +862,8 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: multi-step live scenarios; complete HTML for S1/S2/S5–S10;
-plan-launch chrome in the browser; remote hosting. The plan format's
+Not implemented: multi-step live scenarios; complete HTML for S5–S10;
+live-launch chrome in the browser; remote hosting. The plan format's
 `measurements` block remains absent. S3's live-progress section stays
 unavailable until something runs in the background.
 
@@ -874,9 +885,10 @@ unavailable until something runs in the background.
   nothing drains on its own.
 - The Domain Test UI read model projects recorded evidence and, for S8 only,
   aggregates rates against configured thresholds (ADR-0019, ADR-0022). Live
-  evaluation is gated (ADR-0023). A loopback workbench renders S3/S4 HTML from
-  those contracts (ADR-0024). It invents no quality score and writes no golden
-  fixture. It is a leaf; deleting it loses no canonical fact.
+  evaluation is gated (ADR-0023). A loopback workbench renders S1–S4 HTML
+  from those contracts and launches only bounded offline plans through the
+  existing application boundary (ADR-0024). It invents no quality score and
+  writes no golden fixture. It is a leaf; deleting it loses no canonical fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
 

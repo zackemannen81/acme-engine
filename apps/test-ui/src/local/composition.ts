@@ -11,10 +11,12 @@ import {
   createResponsePipeline,
   createStateEngine,
   type Clock,
+  type ContractRegistry,
   type ExecutionEngine,
   type ExecutionRepository,
   type IdGenerator,
   type ModelGateway,
+  type ModuleRegistry,
   type PayloadEncryptor,
   type RepositoryEvidence,
 } from '@acme/core';
@@ -58,10 +60,27 @@ export interface InterfaceComposition {
   engine(gateway: ModelGateway): ExecutionEngine;
 }
 
+export interface InterfaceRegistries {
+  readonly modules: ModuleRegistry;
+  readonly contracts: ContractRegistry;
+}
+
+/** The one static registry composition shared by launch and S1 inspection. */
+export function createInterfaceRegistries(): InterfaceRegistries {
+  return {
+    modules: createModuleRegistry([narrativeModule, researchModule]),
+    contracts: createContractRegistry([
+      narrativeObserveDocumentContract,
+      researchObserveEvidenceContract,
+    ]),
+  };
+}
+
 export function createInterfaceComposition(
   options: CompositionOptions,
 ): InterfaceComposition {
   const { clock, ids } = options;
+  const registries = createInterfaceRegistries();
   let repository: InterfaceRepository;
   let close = (): void => {};
 
@@ -100,11 +119,8 @@ export function createInterfaceComposition(
       return createExecutionEngine({
         clock,
         ids,
-        modules: createModuleRegistry([narrativeModule, researchModule]),
-        contracts: createContractRegistry([
-          narrativeObserveDocumentContract,
-          researchObserveEvidenceContract,
-        ]),
+        modules: registries.modules,
+        contracts: registries.contracts,
         pipeline: createResponsePipeline(),
         gateway,
         memory: createMemoryEngine({ ids }),

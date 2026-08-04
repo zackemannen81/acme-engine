@@ -2,9 +2,10 @@
  * CLI entry for the local workbench (ADR-0024).
  *
  * Usage (from repo after build):
- *   node apps/test-ui/dist/local/workbench-main.js --workspace <dir> [--port 8787]
+ *   node apps/test-ui/dist/local/workbench-main.js --workspace <dir> [--scenario-root <dir>] [--port 8787]
  *
- * Env: ACME_TEST_UI_WORKSPACE, ACME_TEST_UI_PORT, ACME_TEST_UI_LEDGER (optional sqlite)
+ * Env: ACME_TEST_UI_WORKSPACE, ACME_TEST_UI_SCENARIO_ROOT,
+ *      ACME_TEST_UI_PORT, ACME_TEST_UI_LEDGER (optional sqlite)
  */
 
 import { resolve } from 'node:path';
@@ -25,7 +26,7 @@ async function main(): Promise<void> {
     argValue(args, '--workspace') ?? process.env['ACME_TEST_UI_WORKSPACE'];
   if (workspace === undefined || workspace.trim().length === 0) {
     process.stderr.write(
-      'Usage: workbench-main --workspace <dir> [--port 8787] [--ledger <sqlite>]\n',
+      'Usage: workbench-main --workspace <dir> [--scenario-root <dir>] [--port 8787] [--ledger <sqlite>]\n',
     );
     process.exitCode = 2;
     return;
@@ -42,10 +43,16 @@ async function main(): Promise<void> {
 
   const ledger =
     argValue(args, '--ledger') ?? process.env['ACME_TEST_UI_LEDGER'];
+  const scenarioRoot =
+    argValue(args, '--scenario-root') ??
+    process.env['ACME_TEST_UI_SCENARIO_ROOT'];
 
   let seq = 0;
   const server = await startWorkbenchServer({
     workspaceRoot: resolve(workspace),
+    ...(scenarioRoot === undefined
+      ? {}
+      : { scenarioRoot: resolve(scenarioRoot) }),
     host: '127.0.0.1',
     port,
     ...(ledger === undefined ? {} : { ledgerDatabase: resolve(ledger) }),

@@ -1,9 +1,9 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — phases 0–4 delivered (ACME-0039 to ACME-0042); phases 5–6 open**
+Status: **Partially resolved — phases 0–6 and S1–S4 browser flow delivered (ACME-0039 to ACME-0047); residual surfaces and multi-step live remain optional**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
-Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md)
+Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md), [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md), [ADR-0022](../adr/0022-measurement-and-fixture-approval.md), [ADR-0023](../adr/0023-live-evaluation-gate.md), [ADR-0024](../adr/0024-local-spa-loopback-workbench.md)
 
 ## Discovery context
 
@@ -16,8 +16,8 @@ were satisfied through ACME-0035 / ACME-0036, leaving two activation blockers:
    ports, ScenarioRunner and conformance kits
 
 Both blockers on the first slice are now cleared. ACME-0039 accepted all seven
-gate freezes in ADR-0019 and delivered phases 0 and 1; ACME-0040 and ACME-0041
-followed with phases 2 and 3.
+gate freezes in ADR-0019 and delivered phases 0 and 1; ACME-0040 through
+ACME-0047 delivered phases 2–6 plus the first browser workbench slices.
 
 A visual mock (non-authority) exists at:
 
@@ -54,7 +54,9 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Fifth** | Phase 5 measurement + fixture review | **Done — ACME-0043 / ADR-0022** |
 | **Sixth** | Phase 6 gated live evaluation | **Done — ACME-0044 / ADR-0023** |
 | **Seventh** | Local loopback workbench (S3/S4 HTML) | **Done — ACME-0045 / ADR-0024** |
-| Later | Remaining surface renderers; plan-launch UI; multi-step live | Open — optional |
+| **Eighth** | Browser offline plan preview and launch (S2→S3→S4) | **Done — ACME-0046** |
+| **Ninth** | Browser catalog renderer (S1) | **Done — ACME-0047** |
+| Later | Remaining S5–S10 renderers; live browser controls; multi-step live | Open — optional |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -151,6 +153,31 @@ contracts made the Execution Inspector real and testable without a browser.
 - Unit tests for pure renderers; integration test for loopback HTTP
 - Non-loopback hosts refused
 
+## What ACME-0046 delivered
+
+- pure `renderPlanViewHtml` over `acme-view-plan/1`
+- bounded YAML/JSON preview with parser and validator failures rendered inert
+- per-process CSRF token, same-server checks, a fixed request-body limit and
+  process-configured scenario root
+- safe and duplicate run-id refusal before the existing synchronous
+  `launchPlan` boundary
+- `303` to S3 after launch, S4 links for configured durable evidence, and an
+  honest non-durable evidence page for memory runs
+- unit, HTTP integration and loopback browser-flow verification using mock
+  fixtures only
+
+## What ACME-0047 delivered
+
+- pure `renderCatalogViewHtml` over `acme-view-catalog/1`
+- `/s1` HTML and `/api/catalog` JSON over one read-only composition helper
+- the same static Narrative/Research registries used by execution, without a
+  duplicate registry declaration
+- `parseScenario` and bounded `discoverCatalogSources` under the existing
+  process-configured scenario root; no browser path input
+- full contract fingerprints and explicit invalid, missing, refused, orphan,
+  diagnostic and unavailable states
+- unit, HTTP integration and responsive loopback browser verification
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -169,11 +196,13 @@ verification story and must not expand an unrelated frozen charter.
 - gate freezes accepted (ADR-0019), the phase-1 view contracts, the phase-2
   catalog, the phase-3 plan compiler (ADR-0020), the phase-4 launch path
   (ADR-0021), phase-5 measurement / fixture review (ADR-0022) and phase-6
-  gated live evaluation (ADR-0023) and the first workbench shell (ADR-0024)
+  gated live evaluation (ADR-0023), the first workbench shell (ADR-0024), and
+  protected browser offline plan launch (ACME-0046) and S1 catalog rendering
+  (ACME-0047)
 
 **Blocks remaining polish (decisions, not missing code):**
 
-- an explicit charter per residual (full surface renderers, plan-launch UI,
+- an explicit charter per residual (S5–S10 renderers, live browser controls,
   multi-step live scenarios)
 
 **Residuals that shape later work only:**
@@ -182,7 +211,7 @@ verification story and must not expand an unrelated frozen charter.
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
-- workbench is minimal: S3/S4 HTML only; S1/S2/S5–S10 remain stubs
+- workbench is bounded: S1–S4 HTML; S5–S10 remain stubs
 
 ## Suggested verification
 
@@ -211,8 +240,8 @@ Phase 3 verification is delivered:
 - the compiled document is accepted by the runner's own `parseScenario`
 - a compiled plan reproduces the pinned Narrative Phase 5 digest
 
-Later charters may deepen remaining HTML surfaces, plan-launch chrome or
-multi-step live scenarios.
+Later charters may deepen remaining HTML surfaces, add explicitly gated live
+browser controls or add multi-step live scenarios.
 
 ## Explicit non-goals for v1
 

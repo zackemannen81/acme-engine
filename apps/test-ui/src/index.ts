@@ -247,11 +247,15 @@ export {
 
 export {
   escapeHtml,
+  renderCatalogViewHtml,
   renderExecutionViewHtml,
+  renderPlanViewHtml,
   renderRunsViewHtml,
   renderShell,
   renderStubSurface,
   WORKBENCH_CSS,
+  type PlanWorkbenchNotice,
+  type PlanWorkbenchRenderOptions,
   type WorkbenchSurface,
 } from './web/index.js';
 
