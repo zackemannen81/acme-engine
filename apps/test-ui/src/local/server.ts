@@ -202,9 +202,20 @@ function assertSameServerRequest(
   if (request.headers['sec-fetch-site'] === 'cross-site') {
     throw new WorkbenchFormRefused(403, 'Cross-site form submission refused.');
   }
+  const fetchSite = request.headers['sec-fetch-site'];
+
+if (fetchSite === 'cross-site') {
+  throw new WorkbenchFormRefused(
+    403,
+    'Cross-site form submission refused.',
+  );
+  }
   const origin = request.headers.origin;
   if (origin === undefined) {
     return;
+  }
+  if (origin === 'null' && fetchSite === 'same-origin') {
+  return;
   }
   let parsed: URL;
   try {
