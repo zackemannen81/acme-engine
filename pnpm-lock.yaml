@@ -108,6 +108,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evaluation':
+        specifier: workspace:*
+        version: link:../evaluation
 
   packages/adapter-model-mock:
     dependencies:
@@ -143,6 +146,16 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/evaluation:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: 4.0.18
+        version: 4.0.18(@types/node@24.13.3)(tsx@4.23.1)(yaml@2.8.1)
+
   packages/module-narrative:
     dependencies:
       '@acme/core':
@@ -166,6 +179,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evaluation':
+        specifier: workspace:*
+        version: link:../evaluation
     devDependencies:
       vitest:
         specifier: 4.0.18

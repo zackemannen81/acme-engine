@@ -176,6 +176,6 @@ export const validScenario = {
 };
 
 export const invalidScenario = {
-  schemaVersion: 'acme-scenario/2',
+  schemaVersion: 'acme-scenario/3',
   name: 'wrong-version',
 };

@@ -38,6 +38,7 @@ import {
 /** Conformance kits `@acme/testing` publishes. Asserted by test. */
 export const ADAPTER_KITS = [
   'execution-repository',
+  'quality-evaluation-store',
   'model-gateway',
   'domain-module',
 ] as const;
@@ -390,6 +391,22 @@ function scenarioDetail(
       const requested = text(body[field]);
       if (requested !== null) {
         references.push(reference(index, field, requested, fixtures));
+      }
+    }
+
+    if (kind === 'evaluate') {
+      const artifact = body['artifact'];
+      if (isObject(artifact)) {
+        const requested = text(artifact['fixture']);
+        if (requested !== null) {
+          references.push(
+            reference(index, 'artifact.fixture', requested, fixtures),
+          );
+        }
+      }
+      const recording = text(body['recording']);
+      if (recording !== null) {
+        references.push(reference(index, 'recording', recording, fixtures));
       }
     }
   }

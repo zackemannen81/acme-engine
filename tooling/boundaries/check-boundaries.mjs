@@ -16,6 +16,10 @@ const coreFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/core/src/forbidden.ts',
 );
+const evaluationFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/evaluation/src/forbidden-adapter.ts',
+);
 const moduleFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden.ts',
@@ -136,6 +140,10 @@ function verifyForbiddenFixture(fixturePath, expectedRule) {
 
 verifyForbiddenFixture(coreFixturePath, 'core-is-domain-neutral');
 verifyForbiddenFixture(
+  evaluationFixturePath,
+  'evaluation-depends-only-on-core',
+);
+verifyForbiddenFixture(
   moduleFixturePath,
   'domain-modules-do-not-depend-on-apps-adapters-or-testing',
 );
@@ -161,5 +169,5 @@ verifyForbiddenFixture(
 );
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/module/cross-module/provider/driver/test-ui fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/evaluation/module/cross-module/provider/driver/test-ui fixture checks passed.\n',
 );

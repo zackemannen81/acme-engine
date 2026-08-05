@@ -46,6 +46,7 @@ describe('adapter kit identifiers', () => {
   it('names kits @acme/testing actually exports', () => {
     const entryPoints: Record<(typeof ADAPTER_KITS)[number], string> = {
       'execution-repository': 'executionRepositoryConformance',
+      'quality-evaluation-store': 'qualityEvaluationStoreConformance',
       'model-gateway': 'modelGatewayConformance',
       'domain-module': 'domainModuleConformance',
     };

@@ -4,6 +4,7 @@ export const TESTING_CORE_PACKAGE: AcmeCorePackageName = ACME_CORE_PACKAGE;
 
 export * from './domain-module-conformance.js';
 export * from './model-gateway-conformance.js';
+export * from './quality-evaluation-conformance.js';
 export * from './repository-conformance.js';
 export * from './scenario.js';
 export * from './test-payload-encryptor.js';

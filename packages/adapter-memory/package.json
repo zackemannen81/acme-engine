@@ -17,6 +17,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*"
+    "@acme/core": "workspace:*",
+    "@acme/evaluation": "workspace:*"
   }
 }

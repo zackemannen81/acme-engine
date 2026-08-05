@@ -22,15 +22,27 @@ export default {
       },
     },
     {
+      name: 'evaluation-depends-only-on-core',
+      severity: 'error',
+      comment:
+        'The domain-neutral evaluation layer may depend on itself and public core, not apps, adapters, modules, or testing.',
+      from: {
+        path: '(?:^|/)packages/evaluation/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|evaluation(?:/|$)))',
+      },
+    },
+    {
       name: 'memory-adapter-depends-only-on-core',
       severity: 'error',
       comment:
-        'The in-memory adapter may depend on itself and core, not apps, modules, or other adapters.',
+        'The in-memory adapter may depend on itself, core and the domain-neutral evaluation layer, not apps, modules, or other adapters.',
       from: {
         path: '(?:^|/)packages/adapter-memory/src',
       },
       to: {
-        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-memory(?:/|$)))',
+        path: '^(?:apps|packages/(?!core(?:/|$)|evaluation(?:/|$)|adapter-memory(?:/|$)))',
       },
     },
     {

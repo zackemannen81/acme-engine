@@ -14,9 +14,20 @@ import {
   type ModelSelection,
   type NormalizedModelResponse,
 } from '@acme/core';
+import {
+  QualityEvaluationHarness,
+  createQualityEvaluationInput,
+  recordedExternalEvaluator,
+  type QualityEvaluationRecord,
+  type QualityEvaluatorRef,
+  type QualityVerdict,
+} from '@acme/evaluation';
 
 export const SCENARIO_SCHEMA_VERSION = 'acme-scenario/1' as const;
+export const SCENARIO_SCHEMA_VERSION_V2 = 'acme-scenario/2' as const;
 export const SCENARIO_REPORT_VERSION = 'acme-scenario-report/1' as const;
+export type ScenarioSchemaVersion =
+  typeof SCENARIO_SCHEMA_VERSION | typeof SCENARIO_SCHEMA_VERSION_V2;
 
 /**
  * A scenario sequences executions against the bounded ExecutionEngine. It is a
@@ -24,7 +35,7 @@ export const SCENARIO_REPORT_VERSION = 'acme-scenario-report/1' as const;
  * retry, no loop and no way to run arbitrary code.
  */
 export interface ScenarioDocument {
-  readonly schemaVersion: typeof SCENARIO_SCHEMA_VERSION;
+  readonly schemaVersion: ScenarioSchemaVersion;
   readonly name: string;
   readonly seed: ScenarioSeed;
   readonly composition: {
@@ -87,11 +98,32 @@ export interface AssertDigestStep {
   readonly fixture?: string;
 }
 
+export interface EvaluateStep {
+  readonly as: string;
+  readonly execution: string;
+  readonly evaluator: QualityEvaluatorRef;
+  readonly artifact: {
+    readonly kind: string;
+    readonly id: string;
+    readonly fixture: string;
+    readonly digest: string;
+  };
+  /** Required only for recorded-external evaluators. */
+  readonly recording?: string;
+}
+
+export interface AssertEvaluationStep {
+  readonly evaluation: string;
+  readonly verdict: QualityVerdict;
+}
+
 export type ScenarioStep =
   | { readonly execute: ExecuteStep }
   | { readonly assert: AssertStep }
   | { readonly replay: ReplayStep }
-  | { readonly assertDigest: AssertDigestStep };
+  | { readonly assertDigest: AssertDigestStep }
+  | { readonly evaluate: EvaluateStep }
+  | { readonly assertEvaluation: AssertEvaluationStep };
 
 export interface ScenarioStepReport {
   readonly index: number;
@@ -143,6 +175,11 @@ export interface ScenarioRunOptions {
    */
   readonly composition: (seed: ScenarioSeed) => ScenarioComposition;
   readonly loadFixture: ScenarioFixtureLoader;
+  /** Required only when an acme-scenario/2 document contains evaluate steps. */
+  readonly quality?: {
+    readonly runId: string;
+    readonly harness: QualityEvaluationHarness;
+  };
 }
 
 class ScenarioError extends AcmeError {}
@@ -202,7 +239,66 @@ function parseExecute(raw: unknown): ExecuteStep {
   };
 }
 
-function parseStep(raw: unknown, index: number): ScenarioStep {
+function qualityVerdict(value: unknown, field: string): QualityVerdict {
+  if (value !== 'pass' && value !== 'fail' && value !== 'inconclusive') {
+    invalid(`${field} must be pass, fail or inconclusive.`);
+  }
+  return value;
+}
+
+function parseEvaluate(raw: unknown): EvaluateStep {
+  if (!isObject(raw)) {
+    invalid('An evaluate step must be an object.');
+  }
+  const evaluator = raw['evaluator'];
+  if (!isObject(evaluator)) {
+    invalid('evaluate.evaluator must be an object.');
+  }
+  const kind = evaluator['kind'];
+  if (kind !== 'deterministic' && kind !== 'recorded-external') {
+    invalid(
+      'evaluate.evaluator.kind must be deterministic or recorded-external.',
+    );
+  }
+  const artifact = raw['artifact'];
+  if (!isObject(artifact)) {
+    invalid('evaluate.artifact must be an object.');
+  }
+  const digest = text(artifact['digest'], 'evaluate.artifact.digest');
+  if (!/^[a-f0-9]{64}$/u.test(digest)) {
+    invalid('evaluate.artifact.digest must be a lowercase SHA-256 digest.');
+  }
+  const recording = raw['recording'];
+  if ((kind === 'recorded-external') !== (recording !== undefined)) {
+    invalid(
+      'evaluate.recording is required exactly for recorded-external evaluators.',
+    );
+  }
+  return {
+    as: text(raw['as'], 'evaluate.as'),
+    execution: text(raw['execution'], 'evaluate.execution'),
+    evaluator: {
+      id: text(evaluator['id'], 'evaluate.evaluator.id'),
+      version: text(evaluator['version'], 'evaluate.evaluator.version'),
+      kind,
+    },
+    artifact: {
+      kind: text(artifact['kind'], 'evaluate.artifact.kind'),
+      id: text(artifact['id'], 'evaluate.artifact.id'),
+      fixture: text(artifact['fixture'], 'evaluate.artifact.fixture'),
+      digest,
+    },
+    ...(recording === undefined
+      ? {}
+      : { recording: text(recording, 'evaluate.recording') }),
+  };
+}
+
+function parseStep(
+  raw: unknown,
+  index: number,
+  schemaVersion: ScenarioSchemaVersion,
+): ScenarioStep {
   if (!isObject(raw)) {
     invalid(`Step ${String(index)} must be an object.`);
   }
@@ -290,6 +386,26 @@ function parseStep(raw: unknown, index: number): ScenarioStep {
         },
       };
     }
+    case 'evaluate': {
+      if (schemaVersion !== SCENARIO_SCHEMA_VERSION_V2) {
+        invalid('The evaluate step requires acme-scenario/2.');
+      }
+      return { evaluate: parseEvaluate(body) };
+    }
+    case 'assertEvaluation': {
+      if (schemaVersion !== SCENARIO_SCHEMA_VERSION_V2) {
+        invalid('The assertEvaluation step requires acme-scenario/2.');
+      }
+      if (!isObject(body)) {
+        invalid('An assertEvaluation step must be an object.');
+      }
+      return {
+        assertEvaluation: {
+          evaluation: text(body['evaluation'], 'assertEvaluation.evaluation'),
+          verdict: qualityVerdict(body['verdict'], 'assertEvaluation.verdict'),
+        },
+      };
+    }
     default:
       invalid(`Unknown step kind "${kind}" at step ${String(index)}.`);
   }
@@ -299,8 +415,14 @@ export function parseScenario(raw: unknown): ScenarioDocument {
   if (!isObject(raw)) {
     invalid('A scenario must be an object.');
   }
-  if (raw['schemaVersion'] !== SCENARIO_SCHEMA_VERSION) {
-    invalid(`A scenario requires schemaVersion ${SCENARIO_SCHEMA_VERSION}.`);
+  const schemaVersion = raw['schemaVersion'];
+  if (
+    schemaVersion !== SCENARIO_SCHEMA_VERSION &&
+    schemaVersion !== SCENARIO_SCHEMA_VERSION_V2
+  ) {
+    invalid(
+      `A scenario requires schemaVersion ${SCENARIO_SCHEMA_VERSION} or ${SCENARIO_SCHEMA_VERSION_V2}.`,
+    );
   }
   const seed = raw['seed'];
   if (!isObject(seed) || seed['ids'] !== 'sequential') {
@@ -331,7 +453,7 @@ export function parseScenario(raw: unknown): ScenarioDocument {
   }
 
   return {
-    schemaVersion: SCENARIO_SCHEMA_VERSION,
+    schemaVersion,
     name: text(raw['name'], 'scenario.name'),
     seed: {
       clock: text(seed['clock'], 'scenario.seed.clock'),
@@ -343,7 +465,7 @@ export function parseScenario(raw: unknown): ScenarioDocument {
       repository: composition['repository'],
       gateway: 'mock',
     },
-    steps: steps.map((step, index) => parseStep(step, index)),
+    steps: steps.map((step, index) => parseStep(step, index, schemaVersion)),
   };
 }
 
@@ -419,6 +541,7 @@ export async function runScenario(
   const document = parseScenario(options.document);
   const composition = options.composition(document.seed);
   const aliases = new Map<string, string>();
+  const evaluationAliases = new Map<string, QualityEvaluationRecord>();
   const steps: ScenarioStepReport[] = [];
   let failure: ScenarioReport['failure'];
 
@@ -559,6 +682,90 @@ export async function runScenario(
           ...(report.recordedDigest === undefined
             ? {}
             : { recordedDigest: report.recordedDigest }),
+        };
+      } else if ('evaluate' in step) {
+        const spec = step.evaluate;
+        if (options.quality === undefined) {
+          fail('evaluate requires ScenarioRunOptions.quality.');
+        }
+        if (evaluationAliases.has(spec.as)) {
+          fail(`evaluate.as ${JSON.stringify(spec.as)} is already defined.`);
+        }
+        const executionId = resolve(spec.execution, 'evaluate.execution');
+        const execution = await composition.repository.get(executionId);
+        if (execution?.result === undefined) {
+          fail(`evaluate found no terminal result for "${spec.execution}".`);
+        }
+        const replayEvidence =
+          await composition.repository.loadReplayEvidence(executionId);
+        const artifact = await options.loadFixture(spec.artifact.fixture);
+        const input = createQualityEvaluationInput({
+          runId: options.quality.runId,
+          executionResult: execution.result,
+          operationDigest:
+            replayEvidence?.preparedCommit.operationDigest ?? null,
+          artifact: {
+            kind: spec.artifact.kind,
+            id: spec.artifact.id,
+            value: artifact,
+            expectedDigest: spec.artifact.digest,
+          },
+          contract: {
+            ...execution.contract,
+            fingerprint: execution.contractFingerprint,
+          },
+        });
+        let evaluated: readonly QualityEvaluationRecord[];
+        if (spec.evaluator.kind === 'recorded-external') {
+          if (spec.recording === undefined) {
+            fail('recorded-external evaluate step has no recording fixture.');
+          }
+          const recording = await options.loadFixture(spec.recording);
+          const evaluator = recordedExternalEvaluator(recording);
+          if (
+            evaluator.id !== spec.evaluator.id ||
+            evaluator.version !== spec.evaluator.version
+          ) {
+            fail(
+              `Recorded evaluator was ${evaluator.id}@${evaluator.version}, expected ${spec.evaluator.id}@${spec.evaluator.version}.`,
+            );
+          }
+          evaluated = await options.quality.harness.runWith(input, [evaluator]);
+        } else {
+          evaluated = await options.quality.harness.run(input, [
+            spec.evaluator,
+          ]);
+        }
+        const evaluation = evaluated[0];
+        if (evaluation === undefined) {
+          fail('evaluate produced no quality record.');
+        }
+        evaluationAliases.set(spec.as, evaluation);
+        detail = {
+          alias: spec.as,
+          evaluationId: evaluation.evaluationId,
+          executionId,
+          evaluator: evaluation.evaluator,
+          qualityVerdict: evaluation.result.verdict,
+          scoreCount: evaluation.result.scores.length,
+          findingCount: evaluation.result.findings.length,
+        } as unknown as JsonValue;
+      } else if ('assertEvaluation' in step) {
+        const spec = step.assertEvaluation;
+        const evaluation = evaluationAliases.get(spec.evaluation);
+        if (evaluation === undefined) {
+          fail(
+            `assertEvaluation refers to unknown evaluation alias "${spec.evaluation}".`,
+          );
+        }
+        if (evaluation.result.verdict !== spec.verdict) {
+          fail(
+            `Quality evaluation "${spec.evaluation}" was ${evaluation.result.verdict}, expected ${spec.verdict}.`,
+          );
+        }
+        detail = {
+          evaluationId: evaluation.evaluationId,
+          qualityVerdict: evaluation.result.verdict,
         };
       } else {
         const spec = step.assertDigest;

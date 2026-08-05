@@ -245,7 +245,7 @@ describe('ScenarioRunner safety and validation', () => {
 
   it.each([
     ['a non-object', 'not a scenario'],
-    ['a wrong schema version', { schemaVersion: 'acme-scenario/2' }],
+    ['a wrong schema version', { schemaVersion: 'acme-scenario/3' }],
   ])('rejects %s', (_label, document) => {
     expect(() => parseScenario(document)).toThrowError(
       expect.objectContaining({

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "acme-scenario/2",
+  "name": "narrative-quality-evaluation",
+  "seed": {
+    "clock": "2026-07-31T12:00:00.000Z",
+    "ids": "sequential",
+    "idPrefix": "narrative-phase-5",
+    "idPadding": 3
+  },
+  "composition": {
+    "repository": "memory",
+    "gateway": "mock"
+  },
+  "steps": [
+    {
+      "execute": {
+        "as": "first",
+        "requestKey": "narrative-phase-5-request-1",
+        "namespace": "narrative",
+        "task": "observe-document",
+        "entityId": "story-phase-5",
+        "expectedRevision": 0,
+        "fixture": "files/inputs/chapter-1.json",
+        "mockResponse": "files/responses/chapter-1.json",
+        "policy": {
+          "retention": "hash-only"
+        }
+      }
+    },
+    {
+      "evaluate": {
+        "as": "deterministic-quality",
+        "execution": "first",
+        "evaluator": {
+          "id": "quality.chapter-structure",
+          "version": "1.0.0",
+          "kind": "deterministic"
+        },
+        "artifact": {
+          "kind": "scenario-input",
+          "id": "inputs/chapter-1.json",
+          "fixture": "files/inputs/chapter-1.json",
+          "digest": "17e79b9b6ef01297364c31cef0208feecfd389a1d1d12b26f5d8f9ca1e8e8626"
+        }
+      }
+    },
+    {
+      "evaluate": {
+        "as": "recorded-quality",
+        "execution": "first",
+        "evaluator": {
+          "id": "quality.external-editorial",
+          "version": "recording-1",
+          "kind": "recorded-external"
+        },
+        "artifact": {
+          "kind": "scenario-input",
+          "id": "inputs/chapter-1.json",
+          "fixture": "files/inputs/chapter-1.json",
+          "digest": "17e79b9b6ef01297364c31cef0208feecfd389a1d1d12b26f5d8f9ca1e8e8626"
+        },
+        "recording": "quality-evaluation-recording.json"
+      }
+    },
+    {
+      "assertEvaluation": {
+        "evaluation": "deterministic-quality",
+        "verdict": "pass"
+      }
+    },
+    {
+      "assertEvaluation": {
+        "evaluation": "recorded-quality",
+        "verdict": "pass"
+      }
+    }
+  ]
+}

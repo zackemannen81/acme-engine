@@ -241,6 +241,60 @@ describe('S1 scenarios', () => {
     ]);
   });
 
+  it('discovers scenario-v2 artifact and recorded-evaluation fixtures', () => {
+    const quality = buildCatalogView(
+      {
+        root: 'quality',
+        scenarios: [
+          {
+            path: 'quality.yaml',
+            document: {
+              schemaVersion: 'acme-scenario/2',
+              name: 'quality',
+              seed: { clock: '2026-08-05T00:00:00.000Z', ids: 'sequential' },
+              composition: { repository: 'memory', gateway: 'mock' },
+              steps: [
+                {
+                  evaluate: {
+                    as: 'review',
+                    execution: 'first',
+                    evaluator: {
+                      id: 'quality.external',
+                      version: '1',
+                      kind: 'recorded-external',
+                    },
+                    artifact: {
+                      kind: 'fixture',
+                      id: 'artifact',
+                      fixture: 'evidence/artifact.json',
+                      digest: 'a'.repeat(64),
+                    },
+                    recording: 'recordings/review.json',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        fixtures: [
+          { path: 'evidence/artifact.json' },
+          { path: 'recordings/review.json' },
+        ],
+      },
+      { validateScenario },
+    );
+    if (!isAvailable(quality.scenarios)) {
+      throw new Error('quality scenario should be available');
+    }
+    expect(quality.scenarios.scenarios[0]?.references).toStrictEqual([
+      expect.objectContaining({
+        field: 'artifact.fixture',
+        status: 'resolved',
+      }),
+      expect.objectContaining({ field: 'recording', status: 'resolved' }),
+    ]);
+  });
+
   it('cannot classify scenarios without the runner validator', () => {
     const withoutValidator = buildCatalogView(evidence());
 
