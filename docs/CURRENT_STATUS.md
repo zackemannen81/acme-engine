@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-04
+Last updated: 2026-08-05
 
 ## Repository
 
@@ -267,7 +267,7 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 531 passing unit-suite tests across packages, integration and scenario paths
+- 535 passing unit-suite tests across packages, integration and scenario paths
   exercised by `pnpm test:unit` (60 files), with separate conformance (58),
   integration (51) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
@@ -338,8 +338,11 @@ template until the next charter is explicitly approved.
 - **ACME-0048:** S5 browser memory-decision inspector over durable replay
   evidence, linked from S4 with ordered candidate → decision → mutation cards,
   explicit absence/correlation states and payloads redacted by default.
+- **ACME-0049:** S6 browser state inspector over repository snapshot evidence,
+  linked from S4 with ordered revision lineage, explicit continuity and
+  transition absence, and state/delta payloads redacted by default.
 
-### Domain Test UI (phases 0–6 and S1–S5 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S6 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -404,7 +407,15 @@ durable replay evidence, preserves recorded counts and decision order, keeps
 ignored/missing/unattributed evidence visible, and never enables payload
 disclosure or memory mutation.
 
-Not delivered: multi-step live scenarios; complete renderers for S6–S10;
+Delivered by ACME-0049: the pure S6 state renderer plus
+`/s6?namespace=...&entityId=...` and
+`/api/state?namespace=...&entityId=...`. S4 carries the exact namespace/entity
+scope into the new view; the route reads repository snapshot evidence,
+preserves builder-owned revision ordering/counts/continuity, distinguishes an
+empty lineage from unavailable evidence, and never enables payload disclosure
+or state mutation.
+
+Not delivered: multi-step live scenarios; complete renderers for S7–S10;
 live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
@@ -427,10 +438,11 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0048).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0049).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S5, including registry/discovery catalog, protected offline plan
-  preview/launch and durable memory-decision inspection; S6–S10 remain stubs and live browser launch remains
+  S1–S6, including registry/discovery catalog, protected offline plan
+  preview/launch, durable memory-decision inspection and state lineage;
+  S7–S10 remain stubs and live browser launch remains
   absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.

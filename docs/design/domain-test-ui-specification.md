@@ -1,17 +1,17 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes, phases 0–6 and the
-first four browser rendering slices are delivered by ACME-0039 through
-ACME-0048 under
+first five browser rendering slices are delivered by ACME-0039 through
+ACME-0049 under
 [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
 [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
-[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S6–S10 HTML and
+[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S7–S10 HTML and
 multi-step live scenarios remain optional residuals requiring their own
 charters.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-04 (ACME-0048 — browser memory decisions implemented)
+Last revised: 2026-08-05 (ACME-0049 — browser state inspector implemented)
 
 ## Executive summary
 
@@ -726,7 +726,24 @@ memory or requesting payload disclosure.
 
 **Met.** `renderMemoryDecisionsViewHtml`, durable repository evidence loading,
 HTML/JSON routes and unit/integration/responsive browser verification. S6–S10
-remain honest stubs.
+remained honest stubs at this exit; ACME-0049 resolves S6 below.
+
+### Phase 11 — Browser state inspector — **done (ACME-0049)**
+
+1. Pure S6 HTML renderer over `acme-view-state/1`.
+2. Read-only `/s6?namespace=...&entityId=...` and
+   `/api/state?namespace=...&entityId=...` routes over repository state
+   evidence.
+3. Contextual S4→S6 navigation with ordered revision lineage, explicit
+   continuity/transition absence and default-redacted state/delta payloads.
+
+**Exit:** a developer can inspect canonical revision lineage and the accepted
+transition for one namespace/entity scope without changing state or requesting
+payload disclosure.
+
+**Met.** `renderStateViewHtml`, repository snapshot composition, HTML/JSON
+routes and unit/integration/responsive browser verification. S7–S10 remain
+honest stubs.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI

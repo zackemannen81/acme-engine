@@ -11,11 +11,13 @@ import {
   buildMemoryDecisionsView,
   buildPlanView,
   buildRunsView,
+  buildStateView,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderMemoryDecisionsViewHtml,
   renderPlanViewHtml,
   renderRunsViewHtml,
+  renderStateViewHtml,
   renderStubSurface,
   RUN_RECORD_VERSION,
   type RunRecord,
@@ -28,10 +30,16 @@ import {
 } from './catalog-fixtures.js';
 import {
   attempts,
+  brokenTransition,
   committedExecution,
+  entityId,
   executionId,
   hashOnlyModelCall,
   preparedCommit,
+  namespace,
+  nextSnapshot,
+  nextTransition,
+  priorSnapshot,
   replayEvidence,
 } from './fixtures.js';
 
@@ -213,6 +221,9 @@ describe('pure HTML renderers', () => {
     expect(html).toContain(
       `/s5?executionId=${encodeURIComponent(executionId)}`,
     );
+    expect(html).toContain(
+      `/s6?namespace=${encodeURIComponent(namespace)}&amp;entityId=${encodeURIComponent(entityId)}`,
+    );
   });
 
   it('renders ordered S5 decisions, reasons and correlated mutations without revealing payloads', () => {
@@ -248,6 +259,55 @@ describe('pure HTML renderers', () => {
 
     expect(html).toContain('Memory decisions unavailable');
     expect(html).toContain('PREPARED_COMMIT_UNAVAILABLE');
+  });
+
+  it('renders ordered S6 lineage and accepted transitions without revealing payloads', () => {
+    const html = renderStateViewHtml(
+      buildStateView({
+        namespace,
+        entityId,
+        snapshots: [nextSnapshot, priorSnapshot],
+        transitions: [nextTransition],
+      }),
+    );
+
+    expect(html).toContain('acme-view-state/1');
+    expect(html).toContain(namespace);
+    expect(html).toContain(entityId);
+    expect(html).toContain('Revisions</dt><dd>2');
+    expect(html).toContain('Head revision</dt><dd>2');
+    expect(html.indexOf('Revision 1')).toBeLessThan(html.indexOf('Revision 2'));
+    expect(html).toContain('STATE_TRANSITION_UNAVAILABLE');
+    expect(html).toContain('transition-2');
+    expect(html).toContain('operation-1');
+    expect(html).toContain('linked');
+    expect(html.match(/redacted/gu)).toHaveLength(3);
+    expect(html).not.toContain('<details>');
+  });
+
+  it('renders broken, empty and unavailable S6 lineage states explicitly', () => {
+    const broken = renderStateViewHtml(
+      buildStateView({
+        namespace,
+        entityId,
+        snapshots: [priorSnapshot, nextSnapshot],
+        transitions: [brokenTransition],
+      }),
+    );
+    expect(broken).toContain('broken');
+
+    const empty = renderStateViewHtml(
+      buildStateView({ namespace, entityId, snapshots: [], transitions: [] }),
+    );
+    expect(empty).toContain('Revisions</dt><dd>0');
+    expect(empty).toContain('Head revision</dt><dd>none');
+    expect(empty).toContain('No state revisions recorded for this scope.');
+
+    const unavailable = renderStateViewHtml(
+      buildStateView({ namespace, entityId }),
+    );
+    expect(unavailable).toContain('State evidence unavailable');
+    expect(unavailable).toContain('STATE_EVIDENCE_UNAVAILABLE');
   });
 
   it('names the contract on stub surfaces', () => {

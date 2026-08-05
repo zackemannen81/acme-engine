@@ -27,6 +27,7 @@ import {
   buildMemoryDecisionsView,
   buildPlanView,
   buildRunsView,
+  buildStateView,
   isSafeRunId,
   type PlanView,
 } from '../index.js';
@@ -40,6 +41,7 @@ import {
   type PlanWorkbenchNotice,
 } from '../web/render-plan.js';
 import { renderRunsViewHtml } from '../web/render-runs.js';
+import { renderStateViewHtml } from '../web/render-state.js';
 import {
   renderShell,
   renderStubSurface,
@@ -99,7 +101,6 @@ const STUBS: readonly {
   readonly title: string;
   readonly contractVersion: string;
 }[] = [
-  { id: 's6', title: 'S6 State', contractVersion: STATE_VIEW_VERSION },
   { id: 's7', title: 'S7 Replay', contractVersion: REPLAY_VIEW_VERSION },
   {
     id: 's8',
@@ -359,6 +360,7 @@ export async function startWorkbenchServer(
             runs: RUNS_VIEW_VERSION,
             execution: EXECUTION_VIEW_VERSION,
             memoryDecisions: MEMORY_DECISION_VIEW_VERSION,
+            state: STATE_VIEW_VERSION,
           },
         });
         return;
@@ -416,6 +418,42 @@ export async function startWorkbenchServer(
           buildMemoryDecisionsView({
             executionId,
             preparedCommit: replayEvidence?.preparedCommit ?? null,
+          }),
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/state') {
+        const namespace = url.searchParams.get('namespace');
+        const entityId = url.searchParams.get('entityId');
+        if (
+          namespace === null ||
+          namespace.length === 0 ||
+          entityId === null ||
+          entityId.length === 0
+        ) {
+          sendJson(response, 400, {
+            error: 'namespace and entityId are required.',
+            view: STATE_VIEW_VERSION,
+          });
+          return;
+        }
+        if (composition === undefined) {
+          sendJson(response, 409, {
+            error: 'S6 requires a configured durable ledger.',
+            view: STATE_VIEW_VERSION,
+          });
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        sendJson(
+          response,
+          200,
+          buildStateView({
+            namespace,
+            entityId,
+            snapshots: evidence.state.snapshots,
+            transitions: evidence.state.transitions,
           }),
         );
         return;
@@ -795,6 +833,58 @@ export async function startWorkbenchServer(
           response,
           200,
           renderMemoryDecisionsViewHtml(view),
+          'text/html; charset=utf-8',
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/s6') {
+        const namespace = url.searchParams.get('namespace');
+        const entityId = url.searchParams.get('entityId');
+        if (
+          namespace === null ||
+          namespace.length === 0 ||
+          entityId === null ||
+          entityId.length === 0
+        ) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's6',
+              title: 'S6 State inspector',
+              subtitle: `View ${STATE_VIEW_VERSION}`,
+              body: '<section class="card"><p>Choose an execution in S4, then follow <strong>Inspect state lineage</strong>.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        if (composition === undefined) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's6',
+              title: 'S6 needs a ledger path',
+              subtitle: `View ${STATE_VIEW_VERSION}`,
+              body: '<section class="card"><p>Start the workbench with <code>--ledger &lt;sqlite-file&gt;</code> to inspect durable state evidence.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        const view = buildStateView({
+          namespace,
+          entityId,
+          snapshots: evidence.state.snapshots,
+          transitions: evidence.state.transitions,
+        });
+        send(
+          response,
+          200,
+          renderStateViewHtml(view),
           'text/html; charset=utf-8',
         );
         return;

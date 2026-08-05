@@ -294,6 +294,9 @@ describe('test-ui local workbench server', () => {
     expect(detailHtml).toContain('story-browser-launch');
     expect(detailHtml).toContain('Trust pipeline');
     expect(detailHtml).toContain('/s5?executionId=');
+    expect(detailHtml).toContain(
+      '/s6?namespace=narrative&amp;entityId=story-browser-launch',
+    );
 
     const executionId = new URL(detail.url).searchParams.get('executionId');
     if (executionId === null) {
@@ -352,9 +355,86 @@ describe('test-ui local workbench server', () => {
     expect(memoryHtml).toContain('redacted');
     expect(memoryHtml).not.toContain('The chapter opens');
 
+    const stateApi = await fetch(
+      `${server.url}/api/state?namespace=narrative&entityId=story-browser-launch`,
+    );
+    expect(stateApi.status).toBe(200);
+    const stateView = (await stateApi.json()) as {
+      view: string;
+      namespace: string;
+      entityId: string;
+      lineage:
+        | { availability: 'unavailable'; reason: string }
+        | {
+            availability: 'available';
+            revisionCount: number;
+            headRevision: number | null;
+            revisions: readonly {
+              continuity: string;
+              value: { disclosure: string };
+              transition:
+                | { availability: 'unavailable'; reason: string }
+                | {
+                    availability: 'available';
+                    delta: { disclosure: string };
+                  };
+            }[];
+          };
+    };
+    expect(stateView).toMatchObject({
+      view: 'acme-view-state/1',
+      namespace: 'narrative',
+      entityId: 'story-browser-launch',
+      lineage: {
+        availability: 'available',
+        revisionCount: 1,
+        headRevision: 1,
+      },
+    });
+    if (stateView.lineage.availability !== 'available') {
+      throw new Error('Recorded state lineage should be available.');
+    }
+    expect(stateView.lineage.revisions[0]).toMatchObject({
+      continuity: 'linked',
+      value: { disclosure: 'redacted' },
+      transition: {
+        availability: 'available',
+        delta: { disclosure: 'redacted' },
+      },
+    });
+
+    const statePage = await fetch(
+      `${server.url}/s6?namespace=narrative&entityId=story-browser-launch`,
+    );
+    expect(statePage.status).toBe(200);
+    const stateHtml = await statePage.text();
+    expect(stateHtml).toContain('S6 State inspector');
+    expect(stateHtml).toContain('acme-view-state/1');
+    expect(stateHtml).toContain('Revision 1');
+    expect(stateHtml).toContain('linked');
+    expect(stateHtml).toContain('redacted');
+    expect(stateHtml).not.toContain('<details>');
+
+    const emptyState = await fetch(
+      `${server.url}/api/state?namespace=narrative&entityId=not-recorded`,
+    );
+    expect(emptyState.status).toBe(200);
+    expect(await emptyState.json()).toMatchObject({
+      lineage: {
+        availability: 'available',
+        revisionCount: 0,
+        headRevision: null,
+      },
+    });
+
     const missingSelection = await fetch(`${server.url}/s5`);
     expect(missingSelection.status).toBe(200);
     expect(await missingSelection.text()).toContain(
+      'Choose an execution in S4',
+    );
+    const missingStateScope = await fetch(`${server.url}/s6`);
+    expect(missingStateScope.status).toBe(200);
+    expect(await missingStateScope.text()).toContain(
       'Choose an execution in S4',
     );
     const unknownExecution = await fetch(
@@ -446,6 +526,18 @@ describe('test-ui local workbench server', () => {
     );
     expect(noLedger.status).toBe(409);
     expect(await noLedger.text()).toContain('configured durable ledger');
+
+    const noStateLedger = await fetch(
+      `${configured.url}/api/state?namespace=narrative&entityId=unknown`,
+    );
+    expect(noStateLedger.status).toBe(409);
+    expect(await noStateLedger.text()).toContain('configured durable ledger');
+
+    const missingStateQuery = await fetch(`${configured.url}/api/state`);
+    expect(missingStateQuery.status).toBe(400);
+    expect(await missingStateQuery.text()).toContain(
+      'namespace and entityId are required',
+    );
   });
 
   it('bounds S2 form bodies and labels memory evidence as non-durable', async () => {

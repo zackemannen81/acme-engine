@@ -14,6 +14,7 @@ export {
 export { renderRunsViewHtml } from './render-runs.js';
 export { renderExecutionViewHtml } from './render-execution.js';
 export { renderMemoryDecisionsViewHtml } from './render-memory-decisions.js';
+export { renderStateViewHtml } from './render-state.js';
 export { renderCatalogViewHtml } from './render-catalog.js';
 export {
   renderPlanViewHtml,

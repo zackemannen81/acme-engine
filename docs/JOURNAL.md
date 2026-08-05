@@ -2,6 +2,42 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — ACME-0049 browser state inspector archived
+
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0049
+- Summary: Rendered `acme-view-state/1` as S6 in the loopback workbench. A
+  durable S4 execution now links to canonical state revision and accepted
+  transition evidence without exposing payloads or changing state.
+- Delivered:
+  - pure `renderStateViewHtml` with recorded head/revision counts, hashes,
+    schema, creation/execution provenance and continuity
+  - accepted transition identity, operation/from/to revision, hash linkage and
+    delta schema, with missing transitions explicit
+  - read-only `/s6?namespace=...&entityId=...` and
+    `/api/state?namespace=...&entityId=...` over repository snapshot evidence
+  - exact S4→S6 scope navigation; honest missing-scope, missing-ledger, empty
+    lineage, broken/unknown continuity and unavailable-evidence states
+  - state and delta payloads redacted by default with no browser disclosure or
+    mutation path
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` (535 tests / 60 files); `pnpm
+  test:conformance` (58 / 7); `pnpm test:integration` (51 / 8); `pnpm
+  test:scenario` (21 / 4); `pnpm docs:check` (116 Markdown files after
+  archive); `pnpm build`; `git diff --check`.
+- Browser: followed one durable S4 scope to S6, where one linked revision and
+  its accepted transition appeared, two payload presentations were redacted
+  and no reveal controls existed. Missing-scope guidance and empty lineage
+  were explicit, console errors were empty, and both 998 px and 390 px layouts
+  had no document overflow.
+- Spend/network: no live-provider call; existing local mock/SQLite evidence
+  only.
+- Follow-ups: S7–S10 HTML remain stubs. S7 replay/digest comparison is the
+  nearest bounded renderer continuation; live browser controls and multi-step
+  live scenarios still require separate approved charters.
+- Signature: Codex
+
 ## 2026-08-04 — ACME-0048 browser memory decisions archived
 
 - Date: 2026-08-04
