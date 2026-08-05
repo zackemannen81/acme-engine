@@ -27,24 +27,32 @@ import {
   REPLAY_VIEW_VERSION,
   RUNS_VIEW_VERSION,
   STATE_VIEW_VERSION,
+  ApprovalRefused,
   buildCatalogView,
   buildExecutionView,
+  buildFixtureReviewView,
   buildMemoryDecisionsView,
   buildMeasurementView,
   buildPlanView,
   buildReplayView,
   buildRunsView,
   buildStateView,
+  decideFixtureChange,
   isSafeRunId,
+  type FixtureApprovalRecord,
+  type FixtureChangeProposal,
+  type FixtureReviewView,
   type MeasureId,
   type MeasurementThresholds,
   type MeasurementView,
   type PlanView,
 } from '../index.js';
 import { discoverCatalogSources } from '../node-source.js';
+import { resolveReference } from '../catalog/paths.js';
 import { renderCatalogViewHtml } from '../web/render-catalog.js';
 import { escapeHtml } from '../web/escape.js';
 import { renderExecutionViewHtml } from '../web/render-execution.js';
+import { renderFixtureReviewViewHtml } from '../web/render-fixture-review.js';
 import { renderMemoryDecisionsViewHtml } from '../web/render-memory-decisions.js';
 import { renderMeasurementViewHtml } from '../web/render-measurement.js';
 import {
@@ -115,11 +123,6 @@ const STUBS: readonly {
   readonly title: string;
   readonly contractVersion: string;
 }[] = [
-  {
-    id: 's9',
-    title: 'S9 Fixture review',
-    contractVersion: FIXTURE_REVIEW_VIEW_VERSION,
-  },
   {
     id: 's10',
     title: 'S10 Live evaluation',
@@ -230,6 +233,117 @@ type MeasurementRouteResult =
   | { readonly ok: true; readonly view: MeasurementView }
   | MeasurementRouteFailure;
 
+const FIXTURE_PROPOSAL_FIELDS: readonly (keyof FixtureChangeProposal)[] = [
+  'proposalId',
+  'fixturePath',
+  'expectedDigest',
+  'proposedDigest',
+  'runId',
+  'executionId',
+];
+
+interface FixtureReviewRouteFailure {
+  readonly ok: false;
+  readonly status: 400 | 404 | 409;
+  readonly message: string;
+}
+
+type FixtureReviewRouteResult =
+  | {
+      readonly ok: true;
+      readonly view: FixtureReviewView;
+      readonly proposal: FixtureChangeProposal | null;
+      readonly alreadyDecided: boolean;
+    }
+  | FixtureReviewRouteFailure;
+
+function proposalFromApproval(
+  approval: FixtureApprovalRecord,
+): FixtureChangeProposal {
+  return {
+    proposalId: approval.proposalId,
+    fixturePath: approval.fixturePath,
+    expectedDigest: approval.expectedDigest,
+    proposedDigest: approval.proposedDigest,
+    runId: approval.runId,
+    executionId: approval.executionId,
+  };
+}
+
+function sameProposal(
+  left: FixtureChangeProposal,
+  right: FixtureChangeProposal,
+): boolean {
+  return FIXTURE_PROPOSAL_FIELDS.every((field) => left[field] === right[field]);
+}
+
+function fixtureProposal(
+  search: URLSearchParams,
+): FixtureChangeProposal | null | FixtureReviewRouteFailure {
+  const values = Object.fromEntries(
+    FIXTURE_PROPOSAL_FIELDS.map((field) => [
+      field,
+      search.get(field)?.trim() ?? '',
+    ]),
+  ) as Record<keyof FixtureChangeProposal, string>;
+  const supplied = FIXTURE_PROPOSAL_FIELDS.filter(
+    (field) => values[field].length > 0,
+  );
+  if (supplied.length === 0) {
+    return null;
+  }
+  if (supplied.length !== FIXTURE_PROPOSAL_FIELDS.length) {
+    const missing = FIXTURE_PROPOSAL_FIELDS.filter(
+      (field) => values[field].length === 0,
+    );
+    return {
+      ok: false,
+      status: 400,
+      message: `A fixture proposal requires every field; missing: ${missing.join(', ')}.`,
+    };
+  }
+
+  const proposal: FixtureChangeProposal = values;
+  if (!isSafeRunId(proposal.proposalId)) {
+    return {
+      ok: false,
+      status: 400,
+      message: 'The proposal identifier must be a safe file name.',
+    };
+  }
+  if (!isSafeRunId(proposal.runId)) {
+    return {
+      ok: false,
+      status: 400,
+      message: 'The run identifier must be a safe file name.',
+    };
+  }
+  if (resolveReference(proposal.fixturePath).status === 'refused') {
+    return {
+      ok: false,
+      status: 400,
+      message: 'The fixture path must stay below the scenario root.',
+    };
+  }
+  if (proposal.expectedDigest === proposal.proposedDigest) {
+    return {
+      ok: false,
+      status: 400,
+      message:
+        'The proposed digest equals the pinned digest; there is nothing to decide.',
+    };
+  }
+  return proposal;
+}
+
+function fixtureProposalQuery(proposal: FixtureChangeProposal): string {
+  return new URLSearchParams(
+    Object.fromEntries(
+      FIXTURE_PROPOSAL_FIELDS.map((field) => [field, proposal[field]]),
+    ),
+  ).toString();
+}
+
 function measurementRate(
   search: URLSearchParams,
   name: string,
@@ -296,7 +410,7 @@ function assertSameServerRequest(
   if (!tokenMatches(submittedToken, csrfToken)) {
     throw new WorkbenchFormRefused(
       403,
-      'The form token is missing or no longer valid. Reload S2 and try again.',
+      'The form token is missing or no longer valid. Reload the page and try again.',
     );
   }
   const fetchSite = request.headers['sec-fetch-site'];
@@ -336,7 +450,7 @@ async function readForm(request: IncomingMessage): Promise<URLSearchParams> {
   if (!contentType.startsWith('application/x-www-form-urlencoded')) {
     throw new WorkbenchFormRefused(
       415,
-      'S2 accepts application/x-www-form-urlencoded form submissions only.',
+      'Workbench forms accept application/x-www-form-urlencoded submissions only.',
     );
   }
   const chunks: Buffer[] = [];
@@ -347,7 +461,7 @@ async function readForm(request: IncomingMessage): Promise<URLSearchParams> {
     if (size > MAX_FORM_BYTES) {
       throw new WorkbenchFormRefused(
         413,
-        `The submitted plan exceeds the ${String(MAX_FORM_BYTES)} byte limit.`,
+        `The submitted form exceeds the ${String(MAX_FORM_BYTES)} byte limit.`,
       );
     }
     chunks.push(buffer);
@@ -396,6 +510,7 @@ export async function startWorkbenchServer(
       : resolve(options.ledgerDatabase);
   const csrfToken = randomBytes(32).toString('hex');
   const activeRunIds = new Set<string>();
+  const activeApprovalIds = new Set<string>();
   const registries = createInterfaceRegistries();
   const catalogRoot =
     options.scenarioRoot === undefined
@@ -511,6 +626,74 @@ export async function startWorkbenchServer(
     };
   }
 
+  async function fixtureReviewView(
+    search: URLSearchParams,
+  ): Promise<FixtureReviewRouteResult> {
+    const staged = fixtureProposal(search);
+    if (staged !== null && 'ok' in staged) {
+      return staged;
+    }
+
+    const workspace = createFileWorkspace({ root: workspaceRoot });
+    const approvals = await workspace.listApprovals();
+    const proposals = approvals.records.map(proposalFromApproval);
+    let alreadyDecided = false;
+
+    if (staged !== null) {
+      const unreadableName = `${staged.proposalId}.json`;
+      if (approvals.unreadable.includes(unreadableName)) {
+        return {
+          ok: false,
+          status: 409,
+          message: `Approval ${JSON.stringify(unreadableName)} exists but is unreadable; it cannot be replaced.`,
+        };
+      }
+      const run = await workspace.loadRun(staged.runId);
+      if (run === null) {
+        return {
+          ok: false,
+          status: 404,
+          message: `Run ${JSON.stringify(staged.runId)} was not found or is unreadable.`,
+        };
+      }
+      if (
+        !run.cases.some((entry) => entry.executionId === staged.executionId)
+      ) {
+        return {
+          ok: false,
+          status: 409,
+          message: `Execution ${JSON.stringify(staged.executionId)} is not linked to run ${JSON.stringify(staged.runId)}.`,
+        };
+      }
+
+      const existing = approvals.records.find(
+        (entry) => entry.proposalId === staged.proposalId,
+      );
+      if (existing === undefined) {
+        proposals.push(staged);
+      } else if (!sameProposal(proposalFromApproval(existing), staged)) {
+        return {
+          ok: false,
+          status: 409,
+          message: `Proposal ${JSON.stringify(staged.proposalId)} conflicts with its recorded decision.`,
+        };
+      } else {
+        alreadyDecided = true;
+      }
+    }
+
+    return {
+      ok: true,
+      view: buildFixtureReviewView({
+        proposals,
+        approvals: approvals.records,
+        unreadable: approvals.unreadable,
+      }),
+      proposal: staged,
+      alreadyDecided,
+    };
+  }
+
   async function handle(
     request: IncomingMessage,
     response: ServerResponse,
@@ -532,6 +715,7 @@ export async function startWorkbenchServer(
             state: STATE_VIEW_VERSION,
             replay: REPLAY_VIEW_VERSION,
             measurement: MEASUREMENT_VIEW_VERSION,
+            fixtureReview: FIXTURE_REVIEW_VIEW_VERSION,
           },
         });
         return;
@@ -668,6 +852,19 @@ export async function startWorkbenchServer(
           sendJson(response, result.status, {
             error: result.message,
             view: MEASUREMENT_VIEW_VERSION,
+          });
+          return;
+        }
+        sendJson(response, 200, result.view);
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/fixture-review') {
+        const result = await fixtureReviewView(url.searchParams);
+        if (!result.ok) {
+          sendJson(response, result.status, {
+            error: result.message,
+            view: FIXTURE_REVIEW_VIEW_VERSION,
           });
           return;
         }
@@ -1188,6 +1385,118 @@ export async function startWorkbenchServer(
           renderMeasurementViewHtml(result.view),
           'text/html; charset=utf-8',
         );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/s9') {
+        const result = await fixtureReviewView(url.searchParams);
+        if (!result.ok) {
+          send(
+            response,
+            result.status,
+            renderShell({
+              surface: 's9',
+              title: 'S9 Fixture review refused',
+              subtitle: `View ${FIXTURE_REVIEW_VIEW_VERSION}`,
+              body: `<section class="card error-banner"><p>${escapeHtml(result.message)}</p><p><a href="/s9">Return to fixture review</a></p></section>`,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        send(
+          response,
+          200,
+          renderFixtureReviewViewHtml(result.view, {
+            csrfToken,
+            proposal: result.proposal,
+          }),
+          'text/html; charset=utf-8',
+        );
+        return;
+      }
+
+      if (request.method === 'POST' && path === '/s9/decision') {
+        const form = await readForm(request);
+        const submittedToken = requiredFormField(form, 'csrfToken');
+        assertSameServerRequest(request, csrfToken, submittedToken, boundPort);
+        const reviewed = await fixtureReviewView(form);
+        if (!reviewed.ok) {
+          send(
+            response,
+            reviewed.status,
+            renderShell({
+              surface: 's9',
+              title: 'S9 Decision refused',
+              subtitle: `View ${FIXTURE_REVIEW_VIEW_VERSION}`,
+              body: `<section class="card error-banner"><p>${escapeHtml(reviewed.message)}</p><p><a href="/s9">Return to fixture review</a></p></section>`,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        const proposal = reviewed.proposal;
+        if (proposal === null) {
+          throw new WorkbenchFormRefused(
+            400,
+            'A fixture proposal is required.',
+          );
+        }
+        if (reviewed.alreadyDecided) {
+          throw new WorkbenchFormRefused(
+            409,
+            `Proposal ${JSON.stringify(proposal.proposalId)} already has a recorded decision.`,
+          );
+        }
+        if (activeApprovalIds.has(proposal.proposalId)) {
+          throw new WorkbenchFormRefused(
+            409,
+            `Proposal ${JSON.stringify(proposal.proposalId)} already has a decision in progress.`,
+          );
+        }
+        const decision = requiredFormField(form, 'decision');
+        if (decision !== 'approved' && decision !== 'rejected') {
+          throw new WorkbenchFormRefused(
+            400,
+            'decision must be approved or rejected.',
+          );
+        }
+        const approver = requiredFormField(form, 'approver');
+        const rationale = requiredFormField(form, 'rationale');
+
+        activeApprovalIds.add(proposal.proposalId);
+        try {
+          const refreshed = await fixtureReviewView(form);
+          if (!refreshed.ok || refreshed.alreadyDecided) {
+            throw new WorkbenchFormRefused(
+              409,
+              `Proposal ${JSON.stringify(proposal.proposalId)} can no longer be decided.`,
+            );
+          }
+          const approval = decideFixtureChange({
+            proposal,
+            decision,
+            approver,
+            rationale,
+            decidedAt: options.clock.now(),
+          });
+          await createFileWorkspace({ root: workspaceRoot }).recordApproval(
+            approval,
+          );
+        } catch (error: unknown) {
+          if (error instanceof ApprovalRefused) {
+            throw new WorkbenchFormRefused(400, error.message);
+          }
+          throw error;
+        } finally {
+          activeApprovalIds.delete(proposal.proposalId);
+        }
+
+        response.writeHead(303, {
+          location: `/s9?${fixtureProposalQuery(proposal)}`,
+          'cache-control': 'no-store',
+        });
+        response.end();
         return;
       }
 

@@ -8,6 +8,7 @@ import {
   VIEW_UNAVAILABLE,
   buildCatalogView,
   buildExecutionView,
+  buildFixtureReviewView,
   buildMemoryDecisionsView,
   buildMeasurementView,
   buildPlanView,
@@ -15,8 +16,10 @@ import {
   buildRunsView,
   buildStateView,
   captureBaseline,
+  decideFixtureChange,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
+  renderFixtureReviewViewHtml,
   renderMemoryDecisionsViewHtml,
   renderMeasurementViewHtml,
   renderPlanViewHtml,
@@ -25,6 +28,7 @@ import {
   renderStateViewHtml,
   renderStubSurface,
   RUN_RECORD_VERSION,
+  type FixtureChangeProposal,
   type RunRecord,
 } from '../src/index.js';
 import {
@@ -418,13 +422,73 @@ describe('pure HTML renderers', () => {
     expect(html).not.toContain('<p class="measure-rate">0.0%</p>');
   });
 
+  it('renders a pending S9 proposal with explicit human decision controls', () => {
+    const proposal: FixtureChangeProposal = {
+      proposalId: 'proposal-web-001',
+      fixturePath: 'digests/narrative.json',
+      expectedDigest: 'digest-old',
+      proposedDigest: 'digest-new',
+      runId: 'run-web-1',
+      executionId: 'exec-1',
+    };
+    const html = renderFixtureReviewViewHtml(
+      buildFixtureReviewView({ proposals: [proposal] }),
+      { csrfToken: 'fixture-token', proposal },
+    );
+
+    expect(html).toContain('S9 Fixture review');
+    expect(html).toContain('acme-view-fixture-review/1');
+    expect(html).toContain('proposal-web-001');
+    expect(html).toContain('pending');
+    expect(html).toContain('digest-old');
+    expect(html).toContain('digest-new');
+    expect(html).toContain('Not applied');
+    expect(html).toContain('Approve proposed change');
+    expect(html).toContain('Reject proposed change');
+    expect(html).toContain('fixture-token');
+    expect(html).toContain('PROPOSAL_PENDING_DECISION');
+  });
+
+  it('renders decided S9 history without offering to rewrite the decision', () => {
+    const proposal: FixtureChangeProposal = {
+      proposalId: 'proposal-web-002',
+      fixturePath: 'digests/research.json',
+      expectedDigest: 'digest-before',
+      proposedDigest: 'digest-after',
+      runId: 'run-web-1',
+      executionId: 'exec-1',
+    };
+    const approval = decideFixtureChange({
+      proposal,
+      decision: 'rejected',
+      approver: '<reviewer>',
+      rationale: '<unsafe> insufficient evidence',
+      decidedAt: '2026-08-05T20:30:00.000Z',
+    });
+    const html = renderFixtureReviewViewHtml(
+      buildFixtureReviewView({
+        proposals: [proposal],
+        approvals: [approval],
+        unreadable: ['<broken>.json'],
+      }),
+      { csrfToken: 'fixture-token' },
+    );
+
+    expect(html).toContain('rejected');
+    expect(html).toContain('&lt;reviewer&gt;');
+    expect(html).toContain('&lt;unsafe&gt; insufficient evidence');
+    expect(html).toContain('&lt;broken&gt;.json');
+    expect(html).not.toContain('<reviewer>');
+    expect(html).not.toContain('action="/s9/decision"');
+  });
+
   it('names the contract on stub surfaces', () => {
     const html = renderStubSurface({
-      surface: 's9',
-      title: 'S9 Fixture review',
-      contractVersion: 'acme-view-fixture-review/1',
+      surface: 's10',
+      title: 'S10 Live evaluation',
+      contractVersion: 'acme-view-live-evaluation/1',
     });
-    expect(html).toContain('acme-view-fixture-review/1');
+    expect(html).toContain('acme-view-live-evaluation/1');
     expect(html).toContain('not rendered in the first visual slice');
   });
 

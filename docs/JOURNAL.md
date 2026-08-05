@@ -2,6 +2,46 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — ACME-0052 browser fixture review archived
+
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0052
+- Summary: Rendered `acme-view-fixture-review/1` as S9 in the loopback
+  workbench. A complete request-local proposal can now be tied to recorded
+  run/execution provenance, reviewed as pending and explicitly approved or
+  rejected by a named reviewer with a rationale.
+- Delivered: pure `renderFixtureReviewViewHtml`; `/s9` and
+  `/api/fixture-review`; protected `/s9/decision`; decided history rebuilt
+  from complete approval records; health registration and removal of the S9
+  stub.
+- Honesty/safety: the route does not infer digests from failure text, compute a
+  fixture diff or read/write the fixture. Decisions are built by
+  `decideFixtureChange`, stored only as `acme-fixture-approval/1`, remain
+  visibly `applied: false`, and cannot overwrite existing, conflicting,
+  unreadable or concurrent proposal ids. CSRF, same-server proof, bounded body,
+  reviewer and rationale are mandatory.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` — 543 tests / 60 files;
+  `pnpm test:conformance` — 58 / 7; `pnpm test:integration` — 53 / 8;
+  `pnpm test:scenario` — 21 / 4; `pnpm docs:check` — 119 Markdown files after
+  archive; `pnpm build`;
+  `git diff --check`.
+- Browser: staged the recorded digest mismatch from `demo-narrative-002`,
+  observed pending state and both explicit controls, then recorded a local
+  test rejection. Redirected history showed the named reviewer, rationale,
+  `rejected`, zero pending decisions and `Not applied`; no rewrite form
+  remained. At 622 px there was no horizontal overflow or error overlay.
+- Fixture proof: `tests/scenario/files/digests/narrative-phase-5.json` retained
+  SHA-256 `A31E00FFDFF103D3582F582A7B54D60C3B494A493CDBD0A0525255223E6BBC86`
+  before and after the browser decision.
+- External effects: no live provider call, paid request, deployment, package
+  publication, push or release. One disposable rejected approval was stored
+  only under the ignored local demo workspace for browser verification.
+- Follow-up: S10 live-evaluation rendering is the remaining bounded browser
+  surface; multi-step live scenarios remain a separate optional charter.
+- Signature: Codex
+
 ## 2026-08-05 — ACME-0051 browser measurement archived
 
 - Date: 2026-08-05

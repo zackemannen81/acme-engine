@@ -135,6 +135,8 @@ textarea {
 }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .measurement-form { display: grid; gap: 1rem; }
+.fixture-form, .decision-form { display: grid; gap: 0.8rem; }
+.decision-form textarea { min-height: 7rem; }
 .threshold-grid, .measure-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
@@ -144,6 +146,21 @@ textarea {
 .measure-card { display: grid; align-content: start; gap: 0.65rem; }
 .measure-rate { margin: 0; font-size: 1.8rem; font-weight: 650; }
 .measure-card meter { width: 100%; height: 0.8rem; accent-color: var(--info); }
+.fixture-proposal { display: grid; gap: 1rem; }
+.digest-change {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+.digest-change div { min-width: 0; display: grid; gap: 0.25rem; }
+.digest-change code { overflow-wrap: anywhere; }
+.fixture-instruction { margin: 0; }
+.decision-panel {
+  border-top: 1px solid var(--line);
+  padding-top: 0.9rem;
+}
+.decision-panel h4 { margin: 0 0 0.6rem; }
 .button-link {
   display: inline-block;
   border: 1px solid var(--info);
@@ -221,5 +238,6 @@ pre {
   nav { position: static; }
   nav a { display: inline-block; }
   main { padding: 1rem; }
+  .digest-change { grid-template-columns: 1fr; }
 }
 `.trim();

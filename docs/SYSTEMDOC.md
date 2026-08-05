@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-08-05
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S1–S8 rendered)
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S1–S9 rendered)
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -745,8 +745,9 @@ evaluation (ADRs 0022–0023). ACME-0045 added the loopback shell (ADR-0024),
 ACME-0046 connected S2 to protected offline preview and launch, ACME-0047
 rendered the existing catalog contract as S1, and ACME-0048 rendered durable
 memory-decision evidence as S5. ACME-0049 rendered repository state lineage as
-S6, ACME-0050 rendered read-only replay verification as S7, and ACME-0051
-rendered recorded-run measurement as S8.
+S6, ACME-0050 rendered read-only replay verification as S7, ACME-0051
+rendered recorded-run measurement as S8, and ACME-0052 rendered fixture review
+as S9.
 
 Implemented today:
 
@@ -844,7 +845,8 @@ Implemented today:
   contracts into accessible markup without recomputing verdicts. A loopback-only
   HTTP process (`startWorkbenchServer`, `workbench-main`) serves S1 catalog,
   S2 authoring, S3 history, S4 execution, S5 memory-decision, S6 state, S7
-  replay and S8 measurement pages plus navigation stubs for S9–S10. S1 reuses
+  replay, S8 measurement and S9 fixture-review pages plus an S10 navigation
+  stub. S1 reuses
   the composition's static registries, the runner's
   validator and bounded discovery under the configured scenario root; it
   accepts no browser path and keeps invalid, missing, refused, orphan and
@@ -870,6 +872,14 @@ Implemented today:
   An unreadable run record refuses the complete view so no format change can
   silently shorten a sample. Deterministic and live cards remain separate;
   the route writes no artifact and calls no provider.
+  S9 stages one complete proposal request-locally and checks its run/execution
+  provenance against the workspace without parsing failure text or reading a
+  fixture. A CSRF- and same-server-protected decision calls
+  `decideFixtureChange` and records only the resulting approval artifact.
+  Existing, conflicting, unreadable and concurrent proposal ids are refused,
+  so browser review cannot rewrite its own history. Decided cards reconstruct
+  their proposals from the approval record and remain explicitly
+  `applied: false`.
   The S2 form accepts bounded YAML/JSON, requires a per-process token and
   same-server request proof, uses a process-configured scenario root, refuses
   unsafe or duplicate run ids, and calls the existing synchronous `launchPlan`
@@ -889,7 +899,7 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: multi-step live scenarios; complete HTML for S9–S10;
+Not implemented: multi-step live scenarios; complete HTML for S10;
 live-launch chrome in the browser; remote hosting. The plan format's
 `measurements` block remains absent. S3's live-progress section stays
 unavailable until something runs in the background.
@@ -912,7 +922,7 @@ unavailable until something runs in the background.
   nothing drains on its own.
 - The Domain Test UI read model projects recorded evidence and, for S8 only,
   aggregates rates against configured thresholds (ADR-0019, ADR-0022). Live
-  evaluation is gated (ADR-0023). A loopback workbench renders S1–S8 HTML
+  evaluation is gated (ADR-0023). A loopback workbench renders S1–S9 HTML
   from those contracts and launches only bounded offline plans through the
   existing application boundary (ADR-0024). It invents no quality score and
   writes no golden fixture. It is a leaf; deleting it loses no canonical fact.

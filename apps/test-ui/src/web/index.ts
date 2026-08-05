@@ -17,6 +17,11 @@ export { renderMemoryDecisionsViewHtml } from './render-memory-decisions.js';
 export { renderStateViewHtml } from './render-state.js';
 export { renderReplayViewHtml } from './render-replay.js';
 export { renderMeasurementViewHtml } from './render-measurement.js';
+export {
+  renderFixtureReviewViewHtml,
+  type FixtureReviewNotice,
+  type FixtureReviewRenderOptions,
+} from './render-fixture-review.js';
 export { renderCatalogViewHtml } from './render-catalog.js';
 export {
   renderPlanViewHtml,

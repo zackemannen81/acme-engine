@@ -267,9 +267,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 540 passing unit-suite tests across packages, integration and scenario paths
+- 543 passing unit-suite tests across packages, integration and scenario paths
   exercised by `pnpm test:unit` (60 files), with separate conformance (58),
-  integration (52) and scenario (21) gates
+  integration (53) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -349,8 +349,12 @@ template until the next charter is explicitly approved.
   separate deterministic/live rate cards, request-local thresholds, explicit
   stored-baseline selection and refusal when unreadable records would silently
   shrink the evidence set.
+- **ACME-0052:** S9 browser fixture review with request-local proposals tied to
+  recorded run/execution provenance, CSRF-protected named decisions,
+  append-once approval history and an explicit never-applied repository-edit
+  instruction.
 
-### Domain Test UI (phases 0–6 and S1–S8 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S9 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -441,7 +445,16 @@ missing/unreadable baseline is refused. Any unreadable run record refuses the
 whole measurement so the denominator cannot shrink silently. The route writes
 nothing and performs no provider call.
 
-Not delivered: multi-step live scenarios; complete renderers for S9–S10;
+Delivered by ACME-0052: the pure S9 fixture-review renderer plus `/s9`,
+`/api/fixture-review` and protected `/s9/decision`. A complete proposal is
+request-local and must point to an existing workspace run/execution; no
+proposal file is invented. Approval/rejection reuses `decideFixtureChange`
+and stores only `acme-fixture-approval/1`. Existing, conflicting, unreadable
+or concurrent proposal ids cannot be overwritten. Decided history is rebuilt
+from approval records, remains `applied: false` and never reads or writes the
+fixture.
+
+Not delivered: multi-step live scenarios; the S10 renderer;
 live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
@@ -464,11 +477,11 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0051).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0052).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S8, including registry/discovery catalog, protected offline plan
+  S1–S9, including registry/discovery catalog, protected offline plan
   preview/launch, durable memory/state inspection, replay verification and
-  recorded-run measurement; S9–S10 remain stubs and live browser launch remains
+  recorded-run measurement plus fixture review; S10 remains a stub and live browser launch remains
   absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.

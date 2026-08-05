@@ -249,6 +249,7 @@ export {
   escapeHtml,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
+  renderFixtureReviewViewHtml,
   renderMemoryDecisionsViewHtml,
   renderMeasurementViewHtml,
   renderReplayViewHtml,
@@ -260,6 +261,8 @@ export {
   WORKBENCH_CSS,
   type PlanWorkbenchNotice,
   type PlanWorkbenchRenderOptions,
+  type FixtureReviewNotice,
+  type FixtureReviewRenderOptions,
   type WorkbenchSurface,
 } from './web/index.js';
 

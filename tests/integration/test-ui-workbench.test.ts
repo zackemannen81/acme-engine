@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -67,6 +67,14 @@ async function formToken(url: string): Promise<string> {
   const match = /name="csrfToken" value="([a-f0-9]+)"/u.exec(html);
   if (match?.[1] === undefined) {
     throw new Error('S2 did not render a form token.');
+  }
+  return match[1];
+}
+
+function tokenFromHtml(html: string): string {
+  const match = /name="csrfToken" value="([a-f0-9]+)"/u.exec(html);
+  if (match?.[1] === undefined) {
+    throw new Error('The page did not render a form token.');
   }
   return match[1];
 }
@@ -316,6 +324,199 @@ describe('test-ui local workbench server', () => {
     expect(await incomplete.text()).toContain(
       'unreadable run records would shrink the evidence set',
     );
+  });
+
+  it('reviews and records one S9 decision without changing the fixture', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'acme-wb-fixture-review-'));
+    roots.push(root);
+    const workspace = createFileWorkspace({ root });
+    const run: RunRecord = {
+      version: RUN_RECORD_VERSION,
+      runId: 'fixture-review-run',
+      planName: 'fixture-review-plan',
+      scenarioName: 'fixture-review-plan',
+      startedAt: '2026-08-05T20:30:00.000Z',
+      finishedAt: '2026-08-05T20:30:01.000Z',
+      composition: { repository: 'memory', gateway: 'mock' },
+      status: 'failed',
+      steps: [{ index: 0, kind: 'assertDigest', status: 'failed' }],
+      cases: [{ alias: 'only', executionId: 'exec-fixture-review' }],
+      failure: { stepIndex: 0, message: 'recorded digest mismatch' },
+    };
+    await workspace.recordRun(run);
+    const fixture = join(scenarioFiles, 'digests', 'narrative-phase-5.json');
+    const fixtureBefore = readFileSync(fixture, 'utf8');
+
+    const server = await startWorkbenchServer({
+      workspaceRoot: root,
+      scenarioRoot: scenarioFiles,
+      host: '127.0.0.1',
+      port: 0,
+      clock: { now: () => '2026-08-05T20:31:00.000Z' },
+      ids: { next: (kind) => `${kind}-fixture-review` },
+    });
+    servers.push(server);
+
+    const proposal = new URLSearchParams({
+      proposalId: 'proposal-browser-001',
+      fixturePath: 'digests/narrative-phase-5.json',
+      expectedDigest: 'digest-pinned',
+      proposedDigest: 'digest-observed',
+      runId: run.runId,
+      executionId: 'exec-fixture-review',
+    });
+    const defaultApi = await fetch(`${server.url}/api/fixture-review`);
+    expect(defaultApi.status).toBe(200);
+    expect(await defaultApi.json()).toMatchObject({
+      view: 'acme-view-fixture-review/1',
+      proposalCount: 0,
+      pendingCount: 0,
+    });
+
+    const pendingApi = await fetch(
+      `${server.url}/api/fixture-review?${proposal}`,
+    );
+    expect(pendingApi.status).toBe(200);
+    expect(await pendingApi.json()).toMatchObject({
+      proposalCount: 1,
+      pendingCount: 1,
+      approvedCount: 0,
+      rejectedCount: 0,
+      proposals: [
+        {
+          proposalId: 'proposal-browser-001',
+          status: 'pending',
+          change: { applied: false },
+        },
+      ],
+    });
+
+    const pendingPage = await fetch(`${server.url}/s9?${proposal}`);
+    expect(pendingPage.status).toBe(200);
+    const pendingHtml = await pendingPage.text();
+    const token = tokenFromHtml(pendingHtml);
+    expect(pendingHtml).toContain('pending');
+    expect(pendingHtml).toContain('Not applied');
+    expect(pendingHtml).toContain('Approve proposed change');
+    expect(pendingHtml).toContain('Reject proposed change');
+
+    const decision = new URLSearchParams(proposal);
+    decision.set('csrfToken', token);
+    decision.set('decision', 'rejected');
+    decision.set('approver', 'test-reviewer');
+    decision.set('rationale', 'the observed digest lacks pinned evidence');
+    const decided = await fetch(`${server.url}/s9/decision`, {
+      method: 'POST',
+      headers: { origin: server.url },
+      body: decision,
+      redirect: 'manual',
+    });
+    expect(decided.status).toBe(303);
+    expect(decided.headers.get('location')).toContain('/s9?proposalId=');
+
+    const decidedPage = await fetch(
+      new URL(decided.headers.get('location') ?? '', server.url),
+    );
+    expect(decidedPage.status).toBe(200);
+    const decidedHtml = await decidedPage.text();
+    expect(decidedHtml).toContain('rejected');
+    expect(decidedHtml).toContain('test-reviewer');
+    expect(decidedHtml).toContain('the observed digest lacks pinned evidence');
+    expect(decidedHtml).toContain('Not applied');
+    expect(decidedHtml).not.toContain('action="/s9/decision"');
+    expect(readFileSync(fixture, 'utf8')).toBe(fixtureBefore);
+
+    const approvals = await workspace.listApprovals();
+    expect(approvals.records).toHaveLength(1);
+    expect(approvals.records[0]).toMatchObject({
+      proposalId: 'proposal-browser-001',
+      decision: 'rejected',
+      approver: 'test-reviewer',
+      decidedAt: '2026-08-05T20:31:00.000Z',
+    });
+
+    const overwrite = await fetch(`${server.url}/s9/decision`, {
+      method: 'POST',
+      headers: { origin: server.url },
+      body: decision,
+      redirect: 'manual',
+    });
+    expect(overwrite.status).toBe(409);
+    expect((await workspace.listApprovals()).records).toStrictEqual(
+      approvals.records,
+    );
+
+    const conflicting = new URLSearchParams(proposal);
+    conflicting.set('proposedDigest', 'different-proposal');
+    const conflict = await fetch(
+      `${server.url}/api/fixture-review?${conflicting}`,
+    );
+    expect(conflict.status).toBe(409);
+    expect(await conflict.text()).toContain('conflicts with its recorded');
+
+    const missingRun = new URLSearchParams(proposal);
+    missingRun.set('proposalId', 'proposal-missing-run');
+    missingRun.set('runId', 'not-recorded');
+    expect(
+      (await fetch(`${server.url}/api/fixture-review?${missingRun}`)).status,
+    ).toBe(404);
+    const wrongExecution = new URLSearchParams(proposal);
+    wrongExecution.set('proposalId', 'proposal-wrong-execution');
+    wrongExecution.set('executionId', 'not-linked');
+    expect(
+      (await fetch(`${server.url}/api/fixture-review?${wrongExecution}`))
+        .status,
+    ).toBe(409);
+    const partial = await fetch(
+      `${server.url}/api/fixture-review?proposalId=partial`,
+    );
+    expect(partial.status).toBe(400);
+    const unsafePath = new URLSearchParams(proposal);
+    unsafePath.set('proposalId', 'proposal-unsafe-path');
+    unsafePath.set('fixturePath', '../../secret.json');
+    expect(
+      (await fetch(`${server.url}/api/fixture-review?${unsafePath}`)).status,
+    ).toBe(400);
+
+    const second = new URLSearchParams(proposal);
+    second.set('proposalId', 'proposal-missing-rationale');
+    second.set('csrfToken', token);
+    second.set('decision', 'approved');
+    second.set('approver', 'test-reviewer');
+    const missingRationale = await fetch(`${server.url}/s9/decision`, {
+      method: 'POST',
+      headers: { origin: server.url },
+      body: second,
+      redirect: 'manual',
+    });
+    expect(missingRationale.status).toBe(400);
+    const badToken = new URLSearchParams(second);
+    badToken.set('rationale', 'has a rationale');
+    badToken.set('csrfToken', 'wrong-token');
+    const refusedToken = await fetch(`${server.url}/s9/decision`, {
+      method: 'POST',
+      headers: { origin: server.url },
+      body: badToken,
+      redirect: 'manual',
+    });
+    expect(refusedToken.status).toBe(403);
+
+    writeFileSync(
+      join(root, 'approvals', 'proposal-unreadable.json'),
+      '{not-json',
+      'utf8',
+    );
+    const unreadableProposal = new URLSearchParams(proposal);
+    unreadableProposal.set('proposalId', 'proposal-unreadable');
+    expect(
+      (await fetch(`${server.url}/api/fixture-review?${unreadableProposal}`))
+        .status,
+    ).toBe(409);
+    const history = (await (
+      await fetch(`${server.url}/api/fixture-review`)
+    ).json()) as { unreadable: readonly string[] };
+    expect(history.unreadable).toContain('proposal-unreadable.json');
+    expect(readFileSync(fixture, 'utf8')).toBe(fixtureBefore);
   });
 
   it('serves S1 from static registries and bounded scenario discovery', async () => {
