@@ -2,6 +2,45 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — ACME-0051 browser measurement archived
+
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0051
+- Summary: Rendered `acme-view-measurement/1` as S8 in the loopback workbench.
+  Recorded mock and non-mock runs now appear as separate deterministic/live
+  measurement cards with observed counts, sample sizes, rates, configured
+  threshold outcomes and explicit baseline comparisons.
+- Delivered: pure `renderMeasurementViewHtml`; `/s8` and
+  `/api/measurement`; request-local finite `0..1` min/max bounds for the three
+  existing measures; safe lookup of one deliberately stored baseline; health
+  contract registration; removal of the S8 stub.
+- Honesty/safety: empty samples remain `MEASUREMENT_SAMPLE_EMPTY`; no threshold
+  means no outcome and no baseline means no comparison. Invalid bounds,
+  unsafe/missing baselines and any unreadable run record are refused so a
+  sample cannot silently shrink. The route writes nothing, promotes no
+  baseline, invents no score and calls no provider.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` — 540 tests / 60 files;
+  `pnpm test:conformance` — 58 / 7; `pnpm test:integration` — 52 / 8;
+  `pnpm test:scenario` — 21 / 4; `pnpm docs:check` — 118 Markdown files after
+  archive; `pnpm build`;
+  `git diff --check`.
+- Browser: the seven-record demo workspace rendered 5 deterministic and 2
+  live runs without mixing them. Request-local thresholds produced the
+  expected `met` / `not-met` outcomes and the selected stored baseline stayed
+  `unchanged`; live baseline comparison remained unavailable. A separate
+  empty workspace rendered six `MEASUREMENT_SAMPLE_EMPTY` states and no false
+  zero or perfect rate. The checked viewport had no horizontal overflow or
+  error overlay.
+- External effects: no live provider call, paid request, deployment, package
+  publication, push or release. A disposable `s8-browser` baseline was stored
+  only under the ignored local demo workspace for browser verification.
+- Follow-up: S9 fixture-review rendering is the nearest bounded UI
+  continuation; S10 browser rendering, live browser controls and multi-step
+  live scenarios remain separate optional charters.
+- Signature: Codex
+
 ## 2026-08-05 — ACME-0050 browser replay inspector archived
 
 - Date: 2026-08-05

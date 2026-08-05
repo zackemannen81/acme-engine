@@ -1,11 +1,16 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { RUN_RECORD_VERSION } from '../../apps/test-ui/src/index.js';
+import {
+  RUN_RECORD_VERSION,
+  buildMeasurementView,
+  captureBaseline,
+  type RunRecord,
+} from '../../apps/test-ui/src/index.js';
 import {
   createFileWorkspace,
   startWorkbenchServer,
@@ -158,6 +163,159 @@ describe('test-ui local workbench server', () => {
     expect(html).toContain('workbench-run-1');
     expect(html).toContain('S3 Run console');
     expect(html).toContain('demo-plan');
+  });
+
+  it('serves read-only S8 measurement with thresholds and a stored baseline', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'acme-wb-measurement-'));
+    roots.push(root);
+    const workspace = createFileWorkspace({ root });
+    const deterministic: RunRecord = {
+      version: RUN_RECORD_VERSION,
+      runId: 'measurement-mock',
+      planName: 'measurement-plan',
+      scenarioName: 'measurement-plan',
+      startedAt: '2026-08-05T10:00:00.000Z',
+      finishedAt: '2026-08-05T10:00:01.000Z',
+      composition: { repository: 'memory', gateway: 'mock' },
+      status: 'passed',
+      steps: [
+        { index: 0, kind: 'execute', status: 'passed' },
+        { index: 1, kind: 'replay', status: 'passed' },
+      ],
+      cases: [{ alias: 'only', executionId: 'exec-measurement-mock' }],
+      failure: null,
+    };
+    const live: RunRecord = {
+      ...deterministic,
+      runId: 'measurement-live',
+      composition: { repository: 'memory', gateway: 'openai' },
+      status: 'failed',
+      steps: [
+        { index: 0, kind: 'execute', status: 'failed' },
+        { index: 1, kind: 'replay', status: 'failed' },
+      ],
+      cases: [{ alias: 'only', executionId: 'exec-measurement-live' }],
+      failure: { stepIndex: 0, message: 'recorded failure' },
+    };
+    await workspace.recordRun(deterministic);
+    await workspace.recordRun(live);
+    const baseline = captureBaseline({
+      name: 'nightly',
+      capturedAt: '2026-08-04T10:00:00.000Z',
+      view: buildMeasurementView({
+        records: [
+          deterministic,
+          { ...deterministic, runId: 'baseline-failed', status: 'failed' },
+        ],
+      }),
+    });
+    await workspace.saveBaseline(baseline);
+
+    const server = await startWorkbenchServer({
+      workspaceRoot: root,
+      host: '127.0.0.1',
+      port: 0,
+      clock: { now: () => '2026-08-05T10:00:02.000Z' },
+      ids: { next: (kind) => `${kind}-measurement` },
+    });
+    servers.push(server);
+
+    const query = new URLSearchParams({
+      baseline: 'nightly',
+      'runPassRate.min': '1',
+      'stepPassRate.min': '0.75',
+      'replayMatchRate.min': '1',
+    });
+    const api = await fetch(`${server.url}/api/measurement?${query}`);
+    expect(api.status).toBe(200);
+    const view = (await api.json()) as {
+      view: string;
+      baselineName: string | null;
+      deterministic: {
+        runCount: number;
+        measures: readonly {
+          id: string;
+          sampleSize: number;
+          outcome: string | null;
+          baseline: { availability: string; comparison?: string };
+        }[];
+      };
+      live: {
+        runCount: number;
+        measures: readonly { id: string; outcome: string | null }[];
+      };
+    };
+    expect(view).toMatchObject({
+      view: 'acme-view-measurement/1',
+      baselineName: 'nightly',
+      deterministic: { runCount: 1 },
+      live: { runCount: 1 },
+    });
+    expect(
+      view.deterministic.measures.find(
+        (measure) => measure.id === 'runPassRate',
+      ),
+    ).toMatchObject({
+      sampleSize: 1,
+      outcome: 'met',
+      baseline: { availability: 'available', comparison: 'improved' },
+    });
+    expect(
+      view.live.measures.find((measure) => measure.id === 'runPassRate'),
+    ).toMatchObject({ outcome: 'not-met' });
+
+    const page = await fetch(`${server.url}/s8?${query}`);
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain('S8 Results and measurement');
+    expect(html).toContain('acme-view-measurement/1');
+    expect(html).toContain('Deterministic series');
+    expect(html).toContain('Live series');
+    expect(html).toContain('100.0%');
+    expect(html).toContain('0.0%');
+    expect(html).toContain('improved');
+    expect(html).toContain('not-met');
+    expect(await workspace.loadBaseline('nightly')).toStrictEqual(baseline);
+    expect((await workspace.listRuns()).records).toHaveLength(2);
+
+    const defaultView = (await (
+      await fetch(`${server.url}/api/measurement`)
+    ).json()) as {
+      baselineName: string | null;
+      deterministic: { measures: readonly { outcome: string | null }[] };
+    };
+    expect(defaultView.baselineName).toBeNull();
+    expect(
+      defaultView.deterministic.measures.every(
+        (entry) => entry.outcome === null,
+      ),
+    ).toBe(true);
+
+    const invalidRate = await fetch(
+      `${server.url}/api/measurement?runPassRate.min=1.1`,
+    );
+    expect(invalidRate.status).toBe(400);
+    expect(await invalidRate.text()).toContain('between 0 and 1');
+    const inverted = await fetch(
+      `${server.url}/s8?runPassRate.min=0.9&runPassRate.max=0.8`,
+    );
+    expect(inverted.status).toBe(400);
+    expect(await inverted.text()).toContain('minimum cannot exceed');
+    const missingBaseline = await fetch(
+      `${server.url}/api/measurement?baseline=missing`,
+    );
+    expect(missingBaseline.status).toBe(404);
+    const unsafeBaseline = await fetch(
+      `${server.url}/api/measurement?baseline=..%2Fescape`,
+    );
+    expect(unsafeBaseline.status).toBe(400);
+
+    writeFileSync(join(root, 'runs', 'broken.json'), '{not-json', 'utf8');
+    const incomplete = await fetch(`${server.url}/api/measurement`);
+    expect(incomplete.status).toBe(409);
+    expect(await incomplete.text()).toContain(
+      'unreadable run records would shrink the evidence set',
+    );
   });
 
   it('serves S1 from static registries and bounded scenario discovery', async () => {

@@ -30,11 +30,15 @@ import {
   buildCatalogView,
   buildExecutionView,
   buildMemoryDecisionsView,
+  buildMeasurementView,
   buildPlanView,
   buildReplayView,
   buildRunsView,
   buildStateView,
   isSafeRunId,
+  type MeasureId,
+  type MeasurementThresholds,
+  type MeasurementView,
   type PlanView,
 } from '../index.js';
 import { discoverCatalogSources } from '../node-source.js';
@@ -42,6 +46,7 @@ import { renderCatalogViewHtml } from '../web/render-catalog.js';
 import { escapeHtml } from '../web/escape.js';
 import { renderExecutionViewHtml } from '../web/render-execution.js';
 import { renderMemoryDecisionsViewHtml } from '../web/render-memory-decisions.js';
+import { renderMeasurementViewHtml } from '../web/render-measurement.js';
 import {
   renderPlanViewHtml,
   type PlanWorkbenchNotice,
@@ -110,11 +115,6 @@ const STUBS: readonly {
   readonly title: string;
   readonly contractVersion: string;
 }[] = [
-  {
-    id: 's8',
-    title: 'S8 Measurement',
-    contractVersion: MEASUREMENT_VIEW_VERSION,
-  },
   {
     id: 's9',
     title: 'S9 Fixture review',
@@ -196,6 +196,89 @@ function sendJson(
 async function readRuns(workspaceRoot: string) {
   const workspace = createFileWorkspace({ root: workspaceRoot });
   return workspace.listRuns();
+}
+
+const MEASUREMENT_QUERY_FIELDS: readonly {
+  readonly id: MeasureId;
+  readonly min: string;
+  readonly max: string;
+}[] = [
+  {
+    id: 'runPassRate',
+    min: 'runPassRate.min',
+    max: 'runPassRate.max',
+  },
+  {
+    id: 'stepPassRate',
+    min: 'stepPassRate.min',
+    max: 'stepPassRate.max',
+  },
+  {
+    id: 'replayMatchRate',
+    min: 'replayMatchRate.min',
+    max: 'replayMatchRate.max',
+  },
+];
+
+interface MeasurementRouteFailure {
+  readonly ok: false;
+  readonly status: 400 | 404 | 409;
+  readonly message: string;
+}
+
+type MeasurementRouteResult =
+  | { readonly ok: true; readonly view: MeasurementView }
+  | MeasurementRouteFailure;
+
+function measurementRate(
+  search: URLSearchParams,
+  name: string,
+): number | undefined | MeasurementRouteFailure {
+  const source = search.get(name);
+  if (source === null || source.trim().length === 0) {
+    return undefined;
+  }
+  const value = Number(source);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    return {
+      ok: false,
+      status: 400,
+      message: `${name} must be a finite rate between 0 and 1.`,
+    };
+  }
+  return value;
+}
+
+function measurementThresholds(
+  search: URLSearchParams,
+): MeasurementThresholds | MeasurementRouteFailure {
+  const thresholds: Partial<
+    Record<MeasureId, { readonly min?: number; readonly max?: number }>
+  > = {};
+  for (const field of MEASUREMENT_QUERY_FIELDS) {
+    const min = measurementRate(search, field.min);
+    if (typeof min === 'object') {
+      return min;
+    }
+    const max = measurementRate(search, field.max);
+    if (typeof max === 'object') {
+      return max;
+    }
+    if (min !== undefined && max !== undefined && min > max) {
+      return {
+        ok: false,
+        status: 400,
+        message: `${field.id} minimum cannot exceed its maximum.`,
+      };
+    }
+    if (min !== undefined || max !== undefined) {
+      thresholds[field.id] = {
+        ...(min === undefined ? {} : { min }),
+        ...(max === undefined ? {} : { max }),
+      };
+    }
+  }
+  return thresholds;
 }
 
 function tokenMatches(actual: string, expected: string): boolean {
@@ -383,6 +466,51 @@ export async function startWorkbenchServer(
     });
   }
 
+  async function measurementView(url: URL): Promise<MeasurementRouteResult> {
+    const thresholds = measurementThresholds(url.searchParams);
+    if ('ok' in thresholds) {
+      return thresholds;
+    }
+    const workspace = createFileWorkspace({ root: workspaceRoot });
+    const history = await workspace.listRuns();
+    if (history.unreadable.length > 0) {
+      return {
+        ok: false,
+        status: 409,
+        message: `Measurement refused because unreadable run records would shrink the evidence set: ${history.unreadable.join(', ')}.`,
+      };
+    }
+
+    const requestedBaseline = url.searchParams.get('baseline')?.trim() ?? '';
+    if (requestedBaseline.length > 0 && !isSafeRunId(requestedBaseline)) {
+      return {
+        ok: false,
+        status: 400,
+        message: 'The baseline name must be a safe file name.',
+      };
+    }
+    const baseline =
+      requestedBaseline.length === 0
+        ? null
+        : await workspace.loadBaseline(requestedBaseline);
+    if (requestedBaseline.length > 0 && baseline === null) {
+      return {
+        ok: false,
+        status: 404,
+        message: `Baseline ${JSON.stringify(requestedBaseline)} was not found or is unreadable.`,
+      };
+    }
+
+    return {
+      ok: true,
+      view: buildMeasurementView({
+        records: history.records,
+        thresholds,
+        baseline,
+      }),
+    };
+  }
+
   async function handle(
     request: IncomingMessage,
     response: ServerResponse,
@@ -403,6 +531,7 @@ export async function startWorkbenchServer(
             memoryDecisions: MEMORY_DECISION_VIEW_VERSION,
             state: STATE_VIEW_VERSION,
             replay: REPLAY_VIEW_VERSION,
+            measurement: MEASUREMENT_VIEW_VERSION,
           },
         });
         return;
@@ -530,6 +659,19 @@ export async function startWorkbenchServer(
           return;
         }
         sendJson(response, 200, await replayView(executionId));
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/measurement') {
+        const result = await measurementView(url);
+        if (!result.ok) {
+          sendJson(response, result.status, {
+            error: result.message,
+            view: MEASUREMENT_VIEW_VERSION,
+          });
+          return;
+        }
+        sendJson(response, 200, result.view);
         return;
       }
 
@@ -1019,6 +1161,31 @@ export async function startWorkbenchServer(
           response,
           200,
           renderReplayViewHtml(await replayView(executionId)),
+          'text/html; charset=utf-8',
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/s8') {
+        const result = await measurementView(url);
+        if (!result.ok) {
+          send(
+            response,
+            result.status,
+            renderShell({
+              surface: 's8',
+              title: 'S8 Measurement refused',
+              subtitle: `View ${MEASUREMENT_VIEW_VERSION}`,
+              body: `<section class="card error-banner"><p>${escapeHtml(result.message)}</p><p><a href="/s8">Return to an unconfigured measurement</a></p></section>`,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        send(
+          response,
+          200,
+          renderMeasurementViewHtml(result.view),
           'text/html; charset=utf-8',
         );
         return;

@@ -109,6 +109,14 @@ code, .mono { font-family: var(--mono); font-size: 0.85em; }
   background: #f4f9fd;
 }
 form label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+}
+fieldset legend { padding: 0 0.25rem; font-size: 0.85rem; font-weight: 600; }
 input, textarea, button { font: inherit; }
 input, textarea {
   width: 100%;
@@ -126,6 +134,16 @@ textarea {
   line-height: 1.45;
 }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.measurement-form { display: grid; gap: 1rem; }
+.threshold-grid, .measure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: 0.75rem;
+}
+.threshold-grid fieldset { display: grid; gap: 0.65rem; }
+.measure-card { display: grid; align-content: start; gap: 0.65rem; }
+.measure-rate { margin: 0; font-size: 1.8rem; font-weight: 650; }
+.measure-card meter { width: 100%; height: 0.8rem; accent-color: var(--info); }
 .button-link {
   display: inline-block;
   border: 1px solid var(--info);

@@ -267,9 +267,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 537 passing unit-suite tests across packages, integration and scenario paths
+- 540 passing unit-suite tests across packages, integration and scenario paths
   exercised by `pnpm test:unit` (60 files), with separate conformance (58),
-  integration (51) and scenario (21) gates
+  integration (52) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -345,8 +345,12 @@ template until the next charter is explicitly approved.
   linked from S4 with exact engine verdicts, digest comparison and redacted
   diagnostic differences; replay is guarded against provider calls and makes
   no canonical write.
+- **ACME-0051:** S8 browser measurement over workspace run records, with
+  separate deterministic/live rate cards, request-local thresholds, explicit
+  stored-baseline selection and refusal when unreadable records would silently
+  shrink the evidence set.
 
-### Domain Test UI (phases 0–6 and S1–S7 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S8 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -428,7 +432,16 @@ path cannot contact a provider. The renderer copies the engine's exact
   canonical effect. Programmatic server composition may receive an injected
   payload encryptor; the command-line workbench acquires no key itself.
 
-Not delivered: multi-step live scenarios; complete renderers for S8–S10;
+Delivered by ACME-0051: the pure S8 measurement renderer plus `/s8` and
+`/api/measurement`. Both aggregate every readable workspace run through
+`buildMeasurementView`, keep deterministic and live records separate, accept
+only request-local finite `0..1` min/max thresholds and optionally load one
+existing safe-named baseline. An absent baseline makes no comparison; a named
+missing/unreadable baseline is refused. Any unreadable run record refuses the
+whole measurement so the denominator cannot shrink silently. The route writes
+nothing and performs no provider call.
+
+Not delivered: multi-step live scenarios; complete renderers for S9–S10;
 live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
@@ -451,11 +464,11 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0050).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0051).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S7, including registry/discovery catalog, protected offline plan
-  preview/launch, durable memory/state inspection and replay verification;
-  S8–S10 remain stubs and live browser launch remains
+  S1–S8, including registry/discovery catalog, protected offline plan
+  preview/launch, durable memory/state inspection, replay verification and
+  recorded-run measurement; S9–S10 remain stubs and live browser launch remains
   absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.

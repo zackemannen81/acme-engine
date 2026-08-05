@@ -1,6 +1,6 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — phases 0–6 and S1–S7 browser flow delivered (ACME-0039 to ACME-0050); residual surfaces and multi-step live remain optional**
+Status: **Partially resolved — phases 0–6 and S1–S8 browser flow delivered (ACME-0039 to ACME-0051); residual surfaces and multi-step live remain optional**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
 Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md), [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md), [ADR-0022](../adr/0022-measurement-and-fixture-approval.md), [ADR-0023](../adr/0023-live-evaluation-gate.md), [ADR-0024](../adr/0024-local-spa-loopback-workbench.md)
@@ -17,7 +17,7 @@ were satisfied through ACME-0035 / ACME-0036, leaving two activation blockers:
 
 Both blockers on the first slice are now cleared. ACME-0039 accepted all seven
 gate freezes in ADR-0019 and delivered phases 0 and 1; ACME-0040 through
-ACME-0050 delivered phases 2–6 plus the first browser workbench slices.
+ACME-0051 delivered phases 2–6 plus the first browser workbench slices.
 
 A visual mock (non-authority) exists at:
 
@@ -59,7 +59,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Tenth** | Browser memory-decision renderer (S5) | **Done — ACME-0048** |
 | **Eleventh** | Browser state inspector (S6) | **Done — ACME-0049** |
 | **Twelfth** | Browser replay inspector (S7) | **Done — ACME-0050** |
-| Later | Remaining S8–S10 renderers; live browser controls; multi-step live | Open — optional |
+| **Thirteenth** | Browser measurement renderer (S8) | **Done — ACME-0051** |
+| Later | Remaining S9–S10 renderers; live browser controls; multi-step live | Open — optional |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -219,6 +220,20 @@ contracts made the Execution Inspector real and testable without a browser.
 - unit, HTTP integration and loopback browser verification against retained
   match and hash-only unavailable evidence
 
+## What ACME-0051 delivered
+
+- pure `renderMeasurementViewHtml` over `acme-view-measurement/1`
+- `/s8` HTML and `/api/measurement` JSON over every readable workspace run
+  record and an optional explicitly named stored baseline
+- request-local finite `0..1` min/max thresholds for the three existing
+  measures, with builder-owned outcomes and no persisted rule or score
+- separate deterministic/live cards, observed/sample counts and explicit
+  empty-sample and no-baseline states
+- refusal for unsafe/missing baselines, invalid bounds and any unreadable run
+  record that would silently shrink the evidence set
+- unit, HTTP integration and loopback browser verification without writes or
+  provider calls
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -240,11 +255,12 @@ verification story and must not expand an unrelated frozen charter.
   gated live evaluation (ADR-0023), the first workbench shell (ADR-0024), and
   protected browser offline plan launch (ACME-0046), S1 catalog rendering
   (ACME-0047), S5 memory-decision rendering (ACME-0048), S6 state-lineage
-  inspection (ACME-0049) and S7 replay verification (ACME-0050)
+  inspection (ACME-0049), S7 replay verification (ACME-0050) and S8
+  measurement rendering (ACME-0051)
 
 **Blocks remaining polish (decisions, not missing code):**
 
-- an explicit charter per residual (S8–S10 renderers, live browser controls,
+- an explicit charter per residual (S9–S10 renderers, live browser controls,
   multi-step live scenarios)
 
 **Residuals that shape later work only:**
@@ -253,7 +269,7 @@ verification story and must not expand an unrelated frozen charter.
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
-- workbench is bounded: S1–S7 HTML; S8–S10 remain stubs
+- workbench is bounded: S1–S8 HTML; S9–S10 remain stubs
 
 ## Suggested verification
 

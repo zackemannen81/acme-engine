@@ -250,6 +250,7 @@ export {
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderMemoryDecisionsViewHtml,
+  renderMeasurementViewHtml,
   renderReplayViewHtml,
   renderStateViewHtml,
   renderPlanViewHtml,

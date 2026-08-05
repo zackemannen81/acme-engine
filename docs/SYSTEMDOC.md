@@ -1,7 +1,7 @@
 # System Documentation
 
 Last updated: 2026-08-05
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S1–S7 rendered)
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a loopback HTML workbench (S1–S8 rendered)
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -745,17 +745,20 @@ evaluation (ADRs 0022–0023). ACME-0045 added the loopback shell (ADR-0024),
 ACME-0046 connected S2 to protected offline preview and launch, ACME-0047
 rendered the existing catalog contract as S1, and ACME-0048 rendered durable
 memory-decision evidence as S5. ACME-0049 rendered repository state lineage as
-S6, and ACME-0050 rendered read-only replay verification as S7.
+S6, ACME-0050 rendered read-only replay verification as S7, and ACME-0051
+rendered recorded-run measurement as S8.
 
 Implemented today:
 
 - `apps/test-ui` (`@acme/test-ui`), a leaf app. It may read public package
   entry points; it may not import a package internal, and nothing imports it.
   Both directions fail a dependency-cruiser fixture
-- seven versioned view contracts — `acme-view-execution/1` (S4),
+- ten versioned view contracts — `acme-view-execution/1` (S4),
   `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6),
   `acme-view-replay/1` (S7), `acme-view-catalog/1` (S1),
-  `acme-view-plan/1` (S2) and `acme-view-runs/1` (S3)
+  `acme-view-plan/1` (S2), `acme-view-runs/1` (S3),
+  `acme-view-measurement/1` (S8), `acme-view-fixture-review/1` (S9) and
+  `acme-view-live-evaluation/1` (S10)
 - pure builders from recorded evidence to those views. No I/O, no clock, no
   network, no browser; every contract is asserted as JSON
 - absence as an explicit value: each optional section is `available` or
@@ -840,9 +843,9 @@ Implemented today:
 - local workbench (ADR-0024): pure HTML renderers under `src/web/` turn view
   contracts into accessible markup without recomputing verdicts. A loopback-only
   HTTP process (`startWorkbenchServer`, `workbench-main`) serves S1 catalog,
-  S2 authoring, S3 history, S4 execution, S5 memory-decision and S6 state
-  pages plus
-  navigation stubs for other surfaces. S1 reuses the composition's static registries, the runner's
+  S2 authoring, S3 history, S4 execution, S5 memory-decision, S6 state, S7
+  replay and S8 measurement pages plus navigation stubs for S9–S10. S1 reuses
+  the composition's static registries, the runner's
   validator and bounded discovery under the configured scenario root; it
   accepts no browser path and keeps invalid, missing, refused, orphan and
   unavailable classifications visible. S5 loads `preparedCommit` through the
@@ -860,6 +863,13 @@ Implemented today:
   canonical evidence. A programmatic server caller may inject a
   `PayloadEncryptor` for retained encrypted replay; `workbench-main` acquires
   no key from arguments or environment.
+  S8 reads every workspace run record, then delegates all rates, threshold
+  outcomes and baseline comparisons to `buildMeasurementView`. Thresholds are
+  finite `0..1` request-local inputs and are never persisted. A baseline is
+  loaded only by an explicit safe name and is never promoted automatically.
+  An unreadable run record refuses the complete view so no format change can
+  silently shorten a sample. Deterministic and live cards remain separate;
+  the route writes no artifact and calls no provider.
   The S2 form accepts bounded YAML/JSON, requires a per-process token and
   same-server request proof, uses a process-configured scenario root, refuses
   unsafe or duplicate run ids, and calls the existing synchronous `launchPlan`
@@ -879,7 +889,7 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: multi-step live scenarios; complete HTML for S8–S10;
+Not implemented: multi-step live scenarios; complete HTML for S9–S10;
 live-launch chrome in the browser; remote hosting. The plan format's
 `measurements` block remains absent. S3's live-progress section stays
 unavailable until something runs in the background.
@@ -902,7 +912,7 @@ unavailable until something runs in the background.
   nothing drains on its own.
 - The Domain Test UI read model projects recorded evidence and, for S8 only,
   aggregates rates against configured thresholds (ADR-0019, ADR-0022). Live
-  evaluation is gated (ADR-0023). A loopback workbench renders S1–S7 HTML
+  evaluation is gated (ADR-0023). A loopback workbench renders S1–S8 HTML
   from those contracts and launches only bounded offline plans through the
   existing application boundary (ADR-0024). It invents no quality score and
   writes no golden fixture. It is a leaf; deleting it loses no canonical fact.

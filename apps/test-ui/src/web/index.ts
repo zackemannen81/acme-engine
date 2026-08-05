@@ -16,6 +16,7 @@ export { renderExecutionViewHtml } from './render-execution.js';
 export { renderMemoryDecisionsViewHtml } from './render-memory-decisions.js';
 export { renderStateViewHtml } from './render-state.js';
 export { renderReplayViewHtml } from './render-replay.js';
+export { renderMeasurementViewHtml } from './render-measurement.js';
 export { renderCatalogViewHtml } from './render-catalog.js';
 export {
   renderPlanViewHtml,

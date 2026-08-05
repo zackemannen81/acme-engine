@@ -9,13 +9,16 @@ import {
   buildCatalogView,
   buildExecutionView,
   buildMemoryDecisionsView,
+  buildMeasurementView,
   buildPlanView,
   buildReplayView,
   buildRunsView,
   buildStateView,
+  captureBaseline,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderMemoryDecisionsViewHtml,
+  renderMeasurementViewHtml,
   renderPlanViewHtml,
   renderReplayViewHtml,
   renderRunsViewHtml,
@@ -351,13 +354,77 @@ describe('pure HTML renderers', () => {
     expect(notRun).toContain('REPLAY_NOT_RUN');
   });
 
+  it('renders S8 deterministic and live rates with configured outcomes', () => {
+    const baselineView = buildMeasurementView({
+      records: [
+        record({
+          runId: 'baseline-pass',
+          steps: [
+            { index: 0, kind: 'execute', status: 'passed' },
+            { index: 1, kind: 'replay', status: 'passed' },
+          ],
+        }),
+        record({ runId: 'baseline-fail', status: 'failed' }),
+      ],
+    });
+    const baseline = captureBaseline({
+      name: 'nightly',
+      capturedAt: '2026-01-01T00:00:00.000Z',
+      view: baselineView,
+    });
+    const html = renderMeasurementViewHtml(
+      buildMeasurementView({
+        records: [
+          record({
+            steps: [
+              { index: 0, kind: 'execute', status: 'passed' },
+              { index: 1, kind: 'replay', status: 'passed' },
+            ],
+          }),
+          record({
+            runId: 'run-live',
+            composition: { repository: 'memory', gateway: 'openai' },
+            status: 'failed',
+            steps: [{ index: 0, kind: 'execute', status: 'failed' }],
+          }),
+        ],
+        thresholds: { runPassRate: { min: 1 } },
+        baseline,
+      }),
+    );
+
+    expect(html).toContain('S8 Results and measurement');
+    expect(html).toContain('acme-view-measurement/1');
+    expect(html).toContain('Deterministic series');
+    expect(html).toContain('Live series');
+    expect(html).toContain('100.0%');
+    expect(html).toContain('0.0%');
+    expect(html).toContain('met');
+    expect(html).toContain('not-met');
+    expect(html).toContain('improved');
+    expect(html).toContain('nightly');
+    expect(html).toContain('runPassRate.min');
+  });
+
+  it('renders empty S8 samples as unavailable and makes no baseline claim', () => {
+    const html = renderMeasurementViewHtml(
+      buildMeasurementView({ records: [] }),
+    );
+
+    expect(html.match(/MEASUREMENT_SAMPLE_EMPTY/gu)).toHaveLength(6);
+    expect(html).toContain('No baseline selected');
+    expect(html).toContain('BASELINE_UNAVAILABLE');
+    expect(html).not.toContain('<p class="measure-rate">100.0%</p>');
+    expect(html).not.toContain('<p class="measure-rate">0.0%</p>');
+  });
+
   it('names the contract on stub surfaces', () => {
     const html = renderStubSurface({
-      surface: 's8',
-      title: 'S8 Measurement',
-      contractVersion: 'acme-view-measurement/1',
+      surface: 's9',
+      title: 'S9 Fixture review',
+      contractVersion: 'acme-view-fixture-review/1',
     });
-    expect(html).toContain('acme-view-measurement/1');
+    expect(html).toContain('acme-view-fixture-review/1');
     expect(html).toContain('not rendered in the first visual slice');
   });
 

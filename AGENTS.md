@@ -27,7 +27,7 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   own, and neither reference module emits domain events yet.
 - The Domain Test UI is activated (ADR-0019 to ADR-0024). `apps/test-ui` holds
   phases 1–6 as versioned view contracts (S1–S10), plus a loopback HTML
-  workbench (S1–S7 rendered; S8–S10 stubbed). It includes
+  workbench (S1–S8 rendered; S9–S10 stubbed). It includes
   `acme-test-plan/1`, protected offline browser preview and launch, measurement,
   fixture review, and gated single-execute live evaluation. Default entry is
   pure (no I/O); workbench serve is opt-in on `./local`. It is a leaf.
