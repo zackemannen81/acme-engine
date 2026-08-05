@@ -2,6 +2,21 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — Changed test ui origin policy
+- Date: 2026-08-05
+- Author: Rickard Zakrisson
+- Task: Hotfix referer / origin mismatch.
+- Summary: Test ui S2 Surface rendered a 403 Invalid form origin refused. on (post) running / verifying the plan
+- Delivered: Added an exeption origin === 'null' && fetchSite === 'same-origin'
+- Verified: pnpm typecheck and started the webserver with node apps/test-ui/dist/local/workbench-main.js `
+>>   --workspace tmp/test-ui-demo/workspace `
+>>   --scenario-root tests/scenario/files `
+>>   --ledger tmp/test-ui-demo/ledger.sqlite `
+>>   --port 8787
+- Browser: Added a plan verified the plan and launched offline run - success.
+- Follow-ups: Closing the server resultet in an error: "(node:20180) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added to [Server]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)" caused by repeatedly pressing ctrl-c :)
+
 ## 2026-08-05 — ACME-0049 browser state inspector archived
 
 - Date: 2026-08-05
@@ -37,6 +52,13 @@ Add one dated, signed entry for every meaningful work session or handoff.
   nearest bounded renderer continuation; live browser controls and multi-step
   live scenarios still require separate approved charters.
 - Signature: Codex
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0049
+- Summary: Rendered `acme-view-state/1` as S6 in the loopback workbench. A
+  durable S4 execution now links to canonical state revision and accepted
+  transition evidence without exposing payloads or changing state.
+- Delivered:
 
 ## 2026-08-04 — ACME-0048 browser memory decisions archived
 
