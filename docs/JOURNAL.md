@@ -2,6 +2,40 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — ACME-0053 browser live evaluation archived
+
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0053
+- Summary: Completed the Domain Test UI's final S10 browser surface. Local
+  developers can inspect live-only history and submit one explicitly
+  confirmed, budgeted `ExecutionRequest` through the already-decided live
+  launch boundary.
+- Delivered: pure `renderLiveEvaluationViewHtml`; `/s10` and
+  `/api/live-evaluation`; protected `/s10/launch`; health registration;
+  duplicate, concurrent and append-only run-id protection; and test-only
+  transport/key injection at the local composition boundary.
+- Honesty/safety: process opt-in and per-launch confirmation remain separate
+  mandatory gates. The browser accepts no credentials, mock history is
+  excluded, unavailable confirmation/cost remains explicit, and the route
+  delegates to `launchLiveExecution` rather than calling a provider or ledger
+  directly.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` — 546 tests / 61 files;
+  `pnpm test:conformance` — 58 / 7; `pnpm test:integration` — 55 / 9;
+  `pnpm test:scenario` — 21 / 4; `pnpm docs:check` — 120 Markdown files after
+  archive; `pnpm build`; `git diff --check`.
+- Browser: launched one S10 run through an injected offline transport and
+  verified the recorded pass plus its execution link. Desktop at 1200 px and
+  narrow at 390 px had no horizontal overflow; the page exposed no credential
+  value and emitted no browser console warning/error.
+- External effects: no live provider call, paid request, deployment, package
+  publication, push or release. Browser verification used only a disposable
+  ignored local workspace and an offline transport.
+- Follow-up: S1–S10 are complete for the bounded workbench. Multi-step live
+  scenarios and remote hosting remain separate optional charters.
+- Signature: Codex
+
 ## 2026-08-05 — ACME-0052 browser fixture review archived
 
 - Date: 2026-08-05

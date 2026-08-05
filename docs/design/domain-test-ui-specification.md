@@ -6,9 +6,9 @@ ACME-0052 under
 [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
 [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
-[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S10 HTML and
-multi-step live scenarios remain optional residuals requiring their own
-charters.
+[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). ACME-0053 completed
+the S1–S10 browser flow; multi-step live scenarios remain an optional residual
+requiring their own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
 Last revised: 2026-08-05 (ACME-0052 — browser fixture review implemented)
@@ -394,6 +394,12 @@ never enter the confirmation or the view — `OPENAI_API_KEY` is read only in
 ScenarioRunner). Live results never enter the deterministic measurement
 partition (ADR-0022).
 
+**Rendered (ACME-0053).** `/s10` and `/api/live-evaluation` project workspace
+history through that existing contract, excluding mock runs and keeping
+unreadable records explicit. A CSRF- and same-server-protected form submits
+one request plus the existing confirmation to `launchLiveExecution`; there is
+no credential field, and the process/env gate remains authoritative.
+
 ## Test plan configuration model
 
 **Freeze accepted; schema shipped (ACME-0041).** `acme-test-plan/1` is
@@ -743,8 +749,8 @@ payload disclosure.
 
 **Met.** `renderStateViewHtml`, repository snapshot composition, HTML/JSON
 routes and unit/integration/responsive browser verification. S7 was resolved
-by ACME-0050 below; S8 by ACME-0051; S9 by ACME-0052; S10 remains an honest
-stub.
+by ACME-0050 below; S8 by ACME-0051; S9 by ACME-0052; S10 remained an honest
+stub at this phase exit and is resolved by ACME-0053 below.
 
 ### Phase 12 — Browser replay inspector — **done (ACME-0050)**
 
@@ -763,7 +769,8 @@ call or canonical write and can distinguish `match`, `different`, engine
 **Met.** `renderReplayViewHtml`, fail-closed gateway composition, HTML/JSON
 routes and unit/integration/browser verification against both retained
 `match` and hash-only `unavailable` evidence. S8 was resolved by ACME-0051
-below; S9 by ACME-0052; S10 remains an honest stub.
+below; S9 by ACME-0052; S10 remained an honest stub at this phase exit and is
+resolved by ACME-0053 below.
 
 ### Phase 13 — Browser measurement — **done (ACME-0051)**
 
@@ -782,7 +789,8 @@ workspace or canonical artifact.
 
 **Met.** `renderMeasurementViewHtml`, HTML/JSON routes and
 unit/integration/browser verification cover configured, no-baseline and empty
-series states. S9 was resolved by ACME-0052 below; S10 remains an honest stub.
+series states. S9 was resolved by ACME-0052 below; S10 remained an honest stub
+at this phase exit and is resolved by ACME-0053 below.
 
 ### Phase 14 — Browser fixture review — **done (ACME-0052)**
 
@@ -801,7 +809,30 @@ repository instruction stays visibly `applied: false`.
 
 **Met.** `renderFixtureReviewViewHtml`, HTML/JSON/decision routes and
 unit/integration/browser verification cover pending and decided history,
-refusals and a byte-identical fixture before/after. S10 remains an honest stub.
+refusals and a byte-identical fixture before/after. ACME-0053 resolves S10
+below.
+
+### Phase 15 — Browser live evaluation — **done (ACME-0053)**
+
+1. Pure S10 HTML renderer over `acme-view-live-evaluation/1`.
+2. `/s10` and `/api/live-evaluation` routes over workspace run records, with
+   the builder's live-only partition, cost availability and unreadable-record
+   evidence preserved.
+3. CSRF- and same-server-protected `/s10/launch` for one
+   `ExecutionRequest`, delegating to the existing ADR-0023 process,
+   confirmation, budget and environment-credential gate.
+4. Safe, append-once browser semantics: unsafe, existing, unreadable, active
+   or competing run ids cannot overwrite history.
+
+**Exit:** a developer can inspect live-only recorded history and explicitly
+launch one budgeted live execution from loopback without a credential entering
+the form, view or run record and without adding live ScenarioRunner semantics.
+
+**Met.** `renderLiveEvaluationViewHtml`, HTML/JSON/launch routes and
+unit/integration/responsive browser verification cover gate absence, malformed
+and contended submissions, successful injected offline transport, live-only
+history and credential-free artifacts. Default verification makes no live
+provider call.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI

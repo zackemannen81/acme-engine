@@ -18,7 +18,7 @@ as `docs/CURRENT_TASK.md`.
 
 | Proposal | Status |
 | --- | --- |
-| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Core phases 0–6 and S1–S9 browser flow delivered through ACME-0052; residual live surface and multi-step live remain optional |
+| [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Core phases 0–6 and complete S1–S10 browser flow delivered through ACME-0053; multi-step live remains optional |
 | [`driver-error-classification.md`](driver-error-classification.md) | Open; discovered by ACME-0034 |
 
 Resolved proposals are removed from this directory once archived under

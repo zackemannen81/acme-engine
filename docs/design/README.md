@@ -15,15 +15,15 @@ Application surfaces:
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
-  continued through ACME-0052: the gate freezes are accepted in
+  continued through ACME-0053: the gate freezes are accepted in
   [`../adr/0019-domain-test-ui-boundary-and-view-contracts.md`](../adr/0019-domain-test-ui-boundary-and-view-contracts.md)
-  and phases 0–6 plus the S1–S9 browser flow are implemented: package
+  and phases 0–6 plus the S1–S10 browser flow are implemented: package
   boundary, S1–S10 view contracts, `acme-test-plan/1`, launch/history,
   measurement, fixture review, gated live evaluation and protected offline
   browser launch, memory-decision inspection, state-lineage inspection and
-  replay/digest verification, recorded-run measurement and fixture review.
-  Remaining surface renderers and multi-step live scenarios
-  require their own charters. Implementation backlog:
+  replay/digest verification, recorded-run measurement, fixture review and
+  protected single-execute live browser launch. Multi-step live scenarios
+  require their own charter. Implementation backlog:
   [`../backlog/domain-test-ui-implementation.md`](../backlog/domain-test-ui-implementation.md).
 
 Design documents describe the integrated system. Individual durable decisions

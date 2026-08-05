@@ -250,6 +250,7 @@ export {
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderFixtureReviewViewHtml,
+  renderLiveEvaluationViewHtml,
   renderMemoryDecisionsViewHtml,
   renderMeasurementViewHtml,
   renderReplayViewHtml,
@@ -263,6 +264,9 @@ export {
   type PlanWorkbenchRenderOptions,
   type FixtureReviewNotice,
   type FixtureReviewRenderOptions,
+  type LiveEvaluationFormValues,
+  type LiveEvaluationNotice,
+  type LiveEvaluationRenderOptions,
   type WorkbenchSurface,
 } from './web/index.js';
 

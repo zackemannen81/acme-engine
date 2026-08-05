@@ -9,10 +9,12 @@ import { URL } from 'node:url';
 
 import type {
   Clock,
+  ExecutionRequest,
   IdGenerator,
   ModelGateway,
   PayloadEncryptor,
 } from '@acme/core';
+import type { ProviderTransport } from '@acme/adapter-model-openai';
 import { parseScenario } from '@acme/testing';
 import { parse as parseYaml } from 'yaml';
 
@@ -31,6 +33,7 @@ import {
   buildCatalogView,
   buildExecutionView,
   buildFixtureReviewView,
+  buildLiveEvaluationView,
   buildMemoryDecisionsView,
   buildMeasurementView,
   buildPlanView,
@@ -38,10 +41,16 @@ import {
   buildRunsView,
   buildStateView,
   decideFixtureChange,
+  isLiveOptInEnv,
   isSafeRunId,
+  LIVE_CONFIRMATION_VERSION,
+  LIVE_GATE_REFUSAL,
+  LiveGateRefused,
   type FixtureApprovalRecord,
   type FixtureChangeProposal,
   type FixtureReviewView,
+  type LiveEvaluationConfirmation,
+  type LiveEvaluationView,
   type MeasureId,
   type MeasurementThresholds,
   type MeasurementView,
@@ -53,6 +62,10 @@ import { renderCatalogViewHtml } from '../web/render-catalog.js';
 import { escapeHtml } from '../web/escape.js';
 import { renderExecutionViewHtml } from '../web/render-execution.js';
 import { renderFixtureReviewViewHtml } from '../web/render-fixture-review.js';
+import {
+  renderLiveEvaluationViewHtml,
+  type LiveEvaluationFormValues,
+} from '../web/render-live-evaluation.js';
 import { renderMemoryDecisionsViewHtml } from '../web/render-memory-decisions.js';
 import { renderMeasurementViewHtml } from '../web/render-measurement.js';
 import {
@@ -62,17 +75,14 @@ import {
 import { renderRunsViewHtml } from '../web/render-runs.js';
 import { renderReplayViewHtml } from '../web/render-replay.js';
 import { renderStateViewHtml } from '../web/render-state.js';
-import {
-  renderShell,
-  renderStubSurface,
-  type WorkbenchSurface,
-} from '../web/shell.js';
+import { renderShell, renderStubSurface } from '../web/shell.js';
 import {
   createInterfaceComposition,
   createInterfaceRegistries,
   type InterfaceComposition,
 } from './composition.js';
 import { launchPlan } from './launch.js';
+import { launchLiveExecution } from './live-launch.js';
 import { createFileWorkspace } from './workspace.js';
 
 /**
@@ -109,6 +119,12 @@ export interface WorkbenchServerOptions {
   readonly ids: IdGenerator;
   /** Optional key boundary for encrypted-payload launch and replay. */
   readonly payloadEncryptor?: PayloadEncryptor;
+  /** Test-only override. Production reads ACME_TEST_UI_LIVE. */
+  readonly liveOptIn?: boolean;
+  /** Test-only transport injection. Production uses fetch. */
+  readonly liveOpenAiTransport?: ProviderTransport;
+  /** Test-only API-key injection. Production reads OPENAI_API_KEY. */
+  readonly liveApiKey?: string;
 }
 
 export interface WorkbenchServer {
@@ -117,18 +133,6 @@ export interface WorkbenchServer {
   readonly url: string;
   close(): Promise<void>;
 }
-
-const STUBS: readonly {
-  readonly id: WorkbenchSurface;
-  readonly title: string;
-  readonly contractVersion: string;
-}[] = [
-  {
-    id: 's10',
-    title: 'S10 Live evaluation',
-    contractVersion: LIVE_EVALUATION_VIEW_VERSION,
-  },
-];
 
 const MAX_FORM_BYTES = 256 * 1024;
 
@@ -495,6 +499,137 @@ function parsePlanSource(
   }
 }
 
+function emptyLiveForm(): LiveEvaluationFormValues {
+  return {
+    runId: '',
+    requestSource: '',
+    optIn: false,
+    provider: 'openai',
+    model: '',
+    caseCount: '1',
+    maxModelCalls: '1',
+    costCeilingMinor: '',
+    currency: '',
+    confirmer: '',
+    rationale: '',
+  };
+}
+
+function liveFormValues(form: URLSearchParams): LiveEvaluationFormValues {
+  return {
+    runId: form.get('runId') ?? '',
+    requestSource: form.get('requestSource') ?? '',
+    optIn: form.get('optIn') === 'true',
+    provider: 'openai',
+    model: form.get('model') ?? '',
+    caseCount: form.get('caseCount') ?? '1',
+    maxModelCalls: form.get('maxModelCalls') ?? '',
+    costCeilingMinor: form.get('costCeilingMinor') ?? '',
+    currency: form.get('currency') ?? '',
+    confirmer: form.get('confirmer') ?? '',
+    rationale: form.get('rationale') ?? '',
+  };
+}
+
+function liveNumber(
+  source: string,
+  name: string,
+  optional = false,
+): number | null {
+  if (source.trim().length === 0 && optional) {
+    return null;
+  }
+  const value = Number(source);
+  if (!Number.isFinite(value)) {
+    throw new WorkbenchFormRefused(400, `${name} must be a finite number.`);
+  }
+  return value;
+}
+
+function liveConfirmationFromForm(values: LiveEvaluationFormValues): unknown {
+  return {
+    version: LIVE_CONFIRMATION_VERSION,
+    optIn: values.optIn,
+    provider: values.provider,
+    model: values.model,
+    caseCount: liveNumber(values.caseCount, 'caseCount'),
+    maxModelCalls: liveNumber(values.maxModelCalls, 'maxModelCalls'),
+    costCeilingMinor: liveNumber(
+      values.costCeilingMinor,
+      'costCeilingMinor',
+      true,
+    ),
+    currency: values.currency.trim().length === 0 ? null : values.currency,
+    confirmer: values.confirmer,
+    rationale: values.rationale,
+  };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+const EXECUTION_REQUEST_FIELDS = new Set([
+  'requestKey',
+  'namespace',
+  'task',
+  'entityId',
+  'expectedRevision',
+  'input',
+  'model',
+  'policy',
+]);
+
+/**
+ * Adapt untrusted form data into the public request shape. The engine remains
+ * the authoritative runtime validator for model, policy, task input and
+ * domain semantics.
+ */
+function executionRequestFromSource(source: string): ExecutionRequest {
+  let raw: unknown;
+  try {
+    raw = parseYaml(source) as unknown;
+  } catch (error: unknown) {
+    throw new WorkbenchFormRefused(
+      400,
+      error instanceof Error
+        ? error.message
+        : 'The execution request could not be parsed.',
+    );
+  }
+  if (!isObject(raw)) {
+    throw new WorkbenchFormRefused(400, 'ExecutionRequest must be an object.');
+  }
+  const unexpected = Object.keys(raw).filter(
+    (field) => !EXECUTION_REQUEST_FIELDS.has(field),
+  );
+  const required = [
+    'requestKey',
+    'namespace',
+    'task',
+    'entityId',
+    'expectedRevision',
+    'input',
+    'model',
+  ] as const;
+  const missing = required.filter((field) => !Object.hasOwn(raw, field));
+  if (unexpected.length > 0 || missing.length > 0) {
+    throw new WorkbenchFormRefused(
+      400,
+      `ExecutionRequest has an invalid shape (missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}).`,
+    );
+  }
+  return raw as unknown as ExecutionRequest;
+}
+
+function isFileExistsError(error: unknown): boolean {
+  return (
+    isObject(error) &&
+    'code' in error &&
+    (error as { readonly code?: unknown }).code === 'EEXIST'
+  );
+}
+
 export async function startWorkbenchServer(
   options: WorkbenchServerOptions,
 ): Promise<WorkbenchServer> {
@@ -511,6 +646,8 @@ export async function startWorkbenchServer(
   const csrfToken = randomBytes(32).toString('hex');
   const activeRunIds = new Set<string>();
   const activeApprovalIds = new Set<string>();
+  const processLiveOptIn =
+    options.liveOptIn ?? isLiveOptInEnv(process.env['ACME_TEST_UI_LIVE']);
   const registries = createInterfaceRegistries();
   const catalogRoot =
     options.scenarioRoot === undefined
@@ -694,6 +831,37 @@ export async function startWorkbenchServer(
     };
   }
 
+  async function liveEvaluationView(
+    confirmation?: LiveEvaluationConfirmation | null,
+  ): Promise<LiveEvaluationView> {
+    const history = await readRuns(workspaceRoot);
+    return buildLiveEvaluationView({
+      records: history.records,
+      unreadable: history.unreadable,
+      ...(confirmation === undefined ? {} : { confirmation }),
+    });
+  }
+
+  async function sendLivePage(
+    response: ServerResponse,
+    status: number,
+    form: LiveEvaluationFormValues,
+    notice?: { readonly level: 'info' | 'error'; readonly message: string },
+    confirmation?: LiveEvaluationConfirmation,
+  ): Promise<void> {
+    send(
+      response,
+      status,
+      renderLiveEvaluationViewHtml(await liveEvaluationView(confirmation), {
+        csrfToken,
+        form,
+        processOptIn: processLiveOptIn,
+        ...(notice === undefined ? {} : { notice }),
+      }),
+      'text/html; charset=utf-8',
+    );
+  }
+
   async function handle(
     request: IncomingMessage,
     response: ServerResponse,
@@ -716,6 +884,7 @@ export async function startWorkbenchServer(
             replay: REPLAY_VIEW_VERSION,
             measurement: MEASUREMENT_VIEW_VERSION,
             fixtureReview: FIXTURE_REVIEW_VIEW_VERSION,
+            liveEvaluation: LIVE_EVALUATION_VIEW_VERSION,
           },
         });
         return;
@@ -869,6 +1038,11 @@ export async function startWorkbenchServer(
           return;
         }
         sendJson(response, 200, result.view);
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/live-evaluation') {
+        sendJson(response, 200, await liveEvaluationView());
         return;
       }
 
@@ -1500,18 +1674,119 @@ export async function startWorkbenchServer(
         return;
       }
 
-      const stub = STUBS.find((entry) => path === `/${entry.id}`);
-      if (request.method === 'GET' && stub !== undefined) {
-        send(
-          response,
-          200,
-          renderStubSurface({
-            surface: stub.id,
-            title: stub.title,
-            contractVersion: stub.contractVersion,
-          }),
-          'text/html; charset=utf-8',
-        );
+      if (request.method === 'GET' && path === '/s10') {
+        const launched = url.searchParams.get('launched');
+        await sendLivePage(response, 200, emptyLiveForm(), {
+          level: 'info',
+          message:
+            launched === null || launched.length === 0
+              ? 'Live launch requires both the process gate and the per-run confirmation below.'
+              : `Live run ${JSON.stringify(launched)} was recorded.`,
+        });
+        return;
+      }
+
+      if (request.method === 'POST' && path === '/s10/launch') {
+        const submitted = await readForm(request);
+        const submittedToken = requiredFormField(submitted, 'csrfToken');
+        assertSameServerRequest(request, csrfToken, submittedToken, boundPort);
+        const form = liveFormValues(submitted);
+
+        try {
+          const runId = requiredFormField(submitted, 'runId');
+          const requestSource = requiredFormField(submitted, 'requestSource');
+          if (requiredFormField(submitted, 'provider') !== 'openai') {
+            throw new WorkbenchFormRefused(
+              400,
+              'Live evaluation v1 supports only provider "openai".',
+            );
+          }
+          if (!isSafeRunId(runId)) {
+            throw new WorkbenchFormRefused(
+              400,
+              'The run identifier must be a safe file name.',
+            );
+          }
+          const workspace = createFileWorkspace({ root: workspaceRoot });
+          const history = await workspace.listRuns();
+          if (
+            activeRunIds.has(runId) ||
+            history.records.some((entry) => entry.runId === runId) ||
+            history.unreadable.includes(`${runId}.json`)
+          ) {
+            throw new WorkbenchFormRefused(
+              409,
+              `Run ${JSON.stringify(runId)} already exists or is in progress; history is never overwritten.`,
+            );
+          }
+
+          const confirmation = liveConfirmationFromForm(form);
+          const executionRequest = executionRequestFromSource(requestSource);
+          let launched:
+            Awaited<ReturnType<typeof launchLiveExecution>> | undefined;
+          activeRunIds.add(runId);
+          try {
+            launched = await launchLiveExecution({
+              confirmation,
+              request: executionRequest,
+              workspace,
+              runId,
+              clock: options.clock,
+              ids: options.ids,
+              repository: ledgerDatabase === undefined ? 'memory' : 'sqlite',
+              ...(ledgerDatabase === undefined
+                ? {}
+                : { database: ledgerDatabase }),
+              ...(options.payloadEncryptor === undefined
+                ? {}
+                : { payloadEncryptor: options.payloadEncryptor }),
+              ...(options.liveOptIn === undefined
+                ? {}
+                : { liveOptIn: options.liveOptIn }),
+              ...(options.liveOpenAiTransport === undefined
+                ? {}
+                : { openAiTransport: options.liveOpenAiTransport }),
+              ...(options.liveApiKey === undefined
+                ? {}
+                : { apiKey: options.liveApiKey }),
+            });
+          } finally {
+            activeRunIds.delete(runId);
+            launched?.composition.close();
+          }
+
+          response.writeHead(303, {
+            location: `/s10?launched=${encodeURIComponent(runId)}`,
+            'cache-control': 'no-store',
+          });
+          response.end();
+          return;
+        } catch (error: unknown) {
+          const status =
+            error instanceof WorkbenchFormRefused
+              ? error.status
+              : error instanceof LiveGateRefused &&
+                  error.reason === LIVE_GATE_REFUSAL.envOptIn
+                ? 403
+                : error instanceof LiveGateRefused &&
+                    error.reason === LIVE_GATE_REFUSAL.apiKey
+                  ? 409
+                  : isFileExistsError(error)
+                    ? 409
+                    : 400;
+          await sendLivePage(response, status, form, {
+            level: 'error',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'The live execution could not be launched.',
+          });
+          return;
+        }
+      }
+
+      if (request.method === 'GET' && path === '/s10/launch') {
+        send(response, 405, 'Method not allowed', 'text/plain; charset=utf-8');
         return;
       }
 

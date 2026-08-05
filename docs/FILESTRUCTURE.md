@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-04
+Last updated: 2026-08-05
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -50,6 +50,7 @@ acme-engine/
 │       │   │   ├── render-catalog.ts
 │       │   │   ├── render-execution.ts
 │       │   │   ├── render-fixture-review.ts
+│       │   │   ├── render-live-evaluation.ts
 │       │   │   ├── render-memory-decisions.ts
 │       │   │   ├── render-measurement.ts
 │       │   │   ├── render-replay.ts
@@ -265,6 +266,7 @@ acme-engine/
 │   │   ├── execution-engine-sqlite.test.ts
 │   │   ├── test-ui-launch.test.ts
 │   │   ├── test-ui-live-launch.test.ts
+│   │   ├── test-ui-live-workbench.test.ts
 │   │   ├── test-ui-workbench.test.ts
 │   │   └── test-ui-read-model.test.ts
 │   └── scenario/
@@ -388,6 +390,7 @@ acme-engine/
 │   │   ├── ACME-0050_browser-replay-inspector.md
 │   │   ├── ACME-0051_browser-measurement-surface.md
 │   │   ├── ACME-0052_browser-fixture-review.md
+│   │   ├── ACME-0053_browser-live-evaluation.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -466,12 +469,13 @@ content remains intentionally omitted here.
   `execution inspect`, `state inspect` and `memory inspect` over both the
   in-memory and durable SQLite repositories.
 - `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024). Phases 1–6 are
-  view contracts for S1–S10; ACME-0045–0052 add pure HTML renderers
-  (`src/web/`) and a loopback workbench serve on `./local` for S1–S9 (other
-  surfaces stubbed), including bounded registry/scenario/fixture catalog and
-  protected offline browser preview and launch. Includes plan compiler,
-  launch path, measurement, fixture review and gated live evaluation. Default
-  entry performs no I/O; discovery on `./node-source`. Leaf package.
+  view contracts for S1–S10; ACME-0045–0053 add pure HTML renderers
+  (`src/web/`) and a complete S1–S10 loopback workbench serve on `./local`,
+  including bounded registry/scenario/fixture catalog, protected offline
+  browser preview/launch and protected single-execute live browser launch.
+  Includes plan compiler, launch path, measurement, fixture review and gated
+  live evaluation. Default entry performs no I/O; discovery on
+  `./node-source`. Leaf package.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -496,10 +500,10 @@ ACME-0015 supplies their shared executable DomainModule-conformance gate.
 `docs/design/domain-test-ui-specification.md` specifies the `apps/test-ui`
 composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
-and delivered phases 0 and 1; ACME-0040 through ACME-0052 added phases 2–6,
+and delivered phases 0 and 1; ACME-0040 through ACME-0053 added phases 2–6,
 the loopback HTML workbench, protected offline plan preview/launch and catalog
-rendering for S1–S9 under ADR-0020 through ADR-0024. Remaining HTML surfaces and
-multi-step live scenarios are open. A non-authority workbench mock lives under
+rendering for S1–S10 under ADR-0020 through ADR-0024. Multi-step live scenarios
+remain open. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it

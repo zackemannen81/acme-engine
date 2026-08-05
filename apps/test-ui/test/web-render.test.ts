@@ -9,6 +9,7 @@ import {
   buildCatalogView,
   buildExecutionView,
   buildFixtureReviewView,
+  buildLiveEvaluationView,
   buildMemoryDecisionsView,
   buildMeasurementView,
   buildPlanView,
@@ -20,13 +21,13 @@ import {
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderFixtureReviewViewHtml,
+  renderLiveEvaluationViewHtml,
   renderMemoryDecisionsViewHtml,
   renderMeasurementViewHtml,
   renderPlanViewHtml,
   renderReplayViewHtml,
   renderRunsViewHtml,
   renderStateViewHtml,
-  renderStubSurface,
   RUN_RECORD_VERSION,
   type FixtureChangeProposal,
   type RunRecord,
@@ -482,14 +483,106 @@ describe('pure HTML renderers', () => {
     expect(html).not.toContain('action="/s9/decision"');
   });
 
-  it('names the contract on stub surfaces', () => {
-    const html = renderStubSurface({
-      surface: 's10',
-      title: 'S10 Live evaluation',
-      contractVersion: 'acme-view-live-evaluation/1',
-    });
+  it('renders S10 confirmation, live-only runs and recorded cost without credentials', () => {
+    const html = renderLiveEvaluationViewHtml(
+      buildLiveEvaluationView({
+        confirmation: {
+          version: 'acme-live-confirmation/1',
+          optIn: true,
+          provider: 'openai',
+          model: '<model-live>',
+          caseCount: 1,
+          maxModelCalls: 1,
+          costCeilingMinor: 50,
+          currency: 'USD',
+          confirmer: '<reviewer>',
+          rationale: '<reason> bounded smoke',
+        },
+        records: [
+          record(),
+          record({
+            runId: 'live-web-1',
+            composition: { repository: 'sqlite', gateway: 'openai' },
+            live: {
+              provider: 'openai',
+              model: '<model-live>',
+              confirmer: '<reviewer>',
+              maxModelCalls: 1,
+              costCeilingMinor: 50,
+              usage: {
+                totalTokens: 18,
+                estimatedCostMinor: 2,
+                currency: 'USD',
+              },
+            },
+          }),
+        ],
+        unreadable: ['<broken>.json'],
+      }),
+      {
+        csrfToken: 'live-token',
+        processOptIn: true,
+        form: {
+          runId: 'live-web-2',
+          requestSource: '{"requestKey":"<request>"}',
+          optIn: true,
+          provider: 'openai',
+          model: '<model-live>',
+          caseCount: '1',
+          maxModelCalls: '1',
+          costCeilingMinor: '50',
+          currency: 'USD',
+          confirmer: '<reviewer>',
+          rationale: '<reason> bounded smoke',
+        },
+      },
+    );
+
+    expect(html).toContain('S10 Live evaluation');
     expect(html).toContain('acme-view-live-evaluation/1');
-    expect(html).toContain('not rendered in the first visual slice');
+    expect(html).toContain('live-web-1');
+    expect(html).not.toContain('run-web-1');
+    expect(html).toContain('18');
+    expect(html).toContain('2 minor units');
+    expect(html).toContain('&lt;model-live&gt;');
+    expect(html).toContain('&lt;reviewer&gt;');
+    expect(html).toContain('&lt;reason&gt; bounded smoke');
+    expect(html).toContain('&lt;broken&gt;.json');
+    expect(html).toContain('live-token');
+    expect(html).not.toContain('name="apiKey"');
+    expect(html).not.toContain('name="token"');
+    expect(html).not.toContain('<model-live>');
+    expect(html).not.toContain('<reviewer>');
+  });
+
+  it('renders S10 gate, confirmation and cost absence without inventing zeros', () => {
+    const html = renderLiveEvaluationViewHtml(
+      buildLiveEvaluationView({ records: [] }),
+      {
+        csrfToken: 'live-token',
+        processOptIn: false,
+        form: {
+          runId: '',
+          requestSource: '',
+          optIn: false,
+          provider: 'openai',
+          model: '',
+          caseCount: '1',
+          maxModelCalls: '1',
+          costCeilingMinor: '',
+          currency: '',
+          confirmer: '',
+          rationale: '',
+        },
+      },
+    );
+
+    expect(html).toContain('Process gate disabled');
+    expect(html).toContain('LIVE_CONFIRMATION_UNAVAILABLE');
+    expect(html).toContain('LIVE_COST_UNAVAILABLE');
+    expect(html).toContain('Mock history is intentionally excluded');
+    expect(html).toContain('disabled');
+    expect(html).not.toContain('not rendered in the first visual slice');
   });
 
   it('escapes untrusted text in run failure messages', () => {

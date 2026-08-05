@@ -135,8 +135,18 @@ textarea {
 }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .measurement-form { display: grid; gap: 1rem; }
-.fixture-form, .decision-form { display: grid; gap: 0.8rem; }
+.fixture-form, .decision-form, .live-form { display: grid; gap: 0.8rem; }
 .decision-form textarea { min-height: 7rem; }
+.live-form fieldset { display: grid; gap: 0.8rem; }
+.live-form textarea[name="rationale"] { min-height: 7rem; }
+.live-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  gap: 0.8rem;
+}
+.checkbox-label { display: flex; align-items: center; gap: 0.55rem; }
+.checkbox-label input { width: auto; }
+.live-run, .live-launch { display: grid; gap: 0.9rem; }
 .threshold-grid, .measure-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));

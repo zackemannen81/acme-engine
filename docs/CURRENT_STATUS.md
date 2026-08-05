@@ -267,9 +267,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 543 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (60 files), with separate conformance (58),
-  integration (53) and scenario (21) gates
+- 546 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (61 files), with separate conformance (58),
+  integration (55) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -353,8 +353,11 @@ template until the next charter is explicitly approved.
   recorded run/execution provenance, CSRF-protected named decisions,
   append-once approval history and an explicit never-applied repository-edit
   instruction.
+- **ACME-0053:** S10 browser live evaluation with live-only history, explicit
+  process and per-run confirmation gates, protected single-execute launch and
+  no credential field or value in browser/workspace artifacts.
 
-### Domain Test UI (phases 0–6 and S1–S9 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -454,8 +457,16 @@ or concurrent proposal ids cannot be overwritten. Decided history is rebuilt
 from approval records, remains `applied: false` and never reads or writes the
 fixture.
 
-Not delivered: multi-step live scenarios; the S10 renderer;
-live launch controls in the browser; remote hosting. Proposal:
+Delivered by ACME-0053: the pure S10 live-evaluation renderer plus `/s10`,
+`/api/live-evaluation` and protected `/s10/launch`. The page shows only
+non-mock run records, explicit confirmation/cost absence and every unreadable
+run filename. Launch accepts exactly one `ExecutionRequest`, reuses the
+ADR-0023 process + named confirmation + budget gate, reads credentials only
+inside the local process and refuses unsafe, existing, unreadable or active
+run ids before provider dispatch. Test-only injection proves the complete HTTP
+path offline; the command-line workbench still uses the real env/fetch path.
+
+Not delivered: multi-step live scenarios; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
 
@@ -477,12 +488,12 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0052).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0053).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S9, including registry/discovery catalog, protected offline plan
+  S1–S10, including registry/discovery catalog, protected offline plan
   preview/launch, durable memory/state inspection, replay verification and
-  recorded-run measurement plus fixture review; S10 remains a stub and live browser launch remains
-  absent. CI still uses CLI/`pnpm` gates, not the browser.
+  recorded-run measurement, fixture review and two-key-gated single-execute
+  live launch. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.
 - **Launching blocks its caller.** `launchPlan` is synchronous by decision

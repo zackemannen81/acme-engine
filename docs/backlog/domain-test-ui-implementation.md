@@ -1,6 +1,6 @@
 # Domain Test UI implementation
 
-Status: **Partially resolved — phases 0–6 and S1–S9 browser flow delivered (ACME-0039 to ACME-0052); residual live surface and multi-step live remain optional**
+Status: **Partially resolved — phases 0–6 and complete S1–S10 browser flow delivered (ACME-0039 to ACME-0053); multi-step live remains optional**
 Discovered in: ACME-0014
 Specification: [`docs/design/domain-test-ui-specification.md`](../design/domain-test-ui-specification.md)
 Decisions: [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md), [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md), [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md), [ADR-0022](../adr/0022-measurement-and-fixture-approval.md), [ADR-0023](../adr/0023-live-evaluation-gate.md), [ADR-0024](../adr/0024-local-spa-loopback-workbench.md)
@@ -17,7 +17,7 @@ were satisfied through ACME-0035 / ACME-0036, leaving two activation blockers:
 
 Both blockers on the first slice are now cleared. ACME-0039 accepted all seven
 gate freezes in ADR-0019 and delivered phases 0 and 1; ACME-0040 through
-ACME-0052 delivered phases 2–6 plus the first browser workbench slices.
+ACME-0053 delivered phases 2–6 plus the complete browser workbench flow.
 
 A visual mock (non-authority) exists at:
 
@@ -61,7 +61,8 @@ Do **not** charter the remaining UI in one task. Follow the design-spec phases:
 | **Twelfth** | Browser replay inspector (S7) | **Done — ACME-0050** |
 | **Thirteenth** | Browser measurement renderer (S8) | **Done — ACME-0051** |
 | **Fourteenth** | Browser fixture-review renderer (S9) | **Done — ACME-0052** |
-| Later | Remaining S10 renderer; live browser controls; multi-step live | Open — optional |
+| **Fifteenth** | Browser live-evaluation renderer and protected single-execute launch (S10) | **Done — ACME-0053** |
+| Later | Multi-step live scenarios | Open — optional |
 
 **Why phase 1 was read model, not plan compiler:** CLI and ScenarioRunner
 already run offline domain tests. The human gap is inspectable evidence. View
@@ -249,6 +250,22 @@ contracts made the Execution Inspector real and testable without a browser.
 - unit, HTTP integration and loopback browser verification, including a
   byte-identical golden before/after a recorded decision
 
+## What ACME-0053 delivered
+
+- pure `renderLiveEvaluationViewHtml` over
+  `acme-view-live-evaluation/1`
+- `/s10` HTML and `/api/live-evaluation` JSON over workspace history, with
+  mock runs excluded and unreadable records explicit
+- CSRF- and same-server-protected `/s10/launch` for exactly one
+  `ExecutionRequest` plus the existing named confirmation/budget document
+- the unchanged ADR-0023 process opt-in and environment-only API-key boundary;
+  the browser exposes no credential field or value
+- refusal before provider dispatch for malformed confirmation/request,
+  invalid policy, unsafe/existing/unreadable/active run ids and competing
+  writes; workspace run and approval records now use exclusive creation
+- unit, HTTP integration and responsive loopback browser verification through
+  an injected offline transport, with no paid or network provider call
+
 ## Why the rest stays outside any non-UI active task
 
 Cross-package application work: optional versioned plan contract, catalog
@@ -271,12 +288,12 @@ verification story and must not expand an unrelated frozen charter.
   protected browser offline plan launch (ACME-0046), S1 catalog rendering
   (ACME-0047), S5 memory-decision rendering (ACME-0048), S6 state-lineage
   inspection (ACME-0049), S7 replay verification (ACME-0050), S8 measurement
-  rendering (ACME-0051) and S9 fixture review (ACME-0052)
+  rendering (ACME-0051), S9 fixture review (ACME-0052) and S10 live
+  rendering/launch (ACME-0053)
 
 **Blocks remaining polish (decisions, not missing code):**
 
-- an explicit charter per residual (S10 renderer, live browser controls,
-  multi-step live scenarios)
+- an explicit charter for multi-step live scenarios
 
 **Residuals that shape later work only:**
 
@@ -284,7 +301,8 @@ verification story and must not expand an unrelated frozen charter.
 - no auto outbox drain (UI must not imply silent delivery)
 - `preparing-commit` trust substages report `reached`; finer resolution needs
   finer engine evidence, not interface inference
-- workbench is bounded: S1–S9 HTML; S10 remains a stub
+- workbench is bounded: S10 live launch is one ExecutionRequest, not a live
+  ScenarioRunner
 
 ## Suggested verification
 
@@ -313,8 +331,8 @@ Phase 3 verification is delivered:
 - the compiled document is accepted by the runner's own `parseScenario`
 - a compiled plan reproduces the pinned Narrative Phase 5 digest
 
-Later charters may deepen remaining HTML surfaces, add explicitly gated live
-browser controls or add multi-step live scenarios.
+The remaining optional charter may add multi-step live scenarios without
+changing S10's bounded single-execute path.
 
 ## Explicit non-goals for v1
 

@@ -120,12 +120,13 @@ export function createFileWorkspace(options: WorkspaceOptions): Workspace {
     directory: string,
     name: string,
     value: unknown,
+    exclusive = false,
   ): Promise<void> {
     await mkdir(directory, { recursive: true });
     await writeFile(
       join(directory, name),
       `${JSON.stringify(value, null, 2)}\n`,
-      'utf8',
+      { encoding: 'utf8', flag: exclusive ? 'wx' : 'w' },
     );
   }
 
@@ -150,6 +151,7 @@ export function createFileWorkspace(options: WorkspaceOptions): Workspace {
         runsDirectory,
         safeFileName(record.runId, 'run identifier'),
         record,
+        true,
       );
     },
 
@@ -194,6 +196,7 @@ export function createFileWorkspace(options: WorkspaceOptions): Workspace {
         approvalsDirectory,
         safeFileName(approval.proposalId, 'proposal identifier'),
         approval,
+        true,
       );
     },
 
