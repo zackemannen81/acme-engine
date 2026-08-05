@@ -7,7 +7,12 @@ import {
 import { basename, isAbsolute, resolve } from 'node:path';
 import { URL } from 'node:url';
 
-import type { Clock, IdGenerator } from '@acme/core';
+import type {
+  Clock,
+  IdGenerator,
+  ModelGateway,
+  PayloadEncryptor,
+} from '@acme/core';
 import { parseScenario } from '@acme/testing';
 import { parse as parseYaml } from 'yaml';
 
@@ -26,6 +31,7 @@ import {
   buildExecutionView,
   buildMemoryDecisionsView,
   buildPlanView,
+  buildReplayView,
   buildRunsView,
   buildStateView,
   isSafeRunId,
@@ -41,6 +47,7 @@ import {
   type PlanWorkbenchNotice,
 } from '../web/render-plan.js';
 import { renderRunsViewHtml } from '../web/render-runs.js';
+import { renderReplayViewHtml } from '../web/render-replay.js';
 import { renderStateViewHtml } from '../web/render-state.js';
 import {
   renderShell,
@@ -87,6 +94,8 @@ export interface WorkbenchServerOptions {
   readonly ledgerDatabase?: string;
   readonly clock: Clock;
   readonly ids: IdGenerator;
+  /** Optional key boundary for encrypted-payload launch and replay. */
+  readonly payloadEncryptor?: PayloadEncryptor;
 }
 
 export interface WorkbenchServer {
@@ -101,7 +110,6 @@ const STUBS: readonly {
   readonly title: string;
   readonly contractVersion: string;
 }[] = [
-  { id: 's7', title: 'S7 Replay', contractVersion: REPLAY_VIEW_VERSION },
   {
     id: 's8',
     title: 'S8 Measurement',
@@ -120,6 +128,15 @@ const STUBS: readonly {
 ];
 
 const MAX_FORM_BYTES = 256 * 1024;
+
+const REPLAY_GATEWAY_GUARD: ModelGateway = {
+  async capabilities() {
+    throw new Error('Replay must not call a gateway.');
+  },
+  async generate() {
+    throw new Error('Replay must not call a gateway.');
+  },
+};
 
 class WorkbenchFormRefused extends Error {
   readonly status: number;
@@ -199,23 +216,17 @@ function assertSameServerRequest(
       'The form token is missing or no longer valid. Reload S2 and try again.',
     );
   }
-  if (request.headers['sec-fetch-site'] === 'cross-site') {
-    throw new WorkbenchFormRefused(403, 'Cross-site form submission refused.');
-  }
   const fetchSite = request.headers['sec-fetch-site'];
 
-if (fetchSite === 'cross-site') {
-  throw new WorkbenchFormRefused(
-    403,
-    'Cross-site form submission refused.',
-  );
+  if (fetchSite === 'cross-site') {
+    throw new WorkbenchFormRefused(403, 'Cross-site form submission refused.');
   }
   const origin = request.headers.origin;
   if (origin === undefined) {
     return;
   }
   if (origin === 'null' && fetchSite === 'same-origin') {
-  return;
+    return;
   }
   let parsed: URL;
   try {
@@ -318,6 +329,9 @@ export async function startWorkbenchServer(
       database: ledgerDatabase,
       clock: options.clock,
       ids: options.ids,
+      ...(options.payloadEncryptor === undefined
+        ? {}
+        : { payloadEncryptor: options.payloadEncryptor }),
     });
   }
 
@@ -353,6 +367,22 @@ export async function startWorkbenchServer(
     );
   }
 
+  async function replayView(executionId: string) {
+    if (composition === undefined) {
+      throw new Error('Replay requires a configured composition.');
+    }
+    const evidence =
+      (await composition.repository.loadReplayEvidence(executionId)) ?? null;
+    const report = await composition
+      .engine(REPLAY_GATEWAY_GUARD)
+      .replayVerify(executionId);
+    return buildReplayView({
+      executionId,
+      report,
+      recordedOperationDigest: evidence?.preparedCommit.operationDigest ?? null,
+    });
+  }
+
   async function handle(
     request: IncomingMessage,
     response: ServerResponse,
@@ -372,6 +402,7 @@ export async function startWorkbenchServer(
             execution: EXECUTION_VIEW_VERSION,
             memoryDecisions: MEMORY_DECISION_VIEW_VERSION,
             state: STATE_VIEW_VERSION,
+            replay: REPLAY_VIEW_VERSION,
           },
         });
         return;
@@ -467,6 +498,38 @@ export async function startWorkbenchServer(
             transitions: evidence.state.transitions,
           }),
         );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/api/replay') {
+        const executionId = url.searchParams.get('executionId');
+        if (executionId === null || executionId.length === 0) {
+          sendJson(response, 400, {
+            error: 'executionId is required.',
+            view: REPLAY_VIEW_VERSION,
+          });
+          return;
+        }
+        if (composition === undefined) {
+          sendJson(response, 409, {
+            error: 'S7 requires a configured durable ledger.',
+            view: REPLAY_VIEW_VERSION,
+          });
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        const execution = evidence.executions.find(
+          (entry) => entry.executionId === executionId,
+        );
+        if (execution === undefined) {
+          sendJson(response, 404, {
+            error: 'Execution not found.',
+            executionId,
+            view: REPLAY_VIEW_VERSION,
+          });
+          return;
+        }
+        sendJson(response, 200, await replayView(executionId));
         return;
       }
 
@@ -623,6 +686,9 @@ export async function startWorkbenchServer(
             ...(ledgerDatabase === undefined
               ? {}
               : { database: ledgerDatabase }),
+            ...(options.payloadEncryptor === undefined
+              ? {}
+              : { payloadEncryptor: options.payloadEncryptor }),
           });
         } catch (error: unknown) {
           sendPlanRefusal(
@@ -896,6 +962,63 @@ export async function startWorkbenchServer(
           response,
           200,
           renderStateViewHtml(view),
+          'text/html; charset=utf-8',
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && path === '/s7') {
+        const executionId = url.searchParams.get('executionId');
+        if (executionId === null || executionId.length === 0) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's7',
+              title: 'S7 Replay inspector',
+              subtitle: `View ${REPLAY_VIEW_VERSION}`,
+              body: '<section class="card"><p>Choose an execution in S4, then follow <strong>Verify replay</strong>.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        if (composition === undefined) {
+          send(
+            response,
+            200,
+            renderShell({
+              surface: 's7',
+              title: 'S7 needs a ledger path',
+              subtitle: `View ${REPLAY_VIEW_VERSION}`,
+              body: '<section class="card"><p>Start the workbench with <code>--ledger &lt;sqlite-file&gt;</code> to verify durable replay evidence.</p></section>',
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        const evidence = composition.repository.snapshot();
+        const execution = evidence.executions.find(
+          (entry) => entry.executionId === executionId,
+        );
+        if (execution === undefined) {
+          send(
+            response,
+            404,
+            renderShell({
+              surface: 's7',
+              title: 'Execution not found',
+              subtitle: `View ${REPLAY_VIEW_VERSION}`,
+              body: `<section class="card"><p>No durable execution matched <code>${escapeHtml(executionId)}</code>.</p></section>`,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        send(
+          response,
+          200,
+          renderReplayViewHtml(await replayView(executionId)),
           'text/html; charset=utf-8',
         );
         return;

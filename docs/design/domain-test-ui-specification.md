@@ -1,17 +1,17 @@
 # Domain Test UI — Specification
 
 Status: Activated application specification. Gate freezes, phases 0–6 and the
-first five browser rendering slices are delivered by ACME-0039 through
-ACME-0049 under
+first six browser rendering slices are delivered by ACME-0039 through
+ACME-0050 under
 [ADR-0019](../adr/0019-domain-test-ui-boundary-and-view-contracts.md),
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
 [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
-[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S7–S10 HTML and
+[ADR-0024](../adr/0024-local-spa-loopback-workbench.md). S8–S10 HTML and
 multi-step live scenarios remain optional residuals requiring their own
 charters.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-05 (ACME-0049 — browser state inspector implemented)
+Last revised: 2026-08-05 (ACME-0050 — browser replay inspector implemented)
 
 ## Executive summary
 
@@ -742,8 +742,26 @@ transition for one namespace/entity scope without changing state or requesting
 payload disclosure.
 
 **Met.** `renderStateViewHtml`, repository snapshot composition, HTML/JSON
-routes and unit/integration/responsive browser verification. S7–S10 remain
-honest stubs.
+routes and unit/integration/responsive browser verification. S7 was resolved
+by ACME-0050 below; S8–S10 remain honest stubs.
+
+### Phase 12 — Browser replay inspector — **done (ACME-0050)**
+
+1. Pure S7 HTML renderer over `acme-view-replay/1`.
+2. Read-only `/s7?executionId=...` and
+   `/api/replay?executionId=...` routes over the existing replay engine and
+   repository replay evidence.
+3. Contextual S4→S7 navigation with the engine's exact verdict, recorded and
+   replayed operation digests, builder-owned comparison and default-redacted
+   diagnostic differences.
+
+**Exit:** a developer can verify one recorded execution without a provider
+call or canonical write and can distinguish `match`, `different`, engine
+`unavailable` and the view's separate `REPLAY_NOT_RUN` absence state.
+
+**Met.** `renderReplayViewHtml`, fail-closed gateway composition, HTML/JSON
+routes and unit/integration/browser verification against both retained
+`match` and hash-only `unavailable` evidence. S8–S10 remain honest stubs.
 
 > **Why not plan-compiler first?** After Milestone 2 the expensive missing
 > piece is human inspection of evidence, not the ability to run scenarios (CLI

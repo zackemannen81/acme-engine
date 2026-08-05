@@ -267,7 +267,7 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 535 passing unit-suite tests across packages, integration and scenario paths
+- 537 passing unit-suite tests across packages, integration and scenario paths
   exercised by `pnpm test:unit` (60 files), with separate conformance (58),
   integration (51) and scenario (21) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
@@ -341,8 +341,12 @@ template until the next charter is explicitly approved.
 - **ACME-0049:** S6 browser state inspector over repository snapshot evidence,
   linked from S4 with ordered revision lineage, explicit continuity and
   transition absence, and state/delta payloads redacted by default.
+- **ACME-0050:** S7 browser replay inspector over the existing replay engine,
+  linked from S4 with exact engine verdicts, digest comparison and redacted
+  diagnostic differences; replay is guarded against provider calls and makes
+  no canonical write.
 
-### Domain Test UI (phases 0–6 and S1–S6 browser flow delivered)
+### Domain Test UI (phases 0–6 and S1–S7 browser flow delivered)
 
 [`Domain Test UI — Specification`](design/domain-test-ui-specification.md) is
 activated. ACME-0039 accepted the seven proposed gate freezes in
@@ -415,7 +419,16 @@ preserves builder-owned revision ordering/counts/continuity, distinguishes an
 empty lineage from unavailable evidence, and never enables payload disclosure
 or state mutation.
 
-Not delivered: multi-step live scenarios; complete renderers for S7–S10;
+Delivered by ACME-0050: the pure S7 replay renderer plus
+`/s7?executionId=...` and `/api/replay?executionId=...`. S4 carries the exact
+execution id into read-only `replayVerify`; a fail-closed gateway proves the
+path cannot contact a provider. The renderer copies the engine's exact
+`match | different | unavailable` verdict, delegates digest comparison to
+  `buildReplayView`, keeps diagnostic values redacted and persists no report or
+  canonical effect. Programmatic server composition may receive an injected
+  payload encryptor; the command-line workbench acquires no key itself.
+
+Not delivered: multi-step live scenarios; complete renderers for S8–S10;
 live launch controls in the browser; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
@@ -438,11 +451,11 @@ lives under `docs/concepts_sandbox/temp/`.
 - **Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0049).**
+- **The Domain Test UI has a bounded local workbench (ACME-0045–0050).**
   Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S6, including registry/discovery catalog, protected offline plan
-  preview/launch, durable memory-decision inspection and state lineage;
-  S7–S10 remain stubs and live browser launch remains
+  S1–S7, including registry/discovery catalog, protected offline plan
+  preview/launch, durable memory/state inspection and replay verification;
+  S8–S10 remain stubs and live browser launch remains
   absent. CI still uses CLI/`pnpm` gates, not the browser.
 - **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
   ExecutionEngine (ADR-0023), not multi-step live scenarios.

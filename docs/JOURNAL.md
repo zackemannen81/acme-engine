@@ -2,6 +2,41 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-05 — ACME-0050 browser replay inspector archived
+
+- Date: 2026-08-05
+- Author: Codex
+- Task: ACME-0050
+- Summary: Rendered `acme-view-replay/1` as S7 in the loopback workbench. A
+  durable S4 execution now links to read-only replay verification with the
+  engine's exact verdict, operation-digest comparison and diagnostic evidence.
+- Delivered: pure `renderReplayViewHtml`; `/s7?executionId=...` and
+  `/api/replay?executionId=...`; S4→S7 correlation; fail-closed gateway
+  composition; optional injected payload encryption for retained replay;
+  default-redacted diagnostics; honest missing-id, missing-ledger and
+  unknown-execution states.
+- Safety: replay uses existing `ExecutionEngine.replayVerify`, persists no
+  report, makes no canonical write and fails if it attempts a provider call.
+  The existing S2 origin hotfix was formatted and its duplicated cross-site
+  branch removed without changing its accepted same-origin behavior.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test:unit` — 537 tests / 60 files;
+  `pnpm test:conformance` — 58 / 7; `pnpm test:integration` — 51 / 8;
+  `pnpm test:scenario` — 21 / 4; `pnpm docs:check`; `pnpm build`;
+  `git diff --check`.
+- Browser: followed S3→S4→S7 for a hash-only durable execution and observed
+  engine `unavailable`, preserved recorded digest and a redacted
+  `REPLAY_MODEL_RESPONSE_UNAVAILABLE` diagnostic. A separate retained,
+  encrypted-payload run produced `match`, three identical digests, `equal`
+  comparison and zero differences. Exact execution ids were preserved and no
+  error overlay appeared.
+- External effects: no live provider call, paid request, deployment, package
+  publication, push or release.
+- Follow-up: S8 measurement rendering is the nearest bounded UI continuation;
+  S9, S10 browser rendering and multi-step live scenarios remain separate
+  optional charters.
+- Signature: Codex
+
 ## 2026-08-05 — Changed test ui origin policy
 - Date: 2026-08-05
 - Author: Rickard Zakrisson

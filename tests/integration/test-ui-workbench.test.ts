@@ -11,6 +11,7 @@ import {
   startWorkbenchServer,
   WorkbenchServeRefused,
 } from '../../apps/test-ui/src/local.js';
+import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 
 const roots: string[] = [];
 const servers: { close(): Promise<void> }[] = [];
@@ -48,6 +49,11 @@ const browserPlan = {
       },
     },
   ],
+};
+
+const encryptedBrowserPlan = {
+  ...browserPlan,
+  policy: { retention: 'encrypted-payload' },
 };
 
 async function formToken(url: string): Promise<string> {
@@ -251,6 +257,7 @@ describe('test-ui local workbench server', () => {
           return `${kind}-browser-server`;
         },
       },
+      payloadEncryptor: createTestPayloadEncryptor(),
     });
     servers.push(server);
 
@@ -258,7 +265,7 @@ describe('test-ui local workbench server', () => {
     const preview = await fetch(`${server.url}/s2/preview`, {
       method: 'POST',
       headers: { origin: server.url },
-      body: submission(token),
+      body: submission(token, { source: JSON.stringify(encryptedBrowserPlan) }),
     });
     expect(preview.status).toBe(200);
     const previewHtml = await preview.text();
@@ -269,7 +276,7 @@ describe('test-ui local workbench server', () => {
     const launch = await fetch(`${server.url}/s2/launch`, {
       method: 'POST',
       headers: { origin: server.url },
-      body: submission(token),
+      body: submission(token, { source: JSON.stringify(encryptedBrowserPlan) }),
       redirect: 'manual',
     });
     expect(launch.status).toBe(303);
@@ -297,6 +304,7 @@ describe('test-ui local workbench server', () => {
     expect(detailHtml).toContain(
       '/s6?namespace=narrative&amp;entityId=story-browser-launch',
     );
+    expect(detailHtml).toContain('/s7?executionId=');
 
     const executionId = new URL(detail.url).searchParams.get('executionId');
     if (executionId === null) {
@@ -415,6 +423,60 @@ describe('test-ui local workbench server', () => {
     expect(stateHtml).toContain('redacted');
     expect(stateHtml).not.toContain('<details>');
 
+    const replayApi = await fetch(
+      `${server.url}/api/replay?executionId=${encodeURIComponent(executionId)}`,
+    );
+    expect(replayApi.status).toBe(200);
+    const replayView = (await replayApi.json()) as {
+      view: string;
+      executionId: string;
+      recordedOperationDigest: string | null;
+      outcome:
+        | { availability: 'unavailable'; reason: string }
+        | {
+            availability: 'available';
+            status: string;
+            digest: { comparison: string };
+            differenceCount: number;
+          };
+    };
+    expect(replayView).toMatchObject({
+      view: 'acme-view-replay/1',
+      executionId,
+      outcome: {
+        availability: 'available',
+        status: 'match',
+        digest: { comparison: 'equal' },
+      },
+    });
+    expect(replayView.recordedOperationDigest).not.toBeNull();
+
+    const replayPage = await fetch(
+      `${server.url}/s7?executionId=${encodeURIComponent(executionId)}`,
+    );
+    expect(replayPage.status).toBe(200);
+    const replayHtml = await replayPage.text();
+    expect(replayHtml).toContain('S7 Replay inspector');
+    expect(replayHtml).toContain('acme-view-replay/1');
+    expect(replayHtml).toContain('match');
+    expect(replayHtml).toContain('equal');
+    expect(replayHtml).toContain('No replay differences recorded.');
+    expect(replayHtml).toContain(replayView.recordedOperationDigest ?? '');
+    expect(replayHtml).not.toContain('<details>');
+
+    const memoryAfterReplay = await (
+      await fetch(
+        `${server.url}/api/memory-decisions?executionId=${encodeURIComponent(executionId)}`,
+      )
+    ).json();
+    const stateAfterReplay = await (
+      await fetch(
+        `${server.url}/api/state?namespace=narrative&entityId=story-browser-launch`,
+      )
+    ).json();
+    expect(memoryAfterReplay).toStrictEqual(memoryView);
+    expect(stateAfterReplay).toStrictEqual(stateView);
+
     const emptyState = await fetch(
       `${server.url}/api/state?namespace=narrative&entityId=not-recorded`,
     );
@@ -437,11 +499,23 @@ describe('test-ui local workbench server', () => {
     expect(await missingStateScope.text()).toContain(
       'Choose an execution in S4',
     );
+    const missingReplayExecution = await fetch(`${server.url}/s7`);
+    expect(missingReplayExecution.status).toBe(200);
+    expect(await missingReplayExecution.text()).toContain(
+      'Choose an execution in S4',
+    );
     const unknownExecution = await fetch(
       `${server.url}/api/memory-decisions?executionId=does-not-exist`,
     );
     expect(unknownExecution.status).toBe(404);
     expect(await unknownExecution.text()).toContain('Execution not found');
+    const unknownReplayExecution = await fetch(
+      `${server.url}/api/replay?executionId=does-not-exist`,
+    );
+    expect(unknownReplayExecution.status).toBe(404);
+    expect(await unknownReplayExecution.text()).toContain(
+      'Execution not found',
+    );
 
     const duplicate = await fetch(`${server.url}/s2/launch`, {
       method: 'POST',

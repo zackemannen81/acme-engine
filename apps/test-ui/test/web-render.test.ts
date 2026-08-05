@@ -10,12 +10,14 @@ import {
   buildExecutionView,
   buildMemoryDecisionsView,
   buildPlanView,
+  buildReplayView,
   buildRunsView,
   buildStateView,
   renderCatalogViewHtml,
   renderExecutionViewHtml,
   renderMemoryDecisionsViewHtml,
   renderPlanViewHtml,
+  renderReplayViewHtml,
   renderRunsViewHtml,
   renderStateViewHtml,
   renderStubSurface,
@@ -35,6 +37,8 @@ import {
   entityId,
   executionId,
   hashOnlyModelCall,
+  matchReport,
+  differentReport,
   preparedCommit,
   namespace,
   nextSnapshot,
@@ -308,6 +312,43 @@ describe('pure HTML renderers', () => {
     );
     expect(unavailable).toContain('State evidence unavailable');
     expect(unavailable).toContain('STATE_EVIDENCE_UNAVAILABLE');
+  });
+
+  it('renders S7 match and digest comparison from the supplied replay view', () => {
+    const html = renderReplayViewHtml(
+      buildReplayView({
+        executionId,
+        report: matchReport,
+        recordedOperationDigest: 'digest-operation-1',
+      }),
+    );
+
+    expect(html).toContain('S7 Replay inspector');
+    expect(html).toContain('acme-view-replay/1');
+    expect(html).toContain('match');
+    expect(html).toContain('equal');
+    expect(html).toContain('digest-operation-1');
+    expect(html).toContain('No replay differences recorded.');
+  });
+
+  it('keeps S7 diagnostics redacted and not-run evidence explicit', () => {
+    const different = renderReplayViewHtml(
+      buildReplayView({ executionId, report: differentReport }),
+    );
+    expect(different).toContain('different');
+    expect(different).toContain('REPLAY_MODEL_RESPONSE_HASH_DIFFERENT');
+    expect(different).toContain('redacted');
+    expect(different).not.toContain('hash-response-9');
+    expect(different).not.toContain('<details>');
+
+    const notRun = renderReplayViewHtml(
+      buildReplayView({
+        executionId,
+        recordedOperationDigest: 'digest-operation-1',
+      }),
+    );
+    expect(notRun).toContain('Replay outcome unavailable');
+    expect(notRun).toContain('REPLAY_NOT_RUN');
   });
 
   it('names the contract on stub surfaces', () => {
