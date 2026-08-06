@@ -161,12 +161,12 @@ describe('SQLite durability under fault and contention', () => {
       repositoryOver(database),
       gateway,
     ).execute(faulted);
-    // A driver-level failure carries no ACME classification, so it lands as a
-    // non-retryable INTERNAL error. See
-    // `docs/backlog/driver-error-classification.md`.
+    // Injected fault is SQLITE_BUSY-shaped; the adapter classifies it as
+    // retryable PERSISTENCE_TRANSIENT before the engine records the terminal
+    // result (ACME-0057 / driver-error classification).
     expect(result).toMatchObject({
       status: 'failed',
-      error: { code: 'INTERNAL', retryable: false },
+      error: { code: 'PERSISTENCE_TRANSIENT', retryable: true },
     });
     expect(gateway.invocations()).toHaveLength(1);
 

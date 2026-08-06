@@ -57,7 +57,7 @@ explicit disposition.
 | G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** |
 | G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **solve** operator alarm + optional host worker docs in WP-O |
 | G04 | Outbox residuals: no redrive for `failed`, no real transport beyond report dispatcher, no domain events from reference modules | Outbox ops | Delivery path unproven under real traffic | **Solve** via WP-O (sliced) |
-| G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Solve** via WP-D (backlog ready) |
+| G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
 | G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Solve** via WP-D |
 | G07 | Domain Test UI workbench phases 0–6 / S1–S10 delivered; CI still CLI/`pnpm`, not browser | Test UI status | Observational, not a defect | **Accept** as intentional; optional browser CI later (WP-T residual) |
 | G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Solve** only with ADR amendment path in WP-T |
@@ -112,10 +112,10 @@ Make persistence failures classifiable for retry, and make terminal
 
 #### Suggested task slices
 
-1. **D1 — Driver error classification** (activate `docs/backlog/driver-error-classification.md`)
-2. **D2 — Stranded execution operator commands**
+1. **D1 — Driver error classification** — **done ACME-0057**
+2. **D2 — Stranded execution operator commands** (next WP-D slice)
 
-#### D1 steps (driver errors)
+#### D1 steps (driver errors) — delivered ACME-0057
 
 1. Map recognized `better-sqlite3` / SQLite codes inside `@acme/adapter-sqlite`
    before they leave the adapter:
@@ -527,8 +527,8 @@ required by `docs/TASK_WORKFLOW.md`.
 
 | Order | Slice | Closes | Why this order |
 |------:|-------|--------|----------------|
-| 1 | D1 Driver error classification | G05 | Backlog-ready, small, improves all SQLite failure modes |
-| 2 | D2 Stranded execution ops | G06 | Operator safety next to durability story |
+| 1 | D1 Driver error classification | G05 | **Done ACME-0057** |
+| 2 | D2 Stranded execution ops | G06 | Next recommended on `chore/gapfixes` |
 | 3 | O1 Outbox redrive | G04 (part) | Completes delivery lifecycle without domain events |
 | 4 | O2 Real dispatcher transport | G04 (part) | Makes drain meaningful beyond report stub |
 | 5 | O4 Growth alarm + host runbook | G03 | Operability without violating ADR-0018 |

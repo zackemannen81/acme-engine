@@ -132,11 +132,13 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/
 │   │   │   ├── database.ts
+│   │   │   ├── driver-errors.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrations.ts
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
 │   │   └── test/
+│   │       ├── driver-errors.test.ts
 │   │       ├── encrypted-payload.test.ts
 │   │       └── migrations.test.ts
 │   ├── core/
@@ -420,6 +422,7 @@ acme-engine/
 │   │   ├── ACME-0054_quality-evaluation-harness.md
 │   │   ├── ACME-0055_acme-human-readable-documents.md
 │   │   ├── ACME-0056_gap-resolution-plan.md
+│   │   ├── ACME-0057_driver-error-classification.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -555,9 +558,7 @@ implementation; each package needs its own activated ACME task.
 is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
 
-The `docs/backlog/` proposals record open residual work (Domain Test UI
-implementation; driver-error classification). The latter keeps generic ACME
-status classes in public contracts and driver-code mapping inside each
-adapter and is scheduled as WP-D / D1 in the gap-resolution plan. Resolved
-proposals (encrypted-payload, strict structured-output) are removed once
-finished.
+The `docs/backlog/` proposals record residual work. Driver-error
+classification is resolved (ACME-0057); the file remains as resolved context.
+Domain Test UI implementation notes remain for optional residuals. Resolved
+proposals may stay for discovery context or be removed once finished.

@@ -41,6 +41,7 @@ import {
 } from '@acme/core';
 import type { Database, Statement } from 'better-sqlite3';
 
+import { withSqliteDriverErrors } from './driver-errors.js';
 import {
   toDomainEventRecord,
   toExecutionAttempt,
@@ -1673,29 +1674,39 @@ export class SqliteExecutionRepository implements ExecutionRepository {
   }
 
   #statement(sql: string): Statement {
-    const cached = this.#statements.get(sql);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const prepared = this.#database.prepare(sql);
-    this.#statements.set(sql, prepared);
-    return prepared;
+    return withSqliteDriverErrors(() => {
+      const cached = this.#statements.get(sql);
+      if (cached !== undefined) {
+        return cached;
+      }
+      const prepared = this.#database.prepare(sql);
+      this.#statements.set(sql, prepared);
+      return prepared;
+    });
   }
 
   #one<TRow>(sql: string, params: readonly SqlValue[] = []): TRow | undefined {
-    return this.#statement(sql).get(...params) as TRow | undefined;
+    return withSqliteDriverErrors(
+      () => this.#statement(sql).get(...params) as TRow | undefined,
+    );
   }
 
   #all<TRow>(sql: string, params: readonly SqlValue[] = []): TRow[] {
-    return this.#statement(sql).all(...params) as TRow[];
+    return withSqliteDriverErrors(
+      () => this.#statement(sql).all(...params) as TRow[],
+    );
   }
 
   #run(sql: string, params: readonly SqlValue[] = []): void {
-    this.#statement(sql).run(...params);
+    withSqliteDriverErrors(() => {
+      this.#statement(sql).run(...params);
+    });
   }
 
   #immediate<T>(work: () => T): T {
-    return this.#database.transaction(work).immediate();
+    return withSqliteDriverErrors(() =>
+      this.#database.transaction(work).immediate(),
+    );
   }
 }
 

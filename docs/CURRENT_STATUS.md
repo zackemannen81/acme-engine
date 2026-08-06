@@ -285,11 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0056 completed the gap-resolution plan
-at `docs/design/gap-resolution-plan.md` (G01–G19, work packages WP-D through
-WP-X, recommended activation order). `docs/CURRENT_TASK.md` is restored to the
-Draft template pending the next explicitly approved task. Preferred first
-implementation slice: driver-error classification (WP-D / D1).
+No implementation task is active. ACME-0057 closed G05 (driver-error
+classification) on `chore/gapfixes`. Next recommended plan slice: WP-D / D2
+stranded-execution operator tooling (G06). `docs/CURRENT_TASK.md` is restored
+to the Draft template.
 
 ### Recent completed work (summary)
 
@@ -367,6 +366,11 @@ implementation slice: driver-error classification (WP-D / D1).
   Swedish presentation, whitepaper and technical system document under
   `hrd/`. These are editable explanatory artifacts; Markdown sources and ADRs
   remain authoritative.
+- **ACME-0056:** Gap-resolution plan (`docs/design/gap-resolution-plan.md`)
+  with G01–G19 and work packages WP-D through WP-X.
+- **ACME-0057:** SQLite driver-error classification (G05 / D1): busy/locked →
+  `PERSISTENCE_TRANSIENT`; corruption/constraint → `PERSISTENCE_CORRUPTION`;
+  unknown → `INTERNAL` AcmeError.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -518,10 +522,11 @@ Ordering, dependencies and activatable slices live in
   transport exists beyond the CLI's report dispatcher, and neither reference
   module emits domain events yet, so production outbox traffic is still
   hypothetical. → WP-O
-- **G05 — Driver error classification:** a `better-sqlite3` failure reaches the
-  caller as non-retryable `INTERNAL`, so a transient `SQLITE_BUSY` would be
-  indistinguishable from an internal defect. Proposal:
-  `docs/backlog/driver-error-classification.md`. → WP-D
+- **G05 — Driver error classification:** **Closed by ACME-0057.** The SQLite
+  adapter maps busy/locked codes to retryable `PERSISTENCE_TRANSIENT` and
+  corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;
+  unknown failures become `INTERNAL` AcmeErrors (never raw driver throws).
+  See `docs/backlog/driver-error-classification.md` (resolved).
 - **G06 — Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.

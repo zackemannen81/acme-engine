@@ -2,6 +2,31 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0057 driver error classification (D1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0057
+- Branch: `chore/gapfixes`
+- Summary: Closed gap G05 / plan slice WP-D D1. `@acme/adapter-sqlite` now
+  maps recognized better-sqlite3 result codes at every repository DB seam
+  (`driver-errors.ts` + wrapped `#statement`/`#one`/`#all`/`#run`/`#immediate`).
+- Classification: busy/locked → `PERSISTENCE_TRANSIENT` retryable; corruption
+  and constraint codes → `PERSISTENCE_CORRUPTION` non-retryable; unknown →
+  `INTERNAL` AcmeError (never a raw driver throw). Public codes stay free of
+  SQLite vocabulary.
+- Tests: unit mapping + real `SQLITE_BUSY` with dual connections and
+  `busy_timeout = 0`; durability fault fixture is SQLITE_BUSY-shaped so the
+  engine records `PERSISTENCE_TRANSIENT` after rollback proof.
+- Docs: backlog proposal marked resolved; CURRENT_STATUS G05 closed; SYSTEMDOC,
+  gap plan, PROJECT_BRIEF, FILESTRUCTURE updated.
+- Verification: `pnpm typecheck`; `test:unit` 565/565; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check` (125 Markdown); `git diff
+  --check`.
+- Out of scope retained: automatic retry consumers; D2 stranded ops.
+- Follow-ups: activate ACME-0058 (or next id) for D2 stranded executions.
+- Signature: Grok
+
 ## 2026-08-06 — Gap plan: live adapter verification in scope
 
 - Date: 2026-08-06

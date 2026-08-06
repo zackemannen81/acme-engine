@@ -530,9 +530,11 @@ and a driver-level fault injected inside the `BEGIN IMMEDIATE` transaction —
 after documents, memory candidates, the state snapshot, the transition and the
 state-head upsert are written — leaves none of them behind once every
 connection is closed and the file is reopened. The recorded model call
-survives, because it is written outside the commit. A driver failure carries
-no ACME classification today and reaches the caller as non-retryable
-`INTERNAL`; see `docs/backlog/driver-error-classification.md`.
+survives, because it is written outside the commit. Driver failures are
+classified inside `@acme/adapter-sqlite` before they leave the repository
+(ACME-0057): busy/locked → retryable `PERSISTENCE_TRANSIENT`,
+corruption/constraint → non-retryable `PERSISTENCE_CORRUPTION`, otherwise
+`INTERNAL` as an `AcmeError` (never a raw driver throw).
 
 Two writers on one file that read the same revision produce exactly one
 commit. The loser's compare-and-swap fails at commit time with
@@ -970,11 +972,12 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (outbox redrive/alarm, driver-error classification, stranded
-  operator tooling, plan model pin, durable quality store, async launch, and
-  related items) are inventoried with work packages and activation order in
+- Residual gaps (outbox redrive/alarm, stranded operator tooling, plan model
+  pin, durable quality store, async launch, and related items) are inventoried
+  with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). That plan does not authorize implementation by itself.
+  (ACME-0056). Driver-error classification (G05 / D1) is delivered by
+  ACME-0057. That plan does not authorize implementation by itself.
 
 ## Deliberately Deferred Decisions
 
