@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 import {
   AcmeError,
   drainOutbox,
+  listStrandedExecutions,
+  prepareOperatorDischarge,
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
@@ -561,6 +563,98 @@ function drainOutboxCommand(
   });
 }
 
+function listStranded(
+  command: Extract<Command, { kind: 'execution-stranded' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const evidence = composition.repository.snapshot();
+    const report = listStrandedExecutions(
+      {
+        executions: evidence.executions,
+        modelCalls: evidence.modelCalls,
+      },
+      { limit: command.limit },
+    );
+    const body = {
+      report: report.report,
+      count: report.count,
+      entries: report.entries.map((entry) => ({
+        executionId: entry.executionId,
+        disposition: entry.disposition,
+        status: entry.status,
+        namespace: entry.namespace,
+        task: entry.task,
+        requestKey: entry.requestKey,
+        entityId: entry.entityId,
+        reasonCode: entry.reasonCode,
+        ...(entry.modelCallId === undefined
+          ? {}
+          : { modelCallId: entry.modelCallId }),
+        ...(entry.modelCallStatus === undefined
+          ? {}
+          : { modelCallStatus: entry.modelCallStatus }),
+        ...(entry.errorCode === undefined ? {} : { errorCode: entry.errorCode }),
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'execution stranded',
+      body,
+      command.common.json,
+      report.count === 0
+        ? ['no stranded executions found']
+        : report.entries.map(
+            (entry) =>
+              `${entry.executionId} ${entry.disposition} ${entry.reasonCode}`,
+          ),
+    );
+    return report.count === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
+function dischargeExecution(
+  command: Extract<Command, { kind: 'execution-discharge' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const evidence = composition.repository.snapshot();
+    const prepared = prepareOperatorDischarge(
+      {
+        executions: evidence.executions,
+        modelCalls: evidence.modelCalls,
+      },
+      {
+        executionId: command.executionId,
+        dischargedBy: command.dischargedBy,
+        rationale: command.rationale,
+        dischargedAt: composition.clock.now(),
+      },
+    );
+    // Terminal only: do not appendAttempt with stage `failed` first — both
+    // adapters promote attempt.stage into execution.status, which would
+    // pre-terminal the row and make markTerminal look divergent. Operator
+    // audit lives in terminal.error.details (who / why / when / reason).
+    await composition.repository.markTerminal(prepared.terminal);
+
+    const body = {
+      executionId: prepared.executionId,
+      reasonCode: prepared.reasonCode,
+      status: prepared.terminal.status,
+      terminalAt: prepared.terminal.terminalAt,
+      error: prepared.terminal.error as unknown as JsonValue,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(options.io, 'execution discharge', body, command.common.json, [
+      `discharged ${prepared.executionId}`,
+      `reason ${prepared.reasonCode}`,
+      `by ${command.dischargedBy}`,
+    ]);
+    return EXIT_OK;
+  });
+}
+
 export async function run(
   argv: readonly string[],
   options: RunOptions,
@@ -579,6 +673,10 @@ export async function run(
         return await replay(command, options);
       case 'execution-inspect':
         return inspectExecution(command, options);
+      case 'execution-stranded':
+        return await listStranded(command, options);
+      case 'execution-discharge':
+        return await dischargeExecution(command, options);
       case 'state-inspect':
         return inspectState(command, options);
       case 'memory-inspect':

@@ -40,6 +40,18 @@ export type Command =
       readonly common: CommonOptions;
     }
   | {
+      readonly kind: 'execution-stranded';
+      readonly limit: number;
+      readonly common: CommonOptions;
+    }
+  | {
+      readonly kind: 'execution-discharge';
+      readonly executionId: string;
+      readonly dischargedBy: string;
+      readonly rationale: string;
+      readonly common: CommonOptions;
+    }
+  | {
       readonly kind: 'state-inspect';
       readonly namespace: string;
       readonly entityId: string;
@@ -75,6 +87,9 @@ export const USAGE = `acme — ACME composition root
   acme scenario run <file> [--adapter memory|sqlite] [--database <path>] [--json]
   acme execution replay <execution-id> --mode verify [--adapter ...] [--database <path>] [--json]
   acme execution inspect <execution-id> [--show-payloads] [--adapter ...] [--database <path>] [--json]
+  acme execution stranded [--limit <n>] [--adapter ...] [--database <path>] [--json]
+  acme execution discharge <execution-id> --by <operator> --rationale <text>
+               [--adapter ...] [--database <path>] [--json]
   acme state inspect <namespace> <entity-id> [--revision <n>] [--adapter ...] [--database <path>] [--json]
   acme memory inspect <namespace> <entity-id> [--status <status>] [--adapter ...] [--database <path>] [--json]
   acme outbox inspect [--status <status>] [--limit <n>] [--adapter ...] [--database <path>] [--json]
@@ -85,9 +100,11 @@ export const USAGE = `acme — ACME composition root
   --script         deterministic model-call script (mock gateway)
   --gateway        openai for a live Responses call (requires OPENAI_API_KEY;
                    model from ACME_OPENAI_MODEL or ACME_LIVE_MODEL)
-  --limit          maximum outbox entries to read or claim (default 50)
+  --limit          maximum outbox or stranded entries to list (default 50)
   --lease-timeout-ms
                    how long an outbox claim stays exclusive (default 30000)
+  --by             operator identity for execution discharge
+  --rationale      human reason for execution discharge
   --show-payloads  print document, memory and state values instead of redacting
   --json           versioned JSON on stdout instead of a text summary
 
@@ -162,6 +179,8 @@ export function parseCommand(argv: readonly string[]): Command {
         status: { type: 'string' },
         limit: { type: 'string' },
         'lease-timeout-ms': { type: 'string' },
+        by: { type: 'string' },
+        rationale: { type: 'string' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -237,8 +256,37 @@ export function parseCommand(argv: readonly string[]): Command {
       const executionId = requirePositional(positionals, 2, 'execution-id');
       return { kind: 'execution-inspect', executionId, common: options };
     }
+    if (action === 'stranded') {
+      return {
+        kind: 'execution-stranded',
+        limit: positiveInteger(values['limit'], '--limit', 50),
+        common: options,
+      };
+    }
+    if (action === 'discharge') {
+      const executionId = requirePositional(positionals, 2, 'execution-id');
+      const dischargedBy = values['by'] as string | undefined;
+      const rationale = values['rationale'] as string | undefined;
+      if (dischargedBy === undefined || dischargedBy.trim().length === 0) {
+        throw new UsageError(
+          'execution discharge requires --by <operator>.',
+        );
+      }
+      if (rationale === undefined || rationale.trim().length === 0) {
+        throw new UsageError(
+          'execution discharge requires --rationale <text>.',
+        );
+      }
+      return {
+        kind: 'execution-discharge',
+        executionId,
+        dischargedBy,
+        rationale,
+        common: options,
+      };
+    }
     throw new UsageError(
-      'Unknown execution action; expected replay or inspect.',
+      'Unknown execution action; expected replay, inspect, stranded or discharge.',
     );
   }
 

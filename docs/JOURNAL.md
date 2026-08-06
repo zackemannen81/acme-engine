@@ -2,6 +2,27 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0058 stranded execution operator tooling (D2)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0058
+- Branch: `chore/gapfixes`
+- Summary: Closed gap G06 / plan slice WP-D D2. Pure core
+  `listStrandedExecutions` and `prepareOperatorDischarge` classify open
+  non-terminal stranded primary model calls (reserved/in-flight, unreadable
+  response, failed, ambiguous) and terminal resume-refusal failures. CLI
+  `execution stranded` and `execution discharge --by --rationale` list and
+  markTerminal with operator audit in error details; no model outcome
+  invented and no state/memory/document write.
+- Note: discharge must not appendAttempt with stage `failed` first — both
+  adapters promote attempt.stage into execution.status and would pre-terminal
+  the row.
+- Verification: `pnpm typecheck`; `test:unit` 574/574; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check` (126 Markdown).
+- Follow-ups: WP-O O1 outbox redrive.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0057 driver error classification (D1)
 
 - Date: 2026-08-06

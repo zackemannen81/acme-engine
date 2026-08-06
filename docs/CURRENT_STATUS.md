@@ -285,10 +285,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0057 closed G05 (driver-error
-classification) on `chore/gapfixes`. Next recommended plan slice: WP-D / D2
-stranded-execution operator tooling (G06). `docs/CURRENT_TASK.md` is restored
-to the Draft template.
+No implementation task is active. ACME-0058 closed G06 (stranded execution
+ops) on `chore/gapfixes`. Next recommended plan slice: WP-O / O1 outbox
+redrive (G04). `docs/CURRENT_TASK.md` is restored to the Draft template.
 
 ### Recent completed work (summary)
 
@@ -371,6 +370,8 @@ to the Draft template.
 - **ACME-0057:** SQLite driver-error classification (G05 / D1): busy/locked →
   `PERSISTENCE_TRANSIENT`; corruption/constraint → `PERSISTENCE_CORRUPTION`;
   unknown → `INTERNAL` AcmeError.
+- **ACME-0058:** Stranded execution list/discharge (G06 / D2): pure core
+  classifier and CLI operator commands over ledger evidence.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -527,10 +528,11 @@ Ordering, dependencies and activatable slices live in
   corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;
   unknown failures become `INTERNAL` AcmeErrors (never raw driver throws).
   See `docs/backlog/driver-error-classification.md` (resolved).
-- **G06 — Stranded executions:** an execution interrupted between model-call
-  reservation and outcome, or one whose response was not retained, is terminal
-  and needs a human decision. No operator command lists or discharges them.
-  → WP-D
+- **G06 — Stranded executions:** **Closed by ACME-0058.** Core
+  `listStrandedExecutions` / `prepareOperatorDischarge` plus CLI
+  `execution stranded` and `execution discharge --by --rationale` inventory
+  open and terminal stranded rows and discharge open ones via `markTerminal`
+  with operator audit in error details (no invented model outcomes).
 - **G07 — Domain Test UI workbench (ACME-0045–0053) delivered.** Phases 0–6
   delivered S1–S10 as JSON contracts. Loopback HTML covers S1–S10 (catalog,
   offline plan preview/launch, durable memory/state inspection, replay,

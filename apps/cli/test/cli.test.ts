@@ -247,6 +247,55 @@ async function seedOutbox(database: string): Promise<void> {
   }
 }
 
+/** Non-terminal execution with a reserved primary call — stranded for discharge. */
+async function seedStranded(database: string): Promise<string> {
+  const executionId = 'execution-cli-stranded';
+  const connection = openDatabase({ location: database, appliedAt: now });
+  try {
+    const repository = createSqliteExecutionRepository({
+      database: connection,
+      ids: createIds(),
+    });
+    await repository.accept({
+      executionId,
+      request: {
+        requestKey: 'cli-stranded-1',
+        namespace,
+        task: 'observe-document',
+        entityId,
+        expectedRevision: 0,
+        input: { seeded: true },
+        model: selection,
+      },
+      requestFingerprint: 'fingerprint-cli-stranded',
+      inputHash: 'input-cli-stranded',
+      contract: { id: 'narrative.observe-document', version: '1.0.0' },
+      contractFingerprint: 'contract-fingerprint',
+      effectivePolicy: {
+        timeoutMs: 1_000,
+        maxModelCalls: 1,
+        maxRepairCalls: 0,
+        maxRevisionCalls: 0,
+        retention: 'hash-only',
+      },
+      createdAt: now,
+    });
+    await repository.reserveModelCall({
+      modelCallId: 'call-cli-stranded',
+      executionId,
+      callKey: 'model:0',
+      attempt: 1,
+      purpose: 'primary',
+      selection,
+      requestHash: 'request-hash-stranded',
+      startedAt: now,
+    });
+  } finally {
+    connection.close();
+  }
+  return executionId;
+}
+
 describe('acme CLI usage', () => {
   it('prints usage for help and exits successfully', async () => {
     const io = capture();
@@ -700,12 +749,133 @@ describe('acme CLI durable round trip', () => {
     expect(emptyIo.out.join('\n')).toContain('no outbox entries were due');
   });
 
+  it('lists and discharges a stranded SQLite execution', async () => {
+    const root = workspace();
+    const database = join(root, 'stranded.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    const executionId = await seedStranded(database);
+
+    const listIo = capture();
+    await expect(
+      run(['execution', 'stranded', '--json', ...sqlite], listIo.options),
+    ).resolves.toBe(EXIT_OK);
+    const listed = JSON.parse(listIo.out.join('\n')) as {
+      report: string;
+      count: number;
+      entries: {
+        executionId: string;
+        disposition: string;
+        reasonCode: string;
+      }[];
+    };
+    expect(listed.report).toBe('acme-stranded-list/1');
+    expect(listed.count).toBe(1);
+    expect(listed.entries[0]).toMatchObject({
+      executionId,
+      disposition: 'open',
+      reasonCode: 'unobserved-reservation',
+    });
+
+    const dischargeIo = capture();
+    await expect(
+      run(
+        [
+          'execution',
+          'discharge',
+          executionId,
+          '--by',
+          'ops-alice',
+          '--rationale',
+          'abandon unobserved call',
+          '--json',
+          ...sqlite,
+        ],
+        dischargeIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const discharged = JSON.parse(dischargeIo.out.join('\n')) as {
+      executionId: string;
+      reasonCode: string;
+      status: string;
+      error: {
+        code: string;
+        details: { operatorDischarge: boolean; dischargedBy: string };
+      };
+    };
+    expect(discharged).toMatchObject({
+      executionId,
+      reasonCode: 'unobserved-reservation',
+      status: 'failed',
+      error: {
+        code: 'MODEL_UNAVAILABLE',
+        details: {
+          operatorDischarge: true,
+          dischargedBy: 'ops-alice',
+        },
+      },
+    });
+
+    // Model-call evidence remains; execution is terminal stranded inventory.
+    const inspectIo = capture();
+    await expect(
+      run(
+        ['execution', 'inspect', executionId, '--json', ...sqlite],
+        inspectIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const inspected = JSON.parse(inspectIo.out.join('\n')) as {
+      execution: { status: string };
+      modelCalls: { status: string }[];
+    };
+    expect(inspected.execution.status).toBe('failed');
+    expect(inspected.modelCalls[0]?.status).toBe('reserved');
+
+    const afterList = capture();
+    await expect(
+      run(['execution', 'stranded', '--json', ...sqlite], afterList.options),
+    ).resolves.toBe(EXIT_OK);
+    const after = JSON.parse(afterList.out.join('\n')) as {
+      entries: { disposition: string; reasonCode: string }[];
+    };
+    expect(after.entries[0]).toMatchObject({
+      disposition: 'terminal',
+      reasonCode: 'terminal-resume-refusal',
+    });
+
+    // Second discharge is refused (already terminal).
+    const refuseIo = capture();
+    await expect(
+      run(
+        [
+          'execution',
+          'discharge',
+          executionId,
+          '--by',
+          'ops-bob',
+          '--rationale',
+          'again',
+          ...sqlite,
+        ],
+        refuseIo.options,
+      ),
+    ).resolves.toBe(EXIT_OUTCOME);
+    expect(refuseIo.err.join('\n')).toContain('Only non-terminal');
+  });
+
   it.each([
     [['outbox', 'redrive'], 'Unknown outbox action'],
     [['outbox', 'drain', '--limit', '0'], '--limit must be a positive integer'],
     [
       ['outbox', 'drain', '--lease-timeout-ms', 'soon'],
       '--lease-timeout-ms must be a positive integer',
+    ],
+    [
+      ['execution', 'discharge', 'exec-x'],
+      'execution discharge requires --by',
+    ],
+    [
+      ['execution', 'discharge', 'exec-x', '--by', 'ops'],
+      'execution discharge requires --rationale',
     ],
   ])('rejects %j as a usage error', async (argv, expected) => {
     const io = capture();

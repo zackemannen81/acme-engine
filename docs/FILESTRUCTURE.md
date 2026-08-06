@@ -171,7 +171,8 @@ acme-engine/
 │   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
 │   │   │   ├── state-projection.ts
-│   │   │   └── state.ts
+│   │   │   ├── state.ts
+│   │   │   └── stranded-execution.ts
 │   │   ├── test/
 │   │   │   ├── execution-identity.test.ts
 │   │   │   ├── hashing.test.ts
@@ -183,7 +184,8 @@ acme-engine/
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
 │   │   │   ├── state-engine.test.ts
-│   │   │   └── state-projection.test.ts
+│   │   │   ├── state-projection.test.ts
+│   │   │   └── stranded-execution.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
 │   ├── evaluation/
@@ -423,6 +425,7 @@ acme-engine/
 │   │   ├── ACME-0055_acme-human-readable-documents.md
 │   │   ├── ACME-0056_gap-resolution-plan.md
 │   │   ├── ACME-0057_driver-error-classification.md
+│   │   ├── ACME-0058_stranded-execution-ops.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

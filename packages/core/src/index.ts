@@ -26,3 +26,4 @@ export * from './repository-digest.js';
 export * from './state.js';
 export * from './state-engine.js';
 export * from './state-projection.js';
+export * from './stranded-execution.js';

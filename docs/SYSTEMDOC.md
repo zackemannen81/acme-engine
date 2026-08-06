@@ -433,6 +433,10 @@ repository adapter. Everything else works through core ports.
   scenario root
 - `execute` runs one task through the bounded ExecutionEngine
 - `execution replay --mode verify` reports the ADR-0012 verdict
+- `execution stranded` lists open and terminal stranded executions
+  (`acme-stranded-list/1`); `execution discharge` marks an open stranded
+  execution failed with operator audit in error details (no model outcome
+  invented, no state/memory/document write)
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
 - `outbox inspect` lists entries with their events; `outbox drain` leases,
@@ -972,12 +976,13 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (outbox redrive/alarm, stranded operator tooling, plan model
-  pin, durable quality store, async launch, and related items) are inventoried
-  with work packages and activation order in
+- Residual gaps (outbox redrive/alarm, plan model pin, durable quality store,
+  async launch, and related items) are inventoried with work packages and
+  activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). Driver-error classification (G05 / D1) is delivered by
-  ACME-0057. That plan does not authorize implementation by itself.
+  (ACME-0056). Driver-error classification (G05 / D1) is ACME-0057; stranded
+  operator tooling (G06 / D2) is ACME-0058. That plan does not authorize
+  implementation by itself.
 
 ## Deliberately Deferred Decisions
 
