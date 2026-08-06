@@ -26,5 +26,11 @@ Application surfaces:
   require their own charter. Implementation backlog:
   [`../backlog/domain-test-ui-implementation.md`](../backlog/domain-test-ui-implementation.md).
 
+Residual planning:
+
+- [`gap-resolution-plan.md`](gap-resolution-plan.md) — ACME-0056 inventory of
+  persistent gaps (G01–G19), work packages, ADR constraints and recommended
+  activation order. Planning artifact only; does not authorize implementation.
+
 Design documents describe the integrated system. Individual durable decisions
 that constrain future change belong in `docs/adr/`.

@@ -970,6 +970,11 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
+- Residual gaps (outbox redrive/alarm, driver-error classification, stranded
+  operator tooling, plan model pin, durable quality store, async launch, and
+  related items) are inventoried with work packages and activation order in
+  [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
+  (ACME-0056). That plan does not authorize implementation by itself.
 
 ## Deliberately Deferred Decisions
 
@@ -980,4 +985,5 @@ unavailable until something runs in the background.
 - provider-specific reconciliation details
 - encryption key lifecycle (KMS, rotation) and privacy deletion
 
-These require evidence and ADRs before implementation.
+These require evidence and ADRs before implementation. See also the accept /
+defer dispositions in the gap-resolution plan.

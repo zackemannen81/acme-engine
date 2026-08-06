@@ -285,10 +285,11 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0055 completed the governing-document
-reality audit and produced three Swedish, human-readable artifacts under
-`hrd/`; `docs/CURRENT_TASK.md` is restored to the Draft template pending the
-next explicitly approved task.
+No implementation task is active. ACME-0056 completed the gap-resolution plan
+at `docs/design/gap-resolution-plan.md` (G01–G19, work packages WP-D through
+WP-X, recommended activation order). `docs/CURRENT_TASK.md` is restored to the
+Draft template pending the next explicitly approved task. Preferred first
+implementation slice: driver-error classification (WP-D / D1).
 
 ### Recent completed work (summary)
 
@@ -501,68 +502,79 @@ live external call through this contract.
 
 ## Persistent Gaps
 
-- **ScenarioRunner has no live provider step.** `acme execute --gateway openai`
-  and test-ui `launchLiveExecution` (ACME-0044) reach a live model, but a
-  multi-step scenario file cannot; ScenarioRunner remains mock-only.
-- **Nothing drains the outbox automatically.** A composition root must call the
-  drain, and no alarm exists for a growing outbox (ADR-0018).
-- **Outbox residuals:** `failed` entries have no redrive path, no real
+Ordering, dependencies and activatable slices live in
+[`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
+(ACME-0056). IDs below match that plan (G01–G19).
+
+- **G01/G02 — ScenarioRunner has no live provider step.** `acme execute
+  --gateway openai` and test-ui `launchLiveExecution` (ACME-0044) reach a live
+  model, but a multi-step scenario file cannot; ScenarioRunner remains
+  mock-only. S10 live launch is single-execute via ExecutionEngine (ADR-0023),
+  not multi-step live scenarios. → WP-L
+- **G03 — Nothing drains the outbox automatically.** A composition root must
+  call the drain, and no alarm exists for a growing outbox (ADR-0018). Library
+  auto-drain is rejected; host drain + growth alarm are the planned path. → WP-O
+- **G04 — Outbox residuals:** `failed` entries have no redrive path, no real
   transport exists beyond the CLI's report dispatcher, and neither reference
   module emits domain events yet, so production outbox traffic is still
-  hypothetical.
-- **Driver error classification:** a `better-sqlite3` failure reaches the
+  hypothetical. → WP-O
+- **G05 — Driver error classification:** a `better-sqlite3` failure reaches the
   caller as non-retryable `INTERNAL`, so a transient `SQLITE_BUSY` would be
   indistinguishable from an internal defect. Proposal:
-  `docs/backlog/driver-error-classification.md`.
-- **Stranded executions:** an execution interrupted between model-call
+  `docs/backlog/driver-error-classification.md`. → WP-D
+- **G06 — Stranded executions:** an execution interrupted between model-call
   reservation and outcome, or one whose response was not retained, is terminal
   and needs a human decision. No operator command lists or discharges them.
-- **The Domain Test UI has a bounded local workbench (ACME-0045–0053).**
-  Phases 0–6 delivered S1–S10 as JSON contracts. Loopback HTML now covers
-  S1–S10, including registry/discovery catalog, protected offline plan
-  preview/launch, durable memory/state inspection, replay verification and
-  recorded-run measurement, fixture review and two-key-gated single-execute
-  live launch. CI still uses CLI/`pnpm` gates, not the browser.
-- **ScenarioRunner remains mock-only.** S10 live launch is single-execute via
-  ExecutionEngine (ADR-0023), not multi-step live scenarios.
-- **Launching blocks its caller.** `launchPlan` is synchronous by decision
-  (ADR-0021). There is no queue, no background worker and no cancellation, so
-  S3's live-progress section stays `unavailable` and a long run holds the
-  caller until it finishes.
-- **Plans cannot pin a model.** `acme-scenario/1` reads the `ModelSelection`
-  from the mock-response fixture, so `acme-test-plan/1` has no model field and
-  an `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020).
-- **`measurements` is not in `acme-test-plan/1`.** S8 (ACME-0043) measures
-  recorded runs with thresholds supplied at measurement time; the plan format
-  still rejects a `measurements` block (ADR-0020). Embedding thresholds in the
-  plan would be a separate charter.
-- **Adapter targets are declared, not discovered.** Nothing in the workspace
-  registers adapter implementations; the CLI composition root hard-codes them.
-  The catalog therefore renders targets a caller declares and only validates
-  the kit name, so a workspace adapter nobody declares is invisible to it.
-- **Trust pipeline granularity.** `preparing-commit` owns the memory,
+  → WP-D
+- **G07 — Domain Test UI workbench (ACME-0045–0053) delivered.** Phases 0–6
+  delivered S1–S10 as JSON contracts. Loopback HTML covers S1–S10 (catalog,
+  offline plan preview/launch, durable memory/state inspection, replay,
+  measurement, fixture review, gated single-execute live). CI still uses
+  CLI/`pnpm` gates, not the browser. **Accepted** as intentional; optional
+  browser CI is T4 only. → accept / WP-T optional
+- **G08 — Launching blocks its caller.** `launchPlan` is synchronous by
+  decision (ADR-0021). There is no queue, no background worker and no
+  cancellation, so S3's live-progress section stays `unavailable` and a long
+  run holds the caller until it finishes. → WP-T (ADR amendment first)
+- **G09 — Plans cannot pin a model.** `acme-scenario/1` reads the
+  `ModelSelection` from the mock-response fixture, so `acme-test-plan/1` has
+  no model field and an `ExecutionRequest` cannot be materialized from a plan
+  alone (ADR-0020). → WP-L
+- **G10 — `measurements` is not in `acme-test-plan/1`.** S8 (ACME-0043)
+  measures recorded runs with thresholds supplied at measurement time; the
+  plan format still rejects a `measurements` block (ADR-0020). Embedding
+  thresholds in the plan would be a separate charter. → WP-T
+- **G11 — Adapter targets are declared, not discovered.** Nothing in the
+  workspace registers adapter implementations; the CLI composition root
+  hard-codes them. The catalog therefore renders targets a caller declares and
+  only validates the kit name, so a workspace adapter nobody declares is
+  invisible to it. → WP-T (or accept declaration-only)
+- **G12 — Trust pipeline granularity.** `preparing-commit` owns the memory,
   projection and state substages, and a failure there reports `reached` for
   all three because the recorded error does not name one. Finer resolution
   requires the engine to record finer evidence, not the interface to guess.
-- **Model parameter capability:** some models (e.g. `gpt-5.6-terra`) reject
-  `temperature` after accepting the schema. Reference contracts no longer emit
-  a default `temperature` (ACME-0037); core and the OpenAI adapter already treat
-  it as optional and only forward when present. Residual: optional profile /
-  capability gating if a future contract *explicitly* sets temperature for a
-  model that rejects it (ADR-0015).
-- **Ambiguous call reconciliation** against provider-side history is not
-  implemented. ADR-0014 keeps such calls terminal and non-retried.
-- **Privacy deletion and full key lifecycle (KMS/rotation)** remain deferred.
-  Payload encryption at rest is implemented (ADR-0016); live runs may use
-  `encrypted-payload` when the composition root supplies an encryptor. The
+  → WP-E
+- **G13 — Model parameter capability:** some models (e.g. `gpt-5.6-terra`)
+  reject `temperature` after accepting the schema. Reference contracts no
+  longer emit a default `temperature` (ACME-0037); core and the OpenAI adapter
+  already treat it as optional and only forward when present. Residual:
+  optional profile / capability gating if a future contract *explicitly* sets
+  temperature for a model that rejects it (ADR-0015). → WP-P (defer until pain)
+- **G14 — Ambiguous call reconciliation** against provider-side history is not
+  implemented. ADR-0014 keeps such calls terminal and non-retried. → WP-P defer
+- **G15 — Privacy deletion and full key lifecycle (KMS/rotation)** remain
+  deferred. Payload encryption at rest is implemented (ADR-0016); live runs may
+  use `encrypted-payload` when the composition root supplies an encryptor. The
   opt-in live gate still defaults to `hash-only` until that wiring is normal.
-- Offline success-path Responses fixtures remain simplified samples (unknown
-  fields tolerated); they are not byte-identical live captures.
-- Package boundary enforcement covers current packages; future adapters must
-  extend its rule set.
-- `better-sqlite3` prebuild resolution is exercised on Windows locally and on
+  → WP-K defer
+- **G16 — Offline success-path Responses fixtures** remain simplified samples
+  (unknown fields tolerated); they are not byte-identical live captures. → WP-P
+  optional
+- **G17 — Package boundary enforcement** covers current packages; future
+  adapters must extend its rule set. → WP-X process
+- **G18 — `better-sqlite3` prebuild** is exercised on Windows locally and on
   `ubuntu-latest` in CI, where the full suite including the SQLite adapter
-  passes. No other platform is observed.
-- **Quality evaluation is memory-only.** The contract and append-only in-memory
-  adapter exist, but no SQLite migration, durable implementation, CLI command,
-  Test UI surface or live AI judge has been approved.
+  passes. No other platform is observed. → WP-X observe-only
+- **G19 — Quality evaluation is memory-only.** The contract and append-only
+  in-memory adapter exist, but no SQLite migration, durable implementation,
+  CLI command, Test UI surface or live AI judge has been approved. → WP-Q

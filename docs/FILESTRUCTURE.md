@@ -360,6 +360,7 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
 │   │   ├── domain-test-ui-specification.md
+│   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md
 │   │   └── research-module-build-and-test-plan.md
 │   ├── finished/
@@ -418,6 +419,7 @@ acme-engine/
 │   │   ├── ACME-0053_browser-live-evaluation.md
 │   │   ├── ACME-0054_quality-evaluation-harness.md
 │   │   ├── ACME-0055_acme-human-readable-documents.md
+│   │   ├── ACME-0056_gap-resolution-plan.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -544,6 +546,11 @@ rendering for S1–S10 under ADR-0020 through ADR-0024. Multi-step live scenario
 remain open. A non-authority workbench mock lives under
 `docs/concepts_sandbox/temp/`.
 
+`docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
+Gaps item (G01–G19), groups them into work packages with ordered steps and ADR
+constraints, and recommends an activation order. It does not authorize
+implementation; each package needs its own activated ACME task.
+
 `docs/concepts_sandbox/` holds explicitly excluded concept work. Nothing in it
 is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
@@ -551,5 +558,6 @@ authority.
 The `docs/backlog/` proposals record open residual work (Domain Test UI
 implementation; driver-error classification). The latter keeps generic ACME
 status classes in public contracts and driver-code mapping inside each
-adapter. Resolved proposals
-(encrypted-payload, strict structured-output) are removed once finished.
+adapter and is scheduled as WP-D / D1 in the gap-resolution plan. Resolved
+proposals (encrypted-payload, strict structured-output) are removed once
+finished.
