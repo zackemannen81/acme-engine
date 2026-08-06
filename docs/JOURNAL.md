@@ -1,6 +1,50 @@
 # Journal
 
 Add one dated, signed entry for every meaningful work session or handoff.
+
+## 2026-08-06 — Gap plan: live adapter verification in scope
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0056 (plan correction; no new task)
+- Summary: Product feedback: live provider calls must not be treated as
+  globally out of scope for live-purpose packages. Updated
+  `docs/design/gap-resolution-plan.md` with an explicit live verification
+  policy: WP-L L2 (and Q4 / P3 when activated) require a bounded real-adapter
+  success path in DoD; default CI stays mock-only; budget/opt-in stay
+  mandatory. Blanket “no live calls” belongs only on offline packages (e.g.
+  WP-D). ACME-0056’s own historical Out of Scope (planning-only, no runtime)
+  is unchanged in the archive.
+- Verification: documentation wording only; no live call in this correction.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0056 gap resolution plan
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0056
+- Summary: Activated a planning-only task and published
+  `docs/design/gap-resolution-plan.md`. Every Persistent Gaps bullet from
+  `docs/CURRENT_STATUS.md` now has a stable ID (G01–G19), a disposition
+  (solve / collapse / accept / defer) and a work package with ordered steps.
+- Packages: WP-D (driver errors + stranded ops), WP-O (outbox redrive,
+  transport, events, growth alarm without library auto-drain), WP-L (plan
+  model pin + ScenarioRunner live multi-step), WP-Q (durable quality store),
+  WP-T (Test UI async/measurements/discovery), WP-E (trust-stage evidence),
+  WP-P/WP-K/WP-X (optional provider, privacy, hygiene).
+- Constraints preserved: ADR-0018 forbids in-library auto-drain; ADR-0021
+  keeps synchronous launch until amended; ADR-0014 keeps ambiguous calls
+  terminal; static composition remains default for adapter discovery.
+- Recommended first implementation slice: D1 driver-error classification
+  from `docs/backlog/driver-error-classification.md`.
+- Documentation: CURRENT_STATUS Active Work and gap IDs, PROJECT_BRIEF Next
+  Deliverable pointer, FILESTRUCTURE, design README, JOURNAL.
+- Verification: documentation gates (`pnpm docs:check`, `git diff --check`).
+  No code, live provider, deployment or publication.
+- Follow-ups: activate the next implementation task explicitly from the plan
+  (prefer D1); do not treat the plan as a multi-gap blank check.
+- Signature: Grok
+
 ## 2026-08-06 — Changed gpt-model
 
 - Date: 2026-08-06
