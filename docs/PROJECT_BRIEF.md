@@ -183,6 +183,5 @@ events, driver-error classification and key lifecycle. Their inventory,
 dependencies and recommended activation order are recorded in
 `docs/design/gap-resolution-plan.md` (ACME-0056). The next implementation
 deliverable must still be explicitly approved before activation; preferred
-WP-D, WP-O, and WP-L (plan model pin + live multi-step scenarios) landed as
-ACME-0057–0064; next recommended is durable quality (Q1) or trust-stage
-evidence (E1).
+WP-D, WP-O, WP-L and Q1 durable quality store landed as ACME-0057–0065; next
+recommended is quality CLI (Q2) or trust-stage evidence (E1).

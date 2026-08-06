@@ -46,15 +46,15 @@ export default {
       },
     },
     {
-      name: 'sqlite-adapter-depends-only-on-core',
+      name: 'sqlite-adapter-depends-only-on-core-and-evaluation',
       severity: 'error',
       comment:
-        'The SQLite adapter may depend on itself and core, not apps, modules, or other adapters.',
+        'The SQLite adapter may depend on itself, core and the domain-neutral evaluation layer, not apps, modules, or other adapters.',
       from: {
         path: '(?:^|/)packages/adapter-sqlite/src',
       },
       to: {
-        path: '^(?:apps|packages/(?!core(?:/|$)|adapter-sqlite(?:/|$)))',
+        path: '^(?:apps|packages/(?!core(?:/|$)|evaluation(?:/|$)|adapter-sqlite(?:/|$)))',
       },
     },
     {

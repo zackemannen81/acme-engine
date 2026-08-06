@@ -70,6 +70,7 @@ describe('sqlite migrations', () => {
       'memory_records',
       'model_calls',
       'outbox',
+      'quality_evaluations',
       'schema_migrations',
       'sqlite_sequence',
       'state_heads',
@@ -89,6 +90,8 @@ describe('sqlite migrations', () => {
       'executions_by_entity_status',
       'memory_records_active_by_entity',
       'outbox_pending',
+      'quality_evaluations_by_execution',
+      'quality_evaluations_by_run',
     ]);
   });
 

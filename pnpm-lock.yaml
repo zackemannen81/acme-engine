@@ -132,6 +132,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evaluation':
+        specifier: workspace:*
+        version: link:../evaluation
       better-sqlite3:
         specifier: 12.4.1
         version: 12.4.1

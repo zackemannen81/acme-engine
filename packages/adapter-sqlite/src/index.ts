@@ -15,3 +15,7 @@ export {
   SqliteExecutionRepository,
   type SqliteExecutionRepositoryOptions,
 } from './repository.js';
+export {
+  createSqliteQualityEvaluationStore,
+  type SqliteQualityEvaluationStoreOptions,
+} from './quality-evaluation-store.js';

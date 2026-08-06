@@ -135,12 +135,14 @@ acme-engine/
 │   │   │   ├── driver-errors.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrations.ts
+│   │   │   ├── quality-evaluation-store.ts
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
 │   │   └── test/
 │   │       ├── driver-errors.test.ts
 │   │       ├── encrypted-payload.test.ts
-│   │       └── migrations.test.ts
+│   │       ├── migrations.test.ts
+│   │       └── quality-evaluation-store.test.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -349,6 +351,7 @@ acme-engine/
 │   │   ├── 0023-live-evaluation-gate.md
 │   │   ├── 0024-local-spa-loopback-workbench.md
 │   │   ├── 0025-post-execution-quality-evaluation.md
+│   │   ├── 0026-durable-quality-evaluation-store.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -432,6 +435,7 @@ acme-engine/
 │   │   ├── ACME-0062_narrative-domain-event.md
 │   │   ├── ACME-0063_plan-model-pin.md
 │   │   ├── ACME-0064_scenario-live-multi-step.md
+│   │   ├── ACME-0065_durable-quality-store.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

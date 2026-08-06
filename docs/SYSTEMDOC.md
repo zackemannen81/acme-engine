@@ -418,7 +418,10 @@ ExecutionEngine and canonical execution evidence do not depend on it.
 - `acme-quality-evaluation/1` returns finite ranged scores, structured
   findings and a `pass | fail | inconclusive` verdict with content-derived
   subject/result/evaluation identities
-- `QualityEvaluationStore` is an append-only port; the in-memory adapter is
+- `QualityEvaluationStore` is an append-only port; the in-memory adapter and
+  durable SQLite adapter (`createSqliteQualityEvaluationStore`, migration v2,
+  ADR-0026) implement it with identical conformance; the SQLite table has no
+  FK to executions so evaluation lifecycle stays independent of the ledger
   idempotent for identical content, refuses identity collisions and returns
   detached records through a reusable conformance kit
 
@@ -990,10 +993,11 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
   live remains via CLI and test-ui `launchLiveExecution` (S10).
-- Residual gaps (durable quality store, async launch, and related items) are
-  inventoried with work packages and activation order in
+- Residual gaps (quality CLI/UI/live judge, async launch, and related items)
+  are inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). WP-D, WP-O and WP-L are delivered as ACME-0057–0064.
+  (ACME-0056). WP-D, WP-O, WP-L and Q1 durable quality store are delivered as
+  ACME-0057–0065.
 
 ## Deliberately Deferred Decisions
 

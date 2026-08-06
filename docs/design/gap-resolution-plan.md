@@ -71,7 +71,7 @@ explicit disposition.
 | G16 | Offline success-path Responses fixtures are simplified samples, not byte-identical live captures | Fixtures | Drift risk vs real provider bodies | **Optional** WP-P hygiene |
 | G17 | Package boundary enforcement covers current packages only; future adapters must extend rules | Tooling | New adapters could violate dependency direction unnoticed | **Process:** every new adapter task extends rules (WP-X) |
 | G18 | `better-sqlite3` prebuild observed on Windows + `ubuntu-latest` only | Platform | Other platforms unproven | **Accept / observe** (WP-X note); no multi-OS matrix required yet |
-| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Solve** durable store first (WP-Q); live judge separate |
+| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Q1 closed** ACME-0065; Q2–Q4 remain |
 
 ## 3. Constraints that shape solutions
 
@@ -303,7 +303,7 @@ idempotent semantics as the in-memory adapter, then expose read paths.
 
 #### Suggested task slices
 
-1. **Q1 — SQLite migration + durable adapter + conformance**
+1. **Q1 — SQLite migration + durable adapter + conformance** — **done ACME-0065**
 2. **Q2 — CLI inspect/list (and optional scenario wiring over durable store)**
 3. **Q3 — Test UI read surface (optional)**
 4. **Q4 — Live / general AI judge (explicitly separate; high bar; live
@@ -537,7 +537,7 @@ required by `docs/TASK_WORKFLOW.md`.
 | 6 | O3 Minimal domain-event emission | G04 (part) | **Done ACME-0062** (Narrative) |
 | 7 | L1 Plan model pin | G09 | **Done ACME-0063** |
 | 8 | L2 ScenarioRunner live multi-step | G01/G02 | **Done ACME-0064** |
-| 9 | Q1 Durable quality store | G19 (core) | Persists evaluations before UI/CLI sugar |
+| 9 | Q1 Durable quality store | G19 (core) | **Done ACME-0065** |
 | 10 | Q2 CLI quality inspect | G19 (part) | Operator read path |
 | 11 | E1 Trust stage evidence | G12 | Better diagnosis; independent |
 | 12 | T2 Plan measurements block | G10 | Schema-only product residual |

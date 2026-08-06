@@ -198,11 +198,41 @@ const initialSchema: readonly string[] = [
   )`,
 ];
 
+/**
+ * Post-execution quality evaluations (ADR-0025 / ACME-0065). Sibling table:
+ * no foreign key to executions, so deleting or retaining ledger rows does not
+ * rewrite evaluation evidence identity and evaluations may outlive or
+ * predate local execution rows independently.
+ */
+const qualityEvaluationsSchema: readonly string[] = [
+  `CREATE TABLE quality_evaluations (
+    evaluation_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    execution_id TEXT NOT NULL,
+    subject_digest TEXT NOT NULL,
+    result_digest TEXT NOT NULL,
+    evaluator_id TEXT NOT NULL,
+    evaluator_version TEXT NOT NULL,
+    evaluator_kind TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    record_json TEXT NOT NULL
+  )`,
+  `CREATE INDEX quality_evaluations_by_run
+    ON quality_evaluations (run_id, evaluation_id)`,
+  `CREATE INDEX quality_evaluations_by_execution
+    ON quality_evaluations (execution_id, evaluation_id)`,
+];
+
 export const migrations: readonly Migration[] = Object.freeze([
   Object.freeze({
     version: 1,
     name: 'initial-revisioned-unit-of-work',
     statements: Object.freeze(initialSchema),
+  }),
+  Object.freeze({
+    version: 2,
+    name: 'quality-evaluations-append-only',
+    statements: Object.freeze(qualityEvaluationsSchema),
   }),
 ]);
 

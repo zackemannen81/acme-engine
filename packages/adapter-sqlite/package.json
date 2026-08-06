@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@acme/core": "workspace:*",
+    "@acme/evaluation": "workspace:*",
     "better-sqlite3": "12.4.1"
   },
   "devDependencies": {

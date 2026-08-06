@@ -2,6 +2,20 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0065 durable quality evaluation store (Q1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0065
+- Branch: `chore/gapfixes`
+- Summary: SQLite migration v2 adds append-only `quality_evaluations` without
+  FK to executions (ADR-0026). `createSqliteQualityEvaluationStore` implements
+  the same `QualityEvaluationStore` port as memory; shared conformance kit
+  passes; close/reopen preserves records. Package may depend on
+  `@acme/evaluation`; boundary rules updated.
+- Out of scope retained: CLI inspect (Q2), Test UI (Q3), live AI judge (Q4).
+- Signature: Grok
+
 ## 2026-08-06 — Live multi-step ScenarioRunner success (operator)
 
 - Date: 2026-08-06
