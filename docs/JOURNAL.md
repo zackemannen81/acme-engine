@@ -2,6 +2,20 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0061 file outbox transport (O2)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0061
+- Branch: `chore/gapfixes`
+- Summary: Bounded file `OutboxDispatcher` in the CLI composition root
+  (`createFileOutboxDispatcher`, `acme-outbox-file-delivery/1`). Drain default
+  remains report-only; `--transport file --outbox-dir` writes one JSON
+  envelope per event and still includes events in the stdout report. Offline
+  unit + CLI SQLite proof; no network product bus.
+- Follow-ups: O3 minimal domain-event emission from a reference module.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0060 outbox growth alarm (O4)
 
 - Date: 2026-08-06

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -747,6 +747,56 @@ describe('acme CLI durable round trip', () => {
       run(['outbox', 'drain', ...sqlite], emptyIo.options),
     ).resolves.toBe(EXIT_OUTCOME);
     expect(emptyIo.out.join('\n')).toContain('no outbox entries were due');
+  });
+
+  it('drains outbox events to a file transport directory', async () => {
+    const root = workspace();
+    const database = join(root, 'file-outbox.sqlite');
+    const outboxDir = join(root, 'delivered');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    await seedOutbox(database);
+
+    const drainIo = capture();
+    await expect(
+      run(
+        [
+          'outbox',
+          'drain',
+          '--transport',
+          'file',
+          '--outbox-dir',
+          outboxDir,
+          '--json',
+          '--show-payloads',
+          ...sqlite,
+        ],
+        drainIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const drained = JSON.parse(drainIo.out.join('\n')) as {
+      transport: string;
+      outboxDir: string;
+      delivered: number;
+      events: { eventId: string }[];
+    };
+    expect(drained).toMatchObject({
+      transport: 'file',
+      outboxDir,
+      delivered: 1,
+    });
+    const eventId = drained.events[0]?.eventId ?? '';
+    expect(eventId.length).toBeGreaterThan(0);
+    const envelope = JSON.parse(
+      readFileSync(join(outboxDir, `${eventId}.json`), 'utf8'),
+    ) as {
+      report: string;
+      event: { type: string; payload: { seeded: boolean } };
+    };
+    expect(envelope.report).toBe('acme-outbox-file-delivery/1');
+    expect(envelope.event).toMatchObject({
+      type: 'cli.observed',
+      payload: { seeded: true },
+    });
   });
 
   it('alarms when outbox pending count exceeds --max-pending', async () => {

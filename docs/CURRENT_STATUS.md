@@ -285,10 +285,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0060 closed outbox growth alarms
-(G03 / O4) on `chore/gapfixes`. Next recommended: WP-O / O2 real dispatcher
-transport or O3 domain-event emission. `docs/CURRENT_TASK.md` is the Draft
-template.
+No implementation task is active. ACME-0061 closed file outbox transport
+(G04 / O2) on `chore/gapfixes`. Next recommended: WP-O / O3 minimal
+domain-event emission. `docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -377,6 +376,8 @@ template.
   repository port, both adapters, `redriveOutbox` coordinator and CLI.
 - **ACME-0060:** Outbox inspect growth summary and `--max-pending` /
   `--max-failed` alarms (G03 / O4).
+- **ACME-0061:** File `OutboxDispatcher` transport for CLI drain
+  (`acme-outbox-file-delivery/1`, `--transport file --outbox-dir`).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -525,10 +526,10 @@ Ordering, dependencies and activatable slices live in
   call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
   by ACME-0060:** `outbox inspect` reports status counts and optional
   `--max-pending` / `--max-failed` thresholds. Host drain remains external.
-- **G04 — Outbox residuals:** **Redrive closed by ACME-0059** (`redriveOutbox`
-  + `acme outbox redrive`). Remaining: no real transport beyond the CLI's
-  report dispatcher, and neither reference module emits domain events yet, so
-  production outbox traffic is still hypothetical. → WP-O (O2–O4)
+- **G04 — Outbox residuals:** **Redrive closed by ACME-0059.** **File transport
+  closed by ACME-0061** (`--transport file --outbox-dir`). Remaining: neither
+  reference module emits domain events yet (O3), so production outbox traffic
+  from modules is still thin. → WP-O O3
 - **G05 — Driver error classification:** **Closed by ACME-0057.** The SQLite
   adapter maps busy/locked codes to retryable `PERSISTENCE_TRANSIENT` and
   corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;

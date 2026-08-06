@@ -6,10 +6,12 @@ import {
   listStrandedExecutions,
   prepareOperatorDischarge,
   redriveOutbox,
+  type DomainEventRecord,
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
   type ModelSelection,
+  type OutboxDispatcher,
   type OutboxRecord,
 } from '@acme/core';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
@@ -33,6 +35,7 @@ import {
   type CompositionOverrides,
   type InspectableRepository,
 } from './composition.js';
+import { createFileOutboxDispatcher } from './outbox-file-dispatcher.js';
 import { emit, payload, type CliIo } from './output.js';
 import { runScenarioFile } from './scenario.js';
 
@@ -585,26 +588,44 @@ function drainOutboxCommand(
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
     const delivered: JsonValue[] = [];
-    // The v1 consumer hands events to the operator through the report rather
-    // than inventing a transport (ADR-0018).
+    // Default report transport: events only in the stdout report (ADR-0018).
+    // File transport: versioned envelopes under --outbox-dir (ACME-0061 / O2).
+    const reportDispatcher: OutboxDispatcher = {
+      async deliver(event: DomainEventRecord) {
+        delivered.push({
+          eventId: event.eventId,
+          executionId: event.executionId,
+          type: event.type,
+          namespace: event.namespace,
+          entityId: event.entityId,
+          occurredAt: event.occurredAt,
+          payload: payload(event.payload, command.common.showPayloads),
+        });
+      },
+    };
+    const fileDispatcher =
+      command.transport === 'file' && command.outboxDir !== undefined
+        ? createFileOutboxDispatcher({
+            directory: command.outboxDir,
+            now: () => composition.clock.now(),
+          })
+        : undefined;
+    const dispatcher: OutboxDispatcher =
+      fileDispatcher === undefined
+        ? reportDispatcher
+        : {
+            async deliver(event: DomainEventRecord) {
+              await fileDispatcher.deliver(event);
+              await reportDispatcher.deliver(event);
+            },
+          };
+
     const report = await drainOutbox({
       repository: composition.repository,
       clock: composition.clock,
       limit: command.limit,
       leaseTimeoutMs: command.leaseTimeoutMs,
-      dispatcher: {
-        async deliver(event) {
-          delivered.push({
-            eventId: event.eventId,
-            executionId: event.executionId,
-            type: event.type,
-            namespace: event.namespace,
-            entityId: event.entityId,
-            occurredAt: event.occurredAt,
-            payload: payload(event.payload, command.common.showPayloads),
-          });
-        },
-      },
+      dispatcher,
     });
     const body = {
       report: report.report,
@@ -613,6 +634,10 @@ function drainOutboxCommand(
       delivered: report.delivered,
       retryScheduled: report.retryScheduled,
       failed: report.failed,
+      transport: command.transport,
+      ...(command.outboxDir === undefined
+        ? {}
+        : { outboxDir: command.outboxDir }),
       entries: report.entries.map((entry) => ({
         eventId: entry.eventId,
         attemptCount: entry.attemptCount,

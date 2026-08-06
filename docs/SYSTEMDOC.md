@@ -440,7 +440,8 @@ repository adapter. Everything else works through core ports.
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
 - `outbox inspect` lists entries with their events; `outbox drain` leases;
-  `outbox redrive` returns terminal `failed` entries to `pending`
+  `outbox redrive` returns terminal `failed` entries to `pending`;
+  `outbox drain --transport file --outbox-dir <path>` writes file envelopes
   delivers and settles one bounded batch, bounded by `--limit` and
   `--lease-timeout-ms`
 - `--adapter memory|sqlite` selects the repository; `--database` is required
@@ -603,7 +604,9 @@ this to an operator. Inspect reports counts by status and optional
 `--max-pending` / `--max-failed` growth alarms (composition-root policy;
 exit code 1 when exceeded). Host scheduling should call `acme outbox drain`
 from cron/`systemd`/CI — not a library timer (ADR-0018). The
-CLI dispatcher hands events to the operator through the drain report rather
+CLI default dispatcher hands events to the operator through the drain report;
+`--transport file --outbox-dir <path>` also writes versioned
+`acme-outbox-file-delivery/1` envelopes (ACME-0061). The report path rather
 than inventing a transport; a real transport is a composition-root change.
 `failed` entries have no redrive path.
 

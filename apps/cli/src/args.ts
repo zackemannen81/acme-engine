@@ -72,6 +72,12 @@ export type Command =
       readonly kind: 'outbox-drain';
       readonly limit: number;
       readonly leaseTimeoutMs: number;
+      /**
+       * `report` = events only in stdout (default).
+       * `file` = write versioned envelopes under `--outbox-dir`.
+       */
+      readonly transport: 'report' | 'file';
+      readonly outboxDir?: string;
       readonly common: CommonOptions;
     }
   | {
@@ -106,7 +112,9 @@ export const USAGE = `acme — ACME composition root
   acme outbox inspect [--status <status>] [--limit <n>]
                [--max-pending <n>] [--max-failed <n>]
                [--adapter ...] [--database <path>] [--json]
-  acme outbox drain [--limit <n>] [--lease-timeout-ms <n>] [--adapter ...] [--database <path>] [--json]
+  acme outbox drain [--limit <n>] [--lease-timeout-ms <n>]
+               [--transport report|file] [--outbox-dir <path>]
+               [--adapter ...] [--database <path>] [--json]
   acme outbox redrive <event-id> [--adapter ...] [--database <path>] [--json]
   acme outbox redrive --all-failed [--limit <n>] [--adapter ...] [--database <path>] [--json]
 
@@ -120,6 +128,8 @@ export const USAGE = `acme — ACME composition root
                    how long an outbox claim stays exclusive (default 30000)
   --max-pending    outbox inspect: exit 1 if pending count exceeds N
   --max-failed     outbox inspect: exit 1 if failed count exceeds N
+  --transport      outbox drain: report (default) or file
+  --outbox-dir     required with --transport file; delivery JSON directory
   --by             operator identity for execution discharge
   --rationale      human reason for execution discharge
   --show-payloads  print document, memory and state values instead of redacting
@@ -209,6 +219,8 @@ export function parseCommand(argv: readonly string[]): Command {
         'all-failed': { type: 'boolean' },
         'max-pending': { type: 'string' },
         'max-failed': { type: 'string' },
+        transport: { type: 'string' },
+        'outbox-dir': { type: 'string' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -368,6 +380,22 @@ export function parseCommand(argv: readonly string[]): Command {
         common: options,
       };
     }
+    const transportRaw = (values['transport'] as string | undefined) ?? 'report';
+    if (transportRaw !== 'report' && transportRaw !== 'file') {
+      throw new UsageError('--transport must be report or file.');
+    }
+    const outboxDir = values['outbox-dir'] as string | undefined;
+    if (transportRaw === 'file') {
+      if (outboxDir === undefined || outboxDir.trim().length === 0) {
+        throw new UsageError(
+          'outbox drain --transport file requires --outbox-dir <path>.',
+        );
+      }
+    } else if (outboxDir !== undefined) {
+      throw new UsageError(
+        '--outbox-dir is only meaningful with --transport file.',
+      );
+    }
     return {
       kind: 'outbox-drain',
       limit,
@@ -376,6 +404,8 @@ export function parseCommand(argv: readonly string[]): Command {
         '--lease-timeout-ms',
         30_000,
       ),
+      transport: transportRaw,
+      ...(outboxDir === undefined ? {} : { outboxDir }),
       common: options,
     };
   }
