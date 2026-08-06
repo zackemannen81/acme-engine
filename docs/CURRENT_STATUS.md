@@ -527,7 +527,10 @@ Ordering, dependencies and activatable slices live in
   `composition.gateway: openai` plus execute `model` (and optional
   `liveGateway` injection) run serial multi-step scenarios live; offline
   injected-transport proof and opt-in `tests/live/scenario-multi-step.test.ts`.
-  S10 remains single-execute (ADR-0023).
+  Operator live success 2026-08-06: both `openai-responses` and
+  `scenario-multi-step` green under `pnpm test:live` (model `gpt-5.6-luna`;
+  evidence in local gitignored `live_test.log`). S10 remains single-execute
+  (ADR-0023).
 - **G03 — Nothing drains the outbox automatically.** A composition root must
   call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
   by ACME-0060:** `outbox inspect` reports status counts and optional

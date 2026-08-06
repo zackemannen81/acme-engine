@@ -2,6 +2,24 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — Live multi-step ScenarioRunner success (operator)
+
+- Date: 2026-08-06
+- Author: Rickard Zakrisson (operator run); documented by Grok
+- Task: ACME-0064 verification
+- Branch: `chore/gapfixes` (not merged to main)
+- Summary: Operator ran `pnpm test:live` successfully. Both live gates
+  passed: `tests/live/openai-responses.test.ts` (single research execute,
+  HTTP 200, `status: committed`, model `gpt-5.6-luna`) and
+  `tests/live/scenario-multi-step.test.ts` (two serial narrative executes
+  under ScenarioRunner `composition.gateway: openai`, ~6.7s).
+- Evidence: local `live_test.log` (gitignored `*.log`; not committed — raw
+  provider bodies may include non-public fields). Duration of full live
+  suite ~7.7s; 2 files / 2 tests green.
+- Documentation note: ACME-0064 DoD for a bounded real multi-step live path
+  is now operator-proven, not only offline-injected.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0063/0064 plan model pin + ScenarioRunner live multi-step
 
 - Date: 2026-08-06
@@ -18,8 +36,8 @@ Add one dated, signed entry for every meaningful work session or handoff.
   S10 remains single-execute. ADR-0020 residual “no model field” is discharged
   by additive optional fields (no version bump).
 - Verification: typecheck; unit/conformance/integration including offline live
-  multi-step; docs:check. Real live multi-step gate not run in this session
-  (credentials/budget left to operator).
+  multi-step; docs:check. Live multi-step later proven by operator
+  (`pnpm test:live`; see following journal entry).
 - Signature: Grok
 
 ## 2026-08-06 — ACME-0062 narrative domain event emission (O3)
