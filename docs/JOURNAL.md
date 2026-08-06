@@ -2,6 +2,18 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0060 outbox growth alarm (O4)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0060
+- Branch: `chore/gapfixes`
+- Summary: `outbox inspect` now always includes a status-count summary and
+  optional `--max-pending` / `--max-failed` thresholds (non-negative). Exceeding
+  a threshold exits with outcome code 1. Host drain remains cron/systemd/CI
+  calling `acme outbox drain` (ADR-0018; no library timer).
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0059 outbox redrive (O1)
 
 - Date: 2026-08-06

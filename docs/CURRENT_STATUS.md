@@ -285,9 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0059 closed outbox redrive (G04 / O1)
-on `chore/gapfixes`. Next recommended: WP-O / O2 real dispatcher transport or
-O4 growth alarm. `docs/CURRENT_TASK.md` is the Draft template.
+No implementation task is active. ACME-0060 closed outbox growth alarms
+(G03 / O4) on `chore/gapfixes`. Next recommended: WP-O / O2 real dispatcher
+transport or O3 domain-event emission. `docs/CURRENT_TASK.md` is the Draft
+template.
 
 ### Recent completed work (summary)
 
@@ -374,6 +375,8 @@ O4 growth alarm. `docs/CURRENT_TASK.md` is the Draft template.
   classifier and CLI operator commands over ledger evidence.
 - **ACME-0059:** Outbox redrive for terminal `failed` entries (G04 / O1):
   repository port, both adapters, `redriveOutbox` coordinator and CLI.
+- **ACME-0060:** Outbox inspect growth summary and `--max-pending` /
+  `--max-failed` alarms (G03 / O4).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -519,8 +522,9 @@ Ordering, dependencies and activatable slices live in
   mock-only. S10 live launch is single-execute via ExecutionEngine (ADR-0023),
   not multi-step live scenarios. → WP-L
 - **G03 — Nothing drains the outbox automatically.** A composition root must
-  call the drain, and no alarm exists for a growing outbox (ADR-0018). Library
-  auto-drain is rejected; host drain + growth alarm are the planned path. → WP-O
+  call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
+  by ACME-0060:** `outbox inspect` reports status counts and optional
+  `--max-pending` / `--max-failed` thresholds. Host drain remains external.
 - **G04 — Outbox residuals:** **Redrive closed by ACME-0059** (`redriveOutbox`
   + `acme outbox redrive`). Remaining: no real transport beyond the CLI's
   report dispatcher, and neither reference module emits domain events yet, so

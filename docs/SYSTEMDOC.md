@@ -599,7 +599,10 @@ calls `drainOutbox`, which performs exactly one leased batch per call.
   `drainOutbox` returns a versioned `acme-outbox-drain-report/1`
 
 `acme outbox inspect`, `acme outbox drain` and `acme outbox redrive` expose
-this to an operator. The
+this to an operator. Inspect reports counts by status and optional
+`--max-pending` / `--max-failed` growth alarms (composition-root policy;
+exit code 1 when exceeded). Host scheduling should call `acme outbox drain`
+from cron/`systemd`/CI — not a library timer (ADR-0018). The
 CLI dispatcher hands events to the operator through the drain report rather
 than inventing a transport; a real transport is a composition-root change.
 `failed` entries have no redrive path.

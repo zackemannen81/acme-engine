@@ -749,6 +749,38 @@ describe('acme CLI durable round trip', () => {
     expect(emptyIo.out.join('\n')).toContain('no outbox entries were due');
   });
 
+  it('alarms when outbox pending count exceeds --max-pending', async () => {
+    const root = workspace();
+    const database = join(root, 'alarm.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    await seedOutbox(database);
+
+    const okIo = capture();
+    await expect(
+      run(
+        ['outbox', 'inspect', '--max-pending', '5', '--json', ...sqlite],
+        okIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const ok = JSON.parse(okIo.out.join('\n')) as {
+      summary: { counts: { pending: number }; alarms: string[] };
+    };
+    expect(ok.summary.counts.pending).toBe(1);
+    expect(ok.summary.alarms).toEqual([]);
+
+    const alarmIo = capture();
+    await expect(
+      run(
+        ['outbox', 'inspect', '--max-pending', '0', '--json', ...sqlite],
+        alarmIo.options,
+      ),
+    ).resolves.toBe(EXIT_OUTCOME);
+    const alarmed = JSON.parse(alarmIo.out.join('\n')) as {
+      summary: { alarms: string[] };
+    };
+    expect(alarmed.summary.alarms[0]).toContain('exceeds --max-pending');
+  });
+
   it('redrives a failed outbox entry on SQLite', async () => {
     const root = workspace();
     const database = join(root, 'redrive.sqlite');

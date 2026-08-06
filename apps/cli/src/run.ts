@@ -474,6 +474,57 @@ function inspectOutbox(
   options: RunOptions,
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
+    // Growth summary uses a wide scan so thresholds are not silently truncated
+    // by the display limit (ACME-0060 / O4). Display rows still honor --limit.
+    const summaryScan = await composition.repository.listOutbox({
+      limit: 10_000,
+    });
+    const counts = {
+      pending: 0,
+      claimed: 0,
+      delivered: 0,
+      failed: 0,
+    };
+    let oldestPendingAvailableAt: string | null = null;
+    let oldestFailedAvailableAt: string | null = null;
+    for (const { record } of summaryScan) {
+      counts[record.status] += 1;
+      if (record.status === 'pending') {
+        if (
+          oldestPendingAvailableAt === null ||
+          record.availableAt < oldestPendingAvailableAt
+        ) {
+          oldestPendingAvailableAt = record.availableAt;
+        }
+      }
+      if (record.status === 'failed') {
+        if (
+          oldestFailedAvailableAt === null ||
+          record.availableAt < oldestFailedAvailableAt
+        ) {
+          oldestFailedAvailableAt = record.availableAt;
+        }
+      }
+    }
+
+    const alarms: string[] = [];
+    if (
+      command.maxPending !== undefined &&
+      counts.pending > command.maxPending
+    ) {
+      alarms.push(
+        `pending count ${String(counts.pending)} exceeds --max-pending ${String(command.maxPending)}`,
+      );
+    }
+    if (
+      command.maxFailed !== undefined &&
+      counts.failed > command.maxFailed
+    ) {
+      alarms.push(
+        `failed count ${String(counts.failed)} exceeds --max-failed ${String(command.maxFailed)}`,
+      );
+    }
+
     const entries = await composition.repository.listOutbox({
       ...(command.status === undefined
         ? {}
@@ -481,6 +532,13 @@ function inspectOutbox(
       limit: command.limit,
     });
     const body = {
+      summary: {
+        counts,
+        scanned: summaryScan.length,
+        oldestPendingAvailableAt,
+        oldestFailedAvailableAt,
+        alarms,
+      },
       entries: entries.map(({ record, event }) => ({
         eventId: record.eventId,
         status: record.status,
@@ -493,18 +551,30 @@ function inspectOutbox(
         payload: payload(event.payload, command.common.showPayloads),
       })),
     } satisfies Readonly<Record<string, JsonValue>>;
+    const summaryLines = [
+      `counts pending=${String(counts.pending)} claimed=${String(counts.claimed)} delivered=${String(counts.delivered)} failed=${String(counts.failed)}`,
+      ...alarms.map((alarm) => `alarm ${alarm}`),
+    ];
     emit(
       options.io,
       'outbox inspect',
       body,
       command.common.json,
-      entries.length === 0
-        ? ['no outbox entries found']
-        : entries.map(
-            ({ record, event }) =>
-              `${record.eventId} ${record.status} ${event.type}`,
-          ),
+      entries.length === 0 && alarms.length === 0
+        ? ['no outbox entries found', ...summaryLines]
+        : [
+            ...summaryLines,
+            ...(entries.length === 0
+              ? []
+              : entries.map(
+                  ({ record, event }) =>
+                    `${record.eventId} ${record.status} ${event.type}`,
+                )),
+          ],
     );
+    if (alarms.length > 0) {
+      return EXIT_OUTCOME;
+    }
     return entries.length === 0 ? EXIT_OUTCOME : EXIT_OK;
   });
 }

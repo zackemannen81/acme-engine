@@ -55,7 +55,7 @@ explicit disposition.
 |----|---------------|-------|-----------------|-------------|
 | G01 | ScenarioRunner has no live provider step; multi-step scenario files cannot reach a live model | Live multi-step | Cannot accept multi-step live offline→live parity | **Solve** via WP-L |
 | G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** |
-| G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **solve** operator alarm + optional host worker docs in WP-O |
+| G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **alarm done** ACME-0060; host drain remains external |
 | G04 | Outbox residuals: no redrive for `failed`, no real transport beyond report dispatcher, no domain events from reference modules | Outbox ops | Delivery path unproven under real traffic | **Solve** via WP-O (sliced) |
 | G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
 | G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Closed** ACME-0058 (WP-D / D2) |
@@ -176,7 +176,7 @@ when the queue grows—without putting a daemon inside the library.
 1. **O1 — Failed-entry redrive path** — **done ACME-0059**
 2. **O2 — Real `OutboxDispatcher` transport (bounded)**
 3. **O3 — Reference module domain-event emission (minimal)**
-4. **O4 — Growth alarm + host drain runbook**
+4. **O4 — Growth alarm + host drain runbook** — **alarm done ACME-0060**
 
 #### O1 steps (redrive)
 
@@ -530,8 +530,8 @@ required by `docs/TASK_WORKFLOW.md`.
 | 1 | D1 Driver error classification | G05 | **Done ACME-0057** |
 | 2 | D2 Stranded execution ops | G06 | **Done ACME-0058** |
 | 3 | O1 Outbox redrive | G04 (part) | **Done ACME-0059** |
-| 4 | O2 Real dispatcher transport | G04 (part) | Next recommended on `chore/gapfixes` |
-| 5 | O4 Growth alarm + host runbook | G03 | Operability without violating ADR-0018 |
+| 4 | O4 Growth alarm + host runbook | G03 | **Alarm done ACME-0060** |
+| 5 | O2 Real dispatcher transport | G04 (part) | Next recommended on `chore/gapfixes` |
 | 6 | O3 Minimal domain-event emission | G04 (part) | Needs O1/O2 to prove traffic end-to-end |
 | 7 | L1 Plan model pin | G09 | Unblocks plan-driven live materialization |
 | 8 | L2 ScenarioRunner live multi-step | G01/G02 | Core product gap for multi-step live |

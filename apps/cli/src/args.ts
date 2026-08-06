@@ -62,6 +62,10 @@ export type Command =
       readonly kind: 'outbox-inspect';
       readonly status?: string;
       readonly limit: number;
+      /** Alarm if pending count exceeds this (composition-root policy). */
+      readonly maxPending?: number;
+      /** Alarm if failed count exceeds this. */
+      readonly maxFailed?: number;
       readonly common: CommonOptions;
     }
   | {
@@ -99,7 +103,9 @@ export const USAGE = `acme — ACME composition root
                [--adapter ...] [--database <path>] [--json]
   acme state inspect <namespace> <entity-id> [--revision <n>] [--adapter ...] [--database <path>] [--json]
   acme memory inspect <namespace> <entity-id> [--status <status>] [--adapter ...] [--database <path>] [--json]
-  acme outbox inspect [--status <status>] [--limit <n>] [--adapter ...] [--database <path>] [--json]
+  acme outbox inspect [--status <status>] [--limit <n>]
+               [--max-pending <n>] [--max-failed <n>]
+               [--adapter ...] [--database <path>] [--json]
   acme outbox drain [--limit <n>] [--lease-timeout-ms <n>] [--adapter ...] [--database <path>] [--json]
   acme outbox redrive <event-id> [--adapter ...] [--database <path>] [--json]
   acme outbox redrive --all-failed [--limit <n>] [--adapter ...] [--database <path>] [--json]
@@ -112,6 +118,8 @@ export const USAGE = `acme — ACME composition root
   --limit          maximum outbox or stranded entries to list (default 50)
   --lease-timeout-ms
                    how long an outbox claim stays exclusive (default 30000)
+  --max-pending    outbox inspect: exit 1 if pending count exceeds N
+  --max-failed     outbox inspect: exit 1 if failed count exceeds N
   --by             operator identity for execution discharge
   --rationale      human reason for execution discharge
   --show-payloads  print document, memory and state values instead of redacting
@@ -140,6 +148,14 @@ function positiveInteger(raw: unknown, flag: string, fallback: number): number {
   const value = Number(raw);
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new UsageError(`${flag} must be a positive integer.`);
+  }
+  return value;
+}
+
+function nonNegativeInteger(raw: unknown, flag: string): number {
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new UsageError(`${flag} must be a non-negative integer.`);
   }
   return value;
 }
@@ -191,6 +207,8 @@ export function parseCommand(argv: readonly string[]): Command {
         by: { type: 'string' },
         rationale: { type: 'string' },
         'all-failed': { type: 'boolean' },
+        'max-pending': { type: 'string' },
+        'max-failed': { type: 'string' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -310,10 +328,22 @@ export function parseCommand(argv: readonly string[]): Command {
     const limit = positiveInteger(values['limit'], '--limit', 50);
     if (action === 'inspect') {
       const status = values['status'] as string | undefined;
+      const maxPendingRaw = values['max-pending'] as string | undefined;
+      const maxFailedRaw = values['max-failed'] as string | undefined;
+      let maxPending: number | undefined;
+      let maxFailed: number | undefined;
+      if (maxPendingRaw !== undefined) {
+        maxPending = nonNegativeInteger(maxPendingRaw, '--max-pending');
+      }
+      if (maxFailedRaw !== undefined) {
+        maxFailed = nonNegativeInteger(maxFailedRaw, '--max-failed');
+      }
       return {
         kind: 'outbox-inspect',
         ...(status === undefined ? {} : { status }),
         limit,
+        ...(maxPending === undefined ? {} : { maxPending }),
+        ...(maxFailed === undefined ? {} : { maxFailed }),
         common: options,
       };
     }
