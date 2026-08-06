@@ -21,7 +21,7 @@ const validConfirmation = {
   version: LIVE_CONFIRMATION_VERSION,
   optIn: true,
   provider: 'openai',
-  model: 'gpt-5.6-Luna',
+  model: 'gpt-5.6-luna',
   caseCount: 1,
   maxModelCalls: 1,
   costCeilingMinor: 50,
@@ -45,7 +45,7 @@ function liveRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     failure: null,
     live: {
       provider: 'openai',
-      model: 'gpt-5.6-Luna',
+      model: 'gpt-5.6-luna',
       confirmer: 'alice',
       maxModelCalls: 1,
       costCeilingMinor: 50,
@@ -188,7 +188,7 @@ describe('S10 live evaluation view', () => {
           runId: 'live-b',
           live: {
             provider: 'openai',
-            model: 'gpt-5.6-Luna',
+            model: 'gpt-5.6-luna',
             confirmer: 'alice',
             maxModelCalls: 1,
             costCeilingMinor: null,

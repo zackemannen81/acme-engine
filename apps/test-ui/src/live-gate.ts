@@ -15,7 +15,7 @@ export interface LiveEvaluationConfirmation {
   /** Must be the boolean true; absent or false is refused. */
   readonly optIn: true;
   readonly provider: LiveProvider;
-  /** Non-secret model id (e.g. gpt-5.6-Luna). */
+  /** Non-secret model id (e.g. gpt-5.6-luna). */
   readonly model: string;
   /** v1: exactly one case / one ExecutionRequest. */
   readonly caseCount: number;

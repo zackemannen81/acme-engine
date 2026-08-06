@@ -55,7 +55,7 @@ function openAiModelId(options: RunScenarioFileOptions): string {
   return (
     process.env['ACME_OPENAI_MODEL'] ??
     process.env['ACME_LIVE_MODEL'] ??
-    'gpt-5.6-Luna'
+    'gpt-5.6-luna'
   );
 }
 

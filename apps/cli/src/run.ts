@@ -53,7 +53,7 @@ export interface RunOptions extends CompositionOverrides {
    * the default builds a real fetch transport.
    */
   readonly openAiTransport?: ProviderTransport;
-  /** Test injection of the live model id (defaults to env / gpt-5.6-Luna). */
+  /** Test injection of the live model id (defaults to env / gpt-5.6-luna). */
   readonly openAiModel?: string;
 }
 
@@ -93,7 +93,7 @@ function openAiModelId(options: RunOptions): string {
   return (
     process.env['ACME_OPENAI_MODEL'] ??
     process.env['ACME_LIVE_MODEL'] ??
-    'gpt-5.6-Luna'
+    'gpt-5.6-luna'
   );
 }
 

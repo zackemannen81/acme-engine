@@ -17,7 +17,7 @@ import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js'
  */
 const OPT_IN = process.env['ACME_LIVE_TEST'];
 const API_KEY = process.env['OPENAI_API_KEY'];
-const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-5.6-Luna';
+const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-5.6-luna';
 
 const roots: string[] = [];
 afterAll(() => {

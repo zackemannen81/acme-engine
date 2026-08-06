@@ -458,7 +458,7 @@ repository adapter. Everything else works through core ports.
 `execute` selects a gateway mutually exclusively: `--script` loads the
 deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
 `createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
-(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-Luna`).
+(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-luna`).
 Scenario runs default to mock; `composition.gateway: openai` enables multi-step
 live under opt-in CLI wiring (ACME-0064). Commands that cannot work are absent rather
 than present and failing, and resume needs no command of its own: an

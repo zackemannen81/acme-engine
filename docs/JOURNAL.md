@@ -172,7 +172,7 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Date: 2026-08-06
 - Author: Rickard Zakrisson
 - Task: None created
-- Summary: Changed default model from gpt-4.1-mini to gpt-5.6-Luna
+- Summary: Changed default model from gpt-4.1-mini to gpt-5.6-luna
 - Signature: Zakrisson
 
 ## 2026-08-06 — ACME-0055 human-readable ACME documents
