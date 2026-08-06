@@ -386,6 +386,10 @@ runner over compatible `acme-scenario/1` and `acme-scenario/2` formats.
   `@acme/evaluation` packages
 - the composition is built from the scenario's own `seed`, so the declared
   clock and ID allocation are the ones the run uses
+- `composition.gateway` is `mock` (default offline fixtures) or `openai`
+  (live multi-step; requires composition `liveGateway`, CLI opt-in
+  `ACME_LIVE_TEST` + credentials, or an injected transport under test)
+- execute steps may pin `model` and, for live, omit `mockResponse`
 
 Because memory record IDs are part of the operation-digest preimage, a
 scenario that pins a digest must also pin its ID scheme. Specification 18.1
@@ -455,7 +459,8 @@ repository adapter. Everything else works through core ports.
 deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
 `createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
 (model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-Luna`).
-Scenario runs remain mock-only. Commands that cannot work are absent rather
+Scenario runs default to mock; `composition.gateway: openai` enables multi-step
+live under opt-in CLI wiring (ACME-0064). Commands that cannot work are absent rather
 than present and failing, and resume needs no command of its own: an
 interrupted execution is resumed by re-submitting the same request through
 `execute` (ADR-0017).
@@ -954,7 +959,8 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: multi-step live scenarios or remote hosting. The plan
+Multi-step live scenarios are supported via ScenarioRunner `gateway: openai`
+(ACME-0064); remote hosting is not. Plans may pin `model` (ACME-0063). The plan
 format's `measurements` block remains absent. S3's live-progress section stays
 unavailable until something runs in the background.
 
@@ -982,13 +988,12 @@ unavailable until something runs in the background.
   gate (ADR-0024). It invents no quality score, writes no golden fixture and
   accepts no browser credential. It is a leaf; deleting it loses no canonical
   fact.
-- ScenarioRunner multi-step live provider steps remain open; single-execute
-  live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (plan model pin, durable quality store, async launch, and
-  related items) are inventoried with work packages and activation order in
+- ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
+  live remains via CLI and test-ui `launchLiveExecution` (S10).
+- Residual gaps (durable quality store, async launch, and related items) are
+  inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). WP-D and WP-O (redrive, file transport, growth alarm, Narrative
-  domain events) are delivered as ACME-0057–0062.
+  (ACME-0056). WP-D, WP-O and WP-L are delivered as ACME-0057–0064.
 
 ## Deliberately Deferred Decisions
 

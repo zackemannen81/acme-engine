@@ -44,7 +44,8 @@ export interface CompiledExecuteStep {
   readonly entityId: string;
   readonly expectedRevision: number;
   readonly fixture: string;
-  readonly mockResponse: string;
+  readonly mockResponse?: string;
+  readonly model?: ModelSelection;
   readonly policy: ExecutionPolicy;
   readonly expectedRequestHash?: string;
 }
@@ -85,7 +86,7 @@ export interface CompiledScenario {
   };
   readonly composition: {
     readonly repository: 'memory' | 'sqlite';
-    readonly gateway: 'mock';
+    readonly gateway: 'mock' | 'openai';
   };
   readonly steps: readonly CompiledStep[];
 }
@@ -125,7 +126,10 @@ function executeStep(plan: TestPlan, entry: TestPlanCase): CompiledExecuteStep {
     entityId: entry.entityId,
     expectedRevision: entry.expectedRevision,
     fixture: entry.input,
-    mockResponse: entry.mockResponse,
+    ...(entry.mockResponse === undefined
+      ? {}
+      : { mockResponse: entry.mockResponse }),
+    ...(entry.model === undefined ? {} : { model: entry.model }),
     policy: effectivePolicy(plan, entry),
     ...(entry.expectRequestHash === undefined
       ? {}
@@ -188,10 +192,19 @@ function isObject(
 }
 
 /**
- * The model selection lives in the mock-response fixture, not in the plan,
- * because that is where `acme-scenario/1` puts it.
+ * Prefer case.model (ACME-0063); fall back to mock-response fixture selection.
  */
-function selectionFrom(fixture: JsonValue | undefined): ModelSelection | null {
+function selectionFrom(
+  entry: TestPlanCase,
+  fixtures: Readonly<Record<string, JsonValue>>,
+): ModelSelection | null {
+  if (entry.model !== undefined) {
+    return entry.model;
+  }
+  if (entry.mockResponse === undefined) {
+    return null;
+  }
+  const fixture = fixtures[entry.mockResponse];
   if (fixture === undefined || !isObject(fixture)) {
     return null;
   }
@@ -209,7 +222,7 @@ function materializeRequests(
   const requests: ExecutionRequest[] = [];
   for (const entry of plan.cases) {
     const input = fixtures[entry.input];
-    const selection = selectionFrom(fixtures[entry.mockResponse]);
+    const selection = selectionFrom(entry, fixtures);
     if (input === undefined || selection === null) {
       return null;
     }

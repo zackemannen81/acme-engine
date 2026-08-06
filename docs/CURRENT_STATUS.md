@@ -285,10 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0062 closed minimal Narrative domain
-event emission (G04 / O3) on `chore/gapfixes`. Next recommended plan slices:
-L1 plan model pin, Q1 durable quality, or WP-E trust stages.
-`docs/CURRENT_TASK.md` is the Draft template.
+No implementation task is active. ACME-0063/0064 closed WP-L (plan model pin
++ ScenarioRunner live multi-step) on `chore/gapfixes`. Next recommended:
+Q1 durable quality or WP-E trust stages. `docs/CURRENT_TASK.md` is the Draft
+template.
 
 ### Recent completed work (summary)
 
@@ -381,6 +381,9 @@ L1 plan model pin, Q1 durable quality, or WP-E trust stages.
   (`acme-outbox-file-delivery/1`, `--transport file --outbox-dir`).
 - **ACME-0062:** Narrative observe-document emits
   `narrative.document-observed` (updates Phase 5 operation digest pin).
+- **ACME-0063:** Plan/scenario model pin (`execute.model`, plan `model`).
+- **ACME-0064:** ScenarioRunner live multi-step (`gateway: openai`,
+  offline injected transport + opt-in live gate).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -520,11 +523,11 @@ Ordering, dependencies and activatable slices live in
 [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
 (ACME-0056). IDs below match that plan (G01–G19).
 
-- **G01/G02 — ScenarioRunner has no live provider step.** `acme execute
-  --gateway openai` and test-ui `launchLiveExecution` (ACME-0044) reach a live
-  model, but a multi-step scenario file cannot; ScenarioRunner remains
-  mock-only. S10 live launch is single-execute via ExecutionEngine (ADR-0023),
-  not multi-step live scenarios. → WP-L
+- **G01/G02 — ScenarioRunner live multi-step:** **Closed by ACME-0064.**
+  `composition.gateway: openai` plus execute `model` (and optional
+  `liveGateway` injection) run serial multi-step scenarios live; offline
+  injected-transport proof and opt-in `tests/live/scenario-multi-step.test.ts`.
+  S10 remains single-execute (ADR-0023).
 - **G03 — Nothing drains the outbox automatically.** A composition root must
   call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
   by ACME-0060:** `outbox inspect` reports status counts and optional
@@ -553,10 +556,10 @@ Ordering, dependencies and activatable slices live in
   decision (ADR-0021). There is no queue, no background worker and no
   cancellation, so S3's live-progress section stays `unavailable` and a long
   run holds the caller until it finishes. → WP-T (ADR amendment first)
-- **G09 — Plans cannot pin a model.** `acme-scenario/1` reads the
-  `ModelSelection` from the mock-response fixture, so `acme-test-plan/1` has
-  no model field and an `ExecutionRequest` cannot be materialized from a plan
-  alone (ADR-0020). → WP-L
+- **G09 — Plans cannot pin a model:** **Closed by ACME-0063.** Case-level
+  `model` on `acme-test-plan/1` compiles to `execute.model`; materialization
+  prefers plan model over mockResponse selection. Live plans may use
+  `composition.gateway: openai` with model and without mockResponse.
 - **G10 — `measurements` is not in `acme-test-plan/1`.** S8 (ACME-0043)
   measures recorded runs with thresholds supplied at measurement time; the
   plan format still rejects a `measurements` block (ADR-0020). Embedding

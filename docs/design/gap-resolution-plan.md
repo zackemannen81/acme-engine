@@ -53,15 +53,15 @@ explicit disposition.
 
 | ID | Gap (summary) | Theme | Risk if ignored | Disposition |
 |----|---------------|-------|-----------------|-------------|
-| G01 | ScenarioRunner has no live provider step; multi-step scenario files cannot reach a live model | Live multi-step | Cannot accept multi-step live offline→live parity | **Solve** via WP-L |
-| G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** |
+| G01 | ScenarioRunner has no live provider step; multi-step scenario files cannot reach a live model | Live multi-step | Cannot accept multi-step live offline→live parity | **Closed** ACME-0064 |
+| G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** / closed with G01 |
 | G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **alarm done** ACME-0060; host drain remains external |
 | G04 | Outbox residuals: no redrive for `failed`, no real transport beyond report dispatcher, no domain events from reference modules | Outbox ops | Delivery path unproven under real traffic | **Solve** via WP-O (sliced) |
 | G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
 | G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Closed** ACME-0058 (WP-D / D2) |
 | G07 | Domain Test UI workbench phases 0–6 / S1–S10 delivered; CI still CLI/`pnpm`, not browser | Test UI status | Observational, not a defect | **Accept** as intentional; optional browser CI later (WP-T residual) |
 | G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Solve** only with ADR amendment path in WP-T |
-| G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Solve** via WP-L (prerequisite to full G01 plan path) |
+| G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Closed** ACME-0063 |
 | G10 | `measurements` not in `acme-test-plan/1`; thresholds only at measurement time | Plans / metrics | Plan cannot carry SLO thresholds | **Solve** via WP-T (separate charter from G09) |
 | G11 | Adapter targets are declared, not discovered; undeclared adapters invisible in catalog | Catalog / composition | Catalog incomplete unless composition root lists targets | **Solve** via WP-T or **accept** static declaration as intentional |
 | G12 | Trust pipeline: `preparing-commit` failure marks all substages `reached` | Evidence granularity | UI cannot show which substage failed | **Solve** via WP-E (engine evidence, not UI guess) |
@@ -243,8 +243,8 @@ without turning ScenarioRunner into a workflow language.
 
 #### Suggested task slices
 
-1. **L1 — Plan/model selection binding** (G09)
-2. **L2 — ScenarioRunner live gateway step / composition** (G01)
+1. **L1 — Plan/model selection binding** (G09) — **done ACME-0063**
+2. **L2 — ScenarioRunner live gateway step / composition** (G01) — **done ACME-0064**
 
 #### L1 steps (model pin)
 
@@ -535,8 +535,8 @@ required by `docs/TASK_WORKFLOW.md`.
 | 4 | O4 Growth alarm + host runbook | G03 | **Alarm done ACME-0060** |
 | 5 | O2 Real dispatcher transport | G04 (part) | **Done ACME-0061** (file sink) |
 | 6 | O3 Minimal domain-event emission | G04 (part) | **Done ACME-0062** (Narrative) |
-| 7 | L1 Plan model pin | G09 | Unblocks plan-driven live materialization |
-| 8 | L2 ScenarioRunner live multi-step | G01/G02 | Core product gap for multi-step live |
+| 7 | L1 Plan model pin | G09 | **Done ACME-0063** |
+| 8 | L2 ScenarioRunner live multi-step | G01/G02 | **Done ACME-0064** |
 | 9 | Q1 Durable quality store | G19 (core) | Persists evaluations before UI/CLI sugar |
 | 10 | Q2 CLI quality inspect | G19 (part) | Operator read path |
 | 11 | E1 Trust stage evidence | G12 | Better diagnosis; independent |

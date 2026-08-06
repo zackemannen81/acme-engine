@@ -268,6 +268,14 @@ async function scenario(
         ...(options.ids === undefined ? {} : { ids: options.ids }),
         ...overrides,
       }),
+    {
+      ...(options.openAiTransport === undefined
+        ? {}
+        : { openAiTransport: options.openAiTransport }),
+      ...(options.openAiModel === undefined
+        ? {}
+        : { openAiModel: options.openAiModel }),
+    },
   );
   try {
     emit(

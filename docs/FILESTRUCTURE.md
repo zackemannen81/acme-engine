@@ -430,6 +430,8 @@ acme-engine/
 │   │   ├── ACME-0060_outbox-growth-alarm.md
 │   │   ├── ACME-0061_outbox-file-transport.md
 │   │   ├── ACME-0062_narrative-domain-event.md
+│   │   ├── ACME-0063_plan-model-pin.md
+│   │   ├── ACME-0064_scenario-live-multi-step.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

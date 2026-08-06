@@ -2,6 +2,26 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0063/0064 plan model pin + ScenarioRunner live multi-step
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0063, ACME-0064
+- Branch: `chore/gapfixes`
+- Summary: WP-L delivered. Plans and scenarios may pin `model` selection;
+  `acme-test-plan/1` materializes `ExecutionRequest` from case.model without
+  requiring mock selection. ScenarioRunner accepts `composition.gateway:
+  openai` with composition `liveGateway`; CLI wires OpenAI (fetch or injected
+  transport). Offline multi-step proof:
+  `tests/integration/scenario-live-offline.test.ts`. Opt-in live multi-step:
+  `tests/live/scenario-multi-step.test.ts` (ACME_LIVE_TEST + OPENAI_API_KEY).
+  S10 remains single-execute. ADR-0020 residual “no model field” is discharged
+  by additive optional fields (no version bump).
+- Verification: typecheck; unit/conformance/integration including offline live
+  multi-step; docs:check. Real live multi-step gate not run in this session
+  (credentials/budget left to operator).
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0062 narrative domain event emission (O3)
 
 - Date: 2026-08-06

@@ -34,7 +34,13 @@ export interface PlanCaseView {
   readonly expectedRevision: number;
   readonly requestKey: string;
   readonly input: string;
-  readonly mockResponse: string;
+  readonly mockResponse: string | null;
+  /** Pinned model selection when present (ACME-0063). */
+  readonly model: {
+    readonly profile: string;
+    readonly providerHint: string | null;
+    readonly modelHint: string | null;
+  } | null;
   readonly policy: ExecutionPolicy;
   readonly expectsStatus: string | null;
   readonly expectsRevision: number | null;
@@ -127,7 +133,15 @@ function caseViews(
       expectedRevision: entry.expectedRevision,
       requestKey,
       input: entry.input,
-      mockResponse: entry.mockResponse,
+      mockResponse: entry.mockResponse ?? null,
+      model:
+        entry.model === undefined
+          ? null
+          : {
+              profile: entry.model.profile,
+              providerHint: entry.model.providerHint ?? null,
+              modelHint: entry.model.modelHint ?? null,
+            },
       policy,
       expectsStatus: entry.expect?.status ?? null,
       expectsRevision: entry.expect?.revision ?? null,

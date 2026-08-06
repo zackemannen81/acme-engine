@@ -1,8 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, dirname } from 'node:path';
 
-import type { JsonValue } from '@acme/core';
+import type { JsonValue, ModelGateway, ModelSelection } from '@acme/core';
 import {
+  createOpenAiResponsesGateway,
+  type ProviderTransport,
+} from '@acme/adapter-model-openai';
+import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+import {
+  parseScenario,
   runScenario,
   seededIdGenerator,
   type ScenarioReport,
@@ -33,9 +39,66 @@ export function resolveFixturePath(root: string, requested: string): string {
   return resolved;
 }
 
+export interface RunScenarioFileOptions {
+  /**
+   * Injected OpenAI transport for offline multi-step live proofs (ACME-0064).
+   * Production uses fetch when composition.gateway is openai.
+   */
+  readonly openAiTransport?: ProviderTransport;
+  readonly openAiModel?: string;
+}
+
+function openAiModelId(options: RunScenarioFileOptions): string {
+  if (options.openAiModel !== undefined && options.openAiModel.length > 0) {
+    return options.openAiModel;
+  }
+  return (
+    process.env['ACME_OPENAI_MODEL'] ??
+    process.env['ACME_LIVE_MODEL'] ??
+    'gpt-5.6-Luna'
+  );
+}
+
+function liveGatewayFor(
+  selection: ModelSelection,
+  options: RunScenarioFileOptions,
+): ModelGateway {
+  const apiKey = process.env['OPENAI_API_KEY'];
+  if (
+    options.openAiTransport === undefined &&
+    (apiKey === undefined || apiKey.trim().length === 0)
+  ) {
+    throw new UsageError(
+      'scenario composition.gateway openai requires OPENAI_API_KEY (or an injected transport in tests).',
+    );
+  }
+  const transport = options.openAiTransport ?? createFetchTransport();
+  const model = openAiModelId(options);
+  return createOpenAiResponsesGateway({
+    transport,
+    now: () => new Date().toISOString(),
+    headers: () =>
+      apiKey === undefined || apiKey.trim().length === 0
+        ? {}
+        : { authorization: `Bearer ${apiKey}` },
+    profiles: [
+      {
+        selection,
+        model,
+        capabilities: {
+          structuredOutput: true,
+          tools: false,
+          vision: false,
+        },
+      },
+    ],
+  });
+}
+
 export async function runScenarioFile(
   scenarioPath: string,
   createComposition: (overrides: CompositionOverrides) => Composition,
+  options: RunScenarioFileOptions = {},
 ): Promise<{ report: ScenarioReport; close: () => void }> {
   let text: string;
   try {
@@ -55,6 +118,17 @@ export async function runScenarioFile(
     );
   }
 
+  // Validate early so live-gateway wiring matches the document.
+  const parsed = parseScenario(document);
+  if (parsed.composition.gateway === 'openai' && options.openAiTransport === undefined) {
+    const optIn = process.env['ACME_LIVE_TEST'];
+    if (optIn === undefined || optIn.trim().length === 0) {
+      throw new UsageError(
+        'scenario composition.gateway openai requires ACME_LIVE_TEST=1 (and OPENAI_API_KEY) for live runs.',
+      );
+    }
+  }
+
   const root = dirname(resolve(scenarioPath));
   let close = (): void => {};
   const report = await runScenario({
@@ -67,7 +141,16 @@ export async function runScenarioFile(
         ids: seededIdGenerator(seed),
       });
       close = built.close;
-      return built;
+      return {
+        repository: built.repository,
+        engine: (gateway) => built.engine(gateway),
+        ...(parsed.composition.gateway === 'openai'
+          ? {
+              liveGateway: (selection: ModelSelection) =>
+                liveGatewayFor(selection, options),
+            }
+          : {}),
+      };
     },
     async loadFixture(requested) {
       const path = resolveFixturePath(root, requested);
