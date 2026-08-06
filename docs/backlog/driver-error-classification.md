@@ -24,6 +24,11 @@ writer that exceeds the busy timeout raises exactly this kind of driver error
 while the correct ACME classification is a retryable `PERSISTENCE_TRANSIENT`.
 The taxonomy already has the right code; nothing populates it.
 
+The proposal is therefore domain-neutral at the public boundary: ACME exposes
+generic persistence classes and retryability, while each concrete adapter owns
+the mapping from its driver's private codes. It does not bind core statuses to
+SQLite or `better-sqlite3`.
+
 ## Proposed outcome
 
 The SQLite adapter classifies driver errors it recognizes before they leave

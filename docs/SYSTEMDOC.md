@@ -1,7 +1,7 @@
 # System Documentation
 
-Last updated: 2026-08-05
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, a ScenarioRunner, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench
+Last updated: 2026-08-06
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2, post-execution quality evaluation, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -15,8 +15,9 @@ Exact contracts, storage schema, protocols and milestones are defined in
 - `@acme/core` contract package, `@acme/adapter-memory`,
   `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
   `@acme/adapter-model-openai`, `@acme/module-narrative`,
-  `@acme/module-research`, reusable
-  repository/gateway/module conformance support in `@acme/testing`, the
+  `@acme/module-research`, `@acme/evaluation`, reusable
+  repository/gateway/module/quality-store conformance support in
+  `@acme/testing`, the
   `@acme/cli` composition root and the `@acme/test-ui` read model
 - workspace import test from `@acme/testing` to `@acme/core`
 - dependency-cruiser package-boundary enforcement
@@ -29,7 +30,8 @@ Exact contracts, storage schema, protocols and milestones are defined in
 
 This substrate implements bounded single-task execution, durable local
 persistence, two offline acceptance scenarios, declarative multi-step
-scenarios and an opt-in live provider gate.
+scenarios, deterministic offline quality assessment and an opt-in live
+provider gate.
 
 ## Implemented Contract Layer
 
@@ -365,10 +367,13 @@ covered by a reusable non-empty conformance suite in `@acme/testing`.
 
 `AGENTS.md` fixes the boundary: the ExecutionEngine runs one task and
 multi-step flows belong to a separate runner. `@acme/testing` implements that
-runner over the `acme-scenario/1` format named in specification section 18.1.
+runner over compatible `acme-scenario/1` and `acme-scenario/2` formats.
 
-- `execute`, `assert`, `replay` and `assertDigest` steps run serially, with
+- v1 `execute`, `assert`, `replay` and `assertDigest` steps run serially, with
   later steps naming an earlier execution by alias
+- v2 adds `evaluate` and `assertEvaluation`; evaluators receive immutable
+  subjects bound to the exact execution/artifact/contract, and a `fail`
+  quality verdict fails a scenario only when explicitly asserted
 - a run halts at the first failed assertion and reports every step already
   run, because later steps depend on earlier state and a cascade of derived
   failures hides the first real one
@@ -377,7 +382,8 @@ runner over the `acme-scenario/1` format named in specification section 18.1.
   scenario is data, not a program
 - the runner never reads a file and never imports a concrete adapter. The
   caller injects the fixture loader and builds the composition, so
-  `@acme/testing` keeps depending on `@acme/core` alone
+  `@acme/testing` depends only on the domain-neutral `@acme/core` and
+  `@acme/evaluation` packages
 - the composition is built from the scenario's own `seed`, so the declared
   clock and ID allocation are the ones the run uses
 
@@ -389,6 +395,33 @@ here and `idPrefix` and `idPadding` make it expressible.
 The Narrative Phase 5 acceptance scenario exists in both forms, hand-written
 and declarative, and reaches the same operation digest through the same
 engine. The agreement is only evidence while both expressions exist.
+
+## Implemented Post-execution Quality Evaluation
+
+ADR-0025 separates quality assessment from both the proposed pre-commit
+`EvaluationDecision` safety gate and S8 population measurements.
+`@acme/evaluation` is a sibling layer that depends only on public core types;
+ExecutionEngine and canonical execution evidence do not depend on it.
+
+- `acme-quality-subject/1` binds run id, execution id, artifact identity and
+  digest, contract id/version and the immutable execution result/evidence
+- a static registry resolves exact evaluator id/version pairs
+- deterministic evaluators run pure rules, thresholds, schema properties and
+  consistency checks
+- recorded-external evaluators replay a previously captured assessment only
+  after exact evaluator/subject/result identity validation; they never call an
+  external service
+- `acme-quality-evaluation/1` returns finite ranged scores, structured
+  findings and a `pass | fail | inconclusive` verdict with content-derived
+  subject/result/evaluation identities
+- `QualityEvaluationStore` is an append-only port; the in-memory adapter is
+  idempotent for identical content, refuses identity collisions and returns
+  detached records through a reusable conformance kit
+
+Assertions remain exact scenario expectations, metrics remain observations
+over run populations, and quality evaluations remain versioned judgments over
+one bound subject. Durable quality storage, UI/CLI surfaces and live AI judges
+are not implemented.
 
 ## Implemented Composition Root
 

@@ -58,13 +58,14 @@ docs/finished/            Completed task archive
 apps/cli/                 Composition root: execute, replay, inspect
 apps/test-ui/             Domain Test UI read model, catalog, plans and launch
 packages/core/            Domain-neutral contracts and deterministic primitives
+packages/evaluation/      Post-execution scores, findings and quality verdicts
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
 packages/adapter-model-mock/ Exact finite model-call scripts
 packages/adapter-model-openai/ OpenAI Responses mapping behind a transport port
 packages/module-narrative/ Narrative observe-document reference module
 packages/module-research/ Research observe-evidence reference module
-packages/testing/         Reusable repository/gateway/module conformance support
+packages/testing/         Conformance kits and ScenarioRunner v1/v2 support
 tooling/                   Shared configuration and repository checks
 ```
 
@@ -72,6 +73,7 @@ tooling/                   Shared configuration and repository checks
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
 `docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(multi-step live runs, outbox redrive and real transports, ambiguous call
-reconciliation, key lifecycle, optional parameter-capability gating). The next
-task must be explicitly approved before activation.
+(multi-step live runs, durable quality-evaluation storage, outbox redrive and
+real transports, ambiguous call reconciliation, key lifecycle, optional
+parameter-capability gating). The next task must be explicitly approved before
+activation.

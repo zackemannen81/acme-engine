@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 ## Repository
 
@@ -49,6 +49,7 @@ implementation baseline:
 - ADR-0022: Measurement semantics and fixture-approval boundary
 - ADR-0023: Live evaluation gate for the Domain Test UI
 - ADR-0024: Local SPA shell and loopback workbench serve
+- ADR-0025: Post-execution quality evaluation
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -267,9 +268,9 @@ There is currently:
 - automated dependency rules, a core vocabulary guard and negative core,
   module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
   (both "the app imports no package internal" and "nothing imports the app")
-- 546 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (61 files), with separate conformance (58),
-  integration (55) and scenario (21) gates
+- 560 passing unit-suite tests across packages, integration and scenario paths
+  exercised by `pnpm test:unit` (64 files), with separate conformance (61),
+  integration (55) and scenario (24) gates
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -284,8 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No product implementation task is active. `docs/CURRENT_TASK.md` is the empty
-template until the next charter is explicitly approved.
+No implementation task is active. ACME-0055 completed the governing-document
+reality audit and produced three Swedish, human-readable artifacts under
+`hrd/`; `docs/CURRENT_TASK.md` is restored to the Draft template pending the
+next explicitly approved task.
 
 ### Recent completed work (summary)
 
@@ -356,6 +359,13 @@ template until the next charter is explicitly approved.
 - **ACME-0053:** S10 browser live evaluation with live-only history, explicit
   process and per-run confirmation gates, protected single-execute launch and
   no credential field or value in browser/workspace artifacts.
+- **ACME-0054:** `@acme/evaluation`, deterministic and recorded-external
+  evaluators, immutable content-derived identities, append-only in-memory
+  storage and ScenarioRunner v2 quality evaluation/assertion steps (ADR-0025).
+- **ACME-0055:** Governing-document reality audit plus a repository-derived
+  Swedish presentation, whitepaper and technical system document under
+  `hrd/`. These are editable explanatory artifacts; Markdown sources and ADRs
+  remain authoritative.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -470,6 +480,25 @@ Not delivered: multi-step live scenarios; remote hosting. Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
 
+### Post-execution quality evaluation
+
+Delivered by ACME-0054 (ADR-0025): `@acme/evaluation` accepts an immutable
+`acme-quality-subject/1` bound to an exact run, execution, artifact and
+contract. A static registry runs named deterministic evaluators or replays an
+exact `acme-recorded-quality-evaluation/1`; both produce structured scores,
+findings and a `pass | fail | inconclusive` verdict. Content-derived subject,
+result and evaluation identities include evaluator id/version and refuse
+collisions or mismatched recordings.
+
+The result is stored separately as `acme-quality-evaluation/1`. The in-memory
+adapter is append-only, idempotent for byte-identical content, returns detached
+records and has a reusable conformance kit. Execution evidence remains
+unchanged. `acme-scenario/2` adds `evaluate` and `assertEvaluation` while the
+v1 parser and behavior remain compatible. A failed quality verdict is a
+successful evaluation step; only an explicit assertion fails the scenario.
+All evaluation paths are deterministic offline and no evaluator may perform a
+live external call through this contract.
+
 ## Persistent Gaps
 
 - **ScenarioRunner has no live provider step.** `acme execute --gateway openai`
@@ -534,5 +563,6 @@ lives under `docs/concepts_sandbox/temp/`.
 - `better-sqlite3` prebuild resolution is exercised on Windows locally and on
   `ubuntu-latest` in CI, where the full suite including the SQLite adapter
   passes. No other platform is observed.
-- A general evaluation / quality-scoring harness is not implemented.
-  ScenarioRunner asserts recorded evidence only.
+- **Quality evaluation is memory-only.** The contract and append-only in-memory
+  adapter exist, but no SQLite migration, durable implementation, CLI command,
+  Test UI surface or live AI judge has been approved.

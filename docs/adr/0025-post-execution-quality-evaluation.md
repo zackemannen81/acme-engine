@@ -202,4 +202,4 @@ plan.
 - [ADR-0012 Execution identity and replay](0012-milestone-1-execution-identity-and-replay.md)
 - [ADR-0019 Domain Test UI boundary](0019-domain-test-ui-boundary-and-view-contracts.md)
 - [ADR-0022 Measurement semantics](0022-measurement-and-fixture-approval.md)
-- [ACME-0054 task charter](../CURRENT_TASK.md)
+- [ACME-0054 task charter](../finished/ACME-0054_quality-evaluation-harness.md)

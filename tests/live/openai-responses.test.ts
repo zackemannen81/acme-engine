@@ -31,7 +31,6 @@ import {
  * opt-in rather than skipping quietly.
  */
 const OPT_IN = process.env['ACME_LIVE_TEST'];
-OPT_IN=1;
 const API_KEY = process.env['OPENAI_API_KEY'];
 // Default is a Responses-capable chat model that accepts strict json_schema.
 // Reference contracts no longer emit `temperature` (ACME-0037). Override with

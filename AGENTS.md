@@ -12,7 +12,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   The contract layer, pure StateEngine and MemoryEngine, in-memory and durable
   SQLite repositories, deterministic model mock, shared conformance kits,
   NarrativeModule, ResearchModule, bounded single-task ExecutionEngine,
-  ScenarioRunner and CLI composition root exist. Both reference domains have
+  ScenarioRunner, post-execution quality evaluation and CLI composition root
+  exist. Both reference domains have
   offline acceptance scenarios. The OpenAI Responses mapping lowers schemas
   for strict structured output, has a `fetch` transport and an opt-in live
   gate, and has reached live success for both reference contracts.
@@ -32,6 +33,11 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   fixture review, and gated single-execute live evaluation through both the
   local function and S10 browser form. Default entry is pure (no I/O);
   workbench serve is opt-in on `./local`. It is a leaf.
+- `@acme/evaluation` adds domain-neutral, immutable post-execution quality
+  assessments. Deterministic evaluators and replayed recorded-external
+  evaluators produce versioned scores, findings and verdicts without mutating
+  execution evidence (ADR-0025). ScenarioRunner v2 can run and assert them
+  offline; the durable store and live AI judges remain out of scope.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

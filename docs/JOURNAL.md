@@ -2,6 +2,81 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0055 human-readable ACME documents
+
+- Date: 2026-08-06
+- Author: Codex
+- Task: ACME-0055
+- Summary: Audited the governing documentation against the implemented
+  ACME-0054 baseline and produced three Swedish, repository-derived artifacts
+  under `hrd/`: an editable presentation, a narrative whitepaper and detailed
+  technical system documentation. The artifacts explicitly separate
+  assertions, population metrics, pre-commit evaluation and post-execution
+  quality evaluation.
+- Documentation reality: `CURRENT_STATUS.md` now records no active
+  implementation task, `FILESTRUCTURE.md` includes the three deliverables and
+  the ACME-0054/0055 archives, and the derived files identify Markdown sources
+  and accepted ADRs as authoritative. The open driver-error proposal is stated
+  consistently: generic public persistence classes with adapter-owned mapping
+  from concrete SQLite/driver codes.
+- Artifact verification: the 9-slide PPTX rendered successfully and passed the
+  presentation overflow test. Microsoft Word rendered all 7 whitepaper pages
+  and all 12 system-document pages to PDF/PNG for full visual inspection.
+  Both DOCX files passed exact table-geometry and accessibility audits; all
+  three files passed placeholder and terminology review.
+- Repository verification: `pnpm docs:check` passed for 123 Markdown files and
+  `git diff --check` passed. No live provider call, deployment or publication
+  occurred.
+- Spend: none.
+- Follow-ups: choose the next operational/product surface explicitly. Durable
+  quality-result persistence, driver error mapping, outbox redrive/transport,
+  stranded-run operator tooling and multi-step live scenarios remain separate
+  proposals rather than implied core work.
+- Signature: Codex
+
+## 2026-08-06 — ACME-0054 General evaluation and quality-scoring harness
+
+- Date: 2026-08-06
+- Author: Codex
+- Task: ACME-0054
+- Summary: Delivered the domain-neutral post-execution quality foundation in
+  `@acme/evaluation` and accepted ADR-0025. Assessments bind exact run,
+  execution, artifact, contract and evaluator versions while remaining
+  separate from immutable execution evidence.
+- Contracts: `acme-quality-subject/1`, `acme-quality-evaluation/1` and
+  `acme-recorded-quality-evaluation/1`; finite ranged scores, structured
+  findings, `pass | fail | inconclusive` verdicts and deterministic
+  content-derived identities. Assertions, population metrics and quality
+  judgments remain distinct concepts.
+- Evaluators: pure deterministic evaluators run rules, thresholds, schema
+  properties and consistency checks. Recorded-external evaluators replay an
+  exact prior assessment offline and refuse any evaluator, subject or result
+  mismatch. A live/general AI judge is not present.
+- Persistence and scenarios: an append-only in-memory store is idempotent for
+  identical content, refuses collisions and returns detached data through a
+  reusable conformance kit. `acme-scenario/2` adds `evaluate` and
+  `assertEvaluation` without breaking v1; a failing quality verdict is a valid
+  assessment and only an explicit assertion fails the run.
+- Documentation: synchronized `AGENTS.md`, `README.md`, project brief, current
+  status, system documentation, file map, design specification, ADR index and
+  the driver-error backlog. The backlog is confirmed generic at the public
+  boundary: adapters translate private driver codes into generic ACME
+  persistence classes.
+- Verification: `pnpm docs:check` (121 Markdown files), `format:check`, `lint`,
+  `typecheck`, `boundaries`, `test:unit` (560/560 in 64 files),
+  `test:conformance` (61/61 in 8), `test:integration` (55/55 in 9),
+  `test:scenario` (24/24 in 5) and `build` all pass. No live provider call was
+  run.
+- Corrections found by the gates: removed an invalid committed `OPT_IN=1`
+  assignment that both broke TypeScript and bypassed explicit live-test
+  opt-in; narrowed ScenarioRunner's harness dependency to the structural
+  `run`/`runWith` surface to avoid a source/dist nominal-type leak.
+- Spend: none.
+- Follow-ups: durable SQLite quality-result storage, CLI/Test UI surfaces and
+  any live judge require separate approval. Driver-error classification
+  remains an independent adapter-hardening proposal.
+- Signature: Codex
+
 ## 2026-08-05 — ACME-0053 browser live evaluation archived
 
 - Date: 2026-08-05

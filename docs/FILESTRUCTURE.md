@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-05
+Last updated: 2026-08-06
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -87,12 +87,17 @@ acme-engine/
 │           ├── read-model.test.ts
 │           ├── redaction.test.ts
 │           └── view-contract.test.ts
+├── hrd/
+│   ├── ACME-presentation.pptx
+│   ├── ACME-teknisk-systemdokumentation.docx
+│   └── ACME-whitepaper.docx
 ├── packages/
 │   ├── adapter-memory/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
 │   │   │   ├── index.ts
+│   │   │   ├── quality-evaluation-store.ts
 │   │   │   └── repository.ts
 │   │   └── test/
 │   │       ├── encrypted-payload.test.ts
@@ -179,6 +184,20 @@ acme-engine/
 │   │   │   └── state-projection.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
+│   ├── evaluation/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── contracts.ts
+│   │   │   ├── errors.ts
+│   │   │   ├── harness.ts
+│   │   │   ├── identity.ts
+│   │   │   ├── index.ts
+│   │   │   ├── recorded.ts
+│   │   │   ├── registry.ts
+│   │   │   └── validation.ts
+│   │   └── test/
+│   │       └── quality-evaluation.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -237,6 +256,7 @@ acme-engine/
 │       │   ├── domain-module-conformance.ts
 │       │   ├── index.ts
 │       │   ├── model-gateway-conformance.ts
+│       │   ├── quality-evaluation-conformance.ts
 │       │   ├── repository-conformance.ts
 │       │   ├── scenario.ts
 │       │   └── test-payload-encryptor.ts
@@ -252,7 +272,8 @@ acme-engine/
 │   │   ├── adapter-sqlite.test.ts
 │   │   ├── domain-module.test.ts
 │   │   ├── module-narrative.test.ts
-│   │   └── module-research.test.ts
+│   │   ├── module-research.test.ts
+│   │   └── quality-evaluation-memory.test.ts
 │   ├── fixtures/
 │   │   ├── faulting-database.ts
 │   │   ├── neutral-execution.ts
@@ -270,6 +291,9 @@ acme-engine/
 │   │   ├── test-ui-workbench.test.ts
 │   │   └── test-ui-read-model.test.ts
 │   └── scenario/
+│       ├── quality-evaluation-recording.json
+│       ├── quality-evaluation-runner.test.ts
+│       ├── quality-evaluation.json
 │       ├── files/
 │       │   ├── digests/narrative-phase-5.json
 │       │   ├── inputs/chapter-1.json
@@ -320,6 +344,7 @@ acme-engine/
 │   │   ├── 0022-measurement-and-fixture-approval.md
 │   │   ├── 0023-live-evaluation-gate.md
 │   │   ├── 0024-local-spa-loopback-workbench.md
+│   │   ├── 0025-post-execution-quality-evaluation.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -391,6 +416,8 @@ acme-engine/
 │   │   ├── ACME-0051_browser-measurement-surface.md
 │   │   ├── ACME-0052_browser-fixture-review.md
 │   │   ├── ACME-0053_browser-live-evaluation.md
+│   │   ├── ACME-0054_quality-evaluation-harness.md
+│   │   ├── ACME-0055_acme-human-readable-documents.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -426,6 +453,11 @@ acme-engine/
 └── vitest.live.config.ts
 ```
 
+`hrd/` contains the Swedish, human-readable presentation, whitepaper and
+technical system document generated from the synchronized repository
+authority. They are derived deliverables; the Markdown documentation and
+accepted ADRs remain normative.
+
 `FS.txt` is a legacy tracked Windows filesystem dump that includes generated
 directories and stale content. It is non-authoritative; this document is the
 canonical maintained repository map. Generated `node_modules/` and `dist/`
@@ -440,7 +472,11 @@ content remains intentionally omitted here.
   ExecutionEngine and replay verifier. Zod is its only external runtime
   dependency.
 - `@acme/adapter-memory`: deterministic aggregate repository with immutable
-  copy-on-commit transactions and read-only evidence inspection.
+  copy-on-commit transactions and read-only evidence inspection, plus a
+  separate append-only in-memory quality-evaluation store.
+- `@acme/evaluation`: domain-neutral post-execution evaluation contracts,
+  immutable content-derived identity, a static evaluator registry, pure
+  deterministic execution and exact recorded-external replay.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
 - `@acme/adapter-model-openai`: the OpenAI Responses mapping behind an
@@ -459,10 +495,11 @@ content remains intentionally omitted here.
 - `@acme/module-research`: strict Research v1 schemas, ADR-0009 proposition,
   source and independence identity, deterministic observe-evidence
   contract/task, corroboration and contradiction policy, and a pure reducer.
-- `@acme/testing`: reusable ExecutionRepository, ModelGateway and
-  DomainModule conformance, typed test support and the ScenarioRunner over
-  `acme-scenario/1`. It depends on `@acme/core` alone; the caller injects the
-  composition and the fixture loader.
+- `@acme/testing`: reusable ExecutionRepository, ModelGateway, DomainModule
+  and QualityEvaluationStore conformance, typed test support and the
+  ScenarioRunner over `acme-scenario/1` and `acme-scenario/2`. It depends only
+  on `@acme/core` and `@acme/evaluation`; the caller injects composition and
+  fixture loading.
 - `@acme/cli`: the composition root. It is the only place that selects a
   concrete repository adapter and model gateway (`--script` mock or
   `--gateway openai`), and it exposes `execute`, `execution replay`,
@@ -486,8 +523,9 @@ content remains intentionally omitted here.
 
 NarrativeModule and ResearchModule phases 1–5, the bounded ExecutionEngine,
 the durable SQLite adapter, the OpenAI Responses adapter (with schema
-lowering and a live success path), ScenarioRunner and the CLI composition
-root are implemented. The live-model path is experimental and opt-in; the CLI
+lowering and a live success path), ScenarioRunner v1/v2, post-execution
+quality evaluation and the CLI composition root are implemented. The
+live-model path is experimental and opt-in; the CLI
 selects the mock through `--script` or OpenAI through `--gateway openai`.
 Further packages and workers must be added only by explicitly activated tasks.
 
@@ -511,5 +549,7 @@ is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
 
 The `docs/backlog/` proposals record open residual work (Domain Test UI
-implementation; driver-error classification). Resolved proposals
+implementation; driver-error classification). The latter keeps generic ACME
+status classes in public contracts and driver-code mapping inside each
+adapter. Resolved proposals
 (encrypted-payload, strict structured-output) are removed once finished.

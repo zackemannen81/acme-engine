@@ -15,9 +15,9 @@ import {
   type NormalizedModelResponse,
 } from '@acme/core';
 import {
-  QualityEvaluationHarness,
   createQualityEvaluationInput,
   recordedExternalEvaluator,
+  type QualityEvaluationHarness,
   type QualityEvaluationRecord,
   type QualityEvaluatorRef,
   type QualityVerdict,
@@ -178,7 +178,7 @@ export interface ScenarioRunOptions {
   /** Required only when an acme-scenario/2 document contains evaluate steps. */
   readonly quality?: {
     readonly runId: string;
-    readonly harness: QualityEvaluationHarness;
+    readonly harness: Pick<QualityEvaluationHarness, 'run' | 'runWith'>;
   };
 }
 

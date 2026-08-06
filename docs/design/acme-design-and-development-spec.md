@@ -196,6 +196,7 @@ acme-engine/
 │   └── cli/
 ├── packages/
 │   ├── core/
+│   ├── evaluation/
 │   ├── testing/
 │   ├── adapter-memory/
 │   ├── adapter-sqlite/
@@ -216,7 +217,9 @@ acme-engine/
 Package responsibilities:
 
 - `@acme/core`: contracts, ports and pure orchestration; no SDKs or SQL.
-- `@acme/testing`: conformance kits, fixture clock/IDs and ScenarioRunner.
+- `@acme/evaluation`: immutable post-execution quality subjects, evaluators,
+  records and content-derived identities.
+- `@acme/testing`: conformance kits, fixture clock/IDs and ScenarioRunner v1/v2.
 - `@acme/adapter-memory`: deterministic store and Unit of Work.
 - `@acme/adapter-sqlite`: schema, migrations and durable implementation.
 - `@acme/adapter-model-mock`: exact finite call scripts and normalized model
@@ -234,6 +237,8 @@ Allowed direction:
 apps → adapters → core
 apps → modules → core
 testing → core
+evaluation → core
+testing → evaluation
 adapter conformance tests → testing
 module conformance tests → testing
 ```
@@ -1113,6 +1118,34 @@ Composition semantics:
 Safety therefore remains a gate, not a fake document domain. A future
 standalone safety analysis task is valid if it produces its own report, but it
 still cannot mutate another module's state.
+
+### 13.1 Post-execution quality evaluation
+
+ADR-0025 defines a separate domain-neutral layer for assessments made after
+execution. It MUST NOT be confused with the pre-commit `Evaluator` above:
+pre-commit evaluation can block canonical effects, while post-execution
+quality evaluation cannot change the execution or its evidence.
+
+A quality subject binds the exact run, execution, artifact id/digest,
+contract id/version and detached execution result/evidence. A named evaluator
+is resolved by exact id and version and produces:
+
+- finite scores with explicit ranges
+- structured findings with stable codes, severity and evidence references
+- one `pass | fail | inconclusive` quality verdict
+- content-derived subject, result and evaluation identities
+
+Two evaluator kinds are implemented. A deterministic evaluator runs pure
+rules, thresholds, schema properties or consistency checks. A
+recorded-external evaluator replays a prior assessment only when its evaluator,
+subject and result identities match exactly; it performs no live call.
+
+`QualityEvaluationStore` is append-only. Reusing an evaluation identity with
+different content is a collision, while byte-identical appends are idempotent.
+Stored assessment records remain separate from the execution repository.
+Assertions express exact expected facts, metrics aggregate observations over
+populations, and quality evaluation expresses a versioned judgment over one
+bound subject.
 
 ## 14. Execution protocol
 
@@ -2090,7 +2123,9 @@ minimum proof that memory policy belongs to domains.
 
 ### 18.1 Scenario format
 
-Scenarios are validated YAML files with schema version `acme-scenario/1`:
+Scenarios are validated YAML files with schema version `acme-scenario/1` or
+the compatible `acme-scenario/2`. Version 1 provides the original execution
+and replay steps:
 
 ```yaml
 schemaVersion: acme-scenario/1
@@ -2125,6 +2160,13 @@ steps:
 ScenarioRunner resolves aliases, executes steps serially and emits a JSON
 report. It MUST NOT permit arbitrary JavaScript or shell execution. Includes
 must stay below the scenario root and cycles are rejected.
+
+Version 2 adds `evaluate` and `assertEvaluation`. `evaluate` names a prior
+execution, fixture-bound artifact/contract identity and exact evaluator
+id/version. Deterministic evaluator configuration or a recorded-external
+fixture is loaded by the injected caller. The step succeeds when an assessment
+was validly produced and stored even when its verdict is `fail`;
+`assertEvaluation` is the explicit expectation that can halt a scenario.
 
 ### 18.2 CLI
 
@@ -2185,6 +2227,7 @@ environment opt-in and budget.
 | conformance | every implementation of a port/module | repository idempotency, gateway normalization |
 | integration | SQLite and composition root | migrations, CAS, transaction rollback, WAL reopen |
 | scenario | complete offline stories | Narrative and Research acceptance flows |
+| quality evaluation | one immutable execution subject | deterministic rules and exact recorded-external replay |
 | fault injection | stage-specific crashes/failures | post-call crash, mid-commit rollback, busy DB |
 | live evaluation | provider quality/cost | separate opt-in dataset with redacted content |
 
@@ -2206,6 +2249,10 @@ environment opt-in and budget.
 - Narrative and Research run through core with no special branches
 - migration checksum mismatch stops startup
 - outbox delivery can repeat without duplicating consumer effect
+- quality results bind exact run/artifact/contract/evaluator versions without
+  mutating original execution evidence
+- deterministic and recorded-external quality evaluation replay byte-identical
+  results offline
 
 Fault injection points MUST be named constants around stage transitions and
 transaction statements. Tests use injected failures, never timing races as

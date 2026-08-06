@@ -167,15 +167,17 @@ ExecutionEngine, durable SQLite persistence, NarrativeModule and
 ResearchModule are implemented; both reference domains reach committed
 canonical state and replay offline through the same core with no domain branch
 in it; and the live half landed as a provider adapter behind a transport port,
-a ScenarioRunner over `acme-scenario/1` and a CLI composition root.
+a ScenarioRunner over `acme-scenario/1` and `acme-scenario/2`, a domain-neutral
+post-execution quality-evaluation layer and a CLI composition root.
 
 The durability requirement above is also met. A crash after a successful model
 call is recoverable without calling the provider again, an interrupted
 transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
-No deliverable is currently outstanding against this brief. The open choices
-are the Domain Test UI decision gates, an evaluation and quality-scoring
-harness, and the operational surfaces this brief never claimed: real event
-transports, redrive for dead-lettered events, and key lifecycle. The next
-deliverable must still be explicitly approved before activation.
+No deliverable is currently outstanding against this brief. The Domain Test
+UI decision gates and the evaluation/quality-scoring foundation are delivered.
+Open choices are operational surfaces this brief never claimed: durable
+quality-result storage, real event transports, redrive for dead-lettered
+events, driver-error classification and key lifecycle. The next deliverable
+must still be explicitly approved before activation.
