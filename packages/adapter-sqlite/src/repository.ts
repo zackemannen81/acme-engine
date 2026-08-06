@@ -1054,6 +1054,35 @@ export class SqliteExecutionRepository implements ExecutionRepository {
     });
   }
 
+  async redriveOutbox(entry: {
+    readonly eventId: string;
+    readonly availableAt: string;
+  }): Promise<void> {
+    requireText(entry.eventId, 'eventId');
+    this.#immediate(() => {
+      const record = this.#requireOutbox(entry.eventId);
+      if (record.status === 'delivered') {
+        corruption('A delivered outbox entry cannot be redriven.', {
+          eventId: entry.eventId,
+        });
+      }
+      if (record.status !== 'failed') {
+        invalid('Only failed outbox entries can be redriven.', {
+          eventId: entry.eventId,
+          status: record.status,
+        });
+      }
+      // pending + availableAt; keep last_error and attempt_count; clear claim.
+      this.#run(
+        `UPDATE outbox
+           SET status = 'pending', available_at = ?, claimed_at = NULL,
+               delivered_at = NULL
+         WHERE event_id = ?`,
+        [entry.availableAt, entry.eventId],
+      );
+    });
+  }
+
   async listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]> {
     requireLimit(query.limit);
     const rows =

@@ -285,9 +285,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0058 closed G06 (stranded execution
-ops) on `chore/gapfixes`. Next recommended plan slice: WP-O / O1 outbox
-redrive (G04). `docs/CURRENT_TASK.md` is restored to the Draft template.
+No implementation task is active. ACME-0059 closed outbox redrive (G04 / O1)
+on `chore/gapfixes`. Next recommended: WP-O / O2 real dispatcher transport or
+O4 growth alarm. `docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -372,6 +372,8 @@ redrive (G04). `docs/CURRENT_TASK.md` is restored to the Draft template.
   unknown → `INTERNAL` AcmeError.
 - **ACME-0058:** Stranded execution list/discharge (G06 / D2): pure core
   classifier and CLI operator commands over ledger evidence.
+- **ACME-0059:** Outbox redrive for terminal `failed` entries (G04 / O1):
+  repository port, both adapters, `redriveOutbox` coordinator and CLI.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -519,10 +521,10 @@ Ordering, dependencies and activatable slices live in
 - **G03 — Nothing drains the outbox automatically.** A composition root must
   call the drain, and no alarm exists for a growing outbox (ADR-0018). Library
   auto-drain is rejected; host drain + growth alarm are the planned path. → WP-O
-- **G04 — Outbox residuals:** `failed` entries have no redrive path, no real
-  transport exists beyond the CLI's report dispatcher, and neither reference
-  module emits domain events yet, so production outbox traffic is still
-  hypothetical. → WP-O
+- **G04 — Outbox residuals:** **Redrive closed by ACME-0059** (`redriveOutbox`
+  + `acme outbox redrive`). Remaining: no real transport beyond the CLI's
+  report dispatcher, and neither reference module emits domain events yet, so
+  production outbox traffic is still hypothetical. → WP-O (O2–O4)
 - **G05 — Driver error classification:** **Closed by ACME-0057.** The SQLite
   adapter maps busy/locked codes to retryable `PERSISTENCE_TRANSIENT` and
   corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;

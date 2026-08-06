@@ -2,6 +2,23 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0059 outbox redrive (O1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0059
+- Branch: `chore/gapfixes`
+- Summary: Closed outbox redrive residual of G04 / plan O1. Added
+  `ExecutionRepository.redriveOutbox` on memory and SQLite adapters, pure
+  `redriveOutbox` coordinator (`acme-outbox-redrive-report/1`), and CLI
+  `outbox redrive <event-id>` / `outbox redrive --all-failed`. Only `failed`
+  entries return to `pending`; `delivered` is refused; `lastError` and
+  attempt count are retained. Extends ADR-0018's deferred redrive residual.
+- Verification: `pnpm typecheck`; `test:unit` 576/576; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check`.
+- Follow-ups: O2 real dispatcher transport; O4 growth alarm.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0058 stranded execution operator tooling (D2)
 
 - Date: 2026-08-06

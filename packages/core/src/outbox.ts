@@ -9,6 +9,9 @@ import type {
 /** Versioned drain report identity. */
 export const ACME_OUTBOX_DRAIN_REPORT = 'acme-outbox-drain-report/1';
 
+/** Versioned redrive report identity. */
+export const ACME_OUTBOX_REDRIVE_REPORT = 'acme-outbox-redrive-report/1';
+
 /**
  * Delivers one committed domain event. A rejected promise is a delivery
  * failure. Transports live in composition roots, never in core (ADR-0018).
@@ -55,6 +58,32 @@ export interface OutboxDrainReport {
   readonly failed: number;
   readonly entries: readonly OutboxDrainEntryReport[];
   readonly diagnostics: readonly DiagnosticFact[];
+}
+
+export interface OutboxRedriveOptions {
+  readonly repository: ExecutionRepository;
+  readonly clock: Clock;
+  /**
+   * Specific event ids to redrive. When omitted, every `failed` entry up to
+   * `limit` is selected in list order.
+   */
+  readonly eventIds?: readonly string[];
+  /** Maximum entries to redrive in this call. */
+  readonly limit: number;
+}
+
+export interface OutboxRedriveEntryReport {
+  readonly eventId: string;
+  readonly outcome: 'redriven';
+  readonly availableAt: IsoTimestamp;
+  readonly attemptCount: number;
+}
+
+export interface OutboxRedriveReport {
+  readonly report: typeof ACME_OUTBOX_REDRIVE_REPORT;
+  readonly redrivenAt: IsoTimestamp;
+  readonly redriven: number;
+  readonly entries: readonly OutboxRedriveEntryReport[];
 }
 
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u;
@@ -163,6 +192,71 @@ export async function drainOutbox(
     failed: entries.filter((entry) => entry.outcome === 'failed').length,
     entries,
     diagnostics: [],
+  });
+}
+
+/**
+ * Move terminal `failed` outbox entries back to `pending` so a later drain
+ * may lease them (ACME-0059). One bounded batch; never redrives `delivered`.
+ */
+export async function redriveOutbox(
+  options: OutboxRedriveOptions,
+): Promise<OutboxRedriveReport> {
+  if (!Number.isSafeInteger(options.limit) || options.limit <= 0) {
+    invalid('Outbox redrive limit must be a positive integer.', {
+      limit: options.limit,
+    });
+  }
+  const now = requireTimestamp(options.clock.now());
+
+  const entries: OutboxRedriveEntryReport[] = [];
+
+  if (options.eventIds !== undefined && options.eventIds.length > 0) {
+    if (options.eventIds.length > options.limit) {
+      invalid('eventIds length exceeds redrive limit.', {
+        count: options.eventIds.length,
+        limit: options.limit,
+      });
+    }
+    for (const eventId of options.eventIds) {
+      if (typeof eventId !== 'string' || eventId.trim().length === 0) {
+        invalid('eventIds must be non-empty strings.');
+      }
+      await options.repository.redriveOutbox({
+        eventId,
+        availableAt: now,
+      });
+      entries.push({
+        eventId,
+        outcome: 'redriven',
+        availableAt: now,
+        attemptCount: 0,
+      });
+    }
+  } else {
+    const failed = await options.repository.listOutbox({
+      status: 'failed',
+      limit: options.limit,
+    });
+    for (const entry of failed) {
+      await options.repository.redriveOutbox({
+        eventId: entry.record.eventId,
+        availableAt: now,
+      });
+      entries.push({
+        eventId: entry.record.eventId,
+        outcome: 'redriven',
+        availableAt: now,
+        attemptCount: entry.record.attemptCount,
+      });
+    }
+  }
+
+  return deepFreeze({
+    report: ACME_OUTBOX_REDRIVE_REPORT,
+    redrivenAt: now,
+    redriven: entries.length,
+    entries,
   });
 }
 

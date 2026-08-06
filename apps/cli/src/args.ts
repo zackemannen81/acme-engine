@@ -71,6 +71,13 @@ export type Command =
       readonly common: CommonOptions;
     }
   | {
+      readonly kind: 'outbox-redrive';
+      readonly eventId?: string;
+      readonly allFailed: boolean;
+      readonly limit: number;
+      readonly common: CommonOptions;
+    }
+  | {
       readonly kind: 'memory-inspect';
       readonly namespace: string;
       readonly entityId: string;
@@ -94,6 +101,8 @@ export const USAGE = `acme — ACME composition root
   acme memory inspect <namespace> <entity-id> [--status <status>] [--adapter ...] [--database <path>] [--json]
   acme outbox inspect [--status <status>] [--limit <n>] [--adapter ...] [--database <path>] [--json]
   acme outbox drain [--limit <n>] [--lease-timeout-ms <n>] [--adapter ...] [--database <path>] [--json]
+  acme outbox redrive <event-id> [--adapter ...] [--database <path>] [--json]
+  acme outbox redrive --all-failed [--limit <n>] [--adapter ...] [--database <path>] [--json]
 
   --adapter        memory (default) or sqlite
   --database       required with --adapter sqlite
@@ -181,6 +190,7 @@ export function parseCommand(argv: readonly string[]): Command {
         'lease-timeout-ms': { type: 'string' },
         by: { type: 'string' },
         rationale: { type: 'string' },
+        'all-failed': { type: 'boolean' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -292,8 +302,10 @@ export function parseCommand(argv: readonly string[]): Command {
 
   if (group === 'outbox') {
     const action = positionals[1];
-    if (action !== 'inspect' && action !== 'drain') {
-      throw new UsageError('Unknown outbox action; expected inspect or drain.');
+    if (action !== 'inspect' && action !== 'drain' && action !== 'redrive') {
+      throw new UsageError(
+        'Unknown outbox action; expected inspect, drain or redrive.',
+      );
     }
     const limit = positiveInteger(values['limit'], '--limit', 50);
     if (action === 'inspect') {
@@ -301,6 +313,27 @@ export function parseCommand(argv: readonly string[]): Command {
       return {
         kind: 'outbox-inspect',
         ...(status === undefined ? {} : { status }),
+        limit,
+        common: options,
+      };
+    }
+    if (action === 'redrive') {
+      const allFailed = values['all-failed'] === true;
+      const eventId = positionals[2];
+      if (allFailed && eventId !== undefined) {
+        throw new UsageError(
+          'outbox redrive accepts either <event-id> or --all-failed, not both.',
+        );
+      }
+      if (!allFailed && (eventId === undefined || eventId.length === 0)) {
+        throw new UsageError(
+          'outbox redrive requires <event-id> or --all-failed.',
+        );
+      }
+      return {
+        kind: 'outbox-redrive',
+        ...(eventId === undefined ? {} : { eventId }),
+        allFailed,
         limit,
         common: options,
       };

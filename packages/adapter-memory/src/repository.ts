@@ -1014,6 +1014,41 @@ export class InMemoryExecutionRepository implements ExecutionRepository {
     this.#store = staged;
   }
 
+  async redriveOutbox(entry: {
+    readonly eventId: string;
+    readonly availableAt: string;
+  }): Promise<void> {
+    const record = this.#requireOutbox(entry.eventId);
+    if (record.status === 'delivered') {
+      corruption('A delivered outbox entry cannot be redriven.', {
+        eventId: entry.eventId,
+      });
+    }
+    if (record.status !== 'failed') {
+      invalid('Only failed outbox entries can be redriven.', {
+        eventId: entry.eventId,
+        status: record.status,
+      });
+    }
+    const staged = stageStore(this.#store);
+    staged.outbox.set(
+      record.eventId,
+      clone(
+        {
+          eventId: record.eventId,
+          status: 'pending',
+          attemptCount: record.attemptCount,
+          availableAt: entry.availableAt,
+          ...(record.lastError === undefined
+            ? {}
+            : { lastError: record.lastError }),
+        },
+        this.#hashing,
+      ),
+    );
+    this.#store = staged;
+  }
+
   async listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]> {
     requireLimit(query.limit);
     const matching = this.#orderedOutbox().filter(

@@ -421,6 +421,7 @@ describe('ExecutionEngine neutral integration', () => {
       leaseOutbox: base.leaseOutbox.bind(base),
       markOutboxDelivered: base.markOutboxDelivered.bind(base),
       markOutboxFailed: base.markOutboxFailed.bind(base),
+      redriveOutbox: base.redriveOutbox.bind(base),
       listOutbox: base.listOutbox.bind(base),
       async commit() {
         throw new AcmeError({

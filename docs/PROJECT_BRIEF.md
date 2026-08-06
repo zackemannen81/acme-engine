@@ -183,5 +183,5 @@ events, driver-error classification and key lifecycle. Their inventory,
 dependencies and recommended activation order are recorded in
 `docs/design/gap-resolution-plan.md` (ACME-0056). The next implementation
 deliverable must still be explicitly approved before activation; preferred
-WP-D D1 (driver-error classification) and D2 (stranded operator tooling)
-landed as ACME-0057 and ACME-0058; next recommended is outbox redrive (O1).
+WP-D D1–D2 and WP-O O1 (outbox redrive) landed as ACME-0057–0059; next
+recommended is outbox real transport (O2) or growth alarm (O4).

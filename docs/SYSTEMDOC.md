@@ -439,7 +439,8 @@ repository adapter. Everything else works through core ports.
   invented, no state/memory/document write)
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
-- `outbox inspect` lists entries with their events; `outbox drain` leases,
+- `outbox inspect` lists entries with their events; `outbox drain` leases;
+  `outbox redrive` returns terminal `failed` entries to `pending`
   delivers and settles one bounded batch, bounded by `--limit` and
   `--lease-timeout-ms`
 - `--adapter memory|sqlite` selects the repository; `--database` is required
@@ -597,7 +598,8 @@ calls `drainOutbox`, which performs exactly one leased batch per call.
 - `OutboxDispatcher` carries no transport, network or provider vocabulary, and
   `drainOutbox` returns a versioned `acme-outbox-drain-report/1`
 
-`acme outbox inspect` and `acme outbox drain` expose this to an operator. The
+`acme outbox inspect`, `acme outbox drain` and `acme outbox redrive` expose
+this to an operator. The
 CLI dispatcher hands events to the operator through the drain report rather
 than inventing a transport; a real transport is a composition-root change.
 `failed` entries have no redrive path.
@@ -976,13 +978,12 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (outbox redrive/alarm, plan model pin, durable quality store,
-  async launch, and related items) are inventoried with work packages and
-  activation order in
+- Residual gaps (outbox real transport / domain events / growth alarm, plan
+  model pin, durable quality store, async launch, and related items) are
+  inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). Driver-error classification (G05 / D1) is ACME-0057; stranded
-  operator tooling (G06 / D2) is ACME-0058. That plan does not authorize
-  implementation by itself.
+  (ACME-0056). G05–G06 and outbox redrive (O1) are delivered (ACME-0057–0059).
+  That plan does not authorize implementation by itself.
 
 ## Deliberately Deferred Decisions
 

@@ -5,6 +5,7 @@ import {
   drainOutbox,
   listStrandedExecutions,
   prepareOperatorDischarge,
+  redriveOutbox,
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
@@ -563,6 +564,45 @@ function drainOutboxCommand(
   });
 }
 
+function redriveOutboxCommand(
+  command: Extract<Command, { kind: 'outbox-redrive' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const report = await redriveOutbox({
+      repository: composition.repository,
+      clock: composition.clock,
+      limit: command.limit,
+      ...(command.eventId === undefined
+        ? {}
+        : { eventIds: [command.eventId] }),
+    });
+    const body = {
+      report: report.report,
+      redrivenAt: report.redrivenAt,
+      redriven: report.redriven,
+      entries: report.entries.map((entry) => ({
+        eventId: entry.eventId,
+        outcome: entry.outcome,
+        availableAt: entry.availableAt,
+        attemptCount: entry.attemptCount,
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'outbox redrive',
+      body,
+      command.common.json,
+      report.redriven === 0
+        ? ['no failed outbox entries redriven']
+        : report.entries.map(
+            (entry) => `${entry.eventId} redriven attemptCount ${String(entry.attemptCount)}`,
+          ),
+    );
+    return report.redriven === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
 function listStranded(
   command: Extract<Command, { kind: 'execution-stranded' }>,
   options: RunOptions,
@@ -685,6 +725,8 @@ export async function run(
         return await inspectOutbox(command, options);
       case 'outbox-drain':
         return await drainOutboxCommand(command, options);
+      case 'outbox-redrive':
+        return await redriveOutboxCommand(command, options);
     }
   } catch (error: unknown) {
     if (error instanceof UsageError) {

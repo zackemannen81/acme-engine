@@ -232,6 +232,17 @@ export interface FailedOutboxEntry {
   readonly retryAt?: IsoTimestamp;
 }
 
+/**
+ * Operator redrive of a terminal `failed` outbox entry back to `pending`
+ * (gap plan O1 / ACME-0059). `lastError` is retained as evidence; attempt
+ * count is not reset.
+ */
+export interface OutboxRedriveEntry {
+  readonly eventId: string;
+  /** When the entry becomes leasable again. */
+  readonly availableAt: IsoTimestamp;
+}
+
 export interface OutboxQuery {
   readonly status?: OutboxRecord['status'];
   readonly limit: number;
@@ -270,6 +281,12 @@ export interface ExecutionRepository {
   markOutboxDelivered(entry: DeliveredOutboxEntry): Promise<void>;
   /** Settle a leased entry for retry, or as `failed` without `retryAt`. */
   markOutboxFailed(entry: FailedOutboxEntry): Promise<void>;
+  /**
+   * Move a terminal `failed` outbox entry back to `pending` so a later drain
+   * may lease it. Refuses `delivered`, unknown ids and non-failed statuses.
+   * Does not delete evidence; keeps `lastError` and `attemptCount`.
+   */
+  redriveOutbox(entry: OutboxRedriveEntry): Promise<void>;
   /** Read outbox entries and their events in lease order, leasing nothing. */
   listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]>;
 }

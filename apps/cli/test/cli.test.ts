@@ -749,6 +749,74 @@ describe('acme CLI durable round trip', () => {
     expect(emptyIo.out.join('\n')).toContain('no outbox entries were due');
   });
 
+  it('redrives a failed outbox entry on SQLite', async () => {
+    const root = workspace();
+    const database = join(root, 'redrive.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    await seedOutbox(database);
+
+    // Force the only entry into terminal failed via lease + fail.
+    const connection = openDatabase({ location: database, appliedAt: now });
+    let eventId = '';
+    try {
+      const repository = createSqliteExecutionRepository({
+        database: connection,
+        ids: createIds(),
+      });
+      const leased = await repository.leaseOutbox({
+        now,
+        limit: 10,
+        leaseExpiresAt: '2026-07-31T12:00:30.000Z',
+      });
+      eventId = leased[0]?.record.eventId ?? '';
+      await repository.markOutboxFailed({
+        eventId,
+        error: {
+          code: 'INTERNAL',
+          message: 'fixture give-up',
+          stage: 'committed',
+          retryable: false,
+        },
+        failedAt: now,
+      });
+    } finally {
+      connection.close();
+    }
+
+    const redriveIo = capture();
+    await expect(
+      run(
+        ['outbox', 'redrive', eventId, '--json', ...sqlite],
+        redriveIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const redriven = JSON.parse(redriveIo.out.join('\n')) as {
+      report: string;
+      redriven: number;
+      entries: { eventId: string; outcome: string }[];
+    };
+    expect(redriven.report).toBe('acme-outbox-redrive-report/1');
+    expect(redriven).toMatchObject({
+      redriven: 1,
+      entries: [{ eventId, outcome: 'redriven' }],
+    });
+
+    const inspectIo = capture();
+    await expect(
+      run(
+        ['outbox', 'inspect', '--status', 'pending', '--json', ...sqlite],
+        inspectIo.options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+    const inspected = JSON.parse(inspectIo.out.join('\n')) as {
+      entries: { eventId: string; status: string }[];
+    };
+    expect(inspected.entries[0]).toMatchObject({
+      eventId,
+      status: 'pending',
+    });
+  });
+
   it('lists and discharges a stranded SQLite execution', async () => {
     const root = workspace();
     const database = join(root, 'stranded.sqlite');
@@ -863,7 +931,7 @@ describe('acme CLI durable round trip', () => {
   });
 
   it.each([
-    [['outbox', 'redrive'], 'Unknown outbox action'],
+    [['outbox', 'redrive'], 'outbox redrive requires'],
     [['outbox', 'drain', '--limit', '0'], '--limit must be a positive integer'],
     [
       ['outbox', 'drain', '--lease-timeout-ms', 'soon'],
