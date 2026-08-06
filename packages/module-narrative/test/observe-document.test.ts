@@ -224,7 +224,17 @@ describe('narrative.observe-document@1.0.0', () => {
         },
       },
     });
-    expect(result.events).toEqual([]);
+    expect(result.events).toEqual([
+      {
+        key: `document-observed:${narrativeInput.documentKey}`,
+        type: 'narrative.document-observed',
+        schemaVersion: '1.0.0',
+        payload: {
+          documentKey: narrativeInput.documentKey,
+          observationCount: result.memories.length,
+        },
+      },
+    ]);
     expect(Object.isFrozen(result)).toBe(true);
   });
 

@@ -2,6 +2,19 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0062 narrative domain event emission (O3)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0062
+- Branch: `chore/gapfixes`
+- Summary: `narrative.observe-document` now emits one module-owned domain
+  event `narrative.document-observed` per commit, producing real outbox rows.
+  Narrative Phase 5 operation digest repinned to
+  `c0fcec15fbc93dd53074ef4c3edcccd05552e741db9b3b5b78485b76500e40a4`; quality
+  evaluation recording regenerated. Research still emits no events.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0061 file outbox transport (O2)
 
 - Date: 2026-08-06

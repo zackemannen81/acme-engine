@@ -984,12 +984,11 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live provider steps remain open; single-execute
   live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (outbox real transport / domain events / growth alarm, plan
-  model pin, durable quality store, async launch, and related items) are
-  inventoried with work packages and activation order in
+- Residual gaps (plan model pin, durable quality store, async launch, and
+  related items) are inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). G05–G06 and outbox redrive (O1) are delivered (ACME-0057–0059).
-  That plan does not authorize implementation by itself.
+  (ACME-0056). WP-D and WP-O (redrive, file transport, growth alarm, Narrative
+  domain events) are delivered as ACME-0057–0062.
 
 ## Deliberately Deferred Decisions
 

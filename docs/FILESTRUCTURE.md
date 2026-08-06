@@ -429,6 +429,7 @@ acme-engine/
 │   │   ├── ACME-0059_outbox-redrive.md
 │   │   ├── ACME-0060_outbox-growth-alarm.md
 │   │   ├── ACME-0061_outbox-file-transport.md
+│   │   ├── ACME-0062_narrative-domain-event.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

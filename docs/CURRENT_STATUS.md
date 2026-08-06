@@ -285,9 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0061 closed file outbox transport
-(G04 / O2) on `chore/gapfixes`. Next recommended: WP-O / O3 minimal
-domain-event emission. `docs/CURRENT_TASK.md` is the Draft template.
+No implementation task is active. ACME-0062 closed minimal Narrative domain
+event emission (G04 / O3) on `chore/gapfixes`. Next recommended plan slices:
+L1 plan model pin, Q1 durable quality, or WP-E trust stages.
+`docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -378,6 +379,8 @@ domain-event emission. `docs/CURRENT_TASK.md` is the Draft template.
   `--max-failed` alarms (G03 / O4).
 - **ACME-0061:** File `OutboxDispatcher` transport for CLI drain
   (`acme-outbox-file-delivery/1`, `--transport file --outbox-dir`).
+- **ACME-0062:** Narrative observe-document emits
+  `narrative.document-observed` (updates Phase 5 operation digest pin).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -526,10 +529,10 @@ Ordering, dependencies and activatable slices live in
   call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
   by ACME-0060:** `outbox inspect` reports status counts and optional
   `--max-pending` / `--max-failed` thresholds. Host drain remains external.
-- **G04 — Outbox residuals:** **Redrive closed by ACME-0059.** **File transport
-  closed by ACME-0061** (`--transport file --outbox-dir`). Remaining: neither
-  reference module emits domain events yet (O3), so production outbox traffic
-  from modules is still thin. → WP-O O3
+- **G04 — Outbox residuals:** **Closed for WP-O core path.** Redrive
+  (ACME-0059), file transport (ACME-0061), and Narrative
+  `narrative.document-observed` emission (ACME-0062) make real outbox traffic
+  end-to-end. Research still emits no domain events (optional later).
 - **G05 — Driver error classification:** **Closed by ACME-0057.** The SQLite
   adapter maps busy/locked codes to retryable `PERSISTENCE_TRANSIENT` and
   corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;

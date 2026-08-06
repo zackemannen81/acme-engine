@@ -176,7 +176,8 @@ when the queue grows—without putting a daemon inside the library.
 1. **O1 — Failed-entry redrive path** — **done ACME-0059**
 2. **O2 — Real `OutboxDispatcher` transport (bounded)** — **done ACME-0061**
    (file sink; report remains default)
-3. **O3 — Reference module domain-event emission (minimal)**
+3. **O3 — Reference module domain-event emission (minimal)** — **done ACME-0062**
+   (Narrative only; Research optional later)
 4. **O4 — Growth alarm + host drain runbook** — **alarm done ACME-0060**
 
 #### O1 steps (redrive)
@@ -533,7 +534,7 @@ required by `docs/TASK_WORKFLOW.md`.
 | 3 | O1 Outbox redrive | G04 (part) | **Done ACME-0059** |
 | 4 | O4 Growth alarm + host runbook | G03 | **Alarm done ACME-0060** |
 | 5 | O2 Real dispatcher transport | G04 (part) | **Done ACME-0061** (file sink) |
-| 6 | O3 Minimal domain-event emission | G04 (part) | Next recommended on `chore/gapfixes` |
+| 6 | O3 Minimal domain-event emission | G04 (part) | **Done ACME-0062** (Narrative) |
 | 7 | L1 Plan model pin | G09 | Unblocks plan-driven live materialization |
 | 8 | L2 ScenarioRunner live multi-step | G01/G02 | Core product gap for multi-step live |
 | 9 | Q1 Durable quality store | G19 (core) | Persists evaluations before UI/CLI sugar |

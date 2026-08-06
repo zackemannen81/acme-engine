@@ -183,5 +183,6 @@ events, driver-error classification and key lifecycle. Their inventory,
 dependencies and recommended activation order are recorded in
 `docs/design/gap-resolution-plan.md` (ACME-0056). The next implementation
 deliverable must still be explicitly approved before activation; preferred
-WP-D D1–D2 and WP-O O1/O2/O4 landed as ACME-0057–0061; next recommended is
-minimal domain-event emission (O3).
+WP-D and WP-O (through O3 Narrative events + file transport) landed as
+ACME-0057–0062; next recommended is plan model pin (L1) or durable quality
+(Q1).
