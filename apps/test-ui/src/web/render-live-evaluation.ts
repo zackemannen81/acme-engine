@@ -139,7 +139,7 @@ ${processGate}
 <input name="provider" readonly value="openai"/>
 </label>
 <label>Model id
-<input name="model" required value="${value(form.model)}" placeholder="gpt-4.1-mini"/>
+<input name="model" required value="${value(form.model)}" placeholder="gpt-5.6-Luna"/>
 </label>
 <div class="live-form-grid">
 <label>Case count (v1)

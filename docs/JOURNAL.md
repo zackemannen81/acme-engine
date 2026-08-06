@@ -1,6 +1,13 @@
 # Journal
 
 Add one dated, signed entry for every meaningful work session or handoff.
+## 2026-08-06 — Changed gpt-model
+
+- Date: 2026-08-06
+- Author: Rickard Zakrisson
+- Task: None created
+- Summary: Changed default model from gpt-4.1-mini to gpt-5.6-Luna
+- Signature: Zakrisson
 
 ## 2026-08-06 — ACME-0055 human-readable ACME documents
 

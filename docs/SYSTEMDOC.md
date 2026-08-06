@@ -448,7 +448,7 @@ repository adapter. Everything else works through core ports.
 `execute` selects a gateway mutually exclusively: `--script` loads the
 deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
 `createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
-(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-4.1-mini`).
+(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-Luna`).
 Scenario runs remain mock-only. Commands that cannot work are absent rather
 than present and failing, and resume needs no command of its own: an
 interrupted execution is resumed by re-submitting the same request through
