@@ -12,10 +12,7 @@ import {
   type JobRecord,
   type JobStatus,
 } from '../job-record.js';
-import {
-  compileTestPlan,
-  type CompiledScenario,
-} from '../plan/compile.js';
+import { compileTestPlan, type CompiledScenario } from '../plan/compile.js';
 import { parseTestPlan } from '../plan/schema.js';
 import {
   RUN_RECORD_VERSION,
@@ -170,7 +167,10 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
         `A run identifier must be a safe file name: ${JSON.stringify(enqueueOptions.runId)}`,
       );
     }
-    if (active.has(enqueueOptions.runId) || waitQueue.includes(enqueueOptions.runId)) {
+    if (
+      active.has(enqueueOptions.runId) ||
+      waitQueue.includes(enqueueOptions.runId)
+    ) {
       throw new Error(
         `Run ${JSON.stringify(enqueueOptions.runId)} is already active.`,
       );

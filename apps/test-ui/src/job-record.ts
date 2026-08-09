@@ -52,10 +52,7 @@ const SAFE_ID = /^[A-Za-z0-9._-]+$/u;
 
 export function isSafeJobId(jobId: string): boolean {
   return (
-    jobId.length > 0 &&
-    jobId !== '.' &&
-    jobId !== '..' &&
-    SAFE_ID.test(jobId)
+    jobId.length > 0 && jobId !== '.' && jobId !== '..' && SAFE_ID.test(jobId)
   );
 }
 

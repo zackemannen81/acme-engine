@@ -102,13 +102,10 @@ describe('JobRunner', () => {
     });
 
     // Wait for the background pump to fail the job (missing fixtures).
-    await waitFor(
-      async () => {
-        const job = await workspace.loadJob('run-missing-fixtures');
-        return job !== null && job.status === 'failed';
-      },
-      5000,
-    );
+    await waitFor(async () => {
+      const job = await workspace.loadJob('run-missing-fixtures');
+      return job !== null && job.status === 'failed';
+    }, 5000);
 
     const job = await workspace.loadJob('run-missing-fixtures');
     expect(job?.status).toBe('failed');

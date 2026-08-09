@@ -6,7 +6,9 @@ function statusBadge(status: string): string {
   const kind =
     status === 'passed' || status === 'completed'
       ? 'pass'
-      : status === 'failed' || status === 'cancelled' || status === 'interrupted'
+      : status === 'failed' ||
+          status === 'cancelled' ||
+          status === 'interrupted'
         ? 'fail'
         : 'info';
   return `<span class="badge badge-${kind}">${escapeHtml(status)}</span>`;

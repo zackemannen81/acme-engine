@@ -751,10 +751,7 @@ export async function runScenario(
         };
         const result = await composition
           .engine(gateway)
-          .execute(
-            request,
-            signal === undefined ? undefined : { signal },
-          );
+          .execute(request, signal === undefined ? undefined : { signal });
         aliases.set(spec.as, executionId);
 
         const observed = observedHash?.();

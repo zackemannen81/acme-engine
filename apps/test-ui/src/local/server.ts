@@ -942,8 +942,7 @@ export async function startWorkbenchServer(
           sendJson(response, 200, result);
         } catch (error: unknown) {
           sendJson(response, 404, {
-            error:
-              error instanceof Error ? error.message : 'Cancel failed.',
+            error: error instanceof Error ? error.message : 'Cancel failed.',
           });
         }
         return;

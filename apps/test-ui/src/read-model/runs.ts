@@ -178,8 +178,7 @@ export function buildRunsView(evidence: RunsEvidence): RunsView {
           return available({
             jobs,
             activeCount: evidence.jobs.filter(
-              (job) =>
-                job.status === 'running' || job.status === 'cancelling',
+              (job) => job.status === 'running' || job.status === 'cancelling',
             ).length,
             queuedCount: evidence.jobs.filter((job) => job.status === 'queued')
               .length,
@@ -219,6 +218,8 @@ export function buildRunDetailView(record: RunRecord): RunDetailView {
 }
 
 /** Active (non-terminal) jobs first for console detail helpers. */
-export function listActiveJobs(jobs: readonly JobRecord[]): readonly JobRecord[] {
+export function listActiveJobs(
+  jobs: readonly JobRecord[],
+): readonly JobRecord[] {
   return jobs.filter((job) => !isTerminalJobStatus(job.status));
 }
