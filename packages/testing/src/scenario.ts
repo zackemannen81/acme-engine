@@ -675,9 +675,15 @@ export async function runScenario(
         detail: null,
       });
       for (let rest = index + 1; rest < document.steps.length; rest += 1) {
+        const currentStep = document.steps[rest];
+
+        if (!currentStep || Object.keys(currentStep).length === 0) {
+          throw new Error('signal lost..');
+        }
+
         steps.push({
           index: rest,
-          kind: Object.keys(document.steps[rest]!)[0] ?? 'unknown',
+          kind: Object.keys(currentStep)[0] ?? 'unknown',
           status: 'skipped',
           detail: null,
         });

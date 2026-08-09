@@ -28,7 +28,7 @@ export function renderRunsViewHtml(
   view: RunsView,
   options: RunsRenderOptions = {},
 ): string {
-  let progressBlock = '';
+  let progressBlock: string;
   if (view.progress.availability === 'unavailable') {
     progressBlock = `<section class="card">
 <p class="meta">Live progress: unavailable (<code>${escapeHtml(view.progress.reason)}</code>) — no job runner evidence was supplied.</p>
