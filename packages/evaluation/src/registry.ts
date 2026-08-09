@@ -30,14 +30,22 @@ export class QualityEvaluatorRegistry {
           `Duplicate quality evaluator ${JSON.stringify(ref.id)} at version ${JSON.stringify(ref.version)}.`,
         );
       }
+      if (ref.kind === 'live-model') {
+        throw new QualityEvaluationError(
+          'INVALID_QUALITY_EVALUATION',
+          'live-model evaluators cannot be registered in the synchronous harness registry; use runLiveModelQualityJudge.',
+        );
+      }
       entries.set(
         identity,
         Object.freeze({
-          ...ref,
+          id: ref.id,
+          version: ref.version,
+          kind: ref.kind,
           evaluate(input: QualityEvaluationInput) {
             return evaluator.evaluate(input);
           },
-        }),
+        }) as QualityEvaluator,
       );
       refs.push(ref);
     }

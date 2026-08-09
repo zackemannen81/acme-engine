@@ -81,7 +81,7 @@ import {
   createInterfaceRegistries,
   type InterfaceComposition,
 } from './composition.js';
-import { launchPlan } from './launch.js';
+import { createJobRunner } from './job-runner.js';
 import { launchLiveExecution } from './live-launch.js';
 import { createFileWorkspace } from './workspace.js';
 
@@ -203,6 +203,22 @@ function sendJson(
 async function readRuns(workspaceRoot: string) {
   const workspace = createFileWorkspace({ root: workspaceRoot });
   return workspace.listRuns();
+}
+
+async function readJobs(workspaceRoot: string) {
+  const workspace = createFileWorkspace({ root: workspaceRoot });
+  return workspace.listJobs();
+}
+
+async function buildWorkbenchRunsView(workspaceRoot: string) {
+  const history = await readRuns(workspaceRoot);
+  const jobs = await readJobs(workspaceRoot);
+  return buildRunsView({
+    records: history.records,
+    unreadable: history.unreadable,
+    jobs: jobs.records,
+    unreadableJobs: jobs.unreadable,
+  });
 }
 
 const MEASUREMENT_QUERY_FIELDS: readonly {
@@ -648,6 +664,12 @@ export async function startWorkbenchServer(
   const activeApprovalIds = new Set<string>();
   const processLiveOptIn =
     options.liveOptIn ?? isLiveOptInEnv(process.env['ACME_TEST_UI_LIVE']);
+  const workspace = createFileWorkspace({ root: workspaceRoot });
+  const jobRunner = createJobRunner({
+    workspace,
+    clock: options.clock,
+  });
+  await jobRunner.recoverInterrupted();
   const registries = createInterfaceRegistries();
   const catalogRoot =
     options.scenarioRoot === undefined
@@ -896,12 +918,33 @@ export async function startWorkbenchServer(
       }
 
       if (request.method === 'GET' && path === '/api/runs') {
-        const history = await readRuns(workspaceRoot);
-        const view = buildRunsView({
-          records: history.records,
-          unreadable: history.unreadable,
-        });
-        sendJson(response, 200, view);
+        sendJson(response, 200, await buildWorkbenchRunsView(workspaceRoot));
+        return;
+      }
+
+      if (
+        request.method === 'POST' &&
+        path.startsWith('/api/jobs/') &&
+        path.endsWith('/cancel')
+      ) {
+        const jobId = decodeURIComponent(
+          path.slice('/api/jobs/'.length, path.length - '/cancel'.length),
+        );
+        if (!isSafeRunId(jobId)) {
+          sendJson(response, 400, { error: 'Invalid job id.' });
+          return;
+        }
+        const form = await readForm(request);
+        const submittedToken = requiredFormField(form, 'csrfToken');
+        assertSameServerRequest(request, csrfToken, submittedToken, boundPort);
+        try {
+          const result = await jobRunner.cancel(jobId);
+          sendJson(response, 200, result);
+        } catch (error: unknown) {
+          sendJson(response, 404, {
+            error: error instanceof Error ? error.message : 'Cancel failed.',
+          });
+        }
         return;
       }
 
@@ -1156,10 +1199,10 @@ export async function startWorkbenchServer(
           );
           return;
         }
-        const workspace = createFileWorkspace({ root: workspaceRoot });
         if (
           activeRunIds.has(runId) ||
-          (await workspace.loadRun(runId)) !== null
+          (await workspace.loadRun(runId)) !== null ||
+          (await workspace.loadJob(runId)) !== null
         ) {
           sendPlanRefusal(
             response,
@@ -1187,10 +1230,9 @@ export async function startWorkbenchServer(
           return;
         }
 
-        let launched: Awaited<ReturnType<typeof launchPlan>> | undefined;
-        activeRunIds.add(runId);
+        // Async accept (ADR-0027): return as soon as the job is queued.
         try {
-          launched = await launchPlan({
+          await jobRunner.enqueue({
             plan: parsed.raw,
             scenarioRoot,
             workspace,
@@ -1215,9 +1257,36 @@ export async function startWorkbenchServer(
               : 'The run could not be launched.',
           );
           return;
-        } finally {
-          activeRunIds.delete(runId);
-          launched?.composition.close();
+        }
+        response.writeHead(303, {
+          location: `/s3/${encodeURIComponent(runId)}`,
+          'cache-control': 'no-store',
+        });
+        response.end();
+        return;
+      }
+
+      if (
+        request.method === 'POST' &&
+        path.startsWith('/s3/') &&
+        path.endsWith('/cancel')
+      ) {
+        const runId = decodeURIComponent(
+          path.slice('/s3/'.length, path.length - '/cancel'.length),
+        );
+        const form = await readForm(request);
+        const submittedToken = requiredFormField(form, 'csrfToken');
+        assertSameServerRequest(request, csrfToken, submittedToken, boundPort);
+        try {
+          await jobRunner.cancel(runId);
+        } catch (error: unknown) {
+          send(
+            response,
+            404,
+            error instanceof Error ? error.message : 'Cancel failed.',
+            'text/plain; charset=utf-8',
+          );
+          return;
         }
         response.writeHead(303, {
           location: `/s3/${encodeURIComponent(runId)}`,
@@ -1228,15 +1297,11 @@ export async function startWorkbenchServer(
       }
 
       if (request.method === 'GET' && path === '/s3') {
-        const history = await readRuns(workspaceRoot);
-        const view = buildRunsView({
-          records: history.records,
-          unreadable: history.unreadable,
-        });
+        const view = await buildWorkbenchRunsView(workspaceRoot);
         send(
           response,
           200,
-          renderRunsViewHtml(view),
+          renderRunsViewHtml(view, { csrfToken }),
           'text/html; charset=utf-8',
         );
         return;
@@ -1245,7 +1310,41 @@ export async function startWorkbenchServer(
       if (request.method === 'GET' && path.startsWith('/s3/')) {
         const runId = decodeURIComponent(path.slice('/s3/'.length));
         const history = await readRuns(workspaceRoot);
+        const jobs = await readJobs(workspaceRoot);
         const record = history.records.find((entry) => entry.runId === runId);
+        const job = jobs.records.find((entry) => entry.runId === runId);
+        if (record === undefined && job === undefined) {
+          send(
+            response,
+            404,
+            renderStubSurface({
+              surface: 's3',
+              title: 'Run not found',
+              contractVersion: RUNS_VIEW_VERSION,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
+        if (record === undefined && job !== undefined) {
+          const view = buildRunsView({
+            records: history.records,
+            unreadable: history.unreadable,
+            jobs: jobs.records,
+            unreadableJobs: jobs.unreadable,
+          });
+          send(
+            response,
+            200,
+            renderRunsViewHtml(view, {
+              csrfToken,
+              focusJobId: runId,
+              refreshSeconds: 2,
+            }),
+            'text/html; charset=utf-8',
+          );
+          return;
+        }
         if (record === undefined) {
           send(
             response,

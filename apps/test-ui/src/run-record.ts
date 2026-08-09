@@ -50,7 +50,8 @@ export interface RunRecord {
     readonly repository: string;
     readonly gateway: string;
   };
-  readonly status: 'passed' | 'failed';
+  /** `cancelled` is additive (ADR-0027); older records are passed|failed only. */
+  readonly status: 'passed' | 'failed' | 'cancelled';
   readonly steps: readonly RunStepRecord[];
   readonly cases: readonly RunCaseRecord[];
   readonly failure: {
@@ -120,7 +121,7 @@ export function parseRunRecord(raw: unknown): RunRecord | null {
     startedAt === null ||
     finishedAt === null ||
     !isObject(composition) ||
-    (status !== 'passed' && status !== 'failed') ||
+    (status !== 'passed' && status !== 'failed' && status !== 'cancelled') ||
     !Array.isArray(steps) ||
     !Array.isArray(cases)
   ) {

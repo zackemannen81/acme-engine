@@ -36,7 +36,7 @@ export interface LiveConfirmationView {
 
 export interface LiveRunSummaryView {
   readonly runId: string;
-  readonly status: 'passed' | 'failed';
+  readonly status: 'passed' | 'failed' | 'cancelled';
   readonly startedAt: string;
   readonly finishedAt: string;
   readonly gateway: string;

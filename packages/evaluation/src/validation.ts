@@ -89,8 +89,14 @@ export function parseQualityEvaluatorRef(
   const value = object(raw, field);
   exact(value, ['id', 'version', 'kind'], field);
   const kind = value['kind'];
-  if (kind !== 'deterministic' && kind !== 'recorded-external') {
-    invalid(`${field}.kind must be deterministic or recorded-external.`);
+  if (
+    kind !== 'deterministic' &&
+    kind !== 'recorded-external' &&
+    kind !== 'live-model'
+  ) {
+    invalid(
+      `${field}.kind must be deterministic, recorded-external or live-model.`,
+    );
   }
   return deepFreeze({
     id: text(value['id'], `${field}.id`),

@@ -25,6 +25,7 @@ export {
   EXECUTION_VIEW_VERSION,
   FIXTURE_REVIEW_VIEW_VERSION,
   LIVE_EVALUATION_VIEW_VERSION,
+  QUALITY_EVALUATION_VIEW_VERSION,
   MEASUREMENT_VIEW_VERSION,
   MEMORY_DECISION_VIEW_VERSION,
   PLAN_VIEW_VERSION,
@@ -171,11 +172,24 @@ export {
 export {
   buildRunDetailView,
   buildRunsView,
+  listActiveJobs,
+  type JobProgressView,
   type RunDetailView,
   type RunSummaryView,
   type RunsEvidence,
   type RunsView,
 } from './read-model/runs.js';
+
+export {
+  JOB_RECORD_VERSION,
+  emptyJobProgress,
+  isSafeJobId,
+  isTerminalJobStatus,
+  parseJobRecord,
+  type JobProgressSnapshot,
+  type JobRecord,
+  type JobStatus,
+} from './job-record.js';
 
 export {
   buildMeasurementView,
@@ -222,6 +236,16 @@ export {
   type LiveEvaluationView,
   type LiveRunSummaryView,
 } from './read-model/live-evaluation.js';
+
+export {
+  buildQualityEvaluationDetailView,
+  buildQualityEvaluationListView,
+  QUALITY_EVALUATION_UNAVAILABLE,
+  type QualityEvaluationDetailView,
+  type QualityEvaluationListItemView,
+  type QualityEvaluationListView,
+  type QualityEvaluationRecordShape,
+} from './read-model/quality-evaluation.js';
 
 export {
   assertWithinBudget,

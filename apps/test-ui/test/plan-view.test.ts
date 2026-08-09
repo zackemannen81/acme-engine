@@ -121,7 +121,7 @@ describe('S2 plan designer', () => {
 });
 
 describe('S3 run console and history', () => {
-  it('reports no live progress rather than simulating a queue', () => {
+  it('reports no live progress when job evidence is omitted', () => {
     const view = buildRunsView({ records: [] });
 
     expect(view.view).toBe(RUNS_VIEW_VERSION);
@@ -135,6 +135,18 @@ describe('S3 run console and history', () => {
       throw new Error('history should be available');
     }
     expect(view.history.runCount).toBe(0);
+    expect(view.history.cancelledCount).toBe(0);
+  });
+
+  it('reports available empty progress when a job runner supplies evidence', () => {
+    const view = buildRunsView({ records: [], jobs: [] });
+
+    if (!isAvailable(view.progress)) {
+      throw new Error('progress should be available');
+    }
+    expect(view.progress.activeCount).toBe(0);
+    expect(view.progress.queuedCount).toBe(0);
+    expect(view.progress.jobs).toStrictEqual([]);
   });
 
   it('orders history by start time with the run id breaking ties', () => {
@@ -175,6 +187,7 @@ describe('S3 run console and history', () => {
     }
     expect(view.history.passedCount).toBe(1);
     expect(view.history.failedCount).toBe(1);
+    expect(view.history.cancelledCount).toBe(0);
     // A record that would not parse is named, never quietly dropped.
     expect(view.history.unreadable).toStrictEqual(['broken.json']);
     expect(view.history.runs[0]?.failure?.message).toBe('status was blocked');

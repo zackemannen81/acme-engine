@@ -6,6 +6,8 @@ export type QualityEvaluationErrorCode =
   | 'RECORDED_RESULT_MISMATCH'
   | 'QUALITY_STORE_COLLISION';
 
+// Note: INVALID_QUALITY_EVALUATION covers registry refusal of live-model.
+
 export class QualityEvaluationError extends Error {
   readonly code: QualityEvaluationErrorCode;
 

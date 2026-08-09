@@ -9,15 +9,18 @@ import {
   BASELINE_VERSION,
   type MeasurementBaseline,
 } from '../read-model/measurement.js';
+import { parseJobRecord, type JobRecord } from '../job-record.js';
 import { isSafeRunId, parseRunRecord, type RunRecord } from '../run-record.js';
 
 /**
- * Interface-owned file storage (ADR-0021).
+ * Interface-owned file storage (ADR-0021, ADR-0027).
  *
  * ```text
  * <root>/
  * ├── runs/
  * │   └── <runId>.json
+ * ├── jobs/
+ * │   └── <jobId>.json
  * ├── baselines/
  * │   └── <name>.json
  * └── approvals/
@@ -26,7 +29,7 @@ import { isSafeRunId, parseRunRecord, type RunRecord } from '../run-record.js';
  *
  * Nothing here is canonical. The engine never reads these files and the
  * interface never writes the engine's, so deleting the root loses run history
- * and no canonical fact.
+ * and jobs and no canonical fact.
  */
 
 export interface WorkspaceOptions {
@@ -37,6 +40,11 @@ export interface WorkspaceOptions {
 export interface WorkspaceHistory {
   readonly records: readonly RunRecord[];
   /** File names that exist but did not parse as a known record version. */
+  readonly unreadable: readonly string[];
+}
+
+export interface WorkspaceJobs {
+  readonly records: readonly JobRecord[];
   readonly unreadable: readonly string[];
 }
 
@@ -51,6 +59,10 @@ export interface Workspace {
   recordRun(record: RunRecord): Promise<void>;
   loadRun(runId: string): Promise<RunRecord | null>;
   listRuns(): Promise<WorkspaceHistory>;
+  /** Create or overwrite a job file (ADR-0027). Overwrite is required for progress. */
+  saveJob(record: JobRecord): Promise<void>;
+  loadJob(jobId: string): Promise<JobRecord | null>;
+  listJobs(): Promise<WorkspaceJobs>;
   saveBaseline(baseline: MeasurementBaseline): Promise<void>;
   loadBaseline(name: string): Promise<MeasurementBaseline | null>;
   recordApproval(approval: FixtureApprovalRecord): Promise<void>;
@@ -58,6 +70,7 @@ export interface Workspace {
 }
 
 const RUNS_DIRECTORY = 'runs';
+const JOBS_DIRECTORY = 'jobs';
 const BASELINES_DIRECTORY = 'baselines';
 const APPROVALS_DIRECTORY = 'approvals';
 
@@ -67,6 +80,7 @@ const APPROVALS_DIRECTORY = 'approvals';
  * the root.
  */
 function safeFileName(id: string, label: string): string {
+  // Run ids and job ids share the same safe file-name rule (ADR-0021/0027).
   if (!isSafeRunId(id)) {
     throw new Error(
       `A ${label} must be a safe file name: ${JSON.stringify(id)}`,
@@ -113,6 +127,7 @@ function parseBaseline(raw: unknown): MeasurementBaseline | null {
 export function createFileWorkspace(options: WorkspaceOptions): Workspace {
   const root = resolve(options.root);
   const runsDirectory = join(root, RUNS_DIRECTORY);
+  const jobsDirectory = join(root, JOBS_DIRECTORY);
   const baselinesDirectory = join(root, BASELINES_DIRECTORY);
   const approvalsDirectory = join(root, APPROVALS_DIRECTORY);
 
@@ -171,6 +186,31 @@ export function createFileWorkspace(options: WorkspaceOptions): Workspace {
       const { records, unreadable } = await collect(
         runsDirectory,
         parseRunRecord,
+      );
+      return { records, unreadable };
+    },
+
+    async saveJob(record) {
+      await write(
+        jobsDirectory,
+        safeFileName(record.jobId, 'job identifier'),
+        record,
+        false,
+      );
+    },
+
+    async loadJob(jobId) {
+      const raw = await readJson(
+        jobsDirectory,
+        safeFileName(jobId, 'job identifier'),
+      );
+      return raw === undefined ? null : parseJobRecord(raw);
+    },
+
+    async listJobs() {
+      const { records, unreadable } = await collect(
+        jobsDirectory,
+        parseJobRecord,
       );
       return { records, unreadable };
     },

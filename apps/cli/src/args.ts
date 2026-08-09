@@ -93,6 +93,27 @@ export type Command =
       readonly entityId: string;
       readonly status?: string;
       readonly common: CommonOptions;
+    }
+  | {
+      readonly kind: 'quality-list';
+      readonly runId?: string;
+      readonly executionId?: string;
+      readonly limit: number;
+      readonly common: CommonOptions;
+    }
+  | {
+      readonly kind: 'quality-inspect';
+      readonly evaluationId: string;
+      readonly common: CommonOptions;
+    }
+  | {
+      readonly kind: 'quality-judge';
+      readonly executionId: string;
+      readonly runId: string;
+      readonly artifact: string;
+      readonly evaluatorId: string;
+      readonly evaluatorVersion: string;
+      readonly common: CommonOptions;
     };
 
 export const USAGE = `acme — ACME composition root
@@ -109,6 +130,12 @@ export const USAGE = `acme — ACME composition root
                [--adapter ...] [--database <path>] [--json]
   acme state inspect <namespace> <entity-id> [--revision <n>] [--adapter ...] [--database <path>] [--json]
   acme memory inspect <namespace> <entity-id> [--status <status>] [--adapter ...] [--database <path>] [--json]
+  acme quality list [--run-id <id>] [--execution-id <id>] [--limit <n>]
+               [--adapter ...] [--database <path>] [--json]
+  acme quality inspect <evaluation-id> [--adapter ...] [--database <path>] [--json]
+  acme quality judge <execution-id> --run-id <id> --artifact <file>
+               [--evaluator-id <id>] [--evaluator-version <ver>]
+               [--gateway openai] [--adapter ...] [--database <path>] [--json]
   acme outbox inspect [--status <status>] [--limit <n>]
                [--max-pending <n>] [--max-failed <n>]
                [--adapter ...] [--database <path>] [--json]
@@ -132,6 +159,12 @@ export const USAGE = `acme — ACME composition root
   --outbox-dir     required with --transport file; delivery JSON directory
   --by             operator identity for execution discharge
   --rationale      human reason for execution discharge
+  --run-id         quality list/judge run identifier
+  --execution-id   quality list filter
+  --artifact       quality judge artifact JSON file
+  --evaluator-id   live quality judge id (default quality.live-editorial)
+  --evaluator-version
+                   live quality judge version (default 1.0.0)
   --show-payloads  print document, memory and state values instead of redacting
   --json           versioned JSON on stdout instead of a text summary
 
@@ -221,6 +254,11 @@ export function parseCommand(argv: readonly string[]): Command {
         'max-failed': { type: 'string' },
         transport: { type: 'string' },
         'outbox-dir': { type: 'string' },
+        'run-id': { type: 'string' },
+        'execution-id': { type: 'string' },
+        artifact: { type: 'string' },
+        'evaluator-id': { type: 'string' },
+        'evaluator-version': { type: 'string' },
         json: { type: 'boolean' },
         'show-payloads': { type: 'boolean' },
       },
@@ -440,6 +478,53 @@ export function parseCommand(argv: readonly string[]): Command {
       ...(status === undefined ? {} : { status }),
       common: options,
     };
+  }
+
+  if (group === 'quality') {
+    const action = positionals[1];
+    if (action === 'list') {
+      const runId = values['run-id'] as string | undefined;
+      const executionId = values['execution-id'] as string | undefined;
+      return {
+        kind: 'quality-list',
+        ...(runId === undefined ? {} : { runId }),
+        ...(executionId === undefined ? {} : { executionId }),
+        limit: positiveInteger(values['limit'], '--limit', 50),
+        common: options,
+      };
+    }
+    if (action === 'inspect') {
+      const evaluationId = requirePositional(positionals, 2, 'evaluation-id');
+      return { kind: 'quality-inspect', evaluationId, common: options };
+    }
+    if (action === 'judge') {
+      const executionId = requirePositional(positionals, 2, 'execution-id');
+      const runId = values['run-id'] as string | undefined;
+      const artifact = values['artifact'] as string | undefined;
+      if (runId === undefined || runId.trim().length === 0) {
+        throw new UsageError('quality judge requires --run-id <id>.');
+      }
+      if (artifact === undefined || artifact.trim().length === 0) {
+        throw new UsageError('quality judge requires --artifact <file>.');
+      }
+      const evaluatorId =
+        (values['evaluator-id'] as string | undefined) ??
+        'quality.live-editorial';
+      const evaluatorVersion =
+        (values['evaluator-version'] as string | undefined) ?? '1.0.0';
+      return {
+        kind: 'quality-judge',
+        executionId,
+        runId,
+        artifact,
+        evaluatorId,
+        evaluatorVersion,
+        common: options,
+      };
+    }
+    throw new UsageError(
+      'Unknown quality action; expected list, inspect or judge.',
+    );
   }
 
   throw new UsageError(`Unknown command "${String(group)}".`);

@@ -77,8 +77,16 @@ export interface ExecutionEngineOptions {
   readonly hashing?: Hashing;
 }
 
+/** Optional per-call controls (ADR-0027 cooperative cancellation). */
+export interface ExecuteOptions {
+  readonly signal?: AbortSignal;
+}
+
 export interface ExecutionEngine {
-  execute<TInput>(request: ExecutionRequest<TInput>): Promise<ExecutionResult>;
+  execute<TInput>(
+    request: ExecutionRequest<TInput>,
+    options?: ExecuteOptions,
+  ): Promise<ExecutionResult>;
   replayVerify(executionId: string): Promise<ReplayReport>;
 }
 
@@ -682,7 +690,9 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
 
   async execute<TInput>(
     request: ExecutionRequest<TInput>,
+    options?: ExecuteOptions,
   ): Promise<ExecutionResult> {
+    const callSignal = options?.signal;
     const envelope = validateRequestEnvelope(request);
     const effectivePolicy = resolveExecutionPolicy(envelope.policy);
     const resolved = this.#resolve(
@@ -767,6 +777,7 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
         effectivePolicy,
         now,
         resumption,
+        callSignal,
       );
     } catch (error) {
       const data = errorData(error, 'failed');
@@ -935,6 +946,7 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
     policy: ExecutionPolicy,
     now: string,
     resumption?: Resumption,
+    callSignal?: AbortSignal,
   ): Promise<ExecutionResult> {
     const attemptNumber = resumption?.attemptNumber ?? 1;
     await this.#stage(executionId, attemptNumber, 'loading', now);
@@ -1008,7 +1020,7 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
             selection: request.model,
             requiredCapabilities: resolved.contract.requiredCapabilities,
             timeoutMs: policy.timeoutMs,
-            signal: new AbortController().signal,
+            signal: callSignal ?? new AbortController().signal,
           }),
         );
       } catch (error) {

@@ -6,6 +6,12 @@ Date: 2026-08-02
 
 Decision owners: ACME maintainers
 
+> **Amendment note (ADR-0027):** Synchronous `launchPlan` remains. Background
+> launch, job records, progress and cancellation are added as a **parallel**
+> local API (`enqueuePlan` / workbench-owned worker). S3 live-progress becomes
+> available when the host supplies job evidence. See
+> [ADR-0027](0027-async-launch-job-progress-cancellation.md).
+
 ## Context
 
 ADR-0019 gate 4 accepted that interface-owned artifacts live as files under a

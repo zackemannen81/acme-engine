@@ -24,10 +24,8 @@ import { EXIT_OK, run, type RunOptions } from '../../apps/cli/src/index.js';
 
 const now = '2026-08-06T15:00:00.000Z';
 const entityId = 'story-live-offline';
-const selection = { profile: 'live-openai' };
 const roots: string[] = [];
 
-console.log(selection);
 afterEach(() => {
   while (roots.length > 0) {
     rmSync(roots.pop() ?? '', { recursive: true, force: true });

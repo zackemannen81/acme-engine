@@ -8,12 +8,17 @@ import {
   redriveOutbox,
   type DomainEventRecord,
   type ExecutionRequest,
+  type ExecutionResult,
   type JsonValue,
   type ModelGateway,
   type ModelSelection,
   type OutboxDispatcher,
   type OutboxRecord,
 } from '@acme/core';
+import {
+  createQualityEvaluationInput,
+  runLiveModelQualityJudge,
+} from '@acme/evaluation';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
 import {
   createOpenAiResponsesGateway,
@@ -106,7 +111,11 @@ function gatewayFromOpenAi(
   options: RunOptions,
 ): ModelGateway {
   const apiKey = process.env['OPENAI_API_KEY'];
-  if (apiKey === undefined || apiKey.trim().length === 0) {
+  // Injected transports (tests / offline multi-step) do not need credentials.
+  if (
+    options.openAiTransport === undefined &&
+    (apiKey === undefined || apiKey.trim().length === 0)
+  ) {
     throw new UsageError(
       'execute --gateway openai requires OPENAI_API_KEY in the environment.',
     );
@@ -116,7 +125,10 @@ function gatewayFromOpenAi(
   return createOpenAiResponsesGateway({
     transport,
     now: () => new Date().toISOString(),
-    headers: () => ({ authorization: `Bearer ${apiKey}` }),
+    headers: () =>
+      apiKey === undefined || apiKey.trim().length === 0
+        ? {}
+        : { authorization: `Bearer ${apiKey}` },
     profiles: [
       {
         selection,
@@ -756,6 +768,137 @@ function listStranded(
   });
 }
 
+function listQuality(
+  command: Extract<Command, { kind: 'quality-list' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const listed = await composition.qualityStore.list({
+      ...(command.runId === undefined ? {} : { runId: command.runId }),
+      ...(command.executionId === undefined
+        ? {}
+        : { executionId: command.executionId }),
+    });
+    const entries = listed.slice(0, command.limit);
+    const body = {
+      count: entries.length,
+      truncated: listed.length > command.limit,
+      entries: entries.map((entry) => ({
+        evaluationId: entry.evaluationId,
+        runId: entry.subject.runId,
+        executionId: entry.subject.executionId,
+        evaluator: entry.evaluator as unknown as JsonValue,
+        verdict: entry.result.verdict,
+        subjectDigest: entry.subjectDigest,
+        resultDigest: entry.resultDigest,
+      })) as unknown as JsonValue,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'quality list',
+      body,
+      command.common.json,
+      entries.length === 0
+        ? ['no quality evaluations found']
+        : entries.map(
+            (entry) =>
+              `${entry.evaluationId} ${entry.evaluator.kind} ${entry.result.verdict}`,
+          ),
+    );
+    return entries.length === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
+function inspectQuality(
+  command: Extract<Command, { kind: 'quality-inspect' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const record = await composition.qualityStore.get(command.evaluationId);
+    if (record === null) {
+      throw new UsageError(
+        `No quality evaluation found for ${command.evaluationId}.`,
+      );
+    }
+    const body = {
+      evaluation: record as unknown as JsonValue,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(options.io, 'quality inspect', body, command.common.json, [
+      `evaluation ${record.evaluationId}`,
+      `verdict ${record.result.verdict}`,
+      `evaluator ${record.evaluator.id}@${record.evaluator.version} (${record.evaluator.kind})`,
+      `execution ${record.subject.executionId}`,
+    ]);
+    return EXIT_OK;
+  });
+}
+
+function qualityJudge(
+  command: Extract<Command, { kind: 'quality-judge' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const execution = await composition.repository.get(command.executionId);
+    if (execution === null || execution.result === undefined) {
+      throw new UsageError(
+        `No terminal execution result for ${command.executionId}.`,
+      );
+    }
+    const artifact = await readJson(command.artifact, 'artifact');
+    const result = execution.result as ExecutionResult;
+    const evidence = await composition.repository.loadReplayEvidence(
+      command.executionId,
+    );
+    const digest =
+      evidence !== null ? evidence.preparedCommit.operationDigest : null;
+    const input = createQualityEvaluationInput({
+      runId: command.runId,
+      executionResult: result,
+      ...(digest === null ? {} : { operationDigest: digest }),
+      artifact: {
+        kind: 'cli-artifact',
+        id: command.artifact,
+        value: artifact,
+      },
+      contract: {
+        id: execution.contract.id,
+        version: execution.contract.version,
+        fingerprint: execution.contractFingerprint,
+      },
+    });
+
+    // Live judge requires opt-in when using real network transport.
+    if (options.openAiTransport === undefined) {
+      const optIn = process.env['ACME_LIVE_TEST'];
+      if (optIn === undefined || optIn.trim().length === 0) {
+        throw new UsageError(
+          'quality judge requires ACME_LIVE_TEST=1 (and OPENAI_API_KEY) for live model calls, or an injected transport in tests.',
+        );
+      }
+    }
+    const gateway = gatewayFromOpenAi({ profile: 'live-quality' }, options);
+    const record = await runLiveModelQualityJudge({
+      store: composition.qualityStore,
+      gateway,
+      selection: { profile: 'live-quality' },
+      input,
+      evaluator: {
+        id: command.evaluatorId,
+        version: command.evaluatorVersion,
+      },
+    });
+    const body = {
+      evaluation: record as unknown as JsonValue,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(options.io, 'quality judge', body, command.common.json, [
+      `judged ${record.evaluationId}`,
+      `verdict ${record.result.verdict}`,
+      `kind ${record.evaluator.kind}`,
+    ]);
+    return EXIT_OK;
+  });
+}
+
 function dischargeExecution(
   command: Extract<Command, { kind: 'execution-discharge' }>,
   options: RunOptions,
@@ -828,6 +971,12 @@ export async function run(
         return await drainOutboxCommand(command, options);
       case 'outbox-redrive':
         return await redriveOutboxCommand(command, options);
+      case 'quality-list':
+        return await listQuality(command, options);
+      case 'quality-inspect':
+        return await inspectQuality(command, options);
+      case 'quality-judge':
+        return await qualityJudge(command, options);
     }
   } catch (error: unknown) {
     if (error instanceof UsageError) {

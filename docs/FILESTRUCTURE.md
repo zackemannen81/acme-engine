@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-06
+Last updated: 2026-08-09
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -32,6 +32,7 @@ acme-engine/
 │       │   ├── node-source.ts
 │       │   ├── redaction.ts
 │       │   ├── run-record.ts
+│       │   ├── job-record.ts
 │       │   ├── fixture-approval.ts
 │       │   ├── live-gate.ts
 │       │   ├── view.ts
@@ -40,6 +41,7 @@ acme-engine/
 │       │   ├── local/
 │       │   │   ├── composition.ts
 │       │   │   ├── launch.ts
+│       │   │   ├── job-runner.ts
 │       │   │   ├── live-launch.ts
 │       │   │   ├── server.ts
 │       │   │   ├── workbench-main.ts
@@ -78,12 +80,14 @@ acme-engine/
 │           ├── catalog-fixtures.ts
 │           ├── catalog.test.ts
 │           ├── fixtures.ts
+│           ├── job-runner.test.ts
 │           ├── live-evaluation.test.ts
 │           ├── measurement.test.ts
 │           ├── web-render.test.ts
 │           ├── node-source.test.ts
 │           ├── plan-compile.test.ts
 │           ├── plan-view.test.ts
+│           ├── quality-evaluation-view.test.ts
 │           ├── read-model.test.ts
 │           ├── redaction.test.ts
 │           └── view-contract.test.ts
@@ -352,6 +356,7 @@ acme-engine/
 │   │   ├── 0024-local-spa-loopback-workbench.md
 │   │   ├── 0025-post-execution-quality-evaluation.md
 │   │   ├── 0026-durable-quality-evaluation-store.md
+│   │   ├── 0027-async-launch-job-progress-cancellation.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -436,6 +441,9 @@ acme-engine/
 │   │   ├── ACME-0063_plan-model-pin.md
 │   │   ├── ACME-0064_scenario-live-multi-step.md
 │   │   ├── ACME-0065_durable-quality-store.md
+│   │   ├── ACME-0066_quality-cli.md
+│   │   ├── ACME-0067_quality-view.md
+│   │   ├── ACME-0068_live-quality-judge.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

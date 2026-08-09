@@ -60,7 +60,7 @@ explicit disposition.
 | G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
 | G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Closed** ACME-0058 (WP-D / D2) |
 | G07 | Domain Test UI workbench phases 0–6 / S1–S10 delivered; CI still CLI/`pnpm`, not browser | Test UI status | Observational, not a defect | **Accept** as intentional; optional browser CI later (WP-T residual) |
-| G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Solve** only with ADR amendment path in WP-T |
+| G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Closed** ACME-0069 / ADR-0027 (sync `launchPlan` kept; workbench uses `enqueuePlan`) |
 | G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Closed** ACME-0063 |
 | G10 | `measurements` not in `acme-test-plan/1`; thresholds only at measurement time | Plans / metrics | Plan cannot carry SLO thresholds | **Solve** via WP-T (separate charter from G09) |
 | G11 | Adapter targets are declared, not discovered; undeclared adapters invisible in catalog | Catalog / composition | Catalog incomplete unless composition root lists targets | **Solve** via WP-T or **accept** static declaration as intentional |
@@ -71,7 +71,7 @@ explicit disposition.
 | G16 | Offline success-path Responses fixtures are simplified samples, not byte-identical live captures | Fixtures | Drift risk vs real provider bodies | **Optional** WP-P hygiene |
 | G17 | Package boundary enforcement covers current packages only; future adapters must extend rules | Tooling | New adapters could violate dependency direction unnoticed | **Process:** every new adapter task extends rules (WP-X) |
 | G18 | `better-sqlite3` prebuild observed on Windows + `ubuntu-latest` only | Platform | Other platforms unproven | **Accept / observe** (WP-X note); no multi-OS matrix required yet |
-| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Q1 closed** ACME-0065; Q2–Q4 remain |
+| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Closed** ACME-0065–0068 (WP-Q) |
 
 ## 3. Constraints that shape solutions
 
@@ -305,9 +305,10 @@ idempotent semantics as the in-memory adapter, then expose read paths.
 
 1. **Q1 — SQLite migration + durable adapter + conformance** — **done ACME-0065**
 2. **Q2 — CLI inspect/list (and optional scenario wiring over durable store)**
-3. **Q3 — Test UI read surface (optional)**
-4. **Q4 — Live / general AI judge (explicitly separate; high bar; live
-   adapter proof in scope when this slice is activated)**
+   — **done ACME-0066**
+3. **Q3 — Test UI read surface (optional)** — **done ACME-0067** (pure S11 view)
+4. **Q4 — Live / general AI judge** — **done ACME-0068** (`live-model` outside
+   harness; offline injected transport + opt-in live)
 
 #### Q1 steps
 

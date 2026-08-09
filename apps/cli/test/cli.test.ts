@@ -899,6 +899,197 @@ describe('acme CLI durable round trip', () => {
     });
   });
 
+  it('lists and inspects quality evaluations on SQLite', async () => {
+    const root = workspace();
+    const database = join(root, 'quality.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    const { createSqliteQualityEvaluationStore, openDatabase } =
+      await import('../../../packages/adapter-sqlite/src/index.js');
+    const { createQualityEvaluationInput, createQualityEvaluationRecord } =
+      await import('../../../packages/evaluation/src/index.js');
+    const { sha256 } = await import('../../../packages/core/src/index.js');
+
+    const connection = openDatabase({ location: database, appliedAt: now });
+    try {
+      const store = createSqliteQualityEvaluationStore({
+        database: connection,
+      });
+      const input = createQualityEvaluationInput({
+        runId: 'cli-quality-run',
+        executionResult: {
+          status: 'committed',
+          executionId: 'execution-cli-quality',
+          replayed: false,
+          revision: 1,
+          documentKeys: ['doc'],
+          eventIds: [],
+        },
+        operationDigest: sha256('op-cli-quality'),
+        artifact: { kind: 'document', id: 'doc', value: { ok: true } },
+        contract: {
+          id: 'narrative.observe-document',
+          version: '1.0.0',
+          fingerprint: sha256('contract-cli-quality'),
+        },
+      });
+      const record = createQualityEvaluationRecord({
+        input,
+        evaluator: {
+          id: 'quality.chapter-structure',
+          version: '1.0.0',
+          kind: 'deterministic',
+        },
+        result: { scores: [], findings: [], verdict: 'pass' },
+      });
+      await store.put(record);
+
+      const listIo = capture();
+      await expect(
+        run(
+          [
+            'quality',
+            'list',
+            '--run-id',
+            'cli-quality-run',
+            '--json',
+            ...sqlite,
+          ],
+          listIo.options,
+        ),
+      ).resolves.toBe(EXIT_OK);
+      const listed = JSON.parse(listIo.out.join('\n')) as {
+        count: number;
+        entries: { evaluationId: string; verdict: string }[];
+      };
+      expect(listed.count).toBe(1);
+      expect(listed.entries[0]?.verdict).toBe('pass');
+
+      const inspectIo = capture();
+      await expect(
+        run(
+          ['quality', 'inspect', record.evaluationId, '--json', ...sqlite],
+          inspectIo.options,
+        ),
+      ).resolves.toBe(EXIT_OK);
+      const inspected = JSON.parse(inspectIo.out.join('\n')) as {
+        evaluation: { evaluationId: string; result: { verdict: string } };
+      };
+      expect(inspected.evaluation.evaluationId).toBe(record.evaluationId);
+      expect(inspected.evaluation.result.verdict).toBe('pass');
+    } finally {
+      connection.close();
+    }
+  });
+
+  it('judges quality through an injected live-model gateway offline', async () => {
+    const root = workspace();
+    const database = join(root, 'judge.sqlite');
+    const sqlite = ['--adapter', 'sqlite', '--database', database];
+    // Seed a committed execution via normal execute path.
+    const files = await fixtureFiles(root);
+    await expect(
+      run(
+        [
+          'execute',
+          '--request',
+          files.requestPath,
+          '--script',
+          files.scriptPath,
+          ...sqlite,
+        ],
+        capture().options,
+      ),
+    ).resolves.toBe(EXIT_OK);
+
+    const artifactPath = join(root, 'artifact.json');
+    writeFileSync(artifactPath, JSON.stringify({ text: 'judge me' }));
+    const transport: ProviderTransport = {
+      async send() {
+        return {
+          kind: 'response',
+          status: 200,
+          headers: {},
+          body: JSON.stringify({
+            id: 'resp_quality_judge',
+            model: 'gpt-fixture-1',
+            status: 'completed',
+            output: [
+              {
+                type: 'message',
+                content: [
+                  {
+                    type: 'output_text',
+                    text: JSON.stringify({
+                      scores: [
+                        {
+                          id: 'clarity',
+                          value: 0.7,
+                          scale: { min: 0, max: 1 },
+                          interpretation: 'higher-is-better',
+                        },
+                      ],
+                      findings: [],
+                      verdict: 'pass',
+                    }),
+                  },
+                ],
+              },
+            ],
+            usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+          }),
+        };
+      },
+    };
+
+    const judgeIo = capture();
+    const previousKey = process.env['OPENAI_API_KEY'];
+    process.env['OPENAI_API_KEY'] = 'test-not-a-real-key';
+    let judgeCode: number;
+    try {
+      judgeCode = await run(
+        [
+          'quality',
+          'judge',
+          files.executionId,
+          '--run-id',
+          'judge-run-1',
+          '--artifact',
+          artifactPath,
+          '--json',
+          ...sqlite,
+        ],
+        {
+          ...judgeIo.options,
+          openAiTransport: transport,
+          openAiModel: 'gpt-fixture-1',
+        },
+      );
+    } finally {
+      if (previousKey === undefined) {
+        delete process.env['OPENAI_API_KEY'];
+      } else {
+        process.env['OPENAI_API_KEY'] = previousKey;
+      }
+    }
+    if (judgeCode !== EXIT_OK) {
+      // There is no spoon!
+      // 3slint-disable-next-line no-console
+      console.error('judge err', judgeIo.err.join('\n'));
+      // These are not the errors you are looking for, move along..
+      // 3slint-disable-next-line no-console
+      console.error('judge out', judgeIo.out.join('\n'));
+    }
+    expect(judgeCode).toBe(EXIT_OK);
+    const judged = JSON.parse(judgeIo.out.join('\n')) as {
+      evaluation: {
+        evaluator: { kind: string };
+        result: { verdict: string };
+      };
+    };
+    expect(judged.evaluation.evaluator.kind).toBe('live-model');
+    expect(judged.evaluation.result.verdict).toBe('pass');
+  });
+
   it('lists and discharges a stranded SQLite execution', async () => {
     const root = workspace();
     const database = join(root, 'stranded.sqlite');
