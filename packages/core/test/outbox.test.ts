@@ -2,12 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   drainOutbox,
+  redriveOutbox,
   type LeasedOutboxEntry,
   type DeliveredOutboxEntry,
   type DomainEventRecord,
   type ExecutionRepository,
   type FailedOutboxEntry,
   type OutboxLease,
+  type OutboxRedriveEntry,
 } from '../src/index.js';
 
 const now = '2026-07-31T10:00:00.000Z';
@@ -47,6 +49,9 @@ function repository(claimed: readonly LeasedOutboxEntry[]) {
   const failed = vi.fn(async (entry: FailedOutboxEntry) => {
     void entry;
   });
+  const redriven = vi.fn(async (entry: OutboxRedriveEntry) => {
+    void entry;
+  });
   const stub = {
     async leaseOutbox(claim: OutboxLease) {
       claims.push(claim);
@@ -54,8 +59,12 @@ function repository(claimed: readonly LeasedOutboxEntry[]) {
     },
     markOutboxDelivered: delivered,
     markOutboxFailed: failed,
+    redriveOutbox: redriven,
+    async listOutbox() {
+      return [];
+    },
   } as unknown as ExecutionRepository;
-  return { stub, claims, delivered, failed };
+  return { stub, claims, delivered, failed, redriven };
 }
 
 describe('drainOutbox', () => {
@@ -145,6 +154,24 @@ describe('drainOutbox', () => {
           retryAt: '2026-07-31T10:01:00.000Z',
         },
       ],
+    });
+  });
+
+  it('redrives explicit event ids through the repository', async () => {
+    const subject = repository([]);
+    const report = await redriveOutbox({
+      repository: subject.stub,
+      clock: { now: () => now },
+      limit: 10,
+      eventIds: ['event-dead'],
+    });
+    expect(subject.redriven.mock.calls).toEqual([
+      [{ eventId: 'event-dead', availableAt: now }],
+    ]);
+    expect(report).toMatchObject({
+      report: 'acme-outbox-redrive-report/1',
+      redriven: 1,
+      entries: [{ eventId: 'event-dead', outcome: 'redriven' }],
     });
   });
 

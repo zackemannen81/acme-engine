@@ -132,13 +132,17 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/
 │   │   │   ├── database.ts
+│   │   │   ├── driver-errors.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrations.ts
+│   │   │   ├── quality-evaluation-store.ts
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
 │   │   └── test/
+│   │       ├── driver-errors.test.ts
 │   │       ├── encrypted-payload.test.ts
-│   │       └── migrations.test.ts
+│   │       ├── migrations.test.ts
+│   │       └── quality-evaluation-store.test.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -169,7 +173,8 @@ acme-engine/
 │   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
 │   │   │   ├── state-projection.ts
-│   │   │   └── state.ts
+│   │   │   ├── state.ts
+│   │   │   └── stranded-execution.ts
 │   │   ├── test/
 │   │   │   ├── execution-identity.test.ts
 │   │   │   ├── hashing.test.ts
@@ -181,7 +186,8 @@ acme-engine/
 │   │   │   ├── registries.test.ts
 │   │   │   ├── response-pipeline.test.ts
 │   │   │   ├── state-engine.test.ts
-│   │   │   └── state-projection.test.ts
+│   │   │   ├── state-projection.test.ts
+│   │   │   └── stranded-execution.test.ts
 │   │   └── test-d/
 │   │       └── task-inference.test-d.ts
 │   ├── evaluation/
@@ -345,6 +351,7 @@ acme-engine/
 │   │   ├── 0023-live-evaluation-gate.md
 │   │   ├── 0024-local-spa-loopback-workbench.md
 │   │   ├── 0025-post-execution-quality-evaluation.md
+│   │   ├── 0026-durable-quality-evaluation-store.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -420,6 +427,15 @@ acme-engine/
 │   │   ├── ACME-0054_quality-evaluation-harness.md
 │   │   ├── ACME-0055_acme-human-readable-documents.md
 │   │   ├── ACME-0056_gap-resolution-plan.md
+│   │   ├── ACME-0057_driver-error-classification.md
+│   │   ├── ACME-0058_stranded-execution-ops.md
+│   │   ├── ACME-0059_outbox-redrive.md
+│   │   ├── ACME-0060_outbox-growth-alarm.md
+│   │   ├── ACME-0061_outbox-file-transport.md
+│   │   ├── ACME-0062_narrative-domain-event.md
+│   │   ├── ACME-0063_plan-model-pin.md
+│   │   ├── ACME-0064_scenario-live-multi-step.md
+│   │   ├── ACME-0065_durable-quality-store.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md
@@ -555,9 +571,7 @@ implementation; each package needs its own activated ACME task.
 is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
 
-The `docs/backlog/` proposals record open residual work (Domain Test UI
-implementation; driver-error classification). The latter keeps generic ACME
-status classes in public contracts and driver-code mapping inside each
-adapter and is scheduled as WP-D / D1 in the gap-resolution plan. Resolved
-proposals (encrypted-payload, strict structured-output) are removed once
-finished.
+The `docs/backlog/` proposals record residual work. Driver-error
+classification is resolved (ACME-0057); the file remains as resolved context.
+Domain Test UI implementation notes remain for optional residuals. Resolved
+proposals may stay for discovery context or be removed once finished.

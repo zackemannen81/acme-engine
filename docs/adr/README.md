@@ -60,3 +60,4 @@ current architecture.
 - [`0023-live-evaluation-gate.md`](0023-live-evaluation-gate.md)
 - [`0024-local-spa-loopback-workbench.md`](0024-local-spa-loopback-workbench.md)
 - [`0025-post-execution-quality-evaluation.md`](0025-post-execution-quality-evaluation.md)
+- [`0026-durable-quality-evaluation-store.md`](0026-durable-quality-evaluation-store.md)

@@ -36,7 +36,7 @@ const API_KEY = process.env['OPENAI_API_KEY'];
 // Reference contracts no longer emit `temperature` (ACME-0037). Override with
 // ACME_LIVE_MODEL to probe other models; an explicit temperature on a request
 // still requires a model that accepts that parameter.
-const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-5.6-Luna';
+const MODEL = process.env['ACME_LIVE_MODEL'] ?? 'gpt-5.6-luna';
 const MAX_OUTPUT_TOKENS = Number(
   process.env['ACME_LIVE_MAX_OUTPUT_TOKENS'] ?? '4096',
 );

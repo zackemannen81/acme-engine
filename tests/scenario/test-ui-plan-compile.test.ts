@@ -27,7 +27,7 @@ const scenarioRoot = join(dirname(fileURLToPath(import.meta.url)), 'files');
 
 /** The digest pinned by `tests/scenario/narrative-phase-5.test.ts`. */
 const NARRATIVE_PHASE_5_DIGEST =
-  '15f143ba7991e04065ad1ed6bc9f2df6942e05372d18f5d4469b2eba4ae5c94f';
+  'c0fcec15fbc93dd53074ef4c3edcccd05552e741db9b3b5b78485b76500e40a4';
 
 const plan = {
   schemaVersion: 'acme-test-plan/1',

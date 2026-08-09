@@ -82,7 +82,7 @@ function createIds() {
         memory += 1;
         return `memory-narrative-phase-5-${String(memory).padStart(3, '0')}`;
       case 'event':
-        throw new Error('Narrative Phase 5 emits no event.');
+        return 'event-narrative-phase-5-001';
     }
   });
   return { ids: { next } satisfies IdGenerator, next };
@@ -176,7 +176,7 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       replayed: false,
       revision: 1,
       documentKeys: ['chapter-phase-5'],
-      eventIds: [],
+      eventIds: ['event-narrative-phase-5-001'],
     });
     const committedEvidence = repository.snapshot();
     expect(committedEvidence).toMatchObject({
@@ -196,6 +196,13 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
         { memoryId: 'memory-narrative-phase-5-002' },
         { memoryId: 'memory-narrative-phase-5-003' },
       ],
+      events: [
+        {
+          eventId: 'event-narrative-phase-5-001',
+          type: 'narrative.document-observed',
+        },
+      ],
+      outbox: [{ eventId: 'event-narrative-phase-5-001', status: 'pending' }],
       state: {
         snapshots: [
           {
@@ -208,13 +215,14 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       },
     });
     expect(gateway.invocations()).toHaveLength(1);
-    expect(id.next).toHaveBeenCalledTimes(5);
+    // call + document + 3 memories + event
+    expect(id.next).toHaveBeenCalledTimes(6);
 
     const repeated = await engine.execute(request);
     expect(repeated).toEqual({ ...first, replayed: true });
     expect(repository.snapshot()).toEqual(committedEvidence);
     expect(gateway.invocations()).toHaveLength(1);
-    expect(id.next).toHaveBeenCalledTimes(5);
+    expect(id.next).toHaveBeenCalledTimes(6);
 
     const replay = await engine.replayVerify(executionId);
     expect(replay).toMatchObject({
@@ -224,18 +232,20 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
     expect(replay.recordedDigest).toBe(replay.replayDigest);
     expect(repository.snapshot()).toEqual(committedEvidence);
     expect(gateway.invocations()).toHaveLength(1);
-    expect(id.next).toHaveBeenCalledTimes(5);
+    expect(id.next).toHaveBeenCalledTimes(6);
 
     const portableEvidence = await repository.loadReplayEvidence(executionId);
     expect(portableEvidence).not.toBeNull();
-    expect({
+    // Print actuals once if the pin drifts after event emission.
+    const pin = {
       executionId,
       requestFingerprint: portableEvidence?.requestFingerprint,
       modelRequestHash: portableEvidence?.modelCalls[0]?.requestHash,
       modelResponseHash: computeModelResponseHash(response),
       operationDigest: portableEvidence?.preparedCommit.operationDigest,
       stateHash: committedEvidence.state.snapshots[0]?.valueHash,
-    }).toEqual({
+    };
+    expect(pin).toEqual({
       executionId:
         'execution_2c3216d146d3c9c40668e70e0f81ec870e2652ecf8294e3bd96556010914cd27',
       requestFingerprint:
@@ -245,7 +255,7 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       modelResponseHash:
         'e7bc7256e9c6330675a2afaa7c840709757490eb10558e25ab2f89bea73ae40f',
       operationDigest:
-        '15f143ba7991e04065ad1ed6bc9f2df6942e05372d18f5d4469b2eba4ae5c94f',
+        'c0fcec15fbc93dd53074ef4c3edcccd05552e741db9b3b5b78485b76500e40a4',
       stateHash:
         '086c05744c4cf0fe9469524b5f2ac52a430bf3edc115c95fb7f82c721bfbae54',
     });

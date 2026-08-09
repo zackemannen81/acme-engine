@@ -41,6 +41,7 @@ import {
 } from '@acme/core';
 import type { Database, Statement } from 'better-sqlite3';
 
+import { withSqliteDriverErrors } from './driver-errors.js';
 import {
   toDomainEventRecord,
   toExecutionAttempt,
@@ -1053,6 +1054,35 @@ export class SqliteExecutionRepository implements ExecutionRepository {
     });
   }
 
+  async redriveOutbox(entry: {
+    readonly eventId: string;
+    readonly availableAt: string;
+  }): Promise<void> {
+    requireText(entry.eventId, 'eventId');
+    this.#immediate(() => {
+      const record = this.#requireOutbox(entry.eventId);
+      if (record.status === 'delivered') {
+        corruption('A delivered outbox entry cannot be redriven.', {
+          eventId: entry.eventId,
+        });
+      }
+      if (record.status !== 'failed') {
+        invalid('Only failed outbox entries can be redriven.', {
+          eventId: entry.eventId,
+          status: record.status,
+        });
+      }
+      // pending + availableAt; keep last_error and attempt_count; clear claim.
+      this.#run(
+        `UPDATE outbox
+           SET status = 'pending', available_at = ?, claimed_at = NULL,
+               delivered_at = NULL
+         WHERE event_id = ?`,
+        [entry.availableAt, entry.eventId],
+      );
+    });
+  }
+
   async listOutbox(query: OutboxQuery): Promise<readonly LeasedOutboxEntry[]> {
     requireLimit(query.limit);
     const rows =
@@ -1673,29 +1703,39 @@ export class SqliteExecutionRepository implements ExecutionRepository {
   }
 
   #statement(sql: string): Statement {
-    const cached = this.#statements.get(sql);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const prepared = this.#database.prepare(sql);
-    this.#statements.set(sql, prepared);
-    return prepared;
+    return withSqliteDriverErrors(() => {
+      const cached = this.#statements.get(sql);
+      if (cached !== undefined) {
+        return cached;
+      }
+      const prepared = this.#database.prepare(sql);
+      this.#statements.set(sql, prepared);
+      return prepared;
+    });
   }
 
   #one<TRow>(sql: string, params: readonly SqlValue[] = []): TRow | undefined {
-    return this.#statement(sql).get(...params) as TRow | undefined;
+    return withSqliteDriverErrors(
+      () => this.#statement(sql).get(...params) as TRow | undefined,
+    );
   }
 
   #all<TRow>(sql: string, params: readonly SqlValue[] = []): TRow[] {
-    return this.#statement(sql).all(...params) as TRow[];
+    return withSqliteDriverErrors(
+      () => this.#statement(sql).all(...params) as TRow[],
+    );
   }
 
   #run(sql: string, params: readonly SqlValue[] = []): void {
-    this.#statement(sql).run(...params);
+    withSqliteDriverErrors(() => {
+      this.#statement(sql).run(...params);
+    });
   }
 
   #immediate<T>(work: () => T): T {
-    return this.#database.transaction(work).immediate();
+    return withSqliteDriverErrors(() =>
+      this.#database.transaction(work).immediate(),
+    );
   }
 }
 

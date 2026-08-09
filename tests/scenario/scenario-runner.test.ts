@@ -28,7 +28,7 @@ const narrativeScenario = join(scenarioRoot, 'narrative-phase-5.yaml');
  * scenario file must reach the same value through the same engine.
  */
 const NARRATIVE_PHASE_5_DIGEST =
-  '15f143ba7991e04065ad1ed6bc9f2df6942e05372d18f5d4469b2eba4ae5c94f';
+  'c0fcec15fbc93dd53074ef4c3edcccd05552e741db9b3b5b78485b76500e40a4';
 
 const roots: string[] = [];
 

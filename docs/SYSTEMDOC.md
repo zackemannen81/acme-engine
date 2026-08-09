@@ -386,6 +386,10 @@ runner over compatible `acme-scenario/1` and `acme-scenario/2` formats.
   `@acme/evaluation` packages
 - the composition is built from the scenario's own `seed`, so the declared
   clock and ID allocation are the ones the run uses
+- `composition.gateway` is `mock` (default offline fixtures) or `openai`
+  (live multi-step; requires composition `liveGateway`, CLI opt-in
+  `ACME_LIVE_TEST` + credentials, or an injected transport under test)
+- execute steps may pin `model` and, for live, omit `mockResponse`
 
 Because memory record IDs are part of the operation-digest preimage, a
 scenario that pins a digest must also pin its ID scheme. Specification 18.1
@@ -414,7 +418,10 @@ ExecutionEngine and canonical execution evidence do not depend on it.
 - `acme-quality-evaluation/1` returns finite ranged scores, structured
   findings and a `pass | fail | inconclusive` verdict with content-derived
   subject/result/evaluation identities
-- `QualityEvaluationStore` is an append-only port; the in-memory adapter is
+- `QualityEvaluationStore` is an append-only port; the in-memory adapter and
+  durable SQLite adapter (`createSqliteQualityEvaluationStore`, migration v2,
+  ADR-0026) implement it with identical conformance; the SQLite table has no
+  FK to executions so evaluation lifecycle stays independent of the ledger
   idempotent for identical content, refuses identity collisions and returns
   detached records through a reusable conformance kit
 
@@ -433,9 +440,15 @@ repository adapter. Everything else works through core ports.
   scenario root
 - `execute` runs one task through the bounded ExecutionEngine
 - `execution replay --mode verify` reports the ADR-0012 verdict
+- `execution stranded` lists open and terminal stranded executions
+  (`acme-stranded-list/1`); `execution discharge` marks an open stranded
+  execution failed with operator audit in error details (no model outcome
+  invented, no state/memory/document write)
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
-- `outbox inspect` lists entries with their events; `outbox drain` leases,
+- `outbox inspect` lists entries with their events; `outbox drain` leases;
+  `outbox redrive` returns terminal `failed` entries to `pending`;
+  `outbox drain --transport file --outbox-dir <path>` writes file envelopes
   delivers and settles one bounded batch, bounded by `--limit` and
   `--lease-timeout-ms`
 - `--adapter memory|sqlite` selects the repository; `--database` is required
@@ -448,8 +461,9 @@ repository adapter. Everything else works through core ports.
 `execute` selects a gateway mutually exclusively: `--script` loads the
 deterministic mock; `--gateway openai` builds the OpenAI Responses gateway with
 `createFetchTransport`, reading `OPENAI_API_KEY` only in the composition root
-(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-Luna`).
-Scenario runs remain mock-only. Commands that cannot work are absent rather
+(model from `ACME_OPENAI_MODEL` or `ACME_LIVE_MODEL`, default `gpt-5.6-luna`).
+Scenario runs default to mock; `composition.gateway: openai` enables multi-step
+live under opt-in CLI wiring (ACME-0064). Commands that cannot work are absent rather
 than present and failing, and resume needs no command of its own: an
 interrupted execution is resumed by re-submitting the same request through
 `execute` (ADR-0017).
@@ -530,9 +544,11 @@ and a driver-level fault injected inside the `BEGIN IMMEDIATE` transaction —
 after documents, memory candidates, the state snapshot, the transition and the
 state-head upsert are written — leaves none of them behind once every
 connection is closed and the file is reopened. The recorded model call
-survives, because it is written outside the commit. A driver failure carries
-no ACME classification today and reaches the caller as non-retryable
-`INTERNAL`; see `docs/backlog/driver-error-classification.md`.
+survives, because it is written outside the commit. Driver failures are
+classified inside `@acme/adapter-sqlite` before they leave the repository
+(ACME-0057): busy/locked → retryable `PERSISTENCE_TRANSIENT`,
+corruption/constraint → non-retryable `PERSISTENCE_CORRUPTION`, otherwise
+`INTERNAL` as an `AcmeError` (never a raw driver throw).
 
 Two writers on one file that read the same revision produce exactly one
 commit. The loser's compare-and-swap fails at commit time with
@@ -591,8 +607,14 @@ calls `drainOutbox`, which performs exactly one leased batch per call.
 - `OutboxDispatcher` carries no transport, network or provider vocabulary, and
   `drainOutbox` returns a versioned `acme-outbox-drain-report/1`
 
-`acme outbox inspect` and `acme outbox drain` expose this to an operator. The
-CLI dispatcher hands events to the operator through the drain report rather
+`acme outbox inspect`, `acme outbox drain` and `acme outbox redrive` expose
+this to an operator. Inspect reports counts by status and optional
+`--max-pending` / `--max-failed` growth alarms (composition-root policy;
+exit code 1 when exceeded). Host scheduling should call `acme outbox drain`
+from cron/`systemd`/CI — not a library timer (ADR-0018). The
+CLI default dispatcher hands events to the operator through the drain report;
+`--transport file --outbox-dir <path>` also writes versioned
+`acme-outbox-file-delivery/1` envelopes (ACME-0061). The report path rather
 than inventing a transport; a real transport is a composition-root change.
 `failed` entries have no redrive path.
 
@@ -940,7 +962,8 @@ Constraints that continue to bind later phases:
   boundary; no scripting, shell, credential or destructive surface
 - concepts_sandbox mocks are non-authority
 
-Not implemented: multi-step live scenarios or remote hosting. The plan
+Multi-step live scenarios are supported via ScenarioRunner `gateway: openai`
+(ACME-0064); remote hosting is not. Plans may pin `model` (ACME-0063). The plan
 format's `measurements` block remains absent. S3's live-progress section stays
 unavailable until something runs in the background.
 
@@ -968,13 +991,13 @@ unavailable until something runs in the background.
   gate (ADR-0024). It invents no quality score, writes no golden fixture and
   accepts no browser credential. It is a leaf; deleting it loses no canonical
   fact.
-- ScenarioRunner multi-step live provider steps remain open; single-execute
-  live is available via CLI and test-ui `launchLiveExecution`.
-- Residual gaps (outbox redrive/alarm, driver-error classification, stranded
-  operator tooling, plan model pin, durable quality store, async launch, and
-  related items) are inventoried with work packages and activation order in
+- ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
+  live remains via CLI and test-ui `launchLiveExecution` (S10).
+- Residual gaps (quality CLI/UI/live judge, async launch, and related items)
+  are inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). That plan does not authorize implementation by itself.
+  (ACME-0056). WP-D, WP-O, WP-L and Q1 durable quality store are delivered as
+  ACME-0057–0065.
 
 ## Deliberately Deferred Decisions
 

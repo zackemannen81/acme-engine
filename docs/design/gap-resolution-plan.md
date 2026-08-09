@@ -53,15 +53,15 @@ explicit disposition.
 
 | ID | Gap (summary) | Theme | Risk if ignored | Disposition |
 |----|---------------|-------|-----------------|-------------|
-| G01 | ScenarioRunner has no live provider step; multi-step scenario files cannot reach a live model | Live multi-step | Cannot accept multi-step live offline→live parity | **Solve** via WP-L |
-| G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** |
-| G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **solve** operator alarm + optional host worker docs in WP-O |
+| G01 | ScenarioRunner has no live provider step; multi-step scenario files cannot reach a live model | Live multi-step | Cannot accept multi-step live offline→live parity | **Closed** ACME-0064 |
+| G02 | ScenarioRunner remains mock-only; S10 live is single-execute only (same root as G01) | Live multi-step | Duplicate wording of G01 | **Collapse into G01** / closed with G01 |
+| G03 | Nothing drains the outbox automatically; no growth alarm (ADR-0018) | Outbox ops | Pending entries accumulate unnoticed | **Partial:** no library auto-drain; **alarm done** ACME-0060; host drain remains external |
 | G04 | Outbox residuals: no redrive for `failed`, no real transport beyond report dispatcher, no domain events from reference modules | Outbox ops | Delivery path unproven under real traffic | **Solve** via WP-O (sliced) |
-| G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Solve** via WP-D (backlog ready) |
-| G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Solve** via WP-D |
+| G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
+| G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Closed** ACME-0058 (WP-D / D2) |
 | G07 | Domain Test UI workbench phases 0–6 / S1–S10 delivered; CI still CLI/`pnpm`, not browser | Test UI status | Observational, not a defect | **Accept** as intentional; optional browser CI later (WP-T residual) |
 | G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Solve** only with ADR amendment path in WP-T |
-| G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Solve** via WP-L (prerequisite to full G01 plan path) |
+| G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Closed** ACME-0063 |
 | G10 | `measurements` not in `acme-test-plan/1`; thresholds only at measurement time | Plans / metrics | Plan cannot carry SLO thresholds | **Solve** via WP-T (separate charter from G09) |
 | G11 | Adapter targets are declared, not discovered; undeclared adapters invisible in catalog | Catalog / composition | Catalog incomplete unless composition root lists targets | **Solve** via WP-T or **accept** static declaration as intentional |
 | G12 | Trust pipeline: `preparing-commit` failure marks all substages `reached` | Evidence granularity | UI cannot show which substage failed | **Solve** via WP-E (engine evidence, not UI guess) |
@@ -71,7 +71,7 @@ explicit disposition.
 | G16 | Offline success-path Responses fixtures are simplified samples, not byte-identical live captures | Fixtures | Drift risk vs real provider bodies | **Optional** WP-P hygiene |
 | G17 | Package boundary enforcement covers current packages only; future adapters must extend rules | Tooling | New adapters could violate dependency direction unnoticed | **Process:** every new adapter task extends rules (WP-X) |
 | G18 | `better-sqlite3` prebuild observed on Windows + `ubuntu-latest` only | Platform | Other platforms unproven | **Accept / observe** (WP-X note); no multi-OS matrix required yet |
-| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Solve** durable store first (WP-Q); live judge separate |
+| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Q1 closed** ACME-0065; Q2–Q4 remain |
 
 ## 3. Constraints that shape solutions
 
@@ -112,10 +112,10 @@ Make persistence failures classifiable for retry, and make terminal
 
 #### Suggested task slices
 
-1. **D1 — Driver error classification** (activate `docs/backlog/driver-error-classification.md`)
-2. **D2 — Stranded execution operator commands**
+1. **D1 — Driver error classification** — **done ACME-0057**
+2. **D2 — Stranded execution operator commands** — **done ACME-0058**
 
-#### D1 steps (driver errors)
+#### D1 steps (driver errors) — delivered ACME-0057
 
 1. Map recognized `better-sqlite3` / SQLite codes inside `@acme/adapter-sqlite`
    before they leave the adapter:
@@ -173,10 +173,12 @@ when the queue grows—without putting a daemon inside the library.
 
 #### Suggested task slices
 
-1. **O1 — Failed-entry redrive path**
-2. **O2 — Real `OutboxDispatcher` transport (bounded)**
-3. **O3 — Reference module domain-event emission (minimal)**
-4. **O4 — Growth alarm + host drain runbook**
+1. **O1 — Failed-entry redrive path** — **done ACME-0059**
+2. **O2 — Real `OutboxDispatcher` transport (bounded)** — **done ACME-0061**
+   (file sink; report remains default)
+3. **O3 — Reference module domain-event emission (minimal)** — **done ACME-0062**
+   (Narrative only; Research optional later)
+4. **O4 — Growth alarm + host drain runbook** — **alarm done ACME-0060**
 
 #### O1 steps (redrive)
 
@@ -241,8 +243,8 @@ without turning ScenarioRunner into a workflow language.
 
 #### Suggested task slices
 
-1. **L1 — Plan/model selection binding** (G09)
-2. **L2 — ScenarioRunner live gateway step / composition** (G01)
+1. **L1 — Plan/model selection binding** (G09) — **done ACME-0063**
+2. **L2 — ScenarioRunner live gateway step / composition** (G01) — **done ACME-0064**
 
 #### L1 steps (model pin)
 
@@ -301,7 +303,7 @@ idempotent semantics as the in-memory adapter, then expose read paths.
 
 #### Suggested task slices
 
-1. **Q1 — SQLite migration + durable adapter + conformance**
+1. **Q1 — SQLite migration + durable adapter + conformance** — **done ACME-0065**
 2. **Q2 — CLI inspect/list (and optional scenario wiring over durable store)**
 3. **Q3 — Test UI read surface (optional)**
 4. **Q4 — Live / general AI judge (explicitly separate; high bar; live
@@ -527,15 +529,15 @@ required by `docs/TASK_WORKFLOW.md`.
 
 | Order | Slice | Closes | Why this order |
 |------:|-------|--------|----------------|
-| 1 | D1 Driver error classification | G05 | Backlog-ready, small, improves all SQLite failure modes |
-| 2 | D2 Stranded execution ops | G06 | Operator safety next to durability story |
-| 3 | O1 Outbox redrive | G04 (part) | Completes delivery lifecycle without domain events |
-| 4 | O2 Real dispatcher transport | G04 (part) | Makes drain meaningful beyond report stub |
-| 5 | O4 Growth alarm + host runbook | G03 | Operability without violating ADR-0018 |
-| 6 | O3 Minimal domain-event emission | G04 (part) | Needs O1/O2 to prove traffic end-to-end |
-| 7 | L1 Plan model pin | G09 | Unblocks plan-driven live materialization |
-| 8 | L2 ScenarioRunner live multi-step | G01/G02 | Core product gap for multi-step live |
-| 9 | Q1 Durable quality store | G19 (core) | Persists evaluations before UI/CLI sugar |
+| 1 | D1 Driver error classification | G05 | **Done ACME-0057** |
+| 2 | D2 Stranded execution ops | G06 | **Done ACME-0058** |
+| 3 | O1 Outbox redrive | G04 (part) | **Done ACME-0059** |
+| 4 | O4 Growth alarm + host runbook | G03 | **Alarm done ACME-0060** |
+| 5 | O2 Real dispatcher transport | G04 (part) | **Done ACME-0061** (file sink) |
+| 6 | O3 Minimal domain-event emission | G04 (part) | **Done ACME-0062** (Narrative) |
+| 7 | L1 Plan model pin | G09 | **Done ACME-0063** |
+| 8 | L2 ScenarioRunner live multi-step | G01/G02 | **Done ACME-0064** |
+| 9 | Q1 Durable quality store | G19 (core) | **Done ACME-0065** |
 | 10 | Q2 CLI quality inspect | G19 (part) | Operator read path |
 | 11 | E1 Trust stage evidence | G12 | Better diagnosis; independent |
 | 12 | T2 Plan measurements block | G10 | Schema-only product residual |

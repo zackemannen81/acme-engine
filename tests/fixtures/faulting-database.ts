@@ -11,6 +11,10 @@ export interface FaultingDatabaseOptions {
  * Wraps a real database so that one chosen write fails once. The failure is
  * raised by the driver seam the repository already depends on, inside the
  * `BEGIN IMMEDIATE` transaction, so the rollback under test is the real one.
+ *
+ * The injected error is shaped like a better-sqlite3 `SqliteError` with
+ * `code: SQLITE_BUSY` so the adapter's driver classification path is exercised
+ * end-to-end (PERSISTENCE_TRANSIENT), not only the raw-Error fallback.
  */
 export function faultingDatabase(
   database: Database,
@@ -38,7 +42,12 @@ export function faultingDatabase(
             }
             return () => {
               failed = true;
-              throw new Error('Simulated storage fault.');
+              const fault = new Error(
+                'Simulated storage fault (SQLITE_BUSY).',
+              ) as Error & { code: string };
+              fault.name = 'SqliteError';
+              fault.code = 'SQLITE_BUSY';
+              throw fault;
             };
           },
         });

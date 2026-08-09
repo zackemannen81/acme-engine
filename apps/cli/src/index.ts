@@ -15,6 +15,12 @@ export {
 export { CLI_OUTPUT_VERSION, REDACTED, type CliIo } from './output.js';
 export { resolveFixturePath, runScenarioFile } from './scenario.js';
 export {
+  ACME_OUTBOX_FILE_DELIVERY,
+  createFileOutboxDispatcher,
+  type FileOutboxDispatcherOptions,
+  type OutboxFileDeliveryEnvelope,
+} from './outbox-file-dispatcher.js';
+export {
   EXIT_OK,
   EXIT_OUTCOME,
   EXIT_USAGE,

@@ -141,7 +141,17 @@ const expectedResult: ModuleResult<NarrativeDelta> = {
   ],
   memories: expectedMemories,
   stateIntent: expectedStateIntent,
-  events: [],
+  events: [
+    {
+      key: `document-observed:${narrativeInput.documentKey}`,
+      type: 'narrative.document-observed',
+      schemaVersion: '1.0.0',
+      payload: {
+        documentKey: narrativeInput.documentKey,
+        observationCount: 3,
+      },
+    },
+  ],
   diagnostics: [
     {
       code: 'NARRATIVE_DOCUMENT_OBSERVED',

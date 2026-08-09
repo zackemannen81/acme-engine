@@ -3,10 +3,15 @@ import { readFile } from 'node:fs/promises';
 import {
   AcmeError,
   drainOutbox,
+  listStrandedExecutions,
+  prepareOperatorDischarge,
+  redriveOutbox,
+  type DomainEventRecord,
   type ExecutionRequest,
   type JsonValue,
   type ModelGateway,
   type ModelSelection,
+  type OutboxDispatcher,
   type OutboxRecord,
 } from '@acme/core';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
@@ -30,6 +35,7 @@ import {
   type CompositionOverrides,
   type InspectableRepository,
 } from './composition.js';
+import { createFileOutboxDispatcher } from './outbox-file-dispatcher.js';
 import { emit, payload, type CliIo } from './output.js';
 import { runScenarioFile } from './scenario.js';
 
@@ -47,7 +53,7 @@ export interface RunOptions extends CompositionOverrides {
    * the default builds a real fetch transport.
    */
   readonly openAiTransport?: ProviderTransport;
-  /** Test injection of the live model id (defaults to env / gpt-5.6-Luna). */
+  /** Test injection of the live model id (defaults to env / gpt-5.6-luna). */
   readonly openAiModel?: string;
 }
 
@@ -87,7 +93,7 @@ function openAiModelId(options: RunOptions): string {
   return (
     process.env['ACME_OPENAI_MODEL'] ??
     process.env['ACME_LIVE_MODEL'] ??
-    'gpt-5.6-Luna'
+    'gpt-5.6-luna'
   );
 }
 
@@ -262,6 +268,14 @@ async function scenario(
         ...(options.ids === undefined ? {} : { ids: options.ids }),
         ...overrides,
       }),
+    {
+      ...(options.openAiTransport === undefined
+        ? {}
+        : { openAiTransport: options.openAiTransport }),
+      ...(options.openAiModel === undefined
+        ? {}
+        : { openAiModel: options.openAiModel }),
+    },
   );
   try {
     emit(
@@ -471,6 +485,54 @@ function inspectOutbox(
   options: RunOptions,
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
+    // Growth summary uses a wide scan so thresholds are not silently truncated
+    // by the display limit (ACME-0060 / O4). Display rows still honor --limit.
+    const summaryScan = await composition.repository.listOutbox({
+      limit: 10_000,
+    });
+    const counts = {
+      pending: 0,
+      claimed: 0,
+      delivered: 0,
+      failed: 0,
+    };
+    let oldestPendingAvailableAt: string | null = null;
+    let oldestFailedAvailableAt: string | null = null;
+    for (const { record } of summaryScan) {
+      counts[record.status] += 1;
+      if (record.status === 'pending') {
+        if (
+          oldestPendingAvailableAt === null ||
+          record.availableAt < oldestPendingAvailableAt
+        ) {
+          oldestPendingAvailableAt = record.availableAt;
+        }
+      }
+      if (record.status === 'failed') {
+        if (
+          oldestFailedAvailableAt === null ||
+          record.availableAt < oldestFailedAvailableAt
+        ) {
+          oldestFailedAvailableAt = record.availableAt;
+        }
+      }
+    }
+
+    const alarms: string[] = [];
+    if (
+      command.maxPending !== undefined &&
+      counts.pending > command.maxPending
+    ) {
+      alarms.push(
+        `pending count ${String(counts.pending)} exceeds --max-pending ${String(command.maxPending)}`,
+      );
+    }
+    if (command.maxFailed !== undefined && counts.failed > command.maxFailed) {
+      alarms.push(
+        `failed count ${String(counts.failed)} exceeds --max-failed ${String(command.maxFailed)}`,
+      );
+    }
+
     const entries = await composition.repository.listOutbox({
       ...(command.status === undefined
         ? {}
@@ -478,6 +540,13 @@ function inspectOutbox(
       limit: command.limit,
     });
     const body = {
+      summary: {
+        counts,
+        scanned: summaryScan.length,
+        oldestPendingAvailableAt,
+        oldestFailedAvailableAt,
+        alarms,
+      },
       entries: entries.map(({ record, event }) => ({
         eventId: record.eventId,
         status: record.status,
@@ -490,18 +559,30 @@ function inspectOutbox(
         payload: payload(event.payload, command.common.showPayloads),
       })),
     } satisfies Readonly<Record<string, JsonValue>>;
+    const summaryLines = [
+      `counts pending=${String(counts.pending)} claimed=${String(counts.claimed)} delivered=${String(counts.delivered)} failed=${String(counts.failed)}`,
+      ...alarms.map((alarm) => `alarm ${alarm}`),
+    ];
     emit(
       options.io,
       'outbox inspect',
       body,
       command.common.json,
-      entries.length === 0
-        ? ['no outbox entries found']
-        : entries.map(
-            ({ record, event }) =>
-              `${record.eventId} ${record.status} ${event.type}`,
-          ),
+      entries.length === 0 && alarms.length === 0
+        ? ['no outbox entries found', ...summaryLines]
+        : [
+            ...summaryLines,
+            ...(entries.length === 0
+              ? []
+              : entries.map(
+                  ({ record, event }) =>
+                    `${record.eventId} ${record.status} ${event.type}`,
+                )),
+          ],
     );
+    if (alarms.length > 0) {
+      return EXIT_OUTCOME;
+    }
     return entries.length === 0 ? EXIT_OUTCOME : EXIT_OK;
   });
 }
@@ -512,26 +593,44 @@ function drainOutboxCommand(
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
     const delivered: JsonValue[] = [];
-    // The v1 consumer hands events to the operator through the report rather
-    // than inventing a transport (ADR-0018).
+    // Default report transport: events only in the stdout report (ADR-0018).
+    // File transport: versioned envelopes under --outbox-dir (ACME-0061 / O2).
+    const reportDispatcher: OutboxDispatcher = {
+      async deliver(event: DomainEventRecord) {
+        delivered.push({
+          eventId: event.eventId,
+          executionId: event.executionId,
+          type: event.type,
+          namespace: event.namespace,
+          entityId: event.entityId,
+          occurredAt: event.occurredAt,
+          payload: payload(event.payload, command.common.showPayloads),
+        });
+      },
+    };
+    const fileDispatcher =
+      command.transport === 'file' && command.outboxDir !== undefined
+        ? createFileOutboxDispatcher({
+            directory: command.outboxDir,
+            now: () => composition.clock.now(),
+          })
+        : undefined;
+    const dispatcher: OutboxDispatcher =
+      fileDispatcher === undefined
+        ? reportDispatcher
+        : {
+            async deliver(event: DomainEventRecord) {
+              await fileDispatcher.deliver(event);
+              await reportDispatcher.deliver(event);
+            },
+          };
+
     const report = await drainOutbox({
       repository: composition.repository,
       clock: composition.clock,
       limit: command.limit,
       leaseTimeoutMs: command.leaseTimeoutMs,
-      dispatcher: {
-        async deliver(event) {
-          delivered.push({
-            eventId: event.eventId,
-            executionId: event.executionId,
-            type: event.type,
-            namespace: event.namespace,
-            entityId: event.entityId,
-            occurredAt: event.occurredAt,
-            payload: payload(event.payload, command.common.showPayloads),
-          });
-        },
-      },
+      dispatcher,
     });
     const body = {
       report: report.report,
@@ -540,6 +639,10 @@ function drainOutboxCommand(
       delivered: report.delivered,
       retryScheduled: report.retryScheduled,
       failed: report.failed,
+      transport: command.transport,
+      ...(command.outboxDir === undefined
+        ? {}
+        : { outboxDir: command.outboxDir }),
       entries: report.entries.map((entry) => ({
         eventId: entry.eventId,
         attemptCount: entry.attemptCount,
@@ -561,6 +664,138 @@ function drainOutboxCommand(
   });
 }
 
+function redriveOutboxCommand(
+  command: Extract<Command, { kind: 'outbox-redrive' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const report = await redriveOutbox({
+      repository: composition.repository,
+      clock: composition.clock,
+      limit: command.limit,
+      ...(command.eventId === undefined ? {} : { eventIds: [command.eventId] }),
+    });
+    const body = {
+      report: report.report,
+      redrivenAt: report.redrivenAt,
+      redriven: report.redriven,
+      entries: report.entries.map((entry) => ({
+        eventId: entry.eventId,
+        outcome: entry.outcome,
+        availableAt: entry.availableAt,
+        attemptCount: entry.attemptCount,
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'outbox redrive',
+      body,
+      command.common.json,
+      report.redriven === 0
+        ? ['no failed outbox entries redriven']
+        : report.entries.map(
+            (entry) =>
+              `${entry.eventId} redriven attemptCount ${String(entry.attemptCount)}`,
+          ),
+    );
+    return report.redriven === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
+function listStranded(
+  command: Extract<Command, { kind: 'execution-stranded' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const evidence = composition.repository.snapshot();
+    const report = listStrandedExecutions(
+      {
+        executions: evidence.executions,
+        modelCalls: evidence.modelCalls,
+      },
+      { limit: command.limit },
+    );
+    const body = {
+      report: report.report,
+      count: report.count,
+      entries: report.entries.map((entry) => ({
+        executionId: entry.executionId,
+        disposition: entry.disposition,
+        status: entry.status,
+        namespace: entry.namespace,
+        task: entry.task,
+        requestKey: entry.requestKey,
+        entityId: entry.entityId,
+        reasonCode: entry.reasonCode,
+        ...(entry.modelCallId === undefined
+          ? {}
+          : { modelCallId: entry.modelCallId }),
+        ...(entry.modelCallStatus === undefined
+          ? {}
+          : { modelCallStatus: entry.modelCallStatus }),
+        ...(entry.errorCode === undefined
+          ? {}
+          : { errorCode: entry.errorCode }),
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+      })),
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(
+      options.io,
+      'execution stranded',
+      body,
+      command.common.json,
+      report.count === 0
+        ? ['no stranded executions found']
+        : report.entries.map(
+            (entry) =>
+              `${entry.executionId} ${entry.disposition} ${entry.reasonCode}`,
+          ),
+    );
+    return report.count === 0 ? EXIT_OUTCOME : EXIT_OK;
+  });
+}
+
+function dischargeExecution(
+  command: Extract<Command, { kind: 'execution-discharge' }>,
+  options: RunOptions,
+): Promise<number> {
+  return withComposition(command.common, options, async (composition) => {
+    const evidence = composition.repository.snapshot();
+    const prepared = prepareOperatorDischarge(
+      {
+        executions: evidence.executions,
+        modelCalls: evidence.modelCalls,
+      },
+      {
+        executionId: command.executionId,
+        dischargedBy: command.dischargedBy,
+        rationale: command.rationale,
+        dischargedAt: composition.clock.now(),
+      },
+    );
+    // Terminal only: do not appendAttempt with stage `failed` first — both
+    // adapters promote attempt.stage into execution.status, which would
+    // pre-terminal the row and make markTerminal look divergent. Operator
+    // audit lives in terminal.error.details (who / why / when / reason).
+    await composition.repository.markTerminal(prepared.terminal);
+
+    const body = {
+      executionId: prepared.executionId,
+      reasonCode: prepared.reasonCode,
+      status: prepared.terminal.status,
+      terminalAt: prepared.terminal.terminalAt,
+      error: prepared.terminal.error as unknown as JsonValue,
+    } satisfies Readonly<Record<string, JsonValue>>;
+    emit(options.io, 'execution discharge', body, command.common.json, [
+      `discharged ${prepared.executionId}`,
+      `reason ${prepared.reasonCode}`,
+      `by ${command.dischargedBy}`,
+    ]);
+    return EXIT_OK;
+  });
+}
+
 export async function run(
   argv: readonly string[],
   options: RunOptions,
@@ -579,6 +814,10 @@ export async function run(
         return await replay(command, options);
       case 'execution-inspect':
         return inspectExecution(command, options);
+      case 'execution-stranded':
+        return await listStranded(command, options);
+      case 'execution-discharge':
+        return await dischargeExecution(command, options);
       case 'state-inspect':
         return inspectState(command, options);
       case 'memory-inspect':
@@ -587,6 +826,8 @@ export async function run(
         return await inspectOutbox(command, options);
       case 'outbox-drain':
         return await drainOutboxCommand(command, options);
+      case 'outbox-redrive':
+        return await redriveOutboxCommand(command, options);
     }
   } catch (error: unknown) {
     if (error instanceof UsageError) {

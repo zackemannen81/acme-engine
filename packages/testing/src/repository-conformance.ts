@@ -590,6 +590,46 @@ export function executionRepositoryConformance(
         }),
       ).resolves.toEqual([]);
 
+      // Operator redrive returns a failed entry to pending without resetting
+      // attempt count or erasing lastError (ACME-0059).
+      await repository.redriveOutbox({
+        eventId: other,
+        availableAt: '2026-07-30T01:00:00.000Z',
+      });
+      await expect(
+        repository.listOutbox({ status: 'pending', limit: 10 }),
+      ).resolves.toMatchObject([
+        {
+          record: {
+            eventId: other,
+            status: 'pending',
+            attemptCount: 2,
+            availableAt: '2026-07-30T01:00:00.000Z',
+            lastError: error,
+          },
+        },
+      ]);
+      const afterRedrive = await repository.leaseOutbox({
+        now: '2026-07-30T01:00:00.000Z',
+        limit: 10,
+        leaseExpiresAt: '2026-07-30T01:00:30.000Z',
+      });
+      expect(afterRedrive).toMatchObject([
+        { record: { eventId: other, status: 'claimed', attemptCount: 3 } },
+      ]);
+      await repository.markOutboxFailed({
+        eventId: other,
+        error,
+        failedAt: '2026-07-30T01:00:01.000Z',
+      });
+
+      await expect(
+        repository.redriveOutbox({
+          eventId: claimedId,
+          availableAt: timestamp,
+        }),
+      ).rejects.toMatchObject({ data: { code: 'PERSISTENCE_CORRUPTION' } });
+
       // Settling something that was never claimed is a classified error.
       await expect(
         repository.markOutboxDelivered({

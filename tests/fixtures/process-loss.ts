@@ -24,6 +24,7 @@ export function processLossAt(
     leaseOutbox: base.leaseOutbox.bind(base),
     markOutboxDelivered: base.markOutboxDelivered.bind(base),
     markOutboxFailed: base.markOutboxFailed.bind(base),
+    redriveOutbox: base.redriveOutbox.bind(base),
     listOutbox: base.listOutbox.bind(base),
   };
   const lose = (): never => {

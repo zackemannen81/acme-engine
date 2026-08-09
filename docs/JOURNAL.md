@@ -2,6 +2,160 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0065 durable quality evaluation store (Q1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0065
+- Branch: `chore/gapfixes`
+- Summary: SQLite migration v2 adds append-only `quality_evaluations` without
+  FK to executions (ADR-0026). `createSqliteQualityEvaluationStore` implements
+  the same `QualityEvaluationStore` port as memory; shared conformance kit
+  passes; close/reopen preserves records. Package may depend on
+  `@acme/evaluation`; boundary rules updated.
+- Out of scope retained: CLI inspect (Q2), Test UI (Q3), live AI judge (Q4).
+- Signature: Grok
+
+## 2026-08-06 — Live multi-step ScenarioRunner success (operator)
+
+- Date: 2026-08-06
+- Author: Rickard Zakrisson (operator run); documented by Grok
+- Task: ACME-0064 verification
+- Branch: `chore/gapfixes` (not merged to main)
+- Summary: Operator ran `pnpm test:live` successfully. Both live gates
+  passed: `tests/live/openai-responses.test.ts` (single research execute,
+  HTTP 200, `status: committed`, model `gpt-5.6-luna`) and
+  `tests/live/scenario-multi-step.test.ts` (two serial narrative executes
+  under ScenarioRunner `composition.gateway: openai`, ~6.7s).
+- Evidence: local `live_test.log` (gitignored `*.log`; not committed — raw
+  provider bodies may include non-public fields). Duration of full live
+  suite ~7.7s; 2 files / 2 tests green.
+- Documentation note: ACME-0064 DoD for a bounded real multi-step live path
+  is now operator-proven, not only offline-injected.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0063/0064 plan model pin + ScenarioRunner live multi-step
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0063, ACME-0064
+- Branch: `chore/gapfixes`
+- Summary: WP-L delivered. Plans and scenarios may pin `model` selection;
+  `acme-test-plan/1` materializes `ExecutionRequest` from case.model without
+  requiring mock selection. ScenarioRunner accepts `composition.gateway:
+  openai` with composition `liveGateway`; CLI wires OpenAI (fetch or injected
+  transport). Offline multi-step proof:
+  `tests/integration/scenario-live-offline.test.ts`. Opt-in live multi-step:
+  `tests/live/scenario-multi-step.test.ts` (ACME_LIVE_TEST + OPENAI_API_KEY).
+  S10 remains single-execute. ADR-0020 residual “no model field” is discharged
+  by additive optional fields (no version bump).
+- Verification: typecheck; unit/conformance/integration including offline live
+  multi-step; docs:check. Live multi-step later proven by operator
+  (`pnpm test:live`; see following journal entry).
+- Signature: Grok
+
+## 2026-08-06 — ACME-0062 narrative domain event emission (O3)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0062
+- Branch: `chore/gapfixes`
+- Summary: `narrative.observe-document` now emits one module-owned domain
+  event `narrative.document-observed` per commit, producing real outbox rows.
+  Narrative Phase 5 operation digest repinned to
+  `c0fcec15fbc93dd53074ef4c3edcccd05552e741db9b3b5b78485b76500e40a4`; quality
+  evaluation recording regenerated. Research still emits no events.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0061 file outbox transport (O2)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0061
+- Branch: `chore/gapfixes`
+- Summary: Bounded file `OutboxDispatcher` in the CLI composition root
+  (`createFileOutboxDispatcher`, `acme-outbox-file-delivery/1`). Drain default
+  remains report-only; `--transport file --outbox-dir` writes one JSON
+  envelope per event and still includes events in the stdout report. Offline
+  unit + CLI SQLite proof; no network product bus.
+- Follow-ups: O3 minimal domain-event emission from a reference module.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0060 outbox growth alarm (O4)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0060
+- Branch: `chore/gapfixes`
+- Summary: `outbox inspect` now always includes a status-count summary and
+  optional `--max-pending` / `--max-failed` thresholds (non-negative). Exceeding
+  a threshold exits with outcome code 1. Host drain remains cron/systemd/CI
+  calling `acme outbox drain` (ADR-0018; no library timer).
+- Signature: Grok
+
+## 2026-08-06 — ACME-0059 outbox redrive (O1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0059
+- Branch: `chore/gapfixes`
+- Summary: Closed outbox redrive residual of G04 / plan O1. Added
+  `ExecutionRepository.redriveOutbox` on memory and SQLite adapters, pure
+  `redriveOutbox` coordinator (`acme-outbox-redrive-report/1`), and CLI
+  `outbox redrive <event-id>` / `outbox redrive --all-failed`. Only `failed`
+  entries return to `pending`; `delivered` is refused; `lastError` and
+  attempt count are retained. Extends ADR-0018's deferred redrive residual.
+- Verification: `pnpm typecheck`; `test:unit` 576/576; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check`.
+- Follow-ups: O2 real dispatcher transport; O4 growth alarm.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0058 stranded execution operator tooling (D2)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0058
+- Branch: `chore/gapfixes`
+- Summary: Closed gap G06 / plan slice WP-D D2. Pure core
+  `listStrandedExecutions` and `prepareOperatorDischarge` classify open
+  non-terminal stranded primary model calls (reserved/in-flight, unreadable
+  response, failed, ambiguous) and terminal resume-refusal failures. CLI
+  `execution stranded` and `execution discharge --by --rationale` list and
+  markTerminal with operator audit in error details; no model outcome
+  invented and no state/memory/document write.
+- Note: discharge must not appendAttempt with stage `failed` first — both
+  adapters promote attempt.stage into execution.status and would pre-terminal
+  the row.
+- Verification: `pnpm typecheck`; `test:unit` 574/574; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check` (126 Markdown).
+- Follow-ups: WP-O O1 outbox redrive.
+- Signature: Grok
+
+## 2026-08-06 — ACME-0057 driver error classification (D1)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0057
+- Branch: `chore/gapfixes`
+- Summary: Closed gap G05 / plan slice WP-D D1. `@acme/adapter-sqlite` now
+  maps recognized better-sqlite3 result codes at every repository DB seam
+  (`driver-errors.ts` + wrapped `#statement`/`#one`/`#all`/`#run`/`#immediate`).
+- Classification: busy/locked → `PERSISTENCE_TRANSIENT` retryable; corruption
+  and constraint codes → `PERSISTENCE_CORRUPTION` non-retryable; unknown →
+  `INTERNAL` AcmeError (never a raw driver throw). Public codes stay free of
+  SQLite vocabulary.
+- Tests: unit mapping + real `SQLITE_BUSY` with dual connections and
+  `busy_timeout = 0`; durability fault fixture is SQLITE_BUSY-shaped so the
+  engine records `PERSISTENCE_TRANSIENT` after rollback proof.
+- Docs: backlog proposal marked resolved; CURRENT_STATUS G05 closed; SYSTEMDOC,
+  gap plan, PROJECT_BRIEF, FILESTRUCTURE updated.
+- Verification: `pnpm typecheck`; `test:unit` 565/565; `test:conformance`
+  61/61; `test:integration` 55/55; `docs:check` (125 Markdown); `git diff
+  --check`.
+- Out of scope retained: automatic retry consumers; D2 stranded ops.
+- Follow-ups: activate ACME-0058 (or next id) for D2 stranded executions.
+- Signature: Grok
+
 ## 2026-08-06 — Gap plan: live adapter verification in scope
 
 - Date: 2026-08-06
@@ -50,7 +204,7 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Date: 2026-08-06
 - Author: Rickard Zakrisson
 - Task: None created
-- Summary: Changed default model from gpt-4.1-mini to gpt-5.6-Luna
+- Summary: Changed default model from gpt-4.1-mini to gpt-5.6-luna
 - Signature: Zakrisson
 
 ## 2026-08-06 — ACME-0055 human-readable ACME documents

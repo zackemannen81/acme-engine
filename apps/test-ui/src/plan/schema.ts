@@ -3,6 +3,7 @@ import {
   resolveExecutionPolicy,
   type ExecutionPolicy,
   type JsonValue,
+  type ModelSelection,
 } from '@acme/core';
 
 import { resolveReference } from '../catalog/paths.js';
@@ -30,7 +31,8 @@ export interface TestPlanSeed {
 
 export interface TestPlanComposition {
   readonly repository: 'memory' | 'sqlite';
-  readonly gateway: 'mock';
+  /** mock = offline fixtures; openai = live multi-step (ACME-0063/0064). */
+  readonly gateway: 'mock' | 'openai';
 }
 
 export interface TestPlanExpectation {
@@ -55,7 +57,16 @@ export interface TestPlanCase {
   readonly entityId: string;
   readonly expectedRevision: number;
   readonly input: string;
-  readonly mockResponse: string;
+  /**
+   * Mock response fixture (selection + response). Required when
+   * composition.gateway is mock; optional for openai when `model` is set.
+   */
+  readonly mockResponse?: string;
+  /**
+   * Explicit model selection pin (ACME-0063). Preferred over mockResponse
+   * selection when materializing ExecutionRequest / compiling execute.model.
+   */
+  readonly model?: ModelSelection;
   /** Defaults to `<plan name>-<case id>`. */
   readonly requestKey?: string;
   readonly policy?: Partial<ExecutionPolicy>;
@@ -91,6 +102,7 @@ const CASE_KEYS = [
   'expectedRevision',
   'input',
   'mockResponse',
+  'model',
   'requestKey',
   'policy',
   'expectRequestHash',
@@ -254,10 +266,32 @@ function composition(value: unknown): TestPlanComposition {
   if (repository !== 'memory' && repository !== 'sqlite') {
     invalid("plan.composition.repository must be 'memory' or 'sqlite'.");
   }
-  if (raw['gateway'] !== 'mock') {
-    invalid("plan.composition.gateway must be 'mock'.");
+  const gateway = raw['gateway'];
+  if (gateway !== 'mock' && gateway !== 'openai') {
+    invalid("plan.composition.gateway must be 'mock' or 'openai'.");
   }
-  return { repository, gateway: 'mock' };
+  return { repository, gateway };
+}
+
+function modelSelection(
+  value: unknown,
+  label: string,
+): ModelSelection | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const raw = object(value, label);
+  exactKeys(raw, ['profile', 'providerHint', 'modelHint'], label);
+  const providerHint = optionalText(
+    raw['providerHint'],
+    `${label}.providerHint`,
+  );
+  const modelHint = optionalText(raw['modelHint'], `${label}.modelHint`);
+  return {
+    profile: text(raw['profile'], `${label}.profile`),
+    ...(providerHint === undefined ? {} : { providerHint }),
+    ...(modelHint === undefined ? {} : { modelHint }),
+  };
 }
 
 function expectation(
@@ -327,7 +361,11 @@ function replay(value: unknown, label: string): TestPlanReplay | undefined {
   };
 }
 
-function planCase(value: unknown, index: number): TestPlanCase {
+function planCase(
+  value: unknown,
+  index: number,
+  gateway: TestPlanComposition['gateway'],
+): TestPlanCase {
   const label = `plan.cases[${String(index)}]`;
   const raw = object(value, label);
   exactKeys(raw, CASE_KEYS, label);
@@ -339,6 +377,25 @@ function planCase(value: unknown, index: number): TestPlanCase {
   );
   const expect = expectation(raw['expect'], `${label}.expect`);
   const caseReplay = replay(raw['replay'], `${label}.replay`);
+  const model = modelSelection(raw['model'], `${label}.model`);
+  const mockResponse =
+    raw['mockResponse'] === undefined
+      ? undefined
+      : reference(raw['mockResponse'], `${label}.mockResponse`);
+  if (gateway === 'mock' && mockResponse === undefined) {
+    invalid(
+      `${label}.mockResponse is required when composition.gateway is mock.`,
+    );
+  }
+  if (
+    gateway === 'openai' &&
+    model === undefined &&
+    mockResponse === undefined
+  ) {
+    invalid(
+      `${label} requires model (or mockResponse) when composition.gateway is openai.`,
+    );
+  }
   return {
     id: text(raw['id'], `${label}.id`),
     namespace: text(raw['namespace'], `${label}.namespace`),
@@ -349,7 +406,8 @@ function planCase(value: unknown, index: number): TestPlanCase {
       `${label}.expectedRevision`,
     ),
     input: reference(raw['input'], `${label}.input`),
-    mockResponse: reference(raw['mockResponse'], `${label}.mockResponse`),
+    ...(mockResponse === undefined ? {} : { mockResponse }),
+    ...(model === undefined ? {} : { model }),
     ...(requestKey === undefined ? {} : { requestKey }),
     ...(casePolicy === undefined ? {} : { policy: casePolicy }),
     ...(expectRequestHash === undefined ? {} : { expectRequestHash }),
@@ -376,7 +434,10 @@ export function parseTestPlan(raw: unknown): TestPlan {
     invalid('plan.cases must be a non-empty array.');
   }
 
-  const parsed = cases.map((entry, index) => planCase(entry, index));
+  const planComposition = composition(plan['composition']);
+  const parsed = cases.map((entry, index) =>
+    planCase(entry, index, planComposition.gateway),
+  );
 
   const ids = new Set<string>();
   const requestKeys = new Set<string>();
@@ -399,7 +460,7 @@ export function parseTestPlan(raw: unknown): TestPlan {
     schemaVersion: TEST_PLAN_SCHEMA_VERSION,
     name,
     seed: seed(plan['seed']),
-    composition: composition(plan['composition']),
+    composition: planComposition,
     ...(planPolicy === undefined ? {} : { policy: planPolicy }),
     cases: parsed,
   };

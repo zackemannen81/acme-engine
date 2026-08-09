@@ -231,7 +231,19 @@ function interpretOutput(
         },
       },
     },
-    events: [],
+    // Minimal domain event so committed work produces real outbox traffic
+    // (ACME-0062 / plan O3). Type vocabulary stays module-owned.
+    events: [
+      {
+        key: `document-observed:${validatedInput.documentKey}`,
+        type: 'narrative.document-observed',
+        schemaVersion: '1.0.0',
+        payload: {
+          documentKey: validatedInput.documentKey,
+          observationCount: memories.length,
+        },
+      },
+    ],
     diagnostics: [
       {
         code: 'NARRATIVE_DOCUMENT_OBSERVED',

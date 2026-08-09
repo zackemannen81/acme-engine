@@ -285,11 +285,9 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0056 completed the gap-resolution plan
-at `docs/design/gap-resolution-plan.md` (G01–G19, work packages WP-D through
-WP-X, recommended activation order). `docs/CURRENT_TASK.md` is restored to the
-Draft template pending the next explicitly approved task. Preferred first
-implementation slice: driver-error classification (WP-D / D1).
+No implementation task is active. ACME-0065 closed Q1 durable quality
+evaluation store on `chore/gapfixes`. Next recommended: Q2 CLI quality
+inspect or E1 trust stages. `docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -367,6 +365,25 @@ implementation slice: driver-error classification (WP-D / D1).
   Swedish presentation, whitepaper and technical system document under
   `hrd/`. These are editable explanatory artifacts; Markdown sources and ADRs
   remain authoritative.
+- **ACME-0056:** Gap-resolution plan (`docs/design/gap-resolution-plan.md`)
+  with G01–G19 and work packages WP-D through WP-X.
+- **ACME-0057:** SQLite driver-error classification (G05 / D1): busy/locked →
+  `PERSISTENCE_TRANSIENT`; corruption/constraint → `PERSISTENCE_CORRUPTION`;
+  unknown → `INTERNAL` AcmeError.
+- **ACME-0058:** Stranded execution list/discharge (G06 / D2): pure core
+  classifier and CLI operator commands over ledger evidence.
+- **ACME-0059:** Outbox redrive for terminal `failed` entries (G04 / O1):
+  repository port, both adapters, `redriveOutbox` coordinator and CLI.
+- **ACME-0060:** Outbox inspect growth summary and `--max-pending` /
+  `--max-failed` alarms (G03 / O4).
+- **ACME-0061:** File `OutboxDispatcher` transport for CLI drain
+  (`acme-outbox-file-delivery/1`, `--transport file --outbox-dir`).
+- **ACME-0062:** Narrative observe-document emits
+  `narrative.document-observed` (updates Phase 5 operation digest pin).
+- **ACME-0063:** Plan/scenario model pin (`execute.model`, plan `model`).
+- **ACME-0064:** ScenarioRunner live multi-step (`gateway: openai`,
+  offline injected transport + opt-in live gate).
+- **ACME-0065:** Durable SQLite quality evaluation store (Q1, ADR-0026).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -506,26 +523,32 @@ Ordering, dependencies and activatable slices live in
 [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
 (ACME-0056). IDs below match that plan (G01–G19).
 
-- **G01/G02 — ScenarioRunner has no live provider step.** `acme execute
-  --gateway openai` and test-ui `launchLiveExecution` (ACME-0044) reach a live
-  model, but a multi-step scenario file cannot; ScenarioRunner remains
-  mock-only. S10 live launch is single-execute via ExecutionEngine (ADR-0023),
-  not multi-step live scenarios. → WP-L
+- **G01/G02 — ScenarioRunner live multi-step:** **Closed by ACME-0064.**
+  `composition.gateway: openai` plus execute `model` (and optional
+  `liveGateway` injection) run serial multi-step scenarios live; offline
+  injected-transport proof and opt-in `tests/live/scenario-multi-step.test.ts`.
+  Operator live success 2026-08-06: both `openai-responses` and
+  `scenario-multi-step` green under `pnpm test:live` (model `gpt-5.6-luna`;
+  evidence in local gitignored `live_test.log`). S10 remains single-execute
+  (ADR-0023).
 - **G03 — Nothing drains the outbox automatically.** A composition root must
-  call the drain, and no alarm exists for a growing outbox (ADR-0018). Library
-  auto-drain is rejected; host drain + growth alarm are the planned path. → WP-O
-- **G04 — Outbox residuals:** `failed` entries have no redrive path, no real
-  transport exists beyond the CLI's report dispatcher, and neither reference
-  module emits domain events yet, so production outbox traffic is still
-  hypothetical. → WP-O
-- **G05 — Driver error classification:** a `better-sqlite3` failure reaches the
-  caller as non-retryable `INTERNAL`, so a transient `SQLITE_BUSY` would be
-  indistinguishable from an internal defect. Proposal:
-  `docs/backlog/driver-error-classification.md`. → WP-D
-- **G06 — Stranded executions:** an execution interrupted between model-call
-  reservation and outcome, or one whose response was not retained, is terminal
-  and needs a human decision. No operator command lists or discharges them.
-  → WP-D
+  call the drain (ADR-0018; library auto-drain rejected). **Growth alarm closed
+  by ACME-0060:** `outbox inspect` reports status counts and optional
+  `--max-pending` / `--max-failed` thresholds. Host drain remains external.
+- **G04 — Outbox residuals:** **Closed for WP-O core path.** Redrive
+  (ACME-0059), file transport (ACME-0061), and Narrative
+  `narrative.document-observed` emission (ACME-0062) make real outbox traffic
+  end-to-end. Research still emits no domain events (optional later).
+- **G05 — Driver error classification:** **Closed by ACME-0057.** The SQLite
+  adapter maps busy/locked codes to retryable `PERSISTENCE_TRANSIENT` and
+  corruption/constraint codes to non-retryable `PERSISTENCE_CORRUPTION`;
+  unknown failures become `INTERNAL` AcmeErrors (never raw driver throws).
+  See `docs/backlog/driver-error-classification.md` (resolved).
+- **G06 — Stranded executions:** **Closed by ACME-0058.** Core
+  `listStrandedExecutions` / `prepareOperatorDischarge` plus CLI
+  `execution stranded` and `execution discharge --by --rationale` inventory
+  open and terminal stranded rows and discharge open ones via `markTerminal`
+  with operator audit in error details (no invented model outcomes).
 - **G07 — Domain Test UI workbench (ACME-0045–0053) delivered.** Phases 0–6
   delivered S1–S10 as JSON contracts. Loopback HTML covers S1–S10 (catalog,
   offline plan preview/launch, durable memory/state inspection, replay,
@@ -536,10 +559,10 @@ Ordering, dependencies and activatable slices live in
   decision (ADR-0021). There is no queue, no background worker and no
   cancellation, so S3's live-progress section stays `unavailable` and a long
   run holds the caller until it finishes. → WP-T (ADR amendment first)
-- **G09 — Plans cannot pin a model.** `acme-scenario/1` reads the
-  `ModelSelection` from the mock-response fixture, so `acme-test-plan/1` has
-  no model field and an `ExecutionRequest` cannot be materialized from a plan
-  alone (ADR-0020). → WP-L
+- **G09 — Plans cannot pin a model:** **Closed by ACME-0063.** Case-level
+  `model` on `acme-test-plan/1` compiles to `execute.model`; materialization
+  prefers plan model over mockResponse selection. Live plans may use
+  `composition.gateway: openai` with model and without mockResponse.
 - **G10 — `measurements` is not in `acme-test-plan/1`.** S8 (ACME-0043)
   measures recorded runs with thresholds supplied at measurement time; the
   plan format still rejects a `measurements` block (ADR-0020). Embedding
@@ -575,6 +598,7 @@ Ordering, dependencies and activatable slices live in
 - **G18 — `better-sqlite3` prebuild** is exercised on Windows locally and on
   `ubuntu-latest` in CI, where the full suite including the SQLite adapter
   passes. No other platform is observed. → WP-X observe-only
-- **G19 — Quality evaluation is memory-only.** The contract and append-only
-  in-memory adapter exist, but no SQLite migration, durable implementation,
-  CLI command, Test UI surface or live AI judge has been approved. → WP-Q
+- **G19 — Quality evaluation durability:** **Q1 closed by ACME-0065 / ADR-0026.**
+  SQLite migration v2 + `createSqliteQualityEvaluationStore` pass the same
+  conformance kit as memory; close/reopen preserves records. Remaining: CLI
+  (Q2), Test UI (Q3), live AI judge (Q4).

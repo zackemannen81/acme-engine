@@ -34,13 +34,16 @@ export type ScenarioSchemaVersion =
  * caller of the engine, never an extension of it: there is no branching, no
  * retry, no loop and no way to run arbitrary code.
  */
+/** How the runner obtains a ModelGateway for execute steps (ACME-0063/0064). */
+export type ScenarioGatewayKind = 'mock' | 'openai';
+
 export interface ScenarioDocument {
   readonly schemaVersion: ScenarioSchemaVersion;
   readonly name: string;
   readonly seed: ScenarioSeed;
   readonly composition: {
     readonly repository: 'memory' | 'sqlite';
-    readonly gateway: 'mock';
+    readonly gateway: ScenarioGatewayKind;
   };
   readonly steps: readonly ScenarioStep[];
 }
@@ -69,7 +72,16 @@ export interface ExecuteStep {
   readonly entityId: string;
   readonly expectedRevision: number;
   readonly fixture: string;
-  readonly mockResponse: string;
+  /**
+   * Mock response fixture providing selection + response for gateway mock.
+   * Optional when `model` is set and composition.gateway is openai (live).
+   */
+  readonly mockResponse?: string;
+  /**
+   * Explicit model selection (ACME-0063). When present, becomes
+   * ExecutionRequest.model; otherwise selection is read from mockResponse.
+   */
+  readonly model?: ModelSelection;
   readonly policy?: JsonValue;
   /**
    * Pinning makes the model mock assert the exact request. Leaving it out
@@ -165,6 +177,11 @@ export type ScenarioFixtureLoader = (path: string) => Promise<JsonValue>;
 export interface ScenarioComposition {
   readonly repository: ExecutionRepository;
   engine(gateway: ModelGateway): ExecutionEngine;
+  /**
+   * Required when the scenario document declares composition.gateway openai
+   * (ACME-0064). Builds a live (or injected) gateway for the execute selection.
+   */
+  readonly liveGateway?: (selection: ModelSelection) => ModelGateway;
 }
 
 export interface ScenarioRunOptions {
@@ -212,6 +229,32 @@ function revision(value: unknown, field: string): number {
   return value;
 }
 
+function parseModelSelection(
+  raw: unknown,
+  field: string,
+): ModelSelection | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (!isObject(raw)) {
+    invalid(`${field} must be an object.`);
+  }
+  const profile = text(raw['profile'], `${field}.profile`);
+  const providerHint =
+    raw['providerHint'] === undefined
+      ? undefined
+      : text(raw['providerHint'], `${field}.providerHint`);
+  const modelHint =
+    raw['modelHint'] === undefined
+      ? undefined
+      : text(raw['modelHint'], `${field}.modelHint`);
+  return {
+    profile,
+    ...(providerHint === undefined ? {} : { providerHint }),
+    ...(modelHint === undefined ? {} : { modelHint }),
+  };
+}
+
 function parseExecute(raw: unknown): ExecuteStep {
   if (!isObject(raw)) {
     invalid('An execute step must be an object.');
@@ -219,6 +262,16 @@ function parseExecute(raw: unknown): ExecuteStep {
   const hash = raw['expectedRequestHash'];
   if (hash !== undefined && !/^[a-f0-9]{64}$/u.test(String(hash))) {
     invalid('expectedRequestHash must be a lowercase SHA-256 digest.');
+  }
+  const mockResponse =
+    raw['mockResponse'] === undefined
+      ? undefined
+      : text(raw['mockResponse'], 'execute.mockResponse');
+  const model = parseModelSelection(raw['model'], 'execute.model');
+  if (mockResponse === undefined && model === undefined) {
+    invalid(
+      'execute requires mockResponse and/or model (model alone is for live gateway steps).',
+    );
   }
   return {
     as: text(raw['as'], 'execute.as'),
@@ -231,7 +284,8 @@ function parseExecute(raw: unknown): ExecuteStep {
       'execute.expectedRevision',
     ),
     fixture: text(raw['fixture'], 'execute.fixture'),
-    mockResponse: text(raw['mockResponse'], 'execute.mockResponse'),
+    ...(mockResponse === undefined ? {} : { mockResponse }),
+    ...(model === undefined ? {} : { model }),
     ...(raw['policy'] === undefined
       ? {}
       : { policy: raw['policy'] as JsonValue }),
@@ -441,15 +495,42 @@ export function parseScenario(raw: unknown): ScenarioDocument {
     !isObject(composition) ||
     (composition['repository'] !== 'memory' &&
       composition['repository'] !== 'sqlite') ||
-    composition['gateway'] !== 'mock'
+    (composition['gateway'] !== 'mock' && composition['gateway'] !== 'openai')
   ) {
     invalid(
-      'scenario.composition requires repository memory|sqlite and gateway mock.',
+      'scenario.composition requires repository memory|sqlite and gateway mock|openai.',
     );
   }
+  const gateway = composition['gateway'] as ScenarioGatewayKind;
   const steps = raw['steps'];
   if (!Array.isArray(steps) || steps.length === 0) {
     invalid('A scenario requires at least one step.');
+  }
+
+  const parsedSteps = steps.map((step, index) =>
+    parseStep(step, index, schemaVersion),
+  );
+  if (gateway === 'mock') {
+    for (const step of parsedSteps) {
+      if ('execute' in step && step.execute.mockResponse === undefined) {
+        invalid(
+          'execute.mockResponse is required when composition.gateway is mock.',
+        );
+      }
+    }
+  }
+  if (gateway === 'openai') {
+    for (const step of parsedSteps) {
+      if (
+        'execute' in step &&
+        step.execute.model === undefined &&
+        step.execute.mockResponse === undefined
+      ) {
+        invalid(
+          'execute requires model (or mockResponse selection) when composition.gateway is openai.',
+        );
+      }
+    }
   }
 
   return {
@@ -463,9 +544,9 @@ export function parseScenario(raw: unknown): ScenarioDocument {
     },
     composition: {
       repository: composition['repository'],
-      gateway: 'mock',
+      gateway,
     },
-    steps: steps.map((step, index) => parseStep(step, index, schemaVersion)),
+    steps: parsedSteps,
   };
 }
 
@@ -571,12 +652,40 @@ export async function runScenario(
       if ('execute' in step) {
         const spec = step.execute;
         const input = await options.loadFixture(spec.fixture);
-        const fixture = parseMockFixture(
-          await options.loadFixture(spec.mockResponse),
-          spec.mockResponse,
-        );
+        const mockFixture =
+          spec.mockResponse === undefined
+            ? undefined
+            : parseMockFixture(
+                await options.loadFixture(spec.mockResponse),
+                spec.mockResponse,
+              );
+        const selection =
+          spec.model ??
+          mockFixture?.selection ??
+          fail(
+            `execute "${spec.as}" has no model selection (set execute.model or mockResponse.selection).`,
+          );
         const executionId = deriveExecutionId(spec.namespace, spec.requestKey);
-        const capture = capturingGateway(fixture);
+        const gatewayKind = document.composition.gateway;
+        let gateway: ModelGateway;
+        let observedHash: (() => string | undefined) | undefined;
+        if (gatewayKind === 'openai') {
+          if (composition.liveGateway === undefined) {
+            fail(
+              'composition.gateway is openai but the runner composition did not supply liveGateway.',
+            );
+          }
+          gateway = composition.liveGateway(selection);
+        } else {
+          if (mockFixture === undefined) {
+            fail(
+              `execute "${spec.as}" requires mockResponse when composition.gateway is mock.`,
+            );
+          }
+          const capture = capturingGateway(mockFixture);
+          gateway = capture.gateway;
+          observedHash = capture.observedHash;
+        }
         const request: ExecutionRequest = {
           requestKey: spec.requestKey,
           namespace: spec.namespace,
@@ -584,7 +693,7 @@ export async function runScenario(
           entityId: spec.entityId,
           expectedRevision: spec.expectedRevision,
           input,
-          model: fixture.selection,
+          model: selection,
           ...(spec.policy === undefined
             ? {}
             : {
@@ -594,12 +703,10 @@ export async function runScenario(
                 >,
               }),
         };
-        const result = await composition
-          .engine(capture.gateway)
-          .execute(request);
+        const result = await composition.engine(gateway).execute(request);
         aliases.set(spec.as, executionId);
 
-        const observed = capture.observedHash();
+        const observed = observedHash?.();
         if (
           spec.expectedRequestHash !== undefined &&
           observed !== undefined &&
@@ -613,6 +720,7 @@ export async function runScenario(
           alias: spec.as,
           executionId,
           status: result.status,
+          gateway: gatewayKind,
           // A non-committed outcome must say why, or the report sends the
           // reader back to the engine to find out what it already knew.
           ...(result.status === 'committed'

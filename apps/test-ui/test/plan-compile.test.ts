@@ -320,9 +320,79 @@ describe('acme-test-plan/1 compiler', () => {
       namespace: 'alpha',
       task: 'observe',
       input: { text: 'hello' },
-      // The selection comes from the mock fixture, because that is where
-      // acme-scenario/1 keeps it.
+      // Selection from mock fixture when the plan does not pin model.
       model: { profile: 'offline-json' },
+    });
+  });
+
+  it('prefers case.model over mockResponse selection when materializing', () => {
+    const plan = {
+      ...minimalPlan,
+      cases: [
+        {
+          ...minimalPlan.cases[0],
+          model: { profile: 'pinned-live', modelHint: 'gpt-test' },
+        },
+      ],
+    };
+    const compiled = compileTestPlan(parseTestPlan(plan), {
+      fixtures: {
+        'inputs/only.json': { text: 'hello' },
+        'responses/only.json': {
+          selection: { profile: 'offline-json' },
+          response: { text: '{}' },
+        },
+      },
+    });
+    if (!isAvailable(compiled.requests)) {
+      throw new Error('requests should be available');
+    }
+    expect(compiled.requests.requests[0]?.model).toEqual({
+      profile: 'pinned-live',
+      modelHint: 'gpt-test',
+    });
+    const step = compiled.scenario.steps[0];
+    if (step === undefined || !('execute' in step)) {
+      throw new Error('expected execute');
+    }
+    expect(step.execute.model).toEqual({
+      profile: 'pinned-live',
+      modelHint: 'gpt-test',
+    });
+  });
+
+  it('materializes requests from model alone without mockResponse fixtures', () => {
+    const plan = {
+      schemaVersion: 'acme-test-plan/1',
+      name: 'live-pin',
+      seed: { clock: '2026-01-01T00:00:00.000Z', ids: 'sequential' },
+      composition: { repository: 'memory', gateway: 'openai' },
+      cases: [
+        {
+          id: 'only',
+          namespace: 'alpha',
+          task: 'observe',
+          entityId: 'entity-1',
+          expectedRevision: 0,
+          input: 'inputs/only.json',
+          model: { profile: 'live-openai' },
+        },
+      ],
+    };
+    const compiled = compileTestPlan(parseTestPlan(plan), {
+      fixtures: { 'inputs/only.json': { text: 'hello' } },
+    });
+    if (!isAvailable(compiled.requests)) {
+      throw new Error('requests should be available');
+    }
+    expect(compiled.requests.requests[0]).toMatchObject({
+      model: { profile: 'live-openai' },
+      input: { text: 'hello' },
+    });
+    const parsed = parseScenario(compiled.scenario);
+    expect(parsed.composition.gateway).toBe('openai');
+    expect(parsed.steps[0]).toMatchObject({
+      execute: { model: { profile: 'live-openai' } },
     });
   });
 
