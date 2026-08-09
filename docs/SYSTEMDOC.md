@@ -778,7 +778,10 @@ normalization remains future work.
 - Model responses are durably recorded before interpretation and canonical
   commit.
 - Domain events and outbox rows commit together.
-- No production database decision has been made.
+- SQLite remains the only implemented durable adapter. ADR-0028 selects
+  managed PostgreSQL as the hosted Evidence Integrity POC target through a new
+  conformant adapter, but makes no production-provider, adapter-design or
+  deployment decision.
 
 ## Domain Proof
 
@@ -996,6 +999,46 @@ Multi-step live scenarios are supported via ScenarioRunner `gateway: openai`
 format's `measurements` block remains absent. S3 live-progress is available
 when the workbench supplies job records (ACME-0069 / ADR-0027).
 
+## Accepted First Product POC
+
+[ADR-0028](adr/0028-first-poc-evidence-integrity-workbench.md) accepts the
+**Evidence Integrity Workbench** as ACME's first real product POC. The
+normative product boundary is
+[`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
+Research Synthesis is the intended POC #2 but is not active.
+
+The POC is a corpus-bound, non-adjudicative review product. It canonically
+records source-bound observations and explicit domain decisions, not real-
+world or legal truth. Its authority ladder separates immutable source artifact
+versions, statement/exhibit observations, proposition and identity candidates,
+typed evidence relations, versioned human-reviewed assessments and excluded
+credibility/guilt/legal conclusions.
+
+V1 is constrained to a purpose-built synthetic text corpus. Every accepted
+quoted observation must resolve to an exact artifact version and valid locator;
+changed accounts remain distinct; supersession is limited to explicit
+correction lineage; uncertain time remains typed; relations retain all
+endpoints; and new evidence makes affected assessments stale without modifying
+history. The model remains a candidate generator behind the existing trust
+pipeline. Human acceptance makes an assessment shareable within the POC, not
+legally true.
+
+The target product layering is:
+
+```text
+Evidence Integrity web / API / worker
+  → PostgreSQL, object-storage and model adapters
+  → Evidence domain module and pure policies
+  → @acme/core
+```
+
+The accepted baseline is React/Vite, Fastify, a separate Node worker, the
+existing OpenAI Responses adapter, managed PostgreSQL through a new conformant
+adapter and S3-compatible object storage. This is a design constraint for the
+future technical specification, not delivered implementation. Managed
+providers, authentication, hosting, ingestion formats and PostgreSQL adapter
+details remain deferred.
+
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
@@ -1032,7 +1075,7 @@ when the workbench supplies job records (ACME-0069 / ADR-0027).
 
 ## Deliberately Deferred Decisions
 
-- production hosting and production database
+- production hosting, managed providers and final production database
 - dynamic module discovery
 - workflow runtime beyond ScenarioRunner
 - vector retrieval
@@ -1041,3 +1084,11 @@ when the workbench supplies job records (ACME-0069 / ADR-0027).
 
 These require evidence and ADRs before implementation. See also the accept /
 defer dispositions in the gap-resolution plan.
+
+ACME-0073's
+[`first-poc-application-discovery.md`](design/first-poc-application-discovery.md)
+remains a historical discovery memo. ADR-0028 supersedes its Research-first
+recommendation and accepts the Evidence Integrity Workbench plus PostgreSQL as
+the hosted POC target. SQLite remains the only delivered durable adapter. The
+PostgreSQL adapter, managed provider, hosting, authentication, data handling
+and implementation require separately activated work.

@@ -2,6 +2,98 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-09 — ACME-0074 Evidence Integrity Workbench locked as POC #1
+
+- Date: 2026-08-09
+- Author: Codex
+- Task: ACME-0074
+- Branch: `main`
+- Summary: Accepted the Evidence Integrity Workbench as ACME's first real
+  product POC. Added the normative
+  `docs/design/evidence-integrity-workbench-product-definition.md` and accepted
+  ADR-0028. The product turns a fixed synthetic text corpus into immutable
+  source-bound observations, scoped evidence relations, a deterministic
+  timeline, explicit uncertainty, open questions and versioned assessments
+  requiring human review. Research Synthesis is retained as the intended POC
+  #2.
+- Product boundary: canonical means durably accepted with provenance, never
+  proven true in the world. Source observations, expressed propositions,
+  evidence relations, assessments and legal conclusions have separate
+  authority levels. V1 prohibits credibility, guilt, liability, legal-
+  sufficiency, admissibility, privilege, tailored legal advice, criminal-risk
+  profiling and automated high-impact decisions. It also prohibits real
+  confidential, privileged or criminal-offence personal data.
+- Sandbox promotion: reviewed every file under
+  `docs/concepts_sandbox/legal-evidence-on-acme/`. Situated assertions,
+  `TimeBound`, quote binding, contest/coexist, correction-only supersession,
+  pure timeline, versioned assessments, stale-on-new-evidence and human accept
+  were promoted as accepted meanings or invariants. Package/task sketches,
+  artifact sensitivity classification, interrogation assist, jurisdiction and
+  custody policy, media ingestion and real-case bundles remain deferred,
+  excluded or blocked. The sandbox itself remains non-authoritative.
+- Architecture: accepted the existing TypeScript/Node/pnpm/Zod foundation with
+  React/Vite, Fastify, a separate worker, the OpenAI Responses adapter,
+  S3-compatible object storage and managed PostgreSQL as the hosted POC target.
+  SQLite remains the only delivered durable adapter. PostgreSQL requires a new
+  conformant adapter; managed providers, hosting and implementation remain
+  unselected and unauthorized.
+- Risk evidence: reviewed current OpenAI Usage Policies, Regulation (EU)
+  2024/1689, Regulation (EU) 2016/679 Article 10 and NIST AI 600-1. They support
+  synthetic data, source-grounded verification, explicit human authority and
+  conservative exclusions. No legal classification or legal advice is made.
+- Verification: traced accepted POC invariants to existing ACME authority or
+  ADR-0028, reviewed the normative reading path and sandbox disposition table,
+  and checked the governing-document synchronization. `pnpm docs:check`
+  checked 149 Markdown files with internal links and fences clean;
+  `git diff --check` was clean. Code, integration, scenario and live tests were
+  not run because ACME-0074 changes product and architecture documentation only.
+- Handoff: the next product task should specify the synthetic golden corpus,
+  minimal Evidence domain contracts, versioned views and staged implementation
+  slices. Real data, provider selection and deployment remain separately gated.
+- Signature: Codex
+
+## 2026-08-09 — ACME-0073 first real POC discovery
+
+- Date: 2026-08-09
+- Author: Codex
+- Task: ACME-0073
+- Branch: `main`
+- Summary: Produced the decision-ready first-POC discovery report and
+  `docs/design/first-poc-application-discovery.md`. The recommendation is a
+  bounded evidence-to-decision workbench for product, strategy or research
+  teams: controlled sources become a versioned, source-linked brief with
+  supported, contested and unresolved claims and an explicit human approval
+  step. The proposed baseline keeps ACME's TypeScript/Node contracts, adds a
+  React/Vite client, Fastify API and separate worker, and recommends managed
+  PostgreSQL plus object storage for a hosted multi-user pilot. SQLite remains
+  the delivered local/offline adapter; a conformant PostgreSQL adapter is a
+  future prerequisite, not an implementation made by this task.
+- Decisions and boundaries: the comparison matrix is an analyst heuristic,
+  not observed market data. No concept, managed provider, production database
+  or architecture change was approved. The report defines browser/API/SSE and
+  outbox communication, responsibility ownership, scaling triggers, business
+  hypotheses, pilot metrics, data-handling caveats and the explicit product
+  decisions required before a build charter.
+- Evidence: current claims were checked against official Node.js, SQLite,
+  PostgreSQL, OpenAI, Supabase, Neon, Vite, Fastify, Docker and MDN
+  documentation. Repository claims were derived from `PROJECT_BRIEF`,
+  `CURRENT_STATUS`, `SYSTEMDOC`, the gap-resolution plan and accepted ADRs;
+  concept-sandbox material was used only as non-authoritative comparison
+  input.
+- Verification: the Data Analytics report artifact validated with four
+  bounded datasets, five canonical sources, one native comparison chart and
+  four decision tables, then received one final render. The stakeholder
+  reading path was reviewed from executive answer through next decisions.
+  `pnpm docs:check` checked 146 Markdown files with internal links and fences
+  clean; `git diff --check` was clean. Code, integration, scenario and live
+  tests were not run because this task changes only discovery and governing
+  documentation.
+- Handoff: confirm the evidence-to-decision wedge, the first consumer group
+  and internal single-organization versus external multi-tenant pilot before
+  activating product design or implementation. Provider selection remains
+  conditional on identity, object-storage and operating requirements.
+- Signature: Codex
+
 ## 2026-08-09 — ACME-0072 OpenAI/FDE presentation Markdown counterpart
 
 - Date: 2026-08-09

@@ -160,6 +160,31 @@ The first platform version is successful when:
 - crash recovery avoids duplicate model calls and duplicate state operations
 - all core behavior can be tested without network access
 
+## First Product POC
+
+The first real product POC is the **Evidence Integrity Workbench**, accepted by
+[ADR-0028](adr/0028-first-poc-evidence-integrity-workbench.md) and defined in
+[`docs/design/evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
+
+It operates over a fixed synthetic evidence corpus and helps a non-adjudicative
+reviewer establish what each source contains, where an observation occurs, how
+accounts and artifacts relate, what the timeline permits, what remains
+uncertain and which questions remain unanswered. Every material assessment
+must traverse back to accepted source-bound evidence and an exact locator.
+
+The POC keeps source observations, expressed propositions, evidence relations,
+versioned assessments and legal conclusions at separate authority levels. It
+must not determine credibility, guilt, liability, legal sufficiency,
+admissibility or privilege; give tailored legal advice; automate a high-impact
+decision; or process real confidential, privileged or criminal-offence
+personal data. Human review is mandatory before an assessment becomes
+shareable, and human acceptance does not make an assessment legally true.
+
+The product remains outside `packages/core`. Evidence meaning belongs to a new
+domain module; product workflow belongs to an application; provider,
+persistence and object-storage concerns stay behind adapters. Research
+Synthesis is the intended POC #2 but is not activated.
+
 ## Next Deliverable
 
 The First Proof Milestone is complete in both halves. The bounded single-task
@@ -175,8 +200,10 @@ call is recoverable without calling the provider again, an interrupted
 transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
-No deliverable is currently outstanding against this brief. The Domain Test
-UI decision gates and the evaluation/quality-scoring foundation are delivered,
+No implementation deliverable is currently outstanding against this brief.
+The next product-design input is fixed by the First Product POC section, but
+implementation still requires a separate activated task. The Domain Test UI
+decision gates and the evaluation/quality-scoring foundation are delivered,
 and the operational surfaces this brief never claimed — durable quality-result
 storage, a real event transport, redrive for dead-lettered events,
 driver-error classification, stranded-execution operator commands and async
@@ -187,4 +214,6 @@ trust-stage evidence granularity, the remaining Domain Test UI residuals
 (plan `measurements`, adapter discovery, browser CI) and the deliberately
 deferred provider-reconciliation and key-lifecycle work. The next
 implementation deliverable must still be explicitly approved before
-activation; next recommended is trust-stage evidence (E1).
+activation. For product work, the next recommended deliverable is the Evidence
+Integrity technical specification and synthetic golden-corpus plan. Platform-
+only work may still activate trust-stage evidence (E1) independently.

@@ -13,6 +13,13 @@ Team implementation guides:
 
 Application surfaces:
 
+- [`evidence-integrity-workbench-product-definition.md`](evidence-integrity-workbench-product-definition.md)
+  — accepted normative product definition for ACME's first real POC under
+  [`ADR-0028`](../adr/0028-first-poc-evidence-integrity-workbench.md). It fixes
+  the synthetic-corpus, source-bound authority, human-review and prohibited-
+  legal-conclusion boundaries. It authorizes product direction, not
+  implementation or real-data handling.
+
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
   continued through ACME-0053: the gate freezes are accepted in

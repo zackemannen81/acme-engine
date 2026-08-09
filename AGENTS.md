@@ -43,6 +43,14 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   (ADR-0026), `acme quality list|inspect|judge` reads and drives them, and a
   live-model judge runs outside the synchronous harness under the usual
   opt-in and environment-only credentials.
+- ADR-0028 accepts the Evidence Integrity Workbench as the first real product
+  POC. Its normative definition is
+  `docs/design/evidence-integrity-workbench-product-definition.md`: V1 uses a
+  synthetic text corpus, treats the model as a candidate generator, preserves
+  source-bound observations and changed accounts, requires human review and
+  excludes credibility, guilt, legal-sufficiency and real-case-data authority.
+  Research Synthesis is the intended POC #2. No product implementation or
+  non-synthetic data path exists yet.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

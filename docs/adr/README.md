@@ -62,3 +62,4 @@ current architecture.
 - [`0025-post-execution-quality-evaluation.md`](0025-post-execution-quality-evaluation.md)
 - [`0026-durable-quality-evaluation-store.md`](0026-durable-quality-evaluation-store.md)
 - [`0027-async-launch-job-progress-cancellation.md`](0027-async-launch-job-progress-cancellation.md)
+- [`0028-first-poc-evidence-integrity-workbench.md`](0028-first-poc-evidence-integrity-workbench.md)

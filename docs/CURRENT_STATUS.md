@@ -52,6 +52,7 @@ implementation baseline:
 - ADR-0025: Post-execution quality evaluation
 - ADR-0026: Durable quality evaluation store
 - ADR-0027: Async launch job progress and cancellation
+- ADR-0028: First POC is the Evidence Integrity Workbench
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -308,7 +309,11 @@ There is currently:
 ## Approved Direction
 
 `docs/PROJECT_BRIEF.md` is the active project direction. Core must be
-domain-neutral and proven with NarrativeModule and ResearchModule.
+domain-neutral and proven with NarrativeModule and ResearchModule. ADR-0028
+accepts the Evidence Integrity Workbench as the first real product POC. Its
+normative boundary is
+[`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
+The direction is accepted; no product implementation exists yet.
 
 ## Active Work
 
@@ -318,8 +323,17 @@ T1 / G08 (async launch, progress and cancellation under ADR-0027); both
 landed on `grok/gapfixes2` and are merged to `main`. ACME-0070 then
 resynchronized the governing documents with that reality. ACME-0071 produced
 an English, repository-derived OpenAI/FDE project deck and matching PDF under
-`hrd/`, and ACME-0072 added a Markdown counterpart; all three are explanatory
-artifacts and introduce no implementation or architecture change.
+`hrd/`, and ACME-0072 added a Markdown counterpart. ACME-0073 then produced a
+decision-ready discovery report for the first real POC application and the
+supporting source memo
+[`first-poc-application-discovery.md`](design/first-poc-application-discovery.md).
+It provisionally recommended an evidence-to-decision Research workbench and a
+TypeScript/PostgreSQL product baseline. ACME-0074 then accepted the **Evidence
+Integrity Workbench** as POC #1 under ADR-0028, locked its synthetic-corpus,
+source-bound, immutable-evidence and human-review boundaries, and retained
+Research Synthesis as the intended POC #2. The product selection and boundary
+are now authoritative; provider choice, implementation, deployment and any
+real-data path remain unapproved.
 Next recommended: E1 trust-stage evidence (G12) or the remaining WP-T
 residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
 browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
@@ -432,6 +446,17 @@ browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
 - **ACME-0072:** Markdown counterpart to the OpenAI/FDE presentation, retaining
   its narrative, evidence, maturity caveats, diagrams and repository source
   map in a plain-text format.
+- **ACME-0073:** First-POC product and technology discovery report. It compares
+  three candidate wedges, recommends an evidence-to-decision workbench as the
+  leading hypothesis, separates SQLite's current adapter compatibility from
+  PostgreSQL's hosted-product fit, and defines communication, ownership,
+  scaling, metrics and decision gates without activating implementation.
+- **ACME-0074:** Accepted Evidence Integrity Workbench as POC #1 in ADR-0028
+  and a normative product definition. V1 uses a synthetic corpus, distinguishes
+  source observations from propositions and legal conclusions, preserves
+  changed accounts, requires source locators and human review, prohibits
+  credibility/guilt/legal-sufficiency decisions, and keeps Research Synthesis
+  as the intended POC #2. No code or real-data authorization was added.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 

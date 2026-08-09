@@ -373,6 +373,7 @@ acme-engine/
 │   │   ├── 0025-post-execution-quality-evaluation.md
 │   │   ├── 0026-durable-quality-evaluation-store.md
 │   │   ├── 0027-async-launch-job-progress-cancellation.md
+│   │   ├── 0028-first-poc-evidence-integrity-workbench.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -412,6 +413,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
 │   │   ├── domain-test-ui-specification.md
+│   │   ├── evidence-integrity-workbench-product-definition.md
+│   │   ├── first-poc-application-discovery.md
 │   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md
 │   │   └── research-module-build-and-test-plan.md
@@ -488,6 +491,8 @@ acme-engine/
 │   │   ├── ACME-0070_documentation-reality-sync.md
 │   │   ├── ACME-0071_openai-fde-project-presentation.md
 │   │   ├── ACME-0072_openai-fde-presentation-markdown.md
+│   │   ├── ACME-0073_first-poc-application-discovery.md
+│   │   ├── ACME-0074_lock-evidence-integrity-workbench.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
