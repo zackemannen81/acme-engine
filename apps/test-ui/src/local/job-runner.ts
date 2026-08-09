@@ -143,16 +143,46 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
     return job;
   }
 
+  /**
+   * Serialize job-file updates per id so fire-and-forget progress patches
+   * cannot clobber a later terminal write (read-modify-write race).
+   */
+  const patchTails = new Map<string, Promise<void>>();
+
   async function patch(
     jobId: string,
     update: (current: JobRecord) => JobRecord,
   ): Promise<JobRecord | null> {
-    const current = await workspace.loadJob(jobId);
-    if (current === null) {
-      // Workspace may have been torn down (tests) or job removed; stop quietly.
-      return null;
+    const previous = patchTails.get(jobId) ?? Promise.resolve();
+    let release!: () => void;
+    const done = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    patchTails.set(
+      jobId,
+      previous.then(
+        () => done,
+        () => done,
+      ),
+    );
+    await previous.catch(() => undefined);
+    try {
+      const current = await workspace.loadJob(jobId);
+      if (current === null) {
+        return null;
+      }
+      const next = update(current);
+      // A stale progress patch must never revive a finished job.
+      if (
+        isTerminalJobStatus(current.status) &&
+        !isTerminalJobStatus(next.status)
+      ) {
+        return current;
+      }
+      return await writeJob(next);
+    } finally {
+      release();
     }
-    return writeJob(update(current));
   }
 
   async function recoverInterrupted(): Promise<readonly JobRecord[]> {
@@ -408,19 +438,24 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
         document: payload.scenario,
         signal: controller.signal,
         onStep(progress) {
-          void patch(jobId, (job) => ({
-            ...job,
-            updatedAt: clock.now(),
-            progress: {
-              stepIndex: progress.index,
-              stepKind: progress.kind,
-              stepTotal: progress.stepTotal,
-              message:
-                progress.phase === 'start'
-                  ? `starting ${progress.kind}`
-                  : `${progress.kind} ${progress.status ?? 'done'}`,
-            },
-          }));
+          void patch(jobId, (job) => {
+            if (isTerminalJobStatus(job.status)) {
+              return job;
+            }
+            return {
+              ...job,
+              updatedAt: clock.now(),
+              progress: {
+                stepIndex: progress.index,
+                stepKind: progress.kind,
+                stepTotal: progress.stepTotal,
+                message:
+                  progress.phase === 'start'
+                    ? `starting ${progress.kind}`
+                    : `${progress.kind} ${progress.status ?? 'done'}`,
+              },
+            };
+          });
         },
         composition(seed) {
           const built = createInterfaceComposition({
@@ -558,6 +593,9 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
         },
       }));
     } finally {
+      // Drain in-flight progress patches before releasing the active slot so
+      // whenIdle cannot observe a still-running job file.
+      await (patchTails.get(jobId) ?? Promise.resolve()).catch(() => undefined);
       composition?.close();
       active.delete(jobId);
     }
