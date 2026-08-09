@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-06
+Last updated: 2026-08-09
 
 ## Repository
 
@@ -50,6 +50,8 @@ implementation baseline:
 - ADR-0023: Live evaluation gate for the Domain Test UI
 - ADR-0024: Local SPA shell and loopback workbench serve
 - ADR-0025: Post-execution quality evaluation
+- ADR-0026: Durable quality evaluation store
+- ADR-0027: Async launch job progress and cancellation
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -216,14 +218,18 @@ There is currently:
   digest as the hand-written test, and both remain in the suite
 - an `@acme/cli` composition root that selects the in-memory or durable
   SQLite repository and exposes `scenario run`, `execute`, `execution replay`,
-  `execution inspect`, `state inspect` and `memory inspect`, with versioned
-  JSON on stdout, diagnostics on stderr, payload redaction by default and exit
-  codes separating success, a non-committed outcome and a usage error
-- an `@acme/test-ui` Domain Test UI package (ADR-0019) holding phases 1 and 2:
-  five versioned view contracts (`acme-view-execution/1`,
-  `acme-view-memory-decisions/1`, `acme-view-state/1`, `acme-view-replay/1`,
-  `acme-view-catalog/1`) and pure builders over recorded evidence, with no
-  clock, network or browser, and no I/O on the default entry point
+  `execution inspect`, `execution stranded`, `execution discharge`,
+  `state inspect`, `memory inspect`, `outbox inspect|drain|redrive` and
+  `quality list|inspect|judge`, with versioned JSON on stdout, diagnostics on
+  stderr, payload redaction by default and exit codes separating success, a
+  non-committed outcome and a usage error
+- an `@acme/test-ui` Domain Test UI package (ADR-0019) holding eleven versioned
+  view contracts (`acme-view-execution/1`, `acme-view-memory-decisions/1`,
+  `acme-view-state/1`, `acme-view-replay/1`, `acme-view-catalog/1`,
+  `acme-view-plan/1`, `acme-view-runs/1`, `acme-view-measurement/1`,
+  `acme-view-fixture-review/1`, `acme-view-live-evaluation/1` and
+  `acme-view-quality-evaluation/1`) and pure builders over recorded evidence,
+  with no clock, network or browser, and no I/O on the default entry point
 - a catalog (S1) over the static registries plus discovered scenarios and
   fixtures, preserving registry and task declaration order, rendering full
   contract fingerprints, cross-linking contracts to tasks, and marking broken
@@ -247,9 +253,10 @@ There is currently:
   the same operation digest the hand-written acceptance test pins
 - a plan designer (S2) that previews the compiled scenario and reports an
   invalid plan instead of throwing, and a run console (S3) whose history is
-  available and whose live-progress half is `unavailable` because launch is
-  synchronous and nothing runs in the background (ADR-0021)
-- an interface-owned file workspace (`runs/<runId>.json`) that shares no
+  available and whose live-progress half is `available` when the host supplies
+  job evidence (ADR-0027) and `unavailable` for pure history-only callers
+- an interface-owned file workspace (`runs/<runId>.json`, `jobs/<jobId>.json`,
+  `baselines/<name>.json`, `approvals/<proposalId>.json`) that shares no
   table, file or directory with the ledger, with the history index derived by
   reading the records and run identifiers validated as safe file names
 - an app composition beside `@acme/cli` selecting the in-memory or SQLite
@@ -265,12 +272,32 @@ There is currently:
   `reached` instead of guessing when the failing execution stage owns several
   substages, and replay rendered in the engine's exact
   `match | different | unavailable` vocabulary
+- a durable SQLite quality-evaluation store (ADR-0026): migration v2 adds an
+  append-only `quality_evaluations` table with no foreign key to executions, so
+  evaluation lifecycle stays independent of the ledger, and
+  `createSqliteQualityEvaluationStore` passes the same conformance kit as the
+  in-memory store
+- `acme quality list`, `acme quality inspect` and `acme quality judge` over the
+  composition-selected quality store, plus a live-model judge
+  (`runLiveModelQualityJudge`, `kind: live-model`) that runs outside the
+  synchronous evaluator harness and is proven offline with an injected
+  OpenAI transport
+- a pure `acme-view-quality-evaluation/1` list/detail view (S11) in
+  `apps/test-ui`, with no HTML surface and no I/O on the default entry point
+- async plan launch (ADR-0027): an in-process single-flight JobRunner,
+  interface-owned `jobs/<jobId>.json` (`acme-job-record/1`), `enqueuePlan`
+  beside the unchanged synchronous `launchPlan`, S3 live progress when job
+  evidence is supplied, cooperative cancel through an `AbortSignal` and
+  non-terminal jobs marked `interrupted` after a process restart. Cancel never
+  rolls back a committed ledger write
 - automated dependency rules, a core vocabulary guard and negative core,
-  module, cross-module, SQLite-driver and Domain-Test-UI boundary fixtures
-  (both "the app imports no package internal" and "nothing imports the app")
-- 560 passing unit-suite tests across packages, integration and scenario paths
-  exercised by `pnpm test:unit` (64 files), with separate conformance (61),
-  integration (55) and scenario (24) gates
+  module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
+  boundary fixtures (both "the app imports no package internal" and "nothing
+  imports the app")
+- 603 passing unit-suite tests across packages (73 files) exercised by
+  `pnpm test:unit`, with separate conformance (64 tests, 9 files), integration
+  (56 tests, 10 files) and scenario (24 tests, 5 files) gates. Counts observed
+  2026-08-09
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -285,10 +312,14 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0066–0068 closed WP-Q Q2–Q4 on
-`grok/gapfixes2` (CLI quality surfaces, pure S11 view, live-model judge).
-Next recommended: E1 trust stages or WP-T residuals.
-`docs/CURRENT_TASK.md` is the Draft template.
+No implementation task is active. ACME-0066–0068 closed WP-Q Q2–Q4 (CLI
+quality surfaces, pure S11 view, live-model judge) and ACME-0069 closed WP-T
+T1 / G08 (async launch, progress and cancellation under ADR-0027); both
+landed on `grok/gapfixes2` and are merged to `main`. ACME-0070 then
+resynchronized the governing documents with that reality.
+Next recommended: E1 trust-stage evidence (G12) or the remaining WP-T
+residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
+browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -388,6 +419,10 @@ Next recommended: E1 trust stages or WP-T residuals.
 - **ACME-0066:** CLI quality list/inspect over composition quality store (Q2).
 - **ACME-0067:** Pure Test UI quality evaluation list/detail view S11 (Q3).
 - **ACME-0068:** Live-model quality judge + `quality judge` CLI (Q4).
+- **ACME-0069:** Async launch, progress and cancellation (T1 / G08, ADR-0027):
+  in-process JobRunner, `acme-job-record/1`, `enqueuePlan` beside synchronous
+  `launchPlan`, S3 progress, `POST /s3/<runId>/cancel`.
+- **ACME-0070:** Documentation reality sync after ACME-0057–0069.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -498,7 +533,21 @@ inside the local process and refuses unsafe, existing, unreadable or active
 run ids before provider dispatch. Test-only injection proves the complete HTTP
 path offline; the command-line workbench still uses the real env/fetch path.
 
-Not delivered: multi-step live scenarios; remote hosting. Proposal:
+Delivered by ACME-0069 (ADR-0027): async launch. The workbench process owns an
+in-process single-flight JobRunner, the interface workspace gains
+`jobs/<jobId>.json` (`acme-job-record/1`), and browser launch enqueues through
+`enqueuePlan` so the HTTP response returns before the scenario finishes.
+Synchronous `launchPlan` is unchanged for scripts and tests. S3 renders live
+progress when the host supplies job evidence and still reports
+`RUN_PROGRESS_UNAVAILABLE` for pure history-only callers. Cancel is
+`POST /s3/<runId>/cancel` under the same CSRF and same-server proof and is
+cooperative: it does not roll back a committed ledger write. A process restart
+marks non-terminal jobs `interrupted`.
+
+Not delivered: remote hosting; browser CI (T4); a plan `measurements` block
+(T2); adapter discovery beyond declaration (T3). Multi-step live scenarios run
+through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 remains
+single-execute by decision (ADR-0023). Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
 lives under `docs/concepts_sandbox/temp/`.
 
@@ -518,8 +567,23 @@ records and has a reusable conformance kit. Execution evidence remains
 unchanged. `acme-scenario/2` adds `evaluate` and `assertEvaluation` while the
 v1 parser and behavior remain compatible. A failed quality verdict is a
 successful evaluation step; only an explicit assertion fails the scenario.
-All evaluation paths are deterministic offline and no evaluator may perform a
-live external call through this contract.
+All evaluation paths reachable from the synchronous harness are deterministic
+offline, and no evaluator may perform a live external call through that
+contract.
+
+Delivered by ACME-0065 (ADR-0026): the durable SQLite store. Migration v2 adds
+an append-only `quality_evaluations` table with no foreign key to executions,
+`createSqliteQualityEvaluationStore` implements the same
+`QualityEvaluationStore` port as the in-memory adapter, the shared conformance
+kit passes unchanged, and close/reopen preserves records.
+
+Delivered by ACME-0066–0068: `acme quality list`, `acme quality inspect` and
+`acme quality judge` over the composition-selected store (memory or the same
+SQLite file); the pure `acme-view-quality-evaluation/1` list/detail view (S11)
+in `apps/test-ui`; and `runLiveModelQualityJudge`, a live-model judge that runs
+outside the synchronous harness — which still refuses Promise-returning
+evaluators — stores `kind: live-model`, requires `ACME_LIVE_TEST` plus
+credentials, and is proven offline through an injected OpenAI transport.
 
 ## Persistent Gaps
 

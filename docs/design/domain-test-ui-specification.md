@@ -7,11 +7,16 @@ ACME-0052 under
 [ADR-0020](../adr/0020-acme-test-plan-schema-and-compiler.md) and
 [ADR-0021](../adr/0021-interface-workspace-and-launch-boundary.md) through
 [ADR-0024](../adr/0024-local-spa-loopback-workbench.md). ACME-0053 completed
-the S1–S10 browser flow; multi-step live scenarios remain an optional residual
-requiring their own charter.
+the S1–S10 browser flow, ACME-0067 added the pure S11 quality-evaluation view,
+and ACME-0069 replaced blocking browser launch with an in-process job runner
+under
+[ADR-0027](../adr/0027-async-launch-job-progress-cancellation.md).
+Multi-step live scenarios run through ScenarioRunner (ACME-0064); S10 remains
+single-execute by decision. Optional residuals: a plan `measurements` block,
+adapter discovery and browser CI, each requiring its own charter.
 Audience: ACME maintainers, domain engineers, test engineers and reviewers
 Prepared: 2026-07-30
-Last revised: 2026-08-05 (ACME-0052 — browser fixture review implemented)
+Last revised: 2026-08-09 (ACME-0070 — documentation reality sync)
 
 ## Executive summary
 
@@ -640,6 +645,13 @@ Two deviations from the S3 field list are recorded in
 synchronous, so the live-progress section is `unavailable` rather than a
 simulated queue; and the history index is derived by reading the run records
 rather than maintained beside them, so it cannot drift.
+
+The first deviation was later resolved by ACME-0069 under
+[ADR-0027](../adr/0027-async-launch-job-progress-cancellation.md): the
+workbench enqueues through an in-process JobRunner and S3 renders live progress
+from `acme-job-record/1` evidence. Synchronous `launchPlan` is unchanged, and
+pure history-only callers that supply no job evidence still see
+`RUN_PROGRESS_UNAVAILABLE`.
 
 ### Phase 5 — Measurement, fixture review — **done (ACME-0043 / ADR-0022)**
 

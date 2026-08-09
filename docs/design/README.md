@@ -22,8 +22,11 @@ Application surfaces:
   measurement, fixture review, gated live evaluation and protected offline
   browser launch, memory-decision inspection, state-lineage inspection and
   replay/digest verification, recorded-run measurement, fixture review and
-  protected single-execute live browser launch. Multi-step live scenarios
-  require their own charter. Implementation backlog:
+  protected single-execute live browser launch. ACME-0069 added async launch,
+  progress and cancellation under
+  [`../adr/0027-async-launch-job-progress-cancellation.md`](../adr/0027-async-launch-job-progress-cancellation.md).
+  Multi-step live scenarios run through ScenarioRunner (ACME-0064); S10 stays
+  single-execute by decision. Implementation backlog:
   [`../backlog/domain-test-ui-implementation.md`](../backlog/domain-test-ui-implementation.md).
 
 Residual planning:

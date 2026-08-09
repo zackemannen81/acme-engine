@@ -9,7 +9,10 @@ acme-engine/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
+├── .grok/
+│   └── settings.json
 ├── apps/
+│   ├── .npmrc
 │   ├── cli/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -18,11 +21,13 @@ acme-engine/
 │   │   │   ├── composition.ts
 │   │   │   ├── index.ts
 │   │   │   ├── main.ts
+│   │   │   ├── outbox-file-dispatcher.ts
 │   │   │   ├── output.ts
 │   │   │   ├── run.ts
 │   │   │   └── scenario.ts
 │   │   └── test/
-│   │       └── cli.test.ts
+│   │       ├── cli.test.ts
+│   │       └── outbox-file-dispatcher.test.ts
 │   └── test-ui/
 │       ├── package.json
 │       ├── tsconfig.json
@@ -72,6 +77,7 @@ acme-engine/
 │       │       ├── measurement.ts
 │       │       ├── memory.ts
 │       │       ├── plan.ts
+│       │       ├── quality-evaluation.ts
 │       │       ├── replay.ts
 │       │       ├── runs.ts
 │       │       ├── shared.ts
@@ -96,6 +102,7 @@ acme-engine/
 │   ├── ACME-teknisk-systemdokumentation.docx
 │   └── ACME-whitepaper.docx
 ├── packages/
+│   ├── .npmrc
 │   ├── adapter-memory/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -203,10 +210,12 @@ acme-engine/
 │   │   │   ├── harness.ts
 │   │   │   ├── identity.ts
 │   │   │   ├── index.ts
+│   │   │   ├── live-judge.ts
 │   │   │   ├── recorded.ts
 │   │   │   ├── registry.ts
 │   │   │   └── validation.ts
 │   │   └── test/
+│   │       ├── live-judge.test.ts
 │   │       └── quality-evaluation.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
@@ -283,18 +292,21 @@ acme-engine/
 │   │   ├── domain-module.test.ts
 │   │   ├── module-narrative.test.ts
 │   │   ├── module-research.test.ts
-│   │   └── quality-evaluation-memory.test.ts
+│   │   ├── quality-evaluation-memory.test.ts
+│   │   └── quality-evaluation-sqlite.test.ts
 │   ├── fixtures/
 │   │   ├── faulting-database.ts
 │   │   ├── neutral-execution.ts
 │   │   └── process-loss.ts
 │   ├── live/
-│   │   └── openai-responses.test.ts
+│   │   ├── openai-responses.test.ts
+│   │   └── scenario-multi-step.test.ts
 │   ├── integration/
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
+│   │   ├── scenario-live-offline.test.ts
 │   │   ├── test-ui-launch.test.ts
 │   │   ├── test-ui-live-launch.test.ts
 │   │   ├── test-ui-live-workbench.test.ts
@@ -322,6 +334,7 @@ acme-engine/
 │   │       ├── packages/core/src/forbidden.ts
 │   │       ├── packages/core/src/forbidden-driver.ts
 │   │       ├── packages/core/src/forbidden-provider.ts
+│   │       ├── packages/evaluation/src/forbidden-adapter.ts
 │   │       ├── packages/module-fixture/src/forbidden.ts
 │   │       └── packages/module-fixture/src/forbidden-module.ts
 │   ├── docs/
@@ -362,6 +375,30 @@ acme-engine/
 │   ├── concepts_sandbox/
 │   │   ├── README.md
 │   │   ├── POC_interfacing.md
+│   │   ├── acme_cm_001_memory_conflict_benchmark.md
+│   │   ├── acme_cm_001_memory_conflict_benchmark/
+│   │   │   ├── README.md
+│   │   │   ├── acme_cm_001_ground_truth.json
+│   │   │   ├── acme_cm_001_paper.md
+│   │   │   └── acme_cm_001_stream.jsonl
+│   │   ├── audioleaf-kids-on-acme/
+│   │   │   ├── README.md
+│   │   │   ├── 01-architecture.md
+│   │   │   ├── 02-package-api.md
+│   │   │   └── 03-task-and-event-map.md
+│   │   ├── legal-evidence-on-acme/
+│   │   │   ├── README.md
+│   │   │   ├── 01-architecture.md
+│   │   │   ├── 02-package-api.md
+│   │   │   └── 03-task-and-event-map.md
+│   │   ├── research-paper-composer-on-acme/
+│   │   │   ├── README.md
+│   │   │   ├── 01-architecture.md
+│   │   │   ├── 02-package-api.md
+│   │   │   └── 03-task-and-event-map.md
+│   │   ├── three-domain-platform-proof/
+│   │   │   ├── README.md
+│   │   │   └── 01-platform-proof-criteria.md
 │   │   └── temp/
 │   │       └── testregistry_workbench_professional_test_engineering_suite.html
 │   ├── backlog/
@@ -444,7 +481,12 @@ acme-engine/
 │   │   ├── ACME-0066_quality-cli.md
 │   │   ├── ACME-0067_quality-view.md
 │   │   ├── ACME-0068_live-quality-judge.md
+│   │   ├── ACME-0069_async-launch-progress-cancellation.md
+│   │   ├── ACME-0070_documentation-reality-sync.md
 │   │   └── README.md
+│   ├── hrd/
+│   │   ├── README.md
+│   │   └── (Swedish PDF and PNG explanatory artifacts)
 │   ├── paused/
 │   │   └── README.md
 │   ├── presentations/
@@ -481,8 +523,10 @@ acme-engine/
 
 `hrd/` contains the Swedish, human-readable presentation, whitepaper and
 technical system document generated from the synchronized repository
-authority. They are derived deliverables; the Markdown documentation and
-accepted ADRs remain normative.
+authority. `docs/hrd/` holds the same family of derived explanatory artifacts
+in PDF and PNG form, listed here as a group because their filenames are prose
+titles rather than stable paths. They are derived deliverables; the Markdown
+documentation and accepted ADRs remain normative.
 
 `FS.txt` is a legacy tracked Windows filesystem dump that includes generated
 directories and stale content. It is non-authoritative; this document is the
@@ -527,18 +571,23 @@ content remains intentionally omitted here.
   on `@acme/core` and `@acme/evaluation`; the caller injects composition and
   fixture loading.
 - `@acme/cli`: the composition root. It is the only place that selects a
-  concrete repository adapter and model gateway (`--script` mock or
-  `--gateway openai`), and it exposes `execute`, `execution replay`,
-  `execution inspect`, `state inspect` and `memory inspect` over both the
-  in-memory and durable SQLite repositories.
-- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024). Phases 1–6 are
-  view contracts for S1–S10; ACME-0045–0053 add pure HTML renderers
+  concrete repository adapter, quality store and model gateway (`--script`
+  mock or `--gateway openai`), and it exposes `scenario run`, `execute`,
+  `execution replay|inspect|stranded|discharge`, `state inspect`,
+  `memory inspect`, `outbox inspect|drain|redrive` and
+  `quality list|inspect|judge` over both the in-memory and durable SQLite
+  repositories.
+- `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024, ADR-0027). Phases
+  1–6 are view contracts for S1–S10, with the pure `acme-view-quality-evaluation/1`
+  (S11) added by ACME-0067; ACME-0045–0053 add pure HTML renderers
   (`src/web/`) and a complete S1–S10 loopback workbench serve on `./local`,
   including bounded registry/scenario/fixture catalog, protected offline
   browser preview/launch and protected single-execute live browser launch.
   Includes plan compiler, launch path, measurement, fixture review and gated
-  live evaluation. Default entry performs no I/O; discovery on
-  `./node-source`. Leaf package.
+  live evaluation. ACME-0069 adds `src/local/job-runner.ts` and
+  `src/job-record.ts`, so browser launch enqueues and can be cancelled while
+  synchronous `launchPlan` stays available. Default entry performs no I/O;
+  discovery on `./node-source`. Leaf package.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -566,9 +615,11 @@ composition-root application (module and adapter workbenches, view contracts,
 optional `acme-test-plan/1`). ACME-0039 accepted its gate freezes in ADR-0019
 and delivered phases 0 and 1; ACME-0040 through ACME-0053 added phases 2–6,
 the loopback HTML workbench, protected offline plan preview/launch and catalog
-rendering for S1–S10 under ADR-0020 through ADR-0024. Multi-step live scenarios
-remain open. A non-authority workbench mock lives under
-`docs/concepts_sandbox/temp/`.
+rendering for S1–S10 under ADR-0020 through ADR-0024. ACME-0069 added async
+launch, progress and cancellation under ADR-0027. Multi-step live scenarios run
+through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 stays
+single-execute by decision (ADR-0023). A non-authority workbench mock lives
+under `docs/concepts_sandbox/temp/`.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

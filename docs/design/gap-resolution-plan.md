@@ -1,7 +1,7 @@
 # ACME Gap Resolution Plan
 
 Status: Canonical planning artifact (ACME-0056)  
-Last updated: 2026-08-06  
+Last updated: 2026-08-09
 Authority: Inventories residual work from `docs/CURRENT_STATUS.md`.  
 Does **not** replace ADRs, the project brief or the design specification.  
 Does **not** authorize implementation; each work package requires an
@@ -84,7 +84,7 @@ an explicit ADR amendment task first.
 | Outbox is at-least-once, lease/settle | ADR-0018 | Redrive (G04) extends settlement policy; it does not replace the lease model. |
 | ScenarioRunner has no branching/retry/loop | ACME-0027 / design | Live multi-step (G01) is still serial steps; not a workflow engine. |
 | S10 live is single-execute by decision | ADR-0023 | Multi-step live is ScenarioRunner territory, not an S10 expansion by stealth. |
-| `launchPlan` is synchronous by decision | ADR-0021 | G08 requires an ADR amendment (or a new API beside `launchPlan`) before async/queue work. |
+| `launchPlan` is synchronous by decision | ADR-0021 (amended by ADR-0027) | G08 required an ADR before async/queue work. ADR-0027 supplied it: `enqueuePlan` is a new API beside the unchanged synchronous `launchPlan`. |
 | Plans have no model field by design today | ADR-0020 | G09 is a schema/compiler change with golden updates. |
 | Ambiguous model calls are terminal | ADR-0014 | G14 is optional product work, not a bug fix of current ADR. |
 | Payload encryption exists; full KMS/deletion deferred | ADR-0016 | G15 is lifecycle, not “add encryption again”. |
@@ -356,9 +356,11 @@ without rewriting the leaf boundary of `apps/test-ui`.
 
 #### Suggested task slices
 
-1. **T1 — Async launch / progress / cancellation design then implement**
-2. **T2 — Optional `measurements` block in plan format**
-3. **T3 — Adapter catalog discovery vs declaration policy**
+1. **T1 — Async launch / progress / cancellation design then implement** —
+   **done ACME-0069 / ADR-0027** (synchronous `launchPlan` kept; workbench uses
+   `enqueuePlan` + JobRunner)
+2. **T2 — Optional `measurements` block in plan format** — open
+3. **T3 — Adapter catalog discovery vs declaration policy** — open
 4. **T4 — (Optional) browser CI smoke** — only if G07 is reclassified as desired
 
 #### T1 steps
@@ -539,12 +541,12 @@ required by `docs/TASK_WORKFLOW.md`.
 | 7 | L1 Plan model pin | G09 | **Done ACME-0063** |
 | 8 | L2 ScenarioRunner live multi-step | G01/G02 | **Done ACME-0064** |
 | 9 | Q1 Durable quality store | G19 (core) | **Done ACME-0065** |
-| 10 | Q2 CLI quality inspect | G19 (part) | Operator read path |
-| 11 | E1 Trust stage evidence | G12 | Better diagnosis; independent |
+| 10 | Q2 CLI quality inspect | G19 (part) | **Done ACME-0066** |
+| 11 | E1 Trust stage evidence | G12 | **Next recommended**; better diagnosis, independent |
 | 12 | T2 Plan measurements block | G10 | Schema-only product residual |
-| 13 | T1 Async launch (after ADR) | G08 | Largest Test UI design change—do not rush |
+| 13 | T1 Async launch (after ADR) | G08 | **Done ACME-0069 / ADR-0027** |
 | 14 | T3 Adapter declaration policy | G11 | May end as permanent “declare only” |
-| 15 | Q3/Q4, P*, K*, T4 | remaining | Explicit approval each |
+| 15 | Q3/Q4, P*, K*, T4 | remaining | **Q3 done ACME-0067, Q4 done ACME-0068**; P\*, K\*, T4 need explicit approval each |
 
 **Do not** start T1, P2, K, or Q4 without a dedicated charter that names
 ADR work and live/budget rules.

@@ -26,18 +26,23 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   than assumed; and committed events leave the outbox through an explicit
   bounded drain with at-least-once delivery (ADR-0018). Nothing drains on its
   own, and neither reference module emits domain events yet.
-- The Domain Test UI is activated (ADR-0019 to ADR-0024). `apps/test-ui` holds
-  phases 1–6 as versioned view contracts (S1–S10), plus a loopback HTML
-  workbench with S1–S10 rendered. It includes
-  `acme-test-plan/1`, protected offline browser preview and launch, measurement,
-  fixture review, and gated single-execute live evaluation through both the
-  local function and S10 browser form. Default entry is pure (no I/O);
+- The Domain Test UI is activated (ADR-0019 to ADR-0024, ADR-0027).
+  `apps/test-ui` holds phases 1–6 as versioned view contracts (S1–S10) plus the
+  pure S11 quality view, and a loopback HTML workbench with S1–S10 rendered. It
+  includes `acme-test-plan/1`, protected offline browser preview and launch,
+  measurement, fixture review, and gated single-execute live evaluation through
+  both the local function and S10 browser form. Browser launch enqueues through
+  an in-process JobRunner with progress and cooperative cancel; synchronous
+  `launchPlan` remains for scripts and tests. Default entry is pure (no I/O);
   workbench serve is opt-in on `./local`. It is a leaf.
 - `@acme/evaluation` adds domain-neutral, immutable post-execution quality
   assessments. Deterministic evaluators and replayed recorded-external
   evaluators produce versioned scores, findings and verdicts without mutating
-  execution evidence (ADR-0025). ScenarioRunner v2 can run and assert them
-  offline; the durable store and live AI judges remain out of scope.
+  execution evidence (ADR-0025). ScenarioRunner v2 runs and asserts them
+  offline, results persist in an in-memory or durable SQLite quality store
+  (ADR-0026), `acme quality list|inspect|judge` reads and drives them, and a
+  live-model judge runs outside the synchronous harness under the usual
+  opt-in and environment-only credentials.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

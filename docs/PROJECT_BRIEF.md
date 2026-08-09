@@ -1,7 +1,7 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-08-06
+Last updated: 2026-08-09
 
 ## Identity
 
@@ -176,12 +176,15 @@ transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
 No deliverable is currently outstanding against this brief. The Domain Test
-UI decision gates and the evaluation/quality-scoring foundation are delivered.
-Open choices are operational surfaces this brief never claimed: durable
-quality-result storage, real event transports, redrive for dead-lettered
-events, driver-error classification and key lifecycle. Their inventory,
+UI decision gates and the evaluation/quality-scoring foundation are delivered,
+and the operational surfaces this brief never claimed — durable quality-result
+storage, a real event transport, redrive for dead-lettered events,
+driver-error classification, stranded-execution operator commands and async
+workbench launch — landed as ACME-0057 through ACME-0069. Their inventory,
 dependencies and recommended activation order are recorded in
-`docs/design/gap-resolution-plan.md` (ACME-0056). The next implementation
-deliverable must still be explicitly approved before activation; preferred
-WP-D through WP-Q (through live quality judge) landed as ACME-0057–0068; next
-recommended is trust-stage evidence (E1) or Test UI async launch (T1).
+`docs/design/gap-resolution-plan.md` (ACME-0056). Open choices are now
+trust-stage evidence granularity, the remaining Domain Test UI residuals
+(plan `measurements`, adapter discovery, browser CI) and the deliberately
+deferred provider-reconciliation and key-lifecycle work. The next
+implementation deliverable must still be explicitly approved before
+activation; next recommended is trust-stage evidence (E1).

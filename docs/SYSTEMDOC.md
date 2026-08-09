@@ -1,7 +1,7 @@
 # System Documentation
 
-Last updated: 2026-08-06
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2, post-execution quality evaluation, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench
+Last updated: 2026-08-09
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -418,17 +418,28 @@ ExecutionEngine and canonical execution evidence do not depend on it.
 - `acme-quality-evaluation/1` returns finite ranged scores, structured
   findings and a `pass | fail | inconclusive` verdict with content-derived
   subject/result/evaluation identities
-- `QualityEvaluationStore` is an append-only port; the in-memory adapter and
-  durable SQLite adapter (`createSqliteQualityEvaluationStore`, migration v2,
-  ADR-0026) implement it with identical conformance; the SQLite table has no
-  FK to executions so evaluation lifecycle stays independent of the ledger
-  idempotent for identical content, refuses identity collisions and returns
-  detached records through a reusable conformance kit
+- `QualityEvaluationStore` is an append-only port. The in-memory adapter and
+  the durable SQLite adapter (`createSqliteQualityEvaluationStore`, migration
+  v2, ADR-0026) implement it under identical conformance: both are idempotent
+  for byte-identical content, refuse identity collisions and return detached
+  records. The SQLite table carries no foreign key to executions, so the
+  evaluation lifecycle stays independent of the ledger
+- `acme quality list`, `acme quality inspect` and `acme quality judge` read and
+  write that store through the composition root, which selects the in-memory
+  store or the same SQLite file as the repository
+- `runLiveModelQualityJudge` (ACME-0068) runs a live-model judge *outside* the
+  synchronous evaluator harness, which still refuses Promise-returning
+  evaluators. It stores `kind: live-model`, requires the same opt-in and
+  environment-only credentials as every other live path, and is proven offline
+  with an injected transport. The recorded-external evaluator remains the
+  offline default, and no evaluator reachable from the harness may call an
+  external service
+- the pure `acme-view-quality-evaluation/1` list/detail view (S11) projects
+  stored evaluations for the Domain Test UI without an HTML surface
 
 Assertions remain exact scenario expectations, metrics remain observations
 over run populations, and quality evaluations remain versioned judgments over
-one bound subject. Durable quality storage, UI/CLI surfaces and live AI judges
-are not implemented.
+one bound subject.
 
 ## Implemented Composition Root
 
@@ -446,11 +457,15 @@ repository adapter. Everything else works through core ports.
   invented, no state/memory/document write)
 - `execution inspect`, `state inspect` and `memory inspect` read recorded
   evidence
-- `outbox inspect` lists entries with their events; `outbox drain` leases;
-  `outbox redrive` returns terminal `failed` entries to `pending`;
-  `outbox drain --transport file --outbox-dir <path>` writes file envelopes
+- `outbox inspect` lists entries with their events; `outbox drain` leases,
   delivers and settles one bounded batch, bounded by `--limit` and
-  `--lease-timeout-ms`
+  `--lease-timeout-ms`; `outbox redrive` returns terminal `failed` entries to
+  `pending`; `outbox drain --transport file --outbox-dir <path>` writes one
+  file envelope per event instead of reporting only
+- `quality list` and `quality inspect` read stored
+  `acme-quality-evaluation/1` records; `quality judge` runs the live-model
+  judge under `ACME_LIVE_TEST` plus credentials, or an injected transport in
+  tests
 - `--adapter memory|sqlite` selects the repository; `--database` is required
   for SQLite and rejected for memory
 - versioned JSON goes to stdout and diagnostics to stderr
@@ -612,11 +627,12 @@ this to an operator. Inspect reports counts by status and optional
 `--max-pending` / `--max-failed` growth alarms (composition-root policy;
 exit code 1 when exceeded). Host scheduling should call `acme outbox drain`
 from cron/`systemd`/CI — not a library timer (ADR-0018). The
-CLI default dispatcher hands events to the operator through the drain report;
-`--transport file --outbox-dir <path>` also writes versioned
-`acme-outbox-file-delivery/1` envelopes (ACME-0061). The report path rather
-than inventing a transport; a real transport is a composition-root change.
-`failed` entries have no redrive path.
+CLI default dispatcher hands events to the operator through the drain report
+rather than inventing a transport; `--transport file --outbox-dir <path>` also
+writes versioned `acme-outbox-file-delivery/1` envelopes (ACME-0061), and any
+other real transport remains a composition-root change. Terminal `failed`
+entries return to `pending` through `redriveOutbox` and `acme outbox redrive`
+(ACME-0059), which never touches a `delivered` entry and deletes no evidence.
 
 ## System Purpose
 
@@ -801,20 +817,24 @@ ACME-0046 connected S2 to protected offline preview and launch, ACME-0047
 rendered the existing catalog contract as S1, and ACME-0048 rendered durable
 memory-decision evidence as S5. ACME-0049 rendered repository state lineage as
 S6, ACME-0050 rendered read-only replay verification as S7, ACME-0051
-rendered recorded-run measurement as S8, and ACME-0052 rendered fixture review
-as S9.
+rendered recorded-run measurement as S8, ACME-0052 rendered fixture review
+as S9 and ACME-0053 rendered gated single-execute live evaluation as S10.
+ACME-0067 added the pure S11 quality-evaluation view, and ACME-0069 replaced
+blocking browser launch with an in-process job runner under ADR-0027.
 
 Implemented today:
 
 - `apps/test-ui` (`@acme/test-ui`), a leaf app. It may read public package
   entry points; it may not import a package internal, and nothing imports it.
   Both directions fail a dependency-cruiser fixture
-- ten versioned view contracts — `acme-view-execution/1` (S4),
+- eleven versioned view contracts — `acme-view-execution/1` (S4),
   `acme-view-memory-decisions/1` (S5), `acme-view-state/1` (S6),
   `acme-view-replay/1` (S7), `acme-view-catalog/1` (S1),
   `acme-view-plan/1` (S2), `acme-view-runs/1` (S3),
-  `acme-view-measurement/1` (S8), `acme-view-fixture-review/1` (S9) and
-  `acme-view-live-evaluation/1` (S10)
+  `acme-view-measurement/1` (S8), `acme-view-fixture-review/1` (S9),
+  `acme-view-live-evaluation/1` (S10) and
+  `acme-view-quality-evaluation/1` (S11, list and detail over stored quality
+  evaluations; pure contract only, with no HTML page)
 - pure builders from recorded evidence to those views. No I/O, no clock, no
   network, no browser; every contract is asserted as JSON
 - absence as an explicit value: each optional section is `available` or
@@ -1001,9 +1021,10 @@ when the workbench supplies job records (ACME-0069 / ADR-0027).
 - Residual gaps (trust-stage evidence and related items) are inventoried with
   work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). G08 async launch is closed (ACME-0069). WP-D through WP-Q
-  (including quality CLI, S11 view and live
-  judge) are delivered as ACME-0057–0068.
+  (ACME-0056). WP-D through WP-Q (including quality CLI, S11 view and live
+  judge) are delivered as ACME-0057–0068, and WP-T's T1 async launch (G08) is
+  closed by ACME-0069. Open: G12 trust-stage evidence (WP-E), the WP-T
+  residuals T2/T3/T4, and the deferred WP-P, WP-K and WP-X items.
 
 ## Deliberately Deferred Decisions
 

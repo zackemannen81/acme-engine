@@ -18,9 +18,11 @@ acceptance scenario, which is the executable evidence that core is
 domain-neutral. The OpenAI Responses mapping lowers schemas for strict
 structured output, is proven offline and has reached live success through an
 opt-in gate. Encrypted-payload retention seals model responses at rest.
-`@acme/cli` selects either repository, runs declarative `acme-scenario/1`
-files, and can execute with the mock gateway (`--script`) or live OpenAI
-(`--gateway openai`). No published package exists.
+`@acme/cli` selects either repository, runs declarative `acme-scenario/1` and
+`acme-scenario/2` files, and can execute with the mock gateway (`--script`) or
+live OpenAI (`--gateway openai`). Post-execution quality evaluations persist in
+an in-memory or durable SQLite store and are read through
+`acme quality list|inspect|judge`. No published package exists.
 
 Milestone 2 is complete. An execution interrupted after a successful model
 call resumes from the recorded response without paying for a second one, or
@@ -55,6 +57,9 @@ docs/design/              Design specifications
 docs/paused/              Paused parent tasks
 docs/backlog/             Non-activated work proposals
 docs/finished/            Completed task archive
+docs/concepts_sandbox/    Excluded concept work; never authority
+docs/hrd/, hrd/           Derived human-readable Swedish artifacts
+tests/                    Conformance, integration, scenario and opt-in live gates
 apps/cli/                 Composition root: execute, replay, inspect
 apps/test-ui/             Domain Test UI read model, catalog, plans and launch
 packages/core/            Domain-neutral contracts and deterministic primitives
@@ -72,8 +77,11 @@ tooling/                   Shared configuration and repository checks
 ## Current objective
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
-`docs/CURRENT_STATUS.md` for implemented capability and persistent gaps
-(multi-step live runs, durable quality-evaluation storage, outbox redrive and
-real transports, ambiguous call reconciliation, key lifecycle, optional
-parameter-capability gating). The next task must be explicitly approved before
-activation.
+`docs/CURRENT_STATUS.md` for implemented capability and persistent gaps.
+Multi-step live runs, durable quality-evaluation storage, outbox redrive and a
+file transport, driver-error classification, stranded-execution operator
+commands and async workbench launch are delivered (ACME-0057–0069). What
+remains open is trust-stage evidence granularity, the Domain Test UI residuals
+(plan `measurements`, adapter discovery, browser CI), ambiguous call
+reconciliation, key lifecycle and optional parameter-capability gating. The
+next task must be explicitly approved before activation.

@@ -2,6 +2,48 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-09 — ACME-0070 documentation reality sync (ACME-0057–0069)
+
+- Date: 2026-08-09
+- Author: Claude
+- Task: ACME-0070
+- Branch: `main`
+- Summary: Documentation-only resync after ACME-0057 through ACME-0069.
+  `docs/CURRENT_STATUS.md`: date, ADR-0026/0027 added to the list, durable
+  quality store / quality CLI / S11 view / live judge / async launch recorded
+  as implemented, CLI command list completed, view contracts corrected from
+  five to eleven, S3 progress wording corrected, active work and recent-work
+  summary updated, measured test counts replaced.
+  `docs/SYSTEMDOC.md`: date and status line, quality section no longer claims
+  durable storage / CLI / live judges are unimplemented, `quality` commands
+  added to the composition root, outbox section no longer claims `failed`
+  entries lack a redrive path, ten view contracts corrected to eleven, and two
+  sentences garbled by earlier merges repaired.
+  `docs/FILESTRUCTURE.md`: added `apps/cli/src/outbox-file-dispatcher.ts` and
+  its test, `read-model/quality-evaluation.ts`, `evaluation/src/live-judge.ts`
+  and its test, `tests/conformance/quality-evaluation-sqlite.test.ts`,
+  `tests/integration/scenario-live-offline.test.ts`,
+  `tests/live/scenario-multi-step.test.ts`, the evaluation boundary fixture,
+  `.grok/`, both `.npmrc` workspace files, the concepts_sandbox subdirectories,
+  `docs/hrd/` and the ACME-0069/0070 archives.
+  `AGENTS.md`, `README.md`, `docs/PROJECT_BRIEF.md`,
+  `docs/design/gap-resolution-plan.md`, `docs/design/README.md`,
+  `docs/design/domain-test-ui-specification.md` and `docs/backlog/README.md`:
+  closed gaps no longer described as open.
+- Verification: `pnpm test:unit` (603 tests / 73 files), `pnpm test`
+  (conformance 64/9, integration 56/10, scenario 24/5) — all green and the
+  source of the recorded counts; `pnpm docs:check` (141 files, links and
+  fences clean); `git diff --check` reports only
+  `docs/design/gap-resolution-plan.md:4`, whose trailing whitespace is that
+  document's pre-existing Markdown hard-break convention and was kept.
+  No code, test or configuration file was modified.
+  `pnpm test:live` was not run: this task changes no code and live runs stay
+  operator-initiated.
+- Handoff: no implementation task is active. Next recommended is E1
+  trust-stage evidence (G12), then the WP-T residuals T2/T3/T4. Both need an
+  explicitly approved charter.
+- Signature: Claude
+
 ## 2026-08-09 — ACME-0069 async launch, progress and cancellation (T1 / G08)
 
 - Date: 2026-08-09
