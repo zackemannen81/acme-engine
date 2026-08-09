@@ -839,7 +839,7 @@ describe('acme CLI durable round trip', () => {
 
     // Force the only entry into terminal failed via lease + fail.
     const connection = openDatabase({ location: database, appliedAt: now });
-    let eventId = '';
+    let eventId;
     try {
       const repository = createSqliteExecutionRepository({
         database: connection,

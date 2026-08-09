@@ -27,6 +27,7 @@ const entityId = 'story-live-offline';
 const selection = { profile: 'live-openai' };
 const roots: string[] = [];
 
+console.log(selection);
 afterEach(() => {
   while (roots.length > 0) {
     rmSync(roots.pop() ?? '', { recursive: true, force: true });

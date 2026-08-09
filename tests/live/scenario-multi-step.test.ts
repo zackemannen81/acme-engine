@@ -130,7 +130,10 @@ steps:
       io.options,
     );
     if (code !== EXIT_OK) {
-      // eslint-disable-next-line no-console
+      /*
+	Dont know why it's broken.
+	3slint-disable-next-line no-console
+      */
       console.error(io.out.join('\n'), io.err.join('\n'));
     }
     expect(code).toBe(EXIT_OK);
