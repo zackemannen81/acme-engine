@@ -71,7 +71,7 @@ explicit disposition.
 | G16 | Offline success-path Responses fixtures are simplified samples, not byte-identical live captures | Fixtures | Drift risk vs real provider bodies | **Optional** WP-P hygiene |
 | G17 | Package boundary enforcement covers current packages only; future adapters must extend rules | Tooling | New adapters could violate dependency direction unnoticed | **Process:** every new adapter task extends rules (WP-X) |
 | G18 | `better-sqlite3` prebuild observed on Windows + `ubuntu-latest` only | Platform | Other platforms unproven | **Accept / observe** (WP-X note); no multi-OS matrix required yet |
-| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Q1 closed** ACME-0065; Q2–Q4 remain |
+| G19 | Quality evaluation is memory-only; no SQLite migration, durable adapter, CLI, Test UI or live AI judge | Evaluation durability | Quality results lost across process restarts | **Closed** ACME-0065–0068 (WP-Q) |
 
 ## 3. Constraints that shape solutions
 
@@ -305,9 +305,10 @@ idempotent semantics as the in-memory adapter, then expose read paths.
 
 1. **Q1 — SQLite migration + durable adapter + conformance** — **done ACME-0065**
 2. **Q2 — CLI inspect/list (and optional scenario wiring over durable store)**
-3. **Q3 — Test UI read surface (optional)**
-4. **Q4 — Live / general AI judge (explicitly separate; high bar; live
-   adapter proof in scope when this slice is activated)**
+   — **done ACME-0066**
+3. **Q3 — Test UI read surface (optional)** — **done ACME-0067** (pure S11 view)
+4. **Q4 — Live / general AI judge** — **done ACME-0068** (`live-model` outside
+   harness; offline injected transport + opt-in live)
 
 #### Q1 steps
 

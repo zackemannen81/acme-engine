@@ -436,6 +436,9 @@ acme-engine/
 │   │   ├── ACME-0063_plan-model-pin.md
 │   │   ├── ACME-0064_scenario-live-multi-step.md
 │   │   ├── ACME-0065_durable-quality-store.md
+│   │   ├── ACME-0066_quality-cli.md
+│   │   ├── ACME-0067_quality-view.md
+│   │   ├── ACME-0068_live-quality-judge.md
 │   │   └── README.md
 │   ├── paused/
 │   │   └── README.md

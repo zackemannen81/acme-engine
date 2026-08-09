@@ -16,11 +16,16 @@ import {
   type PayloadEncryptor,
   type RepositoryEvidence,
 } from '@acme/core';
-import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
+import {
+  createInMemoryExecutionRepository,
+  createInMemoryQualityEvaluationStore,
+} from '@acme/adapter-memory';
 import {
   createSqliteExecutionRepository,
+  createSqliteQualityEvaluationStore,
   openDatabase,
 } from '@acme/adapter-sqlite';
+import type { QualityEvaluationStore } from '@acme/evaluation';
 import {
   narrativeModule,
   narrativeObserveDocumentContract,
@@ -71,6 +76,8 @@ function payloadEncryptorFromEnv(): PayloadEncryptor | undefined {
 
 export interface Composition {
   readonly repository: InspectableRepository;
+  /** Sibling quality store (memory or same SQLite file as the ledger). */
+  readonly qualityStore: QualityEvaluationStore;
   /** The selected clock, so commands that need time do not invent one. */
   readonly clock: Clock;
   readonly close: () => void;
@@ -108,6 +115,7 @@ export function createComposition(
     overrides.payloadEncryptor ?? payloadEncryptorFromEnv();
 
   let repository: InspectableRepository;
+  let qualityStore: QualityEvaluationStore;
   let close = (): void => {};
 
   if (adapter === 'sqlite') {
@@ -126,15 +134,18 @@ export function createComposition(
       ids,
       ...(payloadEncryptor === undefined ? {} : { payloadEncryptor }),
     });
+    qualityStore = createSqliteQualityEvaluationStore({ database: connection });
   } else {
     repository = createInMemoryExecutionRepository({
       ids,
       ...(payloadEncryptor === undefined ? {} : { payloadEncryptor }),
     });
+    qualityStore = createInMemoryQualityEvaluationStore();
   }
 
   return {
     repository,
+    qualityStore,
     clock,
     close,
     engine(gateway) {

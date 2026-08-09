@@ -23,6 +23,8 @@ export const FIXTURE_REVIEW_VIEW_VERSION =
   'acme-view-fixture-review/1' as const;
 export const LIVE_EVALUATION_VIEW_VERSION =
   'acme-view-live-evaluation/1' as const;
+export const QUALITY_EVALUATION_VIEW_VERSION =
+  'acme-view-quality-evaluation/1' as const;
 
 /**
  * Reason codes for an unavailable section. They are part of the view

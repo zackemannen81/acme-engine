@@ -993,11 +993,11 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
   live remains via CLI and test-ui `launchLiveExecution` (S10).
-- Residual gaps (quality CLI/UI/live judge, async launch, and related items)
-  are inventoried with work packages and activation order in
+- Residual gaps (async launch, trust-stage evidence, and related items) are
+  inventoried with work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). WP-D, WP-O, WP-L and Q1 durable quality store are delivered as
-  ACME-0057–0065.
+  (ACME-0056). WP-D through WP-Q (including quality CLI, S11 view and live
+  judge) are delivered as ACME-0057–0068.
 
 ## Deliberately Deferred Decisions
 

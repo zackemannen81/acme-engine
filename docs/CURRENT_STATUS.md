@@ -285,9 +285,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule.
 
 ## Active Work
 
-No implementation task is active. ACME-0065 closed Q1 durable quality
-evaluation store on `chore/gapfixes`. Next recommended: Q2 CLI quality
-inspect or E1 trust stages. `docs/CURRENT_TASK.md` is the Draft template.
+No implementation task is active. ACME-0066–0068 closed WP-Q Q2–Q4 on
+`grok/gapfixes2` (CLI quality surfaces, pure S11 view, live-model judge).
+Next recommended: E1 trust stages or WP-T residuals.
+`docs/CURRENT_TASK.md` is the Draft template.
 
 ### Recent completed work (summary)
 
@@ -384,6 +385,9 @@ inspect or E1 trust stages. `docs/CURRENT_TASK.md` is the Draft template.
 - **ACME-0064:** ScenarioRunner live multi-step (`gateway: openai`,
   offline injected transport + opt-in live gate).
 - **ACME-0065:** Durable SQLite quality evaluation store (Q1, ADR-0026).
+- **ACME-0066:** CLI quality list/inspect over composition quality store (Q2).
+- **ACME-0067:** Pure Test UI quality evaluation list/detail view S11 (Q3).
+- **ACME-0068:** Live-model quality judge + `quality judge` CLI (Q4).
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
@@ -598,7 +602,7 @@ Ordering, dependencies and activatable slices live in
 - **G18 — `better-sqlite3` prebuild** is exercised on Windows locally and on
   `ubuntu-latest` in CI, where the full suite including the SQLite adapter
   passes. No other platform is observed. → WP-X observe-only
-- **G19 — Quality evaluation durability:** **Q1 closed by ACME-0065 / ADR-0026.**
-  SQLite migration v2 + `createSqliteQualityEvaluationStore` pass the same
-  conformance kit as memory; close/reopen preserves records. Remaining: CLI
-  (Q2), Test UI (Q3), live AI judge (Q4).
+- **G19 — Quality evaluation:** **Closed WP-Q (ACME-0065–0068).** Durable
+  SQLite store (Q1), CLI `quality list|inspect|judge` (Q2), pure
+  `acme-view-quality-evaluation/1` (Q3), and live-model judge outside the
+  sync harness with offline injected-transport proof (Q4).

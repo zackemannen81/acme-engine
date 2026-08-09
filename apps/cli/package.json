@@ -22,6 +22,7 @@
     "@acme/adapter-model-openai": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
     "@acme/core": "workspace:*",
+    "@acme/evaluation": "workspace:*",
     "@acme/module-narrative": "workspace:*",
     "@acme/module-research": "workspace:*",
     "@acme/testing": "workspace:*",

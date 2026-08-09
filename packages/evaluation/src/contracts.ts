@@ -17,7 +17,14 @@ export const QUALITY_EVALUATION_ID_ALGORITHM =
   'acme-quality-evaluation-id-1' as const;
 
 export type QualityVerdict = 'pass' | 'fail' | 'inconclusive';
-export type QualityEvaluatorKind = 'deterministic' | 'recorded-external';
+/**
+ * `live-model` is produced only by the composition-root live judge path
+ * (ACME-0068), never by the synchronous harness (ADR-0025).
+ */
+export type QualityEvaluatorKind =
+  | 'deterministic'
+  | 'recorded-external'
+  | 'live-model';
 
 export interface QualityScore {
   readonly id: string;
@@ -115,8 +122,21 @@ export interface RecordedExternalQualityEvaluator {
   evaluate(input: QualityEvaluationInput): unknown;
 }
 
+/**
+ * Identity-only registration for provenance. The synchronous harness must not
+ * invoke live-model evaluators; use `runLiveModelQualityJudge` instead.
+ */
+export interface LiveModelQualityEvaluator {
+  readonly id: string;
+  readonly version: string;
+  readonly kind: 'live-model';
+  evaluate(input: QualityEvaluationInput): unknown;
+}
+
 export type QualityEvaluator =
-  DeterministicQualityEvaluator | RecordedExternalQualityEvaluator;
+  | DeterministicQualityEvaluator
+  | RecordedExternalQualityEvaluator
+  | LiveModelQualityEvaluator;
 
 export interface QualityEvaluationQuery {
   readonly runId?: string;

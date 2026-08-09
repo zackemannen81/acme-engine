@@ -59,6 +59,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@acme/evaluation':
+        specifier: workspace:*
+        version: link:../../packages/evaluation
       '@acme/module-narrative':
         specifier: workspace:*
         version: link:../../packages/module-narrative

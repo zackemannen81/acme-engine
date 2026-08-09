@@ -2,6 +2,20 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-06 — ACME-0066/0067/0068 quality CLI, S11 view, live judge (Q2–Q4)
+
+- Date: 2026-08-06
+- Author: Grok
+- Task: ACME-0066, ACME-0067, ACME-0068
+- Branch: `grok/gapfixes2`
+- Summary: Closed WP-Q remainder. CLI composition exposes `qualityStore`
+  (memory or same SQLite file). Commands: `quality list`, `quality inspect`,
+  `quality judge`. Pure Test UI view `acme-view-quality-evaluation/1` (list +
+  detail). Live-model judge `runLiveModelQualityJudge` runs outside the
+  synchronous harness (which still refuses Promise returns); stores
+  `kind: live-model`. Offline CLI judge proven with injected OpenAI transport.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0065 durable quality evaluation store (Q1)
 
 - Date: 2026-08-06
