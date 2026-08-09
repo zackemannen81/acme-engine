@@ -90,6 +90,28 @@ function submission(
   });
 }
 
+/** Poll until async enqueue (ADR-0027) writes a terminal history row. */
+async function waitForRun(
+  baseUrl: string,
+  runId: string,
+  timeoutMs = 10_000,
+): Promise<{ readonly runId: string; readonly status: string }> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const history = (await (await fetch(`${baseUrl}/api/runs`)).json()) as {
+      history: {
+        runs: readonly { runId: string; status: string }[];
+      };
+    };
+    const found = history.history.runs.find((entry) => entry.runId === runId);
+    if (found !== undefined) {
+      return found;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error(`Timed out waiting for run ${runId}`);
+}
+
 afterEach(async () => {
   while (servers.length > 0) {
     const server = servers.pop();
@@ -641,11 +663,14 @@ describe('test-ui local workbench server', () => {
     expect(launch.status).toBe(303);
     expect(launch.headers.get('location')).toBe('/s3/browser-run-001');
 
+    await waitForRun(server.url, 'browser-run-001');
     const history = (await (await fetch(`${server.url}/api/runs`)).json()) as {
       history: {
         runs: readonly { runId: string; status: string }[];
       };
+      progress: { availability: string };
     };
+    expect(history.progress.availability).toBe('available');
     expect(history.history.runs).toContainEqual(
       expect.objectContaining({
         runId: 'browser-run-001',
@@ -1016,6 +1041,7 @@ describe('test-ui local workbench server', () => {
       redirect: 'manual',
     });
     expect(launched.status).toBe(303);
+    await waitForRun(server.url, 'browser-memory-001');
     const detail = await fetch(`${server.url}/s3/browser-memory-001`);
     expect(detail.status).toBe(200);
     expect(await detail.text()).toContain('in-memory ledger was not');

@@ -2,6 +2,26 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-09 — ACME-0069 async launch, progress and cancellation (T1 / G08)
+
+- Date: 2026-08-09
+- Author: Grok
+- Task: ACME-0069
+- Branch: `grok/gapfixes2`
+- Summary: Closed G08 behind ADR-0027. Workbench process owns an in-process
+  JobRunner (single-flight). Interface workspace gains `jobs/<id>.json`
+  (`acme-job-record/1`). Parallel API `enqueuePlan` returns immediately;
+  synchronous `launchPlan` unchanged. S3 progress available when job evidence
+  is supplied; pure history-only callers still see `RUN_PROGRESS_UNAVAILABLE`.
+  Cooperative cancel via AbortSignal on `runScenario` and optional
+  `ExecutionEngine.execute` second argument. Cancel does not roll back ledger
+  commits. Run records accept status `cancelled`. Workbench HTTP launch uses
+  enqueue; POST `/s3/<id>/cancel` with CSRF. Process restart marks non-terminal
+  jobs `interrupted`.
+- Verification: typecheck core/testing/test-ui; unit tests including job-runner;
+  integration test-ui-workbench + test-ui-launch.
+- Signature: Grok
+
 ## 2026-08-06 — ACME-0066/0067/0068 quality CLI, S11 view, live judge (Q2–Q4)
 
 - Date: 2026-08-06

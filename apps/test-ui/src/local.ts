@@ -11,6 +11,7 @@ export {
   type Workspace,
   type WorkspaceApprovals,
   type WorkspaceHistory,
+  type WorkspaceJobs,
   type WorkspaceOptions,
 } from './local/workspace.js';
 
@@ -28,6 +29,16 @@ export {
   type LaunchOptions,
   type LaunchResult,
 } from './local/launch.js';
+
+export {
+  createJobRunner,
+  enqueuePlan,
+  type CancelJobResult,
+  type EnqueuePlanOptions,
+  type EnqueuePlanResult,
+  type JobRunner,
+  type JobRunnerOptions,
+} from './local/job-runner.js';
 
 export {
   launchLiveExecution,

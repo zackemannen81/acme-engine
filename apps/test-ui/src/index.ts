@@ -172,11 +172,24 @@ export {
 export {
   buildRunDetailView,
   buildRunsView,
+  listActiveJobs,
+  type JobProgressView,
   type RunDetailView,
   type RunSummaryView,
   type RunsEvidence,
   type RunsView,
 } from './read-model/runs.js';
+
+export {
+  JOB_RECORD_VERSION,
+  emptyJobProgress,
+  isSafeJobId,
+  isTerminalJobStatus,
+  parseJobRecord,
+  type JobProgressSnapshot,
+  type JobRecord,
+  type JobStatus,
+} from './job-record.js';
 
 export {
   buildMeasurementView,

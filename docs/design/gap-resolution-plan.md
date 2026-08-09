@@ -60,7 +60,7 @@ explicit disposition.
 | G05 | Driver errors surface as non-retryable `INTERNAL` (`SQLITE_BUSY` indistinguishable) | Durability / errors | Wrong retry policy under contention | **Closed** ACME-0057 (WP-D / D1) |
 | G06 | Stranded executions: no operator list/discharge for terminal resume refusals | Operator tooling | Human process is manual and invisible | **Closed** ACME-0058 (WP-D / D2) |
 | G07 | Domain Test UI workbench phases 0–6 / S1–S10 delivered; CI still CLI/`pnpm`, not browser | Test UI status | Observational, not a defect | **Accept** as intentional; optional browser CI later (WP-T residual) |
-| G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Solve** only with ADR amendment path in WP-T |
+| G08 | `launchPlan` is synchronous; no queue, worker or cancellation; S3 live-progress stays `unavailable` (ADR-0021) | Test UI async | Long runs block caller | **Closed** ACME-0069 / ADR-0027 (sync `launchPlan` kept; workbench uses `enqueuePlan`) |
 | G09 | Plans cannot pin a model; `ExecutionRequest` cannot be materialized from a plan alone (ADR-0020) | Plans / live | Blocks plan-driven live multi-step | **Closed** ACME-0063 |
 | G10 | `measurements` not in `acme-test-plan/1`; thresholds only at measurement time | Plans / metrics | Plan cannot carry SLO thresholds | **Solve** via WP-T (separate charter from G09) |
 | G11 | Adapter targets are declared, not discovered; undeclared adapters invisible in catalog | Catalog / composition | Catalog incomplete unless composition root lists targets | **Solve** via WP-T or **accept** static declaration as intentional |

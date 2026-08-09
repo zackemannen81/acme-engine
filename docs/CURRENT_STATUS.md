@@ -559,10 +559,11 @@ Ordering, dependencies and activatable slices live in
   measurement, fixture review, gated single-execute live). CI still uses
   CLI/`pnpm` gates, not the browser. **Accepted** as intentional; optional
   browser CI is T4 only. → accept / WP-T optional
-- **G08 — Launching blocks its caller.** `launchPlan` is synchronous by
-  decision (ADR-0021). There is no queue, no background worker and no
-  cancellation, so S3's live-progress section stays `unavailable` and a long
-  run holds the caller until it finishes. → WP-T (ADR amendment first)
+- **G08 — Launching blocks its caller:** **Closed by ACME-0069 / ADR-0027.**
+  Synchronous `launchPlan` remains for blocking callers. Workbench HTTP launch
+  uses in-process `enqueuePlan` / JobRunner with interface-owned
+  `acme-job-record/1` files, S3 live-progress when job evidence is supplied,
+  and cooperative cancel via AbortSignal (no ledger rollback of commits).
 - **G09 — Plans cannot pin a model:** **Closed by ACME-0063.** Case-level
   `model` on `acme-test-plan/1` compiles to `execute.model`; materialization
   prefers plan model over mockResponse selection. Live plans may use

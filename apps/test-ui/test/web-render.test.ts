@@ -211,6 +211,42 @@ describe('pure HTML renderers', () => {
     expect(html).toContain('RUN_PROGRESS_UNAVAILABLE');
   });
 
+  it('renders live progress when job evidence is present', () => {
+    const view = buildRunsView({
+      records: [],
+      jobs: [
+        {
+          version: 'acme-job-record/1',
+          jobId: 'job-live',
+          runId: 'job-live',
+          planName: 'demo',
+          scenarioName: 'demo-scenario',
+          status: 'running',
+          queuedAt: '2026-08-09T12:00:00.000Z',
+          startedAt: '2026-08-09T12:00:01.000Z',
+          updatedAt: '2026-08-09T12:00:02.000Z',
+          finishedAt: null,
+          composition: { repository: 'memory', gateway: 'mock' },
+          progress: {
+            stepIndex: 0,
+            stepKind: 'execute',
+            stepTotal: 2,
+            message: 'starting execute',
+          },
+          cancelRequestedAt: null,
+          runRecordWritten: false,
+          failure: null,
+        },
+      ],
+    });
+    const html = renderRunsViewHtml(view, { csrfToken: 'token' });
+    expect(html).toContain('Live progress');
+    expect(html).toContain('job-live');
+    expect(html).toContain('starting execute');
+    expect(html).toContain('/s3/job-live/cancel');
+    expect(html).not.toContain('RUN_PROGRESS_UNAVAILABLE');
+  });
+
   it('renders empty history without inventing a perfect series', () => {
     const view = buildRunsView({ records: [] });
     const html = renderRunsViewHtml(view);

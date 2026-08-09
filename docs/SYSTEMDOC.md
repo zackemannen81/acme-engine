@@ -867,18 +867,20 @@ Implemented today:
   and reports an invalid plan instead of throwing, so an author can see where
   the mistake is
 - a launch path (ADR-0021) that compiles, runs through the existing
-  ScenarioRunner and records the run. It is synchronous: no worker, no queue,
-  no retry, no cancellation
+  ScenarioRunner and records the run. Synchronous `launchPlan` remains for
+  blocking callers (ADR-0021). Async workbench launch uses `enqueuePlan` /
+  JobRunner (ADR-0027): in-process single-flight worker, optional cancel
 - an interface-owned workspace of files — `runs/<runId>.json`,
-  `baselines/<name>.json`, `approvals/<proposalId>.json` — sharing no table,
-  file or directory with the execution ledger. Deleting it loses interface
-  state and no canonical fact
+  `jobs/<jobId>.json`, `baselines/<name>.json`, `approvals/<proposalId>.json` —
+  sharing no table, file or directory with the execution ledger. Deleting it
+  loses interface state and no canonical fact
 - a history index derived by reading the records, so it cannot disagree with
   them, and a run identifier validated as a safe file name before any path is
   built
-- a run console (S3) whose live-progress half is `unavailable`, because
-  nothing runs in the background. A queue of depth one would describe a system
-  that does not exist
+- a run console (S3) whose live-progress section is `available` when the host
+  supplies job evidence (including an empty queue). Without job evidence it
+  stays `unavailable` (`RUN_PROGRESS_UNAVAILABLE`) for pure history-only
+  callers. Progress copies job snapshots; it invents no verdict
 - run records that link each case to its execution id, so history reaches the
   S4 inspector and the evidence the repository already owns
 - measurement (S8, ADR-0022): rates over recorded run records only —
@@ -945,8 +947,11 @@ Implemented today:
   exclusive creation and cannot be overwritten by a competing write.
   The S2 form accepts bounded YAML/JSON, requires a per-process token and
   same-server request proof, uses a process-configured scenario root, refuses
-  unsafe or duplicate run ids, and calls the existing synchronous `launchPlan`
-  only. Non-loopback hosts are refused. No CDN; CSS is in-package
+  unsafe or duplicate run ids, and enqueues via JobRunner (`enqueuePlan`) so
+  the HTTP response returns before the scenario finishes (ADR-0027). Cancel is
+  POST `/s3/<runId>/cancel` with the same CSRF/same-server proof. Synchronous
+  `launchPlan` remains available for scripts and tests. Non-loopback hosts are
+  refused. No CDN; CSS is in-package
 
 Constraints that continue to bind later phases:
 
@@ -964,8 +969,8 @@ Constraints that continue to bind later phases:
 
 Multi-step live scenarios are supported via ScenarioRunner `gateway: openai`
 (ACME-0064); remote hosting is not. Plans may pin `model` (ACME-0063). The plan
-format's `measurements` block remains absent. S3's live-progress section stays
-unavailable until something runs in the background.
+format's `measurements` block remains absent. S3 live-progress is available
+when the workbench supplies job records (ACME-0069 / ADR-0027).
 
 ## Remaining Implementation Baseline
 
@@ -993,10 +998,11 @@ unavailable until something runs in the background.
   fact.
 - ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
   live remains via CLI and test-ui `launchLiveExecution` (S10).
-- Residual gaps (async launch, trust-stage evidence, and related items) are
-  inventoried with work packages and activation order in
+- Residual gaps (trust-stage evidence and related items) are inventoried with
+  work packages and activation order in
   [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). WP-D through WP-Q (including quality CLI, S11 view and live
+  (ACME-0056). G08 async launch is closed (ACME-0069). WP-D through WP-Q
+  (including quality CLI, S11 view and live
   judge) are delivered as ACME-0057–0068.
 
 ## Deliberately Deferred Decisions

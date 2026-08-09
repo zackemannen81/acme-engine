@@ -184,6 +184,14 @@ export interface ScenarioComposition {
   readonly liveGateway?: (selection: ModelSelection) => ModelGateway;
 }
 
+export interface ScenarioStepProgress {
+  readonly index: number;
+  readonly kind: string;
+  readonly stepTotal: number;
+  readonly phase: 'start' | 'complete';
+  readonly status?: 'passed' | 'failed' | 'skipped';
+}
+
 export interface ScenarioRunOptions {
   readonly document: unknown;
   /**
@@ -197,6 +205,13 @@ export interface ScenarioRunOptions {
     readonly runId: string;
     readonly harness: Pick<QualityEvaluationHarness, 'run' | 'runWith'>;
   };
+  /**
+   * Cooperative cancellation (ADR-0027). Checked before each step and passed
+   * into engine model calls when present.
+   */
+  readonly signal?: AbortSignal;
+  /** Optional progress hook for interface job runners; never affects outcomes. */
+  readonly onStep?: (progress: ScenarioStepProgress) => void;
 }
 
 class ScenarioError extends AcmeError {}
@@ -634,6 +649,9 @@ export async function runScenario(
     return executionId;
   }
 
+  const stepTotal = document.steps.length;
+  const signal = options.signal;
+
   for (const [index, step] of document.steps.entries()) {
     if (failure !== undefined) {
       steps.push({
@@ -645,7 +663,35 @@ export async function runScenario(
       continue;
     }
 
+    if (signal?.aborted) {
+      failure = {
+        stepIndex: index,
+        message: 'The scenario was cancelled before this step started.',
+      };
+      steps.push({
+        index,
+        kind: Object.keys(step)[0] ?? 'unknown',
+        status: 'skipped',
+        detail: null,
+      });
+      for (let rest = index + 1; rest < document.steps.length; rest += 1) {
+        steps.push({
+          index: rest,
+          kind: Object.keys(document.steps[rest]!)[0] ?? 'unknown',
+          status: 'skipped',
+          detail: null,
+        });
+      }
+      break;
+    }
+
     const kind = Object.keys(step)[0] as string;
+    options.onStep?.({
+      index,
+      kind,
+      stepTotal,
+      phase: 'start',
+    });
     try {
       let detail: JsonValue = null;
 
@@ -703,7 +749,12 @@ export async function runScenario(
                 >,
               }),
         };
-        const result = await composition.engine(gateway).execute(request);
+        const result = await composition
+          .engine(gateway)
+          .execute(
+            request,
+            signal === undefined ? undefined : { signal },
+          );
         aliases.set(spec.as, executionId);
 
         const observed = observedHash?.();
@@ -906,6 +957,13 @@ export async function runScenario(
       }
 
       steps.push({ index, kind, status: 'passed', detail });
+      options.onStep?.({
+        index,
+        kind,
+        stepTotal,
+        phase: 'complete',
+        status: 'passed',
+      });
     } catch (error: unknown) {
       const message =
         error instanceof StepFailure
@@ -916,6 +974,13 @@ export async function runScenario(
               ? error.message
               : 'Unexpected scenario failure.';
       steps.push({ index, kind, status: 'failed', detail: { message } });
+      options.onStep?.({
+        index,
+        kind,
+        stepTotal,
+        phase: 'complete',
+        status: 'failed',
+      });
       failure = { stepIndex: index, message };
     }
   }
