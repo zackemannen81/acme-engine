@@ -322,7 +322,7 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
       };
       // Prefer writing the job terminal state even if history already exists
       // (e.g. a racing worker already recorded a run).
-      let runRecordWritten = false;
+      let runRecordWritten: boolean;
       try {
         if ((await workspace.loadRun(job.runId)) === null) {
           await workspace.recordRun(runRecord);
