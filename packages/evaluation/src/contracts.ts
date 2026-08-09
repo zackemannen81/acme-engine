@@ -22,9 +22,7 @@ export type QualityVerdict = 'pass' | 'fail' | 'inconclusive';
  * (ACME-0068), never by the synchronous harness (ADR-0025).
  */
 export type QualityEvaluatorKind =
-  | 'deterministic'
-  | 'recorded-external'
-  | 'live-model';
+  'deterministic' | 'recorded-external' | 'live-model';
 
 export interface QualityScore {
   readonly id: string;

@@ -173,7 +173,11 @@ export async function runLiveModelQualityJudge(
     executionId: options.input.subject.executionId,
     callKey: 'quality:live-model:0',
     selection: options.selection,
-    requiredCapabilities: { structuredOutput: true, tools: false, vision: false },
+    requiredCapabilities: {
+      structuredOutput: true,
+      tools: false,
+      vision: false,
+    },
     timeoutMs,
     signal: controller.signal,
   };

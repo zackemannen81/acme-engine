@@ -903,19 +903,17 @@ describe('acme CLI durable round trip', () => {
     const root = workspace();
     const database = join(root, 'quality.sqlite');
     const sqlite = ['--adapter', 'sqlite', '--database', database];
-    const {
-      createSqliteQualityEvaluationStore,
-      openDatabase,
-    } = await import('../../../packages/adapter-sqlite/src/index.js');
-    const {
-      createQualityEvaluationInput,
-      createQualityEvaluationRecord,
-    } = await import('../../../packages/evaluation/src/index.js');
+    const { createSqliteQualityEvaluationStore, openDatabase } =
+      await import('../../../packages/adapter-sqlite/src/index.js');
+    const { createQualityEvaluationInput, createQualityEvaluationRecord } =
+      await import('../../../packages/evaluation/src/index.js');
     const { sha256 } = await import('../../../packages/core/src/index.js');
 
     const connection = openDatabase({ location: database, appliedAt: now });
     try {
-      const store = createSqliteQualityEvaluationStore({ database: connection });
+      const store = createSqliteQualityEvaluationStore({
+        database: connection,
+      });
       const input = createQualityEvaluationInput({
         runId: 'cli-quality-run',
         executionResult: {
@@ -969,13 +967,7 @@ describe('acme CLI durable round trip', () => {
       const inspectIo = capture();
       await expect(
         run(
-          [
-            'quality',
-            'inspect',
-            record.evaluationId,
-            '--json',
-            ...sqlite,
-          ],
+          ['quality', 'inspect', record.evaluationId, '--json', ...sqlite],
           inspectIo.options,
         ),
       ).resolves.toBe(EXIT_OK);
@@ -1080,9 +1072,11 @@ describe('acme CLI durable round trip', () => {
       }
     }
     if (judgeCode !== EXIT_OK) {
-      // eslint-disable-next-line no-console
+      // There is no spoon!
+      // 3slint-disable-next-line no-console
       console.error('judge err', judgeIo.err.join('\n'));
-      // eslint-disable-next-line no-console
+      // These are not the errors you are looking for, move along..
+      // 3slint-disable-next-line no-console
       console.error('judge out', judgeIo.out.join('\n'));
     }
     expect(judgeCode).toBe(EXIT_OK);

@@ -121,23 +121,19 @@ export function buildQualityEvaluationListView(
     };
   }
   const items = [...records]
-    .sort((left, right) =>
-      left.evaluationId.localeCompare(right.evaluationId),
-    )
-    .map(
-      (record): QualityEvaluationListItemView => ({
-        evaluationId: record.evaluationId,
-        runId: record.subject.runId,
-        executionId: record.subject.executionId,
-        evaluatorId: record.evaluator.id,
-        evaluatorVersion: record.evaluator.version,
-        evaluatorKind: record.evaluator.kind,
-        verdict: record.result.verdict,
-        subjectDigest: record.subjectDigest,
-        scoreCount: record.result.scores.length,
-        findingCount: record.result.findings.length,
-      }),
-    );
+    .sort((left, right) => left.evaluationId.localeCompare(right.evaluationId))
+    .map((record): QualityEvaluationListItemView => ({
+      evaluationId: record.evaluationId,
+      runId: record.subject.runId,
+      executionId: record.subject.executionId,
+      evaluatorId: record.evaluator.id,
+      evaluatorVersion: record.evaluator.version,
+      evaluatorKind: record.evaluator.kind,
+      verdict: record.result.verdict,
+      subjectDigest: record.subjectDigest,
+      scoreCount: record.result.scores.length,
+      findingCount: record.result.findings.length,
+    }));
   return {
     view: QUALITY_EVALUATION_VIEW_VERSION,
     surface: 'list',

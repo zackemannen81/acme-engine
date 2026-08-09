@@ -876,10 +876,7 @@ function qualityJudge(
         );
       }
     }
-    const gateway = gatewayFromOpenAi(
-      { profile: 'live-quality' },
-      options,
-    );
+    const gateway = gatewayFromOpenAi({ profile: 'live-quality' }, options);
     const record = await runLiveModelQualityJudge({
       store: composition.qualityStore,
       gateway,
