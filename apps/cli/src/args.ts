@@ -308,9 +308,7 @@ export function parseCommand(argv: readonly string[]): Command {
       const dischargedBy = values['by'] as string | undefined;
       const rationale = values['rationale'] as string | undefined;
       if (dischargedBy === undefined || dischargedBy.trim().length === 0) {
-        throw new UsageError(
-          'execution discharge requires --by <operator>.',
-        );
+        throw new UsageError('execution discharge requires --by <operator>.');
       }
       if (rationale === undefined || rationale.trim().length === 0) {
         throw new UsageError(
@@ -380,7 +378,8 @@ export function parseCommand(argv: readonly string[]): Command {
         common: options,
       };
     }
-    const transportRaw = (values['transport'] as string | undefined) ?? 'report';
+    const transportRaw =
+      (values['transport'] as string | undefined) ?? 'report';
     if (transportRaw !== 'report' && transportRaw !== 'file') {
       throw new UsageError('--transport must be report or file.');
     }

@@ -123,8 +123,7 @@ export function createSqliteQualityEvaluationStore(
     async get(evaluationId: string): Promise<QualityEvaluationRecord | null> {
       return withSqliteDriverErrors(() => {
         const row = getById.get(evaluationId) as
-          | QualityEvaluationRow
-          | undefined;
+          QualityEvaluationRow | undefined;
         return row === undefined ? null : parseRow(row);
       });
     },

@@ -15,11 +15,7 @@ import {
   narrativeObserveDocumentTask,
 } from '../../packages/module-narrative/src/index.js';
 import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
-import {
-  EXIT_OK,
-  run,
-  type RunOptions,
-} from '../../apps/cli/src/index.js';
+import { EXIT_OK, run, type RunOptions } from '../../apps/cli/src/index.js';
 
 /**
  * ACME-0064: multi-step scenario with composition.gateway openai, proven

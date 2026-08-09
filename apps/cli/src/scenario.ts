@@ -120,7 +120,10 @@ export async function runScenarioFile(
 
   // Validate early so live-gateway wiring matches the document.
   const parsed = parseScenario(document);
-  if (parsed.composition.gateway === 'openai' && options.openAiTransport === undefined) {
+  if (
+    parsed.composition.gateway === 'openai' &&
+    options.openAiTransport === undefined
+  ) {
     const optIn = process.env['ACME_LIVE_TEST'];
     if (optIn === undefined || optIn.trim().length === 0) {
       throw new UsageError(

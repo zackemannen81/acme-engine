@@ -282,7 +282,10 @@ function modelSelection(
   }
   const raw = object(value, label);
   exactKeys(raw, ['profile', 'providerHint', 'modelHint'], label);
-  const providerHint = optionalText(raw['providerHint'], `${label}.providerHint`);
+  const providerHint = optionalText(
+    raw['providerHint'],
+    `${label}.providerHint`,
+  );
   const modelHint = optionalText(raw['modelHint'], `${label}.modelHint`);
   return {
     profile: text(raw['profile'], `${label}.profile`),
@@ -380,9 +383,15 @@ function planCase(
       ? undefined
       : reference(raw['mockResponse'], `${label}.mockResponse`);
   if (gateway === 'mock' && mockResponse === undefined) {
-    invalid(`${label}.mockResponse is required when composition.gateway is mock.`);
+    invalid(
+      `${label}.mockResponse is required when composition.gateway is mock.`,
+    );
   }
-  if (gateway === 'openai' && model === undefined && mockResponse === undefined) {
+  if (
+    gateway === 'openai' &&
+    model === undefined &&
+    mockResponse === undefined
+  ) {
     invalid(
       `${label} requires model (or mockResponse) when composition.gateway is openai.`,
     );

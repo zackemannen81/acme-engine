@@ -77,9 +77,9 @@ describe('sqlite quality evaluation store durability', () => {
     await expect(reopened.get(record.evaluationId)).resolves.toStrictEqual(
       record,
     );
-    await expect(reopened.list({ runId: record.subject.runId })).resolves.toEqual(
-      [record],
-    );
+    await expect(
+      reopened.list({ runId: record.subject.runId }),
+    ).resolves.toEqual([record]);
     await expect(reopened.put(record)).resolves.toBe('existing');
   });
 });

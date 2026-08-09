@@ -4,11 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import {
-  EXIT_OK,
-  run,
-  type RunOptions,
-} from '../../apps/cli/src/index.js';
+import { EXIT_OK, run, type RunOptions } from '../../apps/cli/src/index.js';
 import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
 
 /**
@@ -129,7 +125,10 @@ steps:
     );
 
     const io = capture();
-    const code = await run(['scenario', 'run', scenarioPath, '--json'], io.options);
+    const code = await run(
+      ['scenario', 'run', scenarioPath, '--json'],
+      io.options,
+    );
     if (code !== EXIT_OK) {
       // eslint-disable-next-line no-console
       console.error(io.out.join('\n'), io.err.join('\n'));

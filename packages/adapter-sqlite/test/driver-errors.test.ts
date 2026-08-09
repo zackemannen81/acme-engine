@@ -2,7 +2,11 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { AcmeError, type AcceptedExecution, type IdGenerator } from '@acme/core';
+import {
+  AcmeError,
+  type AcceptedExecution,
+  type IdGenerator,
+} from '@acme/core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {

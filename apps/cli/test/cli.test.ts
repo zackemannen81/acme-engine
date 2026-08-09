@@ -1019,10 +1019,7 @@ describe('acme CLI durable round trip', () => {
       ['outbox', 'drain', '--lease-timeout-ms', 'soon'],
       '--lease-timeout-ms must be a positive integer',
     ],
-    [
-      ['execution', 'discharge', 'exec-x'],
-      'execution discharge requires --by',
-    ],
+    [['execution', 'discharge', 'exec-x'], 'execution discharge requires --by'],
     [
       ['execution', 'discharge', 'exec-x', '--by', 'ops'],
       'execution discharge requires --rationale',

@@ -222,10 +222,7 @@ describe('listStrandedExecutions', () => {
     expect(report.entries[0]?.executionId).toBe('exec-a');
 
     expect(() =>
-      listStrandedExecutions(
-        { executions: [], modelCalls: [] },
-        { limit: 0 },
-      ),
+      listStrandedExecutions({ executions: [], modelCalls: [] }, { limit: 0 }),
     ).toThrow(AcmeError);
   });
 });

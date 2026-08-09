@@ -527,10 +527,7 @@ function inspectOutbox(
         `pending count ${String(counts.pending)} exceeds --max-pending ${String(command.maxPending)}`,
       );
     }
-    if (
-      command.maxFailed !== undefined &&
-      counts.failed > command.maxFailed
-    ) {
+    if (command.maxFailed !== undefined && counts.failed > command.maxFailed) {
       alarms.push(
         `failed count ${String(counts.failed)} exceeds --max-failed ${String(command.maxFailed)}`,
       );
@@ -676,9 +673,7 @@ function redriveOutboxCommand(
       repository: composition.repository,
       clock: composition.clock,
       limit: command.limit,
-      ...(command.eventId === undefined
-        ? {}
-        : { eventIds: [command.eventId] }),
+      ...(command.eventId === undefined ? {} : { eventIds: [command.eventId] }),
     });
     const body = {
       report: report.report,
@@ -699,7 +694,8 @@ function redriveOutboxCommand(
       report.redriven === 0
         ? ['no failed outbox entries redriven']
         : report.entries.map(
-            (entry) => `${entry.eventId} redriven attemptCount ${String(entry.attemptCount)}`,
+            (entry) =>
+              `${entry.eventId} redriven attemptCount ${String(entry.attemptCount)}`,
           ),
     );
     return report.redriven === 0 ? EXIT_OUTCOME : EXIT_OK;
@@ -737,7 +733,9 @@ function listStranded(
         ...(entry.modelCallStatus === undefined
           ? {}
           : { modelCallStatus: entry.modelCallStatus }),
-        ...(entry.errorCode === undefined ? {} : { errorCode: entry.errorCode }),
+        ...(entry.errorCode === undefined
+          ? {}
+          : { errorCode: entry.errorCode }),
         createdAt: entry.createdAt,
         updatedAt: entry.updatedAt,
       })),

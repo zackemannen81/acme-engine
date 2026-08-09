@@ -120,16 +120,20 @@ function primaryCall(
   );
 }
 
-function openReason(
-  call: ModelCallRecord,
-):
+function openReason(call: ModelCallRecord):
   | {
-      readonly reasonCode: Exclude<StrandedReasonCode, 'terminal-resume-refusal'>;
+      readonly reasonCode: Exclude<
+        StrandedReasonCode,
+        'terminal-resume-refusal'
+      >;
       readonly errorCode?: AcmeErrorData['code'];
     }
   | undefined {
   if (call.status === 'reserved' || call.status === 'in-flight') {
-    return { reasonCode: 'unobserved-reservation', errorCode: 'MODEL_UNAVAILABLE' };
+    return {
+      reasonCode: 'unobserved-reservation',
+      errorCode: 'MODEL_UNAVAILABLE',
+    };
   }
   if (call.status === 'succeeded' && call.response === undefined) {
     return {
@@ -159,10 +163,7 @@ function terminalStrandedReason(
     return undefined;
   }
   const code = execution.error.code;
-  if (
-    code === 'MODEL_UNAVAILABLE' ||
-    code === 'RESUME_EVIDENCE_UNAVAILABLE'
-  ) {
+  if (code === 'MODEL_UNAVAILABLE' || code === 'RESUME_EVIDENCE_UNAVAILABLE') {
     return 'terminal-resume-refusal';
   }
   const details = execution.error.details;
