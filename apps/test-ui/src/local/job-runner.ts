@@ -100,6 +100,11 @@ export interface JobRunner {
   cancel(jobId: string): Promise<CancelJobResult>;
   get(jobId: string): Promise<JobRecord | null>;
   list(): Promise<readonly JobRecord[]>;
+  /**
+   * Resolves when the wait queue is empty and no job is active. Used by tests
+   * and hosts that need a barrier after enqueue without polling disk.
+   */
+  whenIdle(): Promise<void>;
 }
 
 export interface JobRunnerOptions {
@@ -113,6 +118,25 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
   const waitQueue: string[] = [];
   const pending = new Map<string, PendingPayload>();
   let pumping = false;
+  let pumpCycle: Promise<void> = Promise.resolve();
+  const idleWaiters: Array<() => void> = [];
+
+  function notifyIdle(): void {
+    if (waitQueue.length === 0 && active.size === 0 && !pumping) {
+      while (idleWaiters.length > 0) {
+        idleWaiters.shift()?.();
+      }
+    }
+  }
+
+  function whenIdle(): Promise<void> {
+    if (waitQueue.length === 0 && active.size === 0 && !pumping) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      idleWaiters.push(resolve);
+    });
+  }
 
   async function writeJob(job: JobRecord): Promise<JobRecord> {
     await workspace.saveJob(job);
@@ -266,7 +290,17 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
           message: 'Cancelled before the job started.',
         },
       };
-      await workspace.recordRun(runRecord);
+      // Prefer writing the job terminal state even if history already exists
+      // (e.g. a racing worker already recorded a run).
+      let runRecordWritten = false;
+      try {
+        if ((await workspace.loadRun(job.runId)) === null) {
+          await workspace.recordRun(runRecord);
+        }
+        runRecordWritten = true;
+      } catch {
+        runRecordWritten = (await workspace.loadRun(job.runId)) !== null;
+      }
       const cancelled: JobRecord = {
         ...job,
         status: 'cancelled',
@@ -275,9 +309,10 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
         cancelRequestedAt: now,
         failure: { message: 'Cancelled before the job started.' },
         progress: { ...job.progress, message: 'cancelled while queued' },
-        runRecordWritten: true,
+        runRecordWritten,
       };
       await writeJob(cancelled);
+      notifyIdle();
       return { job: cancelled, outcome: 'cancelled' };
     }
 
@@ -295,27 +330,31 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
 
   async function pump(): Promise<void> {
     if (pumping) {
-      return;
+      return pumpCycle;
     }
     pumping = true;
-    try {
-      while (waitQueue.length > 0 && active.size === 0) {
-        const jobId = waitQueue.shift();
-        if (jobId === undefined) {
-          break;
+    pumpCycle = (async () => {
+      try {
+        while (waitQueue.length > 0 && active.size === 0) {
+          const jobId = waitQueue.shift();
+          if (jobId === undefined) {
+            break;
+          }
+          try {
+            await runOne(jobId);
+          } catch {
+            // Isolate one job failure from the queue pump.
+          }
         }
-        try {
-          await runOne(jobId);
-        } catch {
-          // Isolate one job failure from the queue pump.
+      } finally {
+        pumping = false;
+        notifyIdle();
+        if (waitQueue.length > 0 && active.size === 0) {
+          void pump();
         }
       }
-    } finally {
-      pumping = false;
-      if (waitQueue.length > 0 && active.size === 0) {
-        void pump();
-      }
-    }
+    })();
+    return pumpCycle;
   }
 
   async function runOne(jobId: string): Promise<void> {
@@ -328,6 +367,25 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
     const payload = pending.get(jobId);
     pending.delete(jobId);
     if (payload === undefined) {
+      // Cancel (or host) removed the payload after dequeue — do not leave
+      // a permanent queued/running ghost.
+      const now = clock.now();
+      await patch(jobId, (job) => {
+        if (isTerminalJobStatus(job.status)) {
+          return job;
+        }
+        return {
+          ...job,
+          status: 'cancelled',
+          updatedAt: now,
+          finishedAt: now,
+          cancelRequestedAt: job.cancelRequestedAt ?? now,
+          failure: {
+            message: 'Job was cancelled before the worker could start it.',
+          },
+          progress: { ...job.progress, message: 'cancelled' },
+        };
+      });
       return;
     }
 
@@ -511,6 +569,7 @@ export function createJobRunner(runnerOptions: JobRunnerOptions): JobRunner {
     cancel,
     get: (jobId) => workspace.loadJob(jobId),
     list: async () => (await workspace.listJobs()).records,
+    whenIdle,
   };
 }
 

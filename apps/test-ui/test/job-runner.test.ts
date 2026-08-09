@@ -1,38 +1,55 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   JOB_RECORD_VERSION,
+  emptyJobProgress,
   parseJobRecord,
   type JobRecord,
 } from '../src/job-record.js';
 import { createJobRunner } from '../src/local/job-runner.js';
 import { createFileWorkspace } from '../src/local/workspace.js';
 import { buildRunsView } from '../src/read-model/runs.js';
-import { parseRunRecord } from '../src/run-record.js';
 import { isAvailable } from '../src/view.js';
 
 const clock = {
   now: () => '2026-08-09T12:00:00.000Z',
 };
 
-const minimalPlan = {
+const scenarioRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+  'tests',
+  'scenario',
+  'files',
+);
+
+/** Valid plan that compiles and runs against narrative fixtures offline. */
+const narrativePlan = {
   schemaVersion: 'acme-test-plan/1',
   name: 'async-plan',
   composition: { repository: 'memory', gateway: 'mock' },
-  seed: { clock: '2026-08-09T12:00:00.000Z', ids: 'sequential' as const },
+  seed: {
+    clock: '2026-08-09T12:00:00.000Z',
+    ids: 'sequential' as const,
+    idPrefix: 'async-job',
+    idPadding: 3,
+  },
   cases: [
     {
-      id: 'only',
-      namespace: 'alpha',
-      task: 'observe',
-      entityId: 'entity-1',
+      id: 'observe',
+      namespace: 'narrative',
+      task: 'observe-document',
+      entityId: 'story-async-job',
       expectedRevision: 0,
-      input: 'inputs/only.json',
-      mockResponse: 'responses/only.json',
+      input: 'inputs/chapter-1.json',
+      mockResponse: 'responses/chapter-1.json',
     },
   ],
 };
@@ -85,73 +102,83 @@ describe('JobRunner', () => {
 
   it('enqueues, completes, and writes a terminal run record', async () => {
     const { workspace } = await tempWorkspace();
-    // Without real fixtures this will fail at load — use a path that exists
-    // only when scenario root has fixtures. Prefer unit-level cancel +
-    // recover which do not need a full scenario.
     const runner = createJobRunner({ workspace, clock });
-    await expect(
-      runner.enqueue({
-        plan: minimalPlan,
-        scenarioRoot: workspace.root,
-        workspace,
-        runId: 'run-missing-fixtures',
-        clock,
-      }),
-    ).resolves.toMatchObject({
-      job: { status: 'queued', jobId: 'run-missing-fixtures' },
+
+    const { job: accepted } = await runner.enqueue({
+      plan: narrativePlan,
+      scenarioRoot,
+      workspace,
+      runId: 'run-ok',
+      clock,
+    });
+    expect(accepted.status).toBe('queued');
+
+    await runner.whenIdle();
+
+    const job = await workspace.loadJob('run-ok');
+    expect(job?.status).toBe('completed');
+    expect(job?.runRecordWritten).toBe(true);
+    const run = await workspace.loadRun('run-ok');
+    expect(run?.status).toBe('passed');
+    expect(run?.cases.length).toBeGreaterThan(0);
+  });
+
+  it('fails a job when fixtures are missing and still writes history', async () => {
+    const { workspace } = await tempWorkspace();
+    const runner = createJobRunner({ workspace, clock });
+
+    await runner.enqueue({
+      plan: narrativePlan,
+      scenarioRoot: workspace.root, // empty — no fixtures
+      workspace,
+      runId: 'run-missing-fixtures',
+      clock,
     });
 
-    // Wait for the background pump to fail the job (missing fixtures).
-    await waitFor(async () => {
-      const job = await workspace.loadJob('run-missing-fixtures');
-      return job !== null && job.status === 'failed';
-    }, 5000);
+    await runner.whenIdle();
 
     const job = await workspace.loadJob('run-missing-fixtures');
     expect(job?.status).toBe('failed');
     expect(job?.runRecordWritten).toBe(true);
     const run = await workspace.loadRun('run-missing-fixtures');
     expect(run?.status).toBe('failed');
-    expect(parseRunRecord(run)).not.toBeNull();
   });
 
   it('cancels a queued job without starting work and writes cancelled history', async () => {
     const { workspace } = await tempWorkspace();
     const runner = createJobRunner({ workspace, clock });
 
-    const enqueued = await runner.enqueue({
-      plan: minimalPlan,
-      scenarioRoot: workspace.root,
-      workspace,
+    // Deterministic path: job is on disk as queued and not in the runner's
+    // wait queue (payload never registered). Exercises cancel-while-queued
+    // without racing the background pump.
+    const queued: JobRecord = {
+      version: JOB_RECORD_VERSION,
+      jobId: 'run-cancel-q',
       runId: 'run-cancel-q',
-      clock,
-    });
-    expect(enqueued.job.status).toBe('queued');
+      planName: 'async-plan',
+      scenarioName: 'async-plan',
+      status: 'queued',
+      queuedAt: '2026-08-09T12:00:00.000Z',
+      startedAt: null,
+      updatedAt: '2026-08-09T12:00:00.000Z',
+      finishedAt: null,
+      composition: { repository: 'memory', gateway: 'mock' },
+      progress: { ...emptyJobProgress(), stepTotal: 1, message: 'queued' },
+      cancelRequestedAt: null,
+      runRecordWritten: false,
+      failure: null,
+    };
+    await workspace.saveJob(queued);
 
     const result = await runner.cancel('run-cancel-q');
-    // May already be running/failed if pump was fast; accept terminal outcomes.
-    expect(['cancelled', 'cancel-requested', 'already-terminal']).toContain(
-      result.outcome,
-    );
-
-    await waitFor(async () => {
-      const job = await workspace.loadJob('run-cancel-q');
-      return (
-        job !== null &&
-        (job.status === 'cancelled' ||
-          job.status === 'failed' ||
-          job.status === 'completed' ||
-          job.status === 'interrupted')
-      );
-    }, 5000);
+    expect(result.outcome).toBe('cancelled');
+    expect(result.job.status).toBe('cancelled');
 
     const finalJob = await workspace.loadJob('run-cancel-q');
     expect(finalJob).not.toBeNull();
-    if (result.outcome === 'cancelled') {
-      expect(finalJob?.status).toBe('cancelled');
-      const run = await workspace.loadRun('run-cancel-q');
-      expect(run?.status).toBe('cancelled');
-    }
+    expect(finalJob?.status).toBe('cancelled');
+    const run = await workspace.loadRun('run-cancel-q');
+    expect(run?.status).toBe('cancelled');
   });
 
   it('marks non-terminal jobs interrupted on recover', async () => {
@@ -218,17 +245,3 @@ describe('JobRunner', () => {
     expect(view.progress.jobs[0]?.status).toBe('running');
   });
 });
-
-async function waitFor(
-  predicate: () => Promise<boolean>,
-  timeoutMs: number,
-): Promise<void> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    if (await predicate()) {
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-  throw new Error(`waitFor timed out after ${timeoutMs}ms`);
-}
