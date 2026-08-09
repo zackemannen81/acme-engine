@@ -8,6 +8,10 @@ opt-in only (`pnpm test:live`) and are not part of default CI.
 Exact contracts, storage schema, protocols and milestones are defined in
 [`docs/design/acme-design-and-development-spec.md`](design/acme-design-and-development-spec.md).
 
+The English OpenAI/FDE presentation, PDF and Markdown counterpart under `hrd/`
+are derived external explanatory artifacts. They summarize this architecture
+but do not define or supersede system behavior, contracts or accepted ADRs.
+
 ## Implemented Substrate
 
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`

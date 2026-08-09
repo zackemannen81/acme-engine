@@ -2,6 +2,77 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-09 — ACME-0072 OpenAI/FDE presentation Markdown counterpart
+
+- Date: 2026-08-09
+- Author: Codex
+- Task: ACME-0072
+- Branch: `main`
+- Summary: Added
+  `hrd/ACME-OpenAI-FDE-project-presentation.md` as a plain-text counterpart to
+  the final 15-slide PowerPoint and PDF. It retains the problem framing,
+  candidate-not-truth thesis, dependency and trust-stage diagrams, workspace
+  structure, two-domain proof, durability, quality distinctions, chronology,
+  delivered surface, test evidence, maturity boundary, bounded remaining work
+  and field-deployment takeaway. Repository-relative links provide a source
+  map to governing documents and accepted ADRs. The PowerPoint and PDF were
+  not changed.
+- Verification: extracted and compared the final PowerPoint slide text and
+  speaker-note sources; confirmed the cover and all 14 narrative sections are
+  present in Markdown; `pnpm docs:check` checked 144 Markdown files with links
+  and fences clean; `git diff --check` was clean. Code, integration, scenario
+  and live tests were not run because the task adds only a derived Markdown
+  artifact and documentation records.
+- Handoff: the Markdown file is an explanatory artifact; governing Markdown
+  and accepted ADRs remain authoritative. No implementation task is active.
+- Signature: Codex
+
+## 2026-08-09 — ACME-0071 OpenAI/FDE project presentation
+
+- Date: 2026-08-09
+- Author: Codex
+- Task: ACME-0071
+- Branch: `main`
+- Summary: Created a 15-slide English project presentation and matching PDF
+  under `hrd/` for an OpenAI Forward Deployed Engineer application. The deck
+  explains ACME's problem framing, candidate-not-truth design thesis,
+  dependency architecture, execution trust stages, repository structure,
+  two-domain proof, durability and replay behavior, quality boundaries,
+  development history, delivered interfaces, verification evidence, current
+  status, bounded gaps and field-deployment relevance. The earlier Swedish
+  ACME-0055 artifacts were preserved. Each slide includes a repository-backed
+  `[Sources]` block in its speaker notes; the Markdown documentation and
+  accepted ADRs remain normative.
+- Verification: rendered and visually inspected all 15 slides; presentation
+  overflow test passed with no detected overflow; verified 15/15 speaker-note
+  source blocks; exported a 15-page tagged PDF and visually inspected all 15
+  pages; the final metadata-only export produced zero visual pixel differences
+  from the inspected PDF render. `pnpm docs:check` checked 142 Markdown files
+  with links and fences clean. `git diff --check` was clean. Code, integration,
+  scenario and live tests were not run because ACME-0071 changes only derived
+  presentation artifacts and documentation.
+- Handoff: no implementation task is active. The deck and PDF are external
+  explanatory artifacts, not new architecture authority. Next recommended
+  work remains E1 trust-stage evidence (G12) or another explicitly approved
+  bounded charter.
+- Signature: Codex
+
+## 2026-08-09 — BASE release tag (operator)
+
+- Date: 2026-08-09
+- Author: Rickard Zakrisson (operator)
+- Task: none (release action after ACME-0070)
+- Branch: `main`
+- Summary: Trailing whitespace cleared in
+  `docs/design/gap-resolution-plan.md:4`, so `git diff --check` is silent with
+  no recorded exception. Commit `e6720e8` tagged and released as `BASE` from
+  `main`, with source archives as the only assets and no published package.
+- Correction: the ACME-0070 entry and its archived charter record that
+  whitespace line as deliberately kept. That was true at archive time and is
+  now superseded by `e6720e8`; the archived task is left unmodified as
+  historical context.
+- Signature: Rickard Zakrisson
+
 ## 2026-08-09 — ACME-0070 documentation reality sync (ACME-0057–0069)
 
 - Date: 2026-08-09

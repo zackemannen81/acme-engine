@@ -98,6 +98,9 @@ acme-engine/
 │           ├── redaction.test.ts
 │           └── view-contract.test.ts
 ├── hrd/
+│   ├── ACME-OpenAI-FDE-project-presentation.md
+│   ├── ACME-OpenAI-FDE-project-presentation.pdf
+│   ├── ACME-OpenAI-FDE-project-presentation.pptx
 │   ├── ACME-presentation.pptx
 │   ├── ACME-teknisk-systemdokumentation.docx
 │   └── ACME-whitepaper.docx
@@ -483,6 +486,8 @@ acme-engine/
 │   │   ├── ACME-0068_live-quality-judge.md
 │   │   ├── ACME-0069_async-launch-progress-cancellation.md
 │   │   ├── ACME-0070_documentation-reality-sync.md
+│   │   ├── ACME-0071_openai-fde-project-presentation.md
+│   │   ├── ACME-0072_openai-fde-presentation-markdown.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -523,10 +528,12 @@ acme-engine/
 
 `hrd/` contains the Swedish, human-readable presentation, whitepaper and
 technical system document generated from the synchronized repository
-authority. `docs/hrd/` holds the same family of derived explanatory artifacts
-in PDF and PNG form, listed here as a group because their filenames are prose
-titles rather than stable paths. They are derived deliverables; the Markdown
-documentation and accepted ADRs remain normative.
+authority, plus the English OpenAI/FDE project presentation, its matching PDF
+and a Markdown counterpart. `docs/hrd/` holds the same family of derived
+explanatory artifacts in PDF and PNG form, listed here as a group because their
+filenames are prose titles rather than stable paths. They are derived
+deliverables; the governing Markdown documentation and accepted ADRs remain
+normative.
 
 `FS.txt` is a legacy tracked Windows filesystem dump that includes generated
 directories and stale content. It is non-authoritative; this document is the

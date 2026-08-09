@@ -316,7 +316,10 @@ No implementation task is active. ACME-0066–0068 closed WP-Q Q2–Q4 (CLI
 quality surfaces, pure S11 view, live-model judge) and ACME-0069 closed WP-T
 T1 / G08 (async launch, progress and cancellation under ADR-0027); both
 landed on `grok/gapfixes2` and are merged to `main`. ACME-0070 then
-resynchronized the governing documents with that reality.
+resynchronized the governing documents with that reality. ACME-0071 produced
+an English, repository-derived OpenAI/FDE project deck and matching PDF under
+`hrd/`, and ACME-0072 added a Markdown counterpart; all three are explanatory
+artifacts and introduce no implementation or architecture change.
 Next recommended: E1 trust-stage evidence (G12) or the remaining WP-T
 residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
 browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
@@ -423,6 +426,12 @@ browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
   in-process JobRunner, `acme-job-record/1`, `enqueuePlan` beside synchronous
   `launchPlan`, S3 progress, `POST /s3/<runId>/cancel`.
 - **ACME-0070:** Documentation reality sync after ACME-0057–0069.
+- **ACME-0071:** English OpenAI/FDE project presentation and matching PDF,
+  derived from the governing Markdown documents and accepted ADRs, with
+  repository-backed slide notes and complete visual verification.
+- **ACME-0072:** Markdown counterpart to the OpenAI/FDE presentation, retaining
+  its narrative, evidence, maturity caveats, diagrams and repository source
+  map in a plain-text format.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 
