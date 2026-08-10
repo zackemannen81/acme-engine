@@ -63,3 +63,4 @@ current architecture.
 - [`0026-durable-quality-evaluation-store.md`](0026-durable-quality-evaluation-store.md)
 - [`0027-async-launch-job-progress-cancellation.md`](0027-async-launch-job-progress-cancellation.md)
 - [`0028-first-poc-evidence-integrity-workbench.md`](0028-first-poc-evidence-integrity-workbench.md)
+- [`0029-poc-1-self-hosted-supabase-persistence-platform.md`](0029-poc-1-self-hosted-supabase-persistence-platform.md)

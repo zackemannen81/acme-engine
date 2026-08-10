@@ -84,7 +84,7 @@ architecture boundary.
 - `docs/concepts_sandbox/`: Explicitly excluded concept work, ideas and future
   visions. Never decided architecture, roadmap or current scope.
 - `docs/finished/`: Archived completed task specifications.
-- When a task is complete, archive `docs/CURRENT_TASK.md` into `docs/finished/` with a descriptive dated filename, then restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+- When a task is complete, archive `docs/CURRENT_TASK.md` into `docs/finished/` as `ACME-NNNN_task-slug.md`, then restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
 
 ## Task Workflow
 

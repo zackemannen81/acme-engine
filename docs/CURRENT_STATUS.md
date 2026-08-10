@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-09
+Last updated: 2026-08-11
 
 ## Repository
 
@@ -53,6 +53,7 @@ implementation baseline:
 - ADR-0026: Durable quality evaluation store
 - ADR-0027: Async launch job progress and cancellation
 - ADR-0028: First POC is the Evidence Integrity Workbench
+- ADR-0029: POC #1 persistence platform is self-hosted Supabase
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -313,7 +314,10 @@ domain-neutral and proven with NarrativeModule and ResearchModule. ADR-0028
 accepts the Evidence Integrity Workbench as the first real product POC. Its
 normative boundary is
 [`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
-The direction is accepted; no product implementation exists yet.
+ADR-0029 selects self-hosted Supabase as POC #1's persistence platform and
+requires the ACME repository adapter to target plain PostgreSQL over the wire
+protocol rather than any Supabase-specific API. The direction and the platform
+are accepted; no product implementation and no adapter exist yet.
 
 ## Active Work
 
@@ -332,11 +336,13 @@ TypeScript/PostgreSQL product baseline. ACME-0074 then accepted the **Evidence
 Integrity Workbench** as POC #1 under ADR-0028, locked its synthetic-corpus,
 source-bound, immutable-evidence and human-review boundaries, and retained
 Research Synthesis as the intended POC #2. The product selection and boundary
-are now authoritative; provider choice, implementation, deployment and any
-real-data path remain unapproved.
-Next recommended: E1 trust-stage evidence (G12) or the remaining WP-T
+are now authoritative, and ADR-0029 has since decided the POC #1 persistence
+platform; implementation, deployment and any real-data path remain unapproved.
+`docs/CURRENT_TASK.md` holds ACME-0076 as a `Draft`: the Evidence Integrity
+Workbench technical specification, not yet frozen at `Ready`. Alternatives if
+that Draft is deferred: E1 trust-stage evidence (G12) or the remaining WP-T
 residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
-browser CI smoke). `docs/CURRENT_TASK.md` is the Draft template.
+browser CI smoke).
 
 ### Recent completed work (summary)
 

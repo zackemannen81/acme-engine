@@ -2,6 +2,68 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-11 — ADR-0029 persistence platform and ACME-0076 Draft revision
+
+- Date: 2026-08-11
+- Author: Claude
+- Task: no task created; a maintainer decision was recorded and the ACME-0076
+  `Draft` charter was revised while still editable.
+- Branch: `plan/legal-evidence`
+- Decision recorded: the POC #1 persistence platform is self-hosted Supabase.
+  The decision is the maintainer's and predates this session, but it existed
+  only in commit `f570dba`'s message and in no governing document, while
+  ADR-0028 and the product definition still said no vendor was selected. It is
+  now normative as ADR-0029 instead of being carried implicitly by a task.
+- ADR-0029 scope: it selects the platform, requires the ACME repository adapter
+  to speak the PostgreSQL wire protocol rather than PostgREST or the Supabase
+  client libraries, and forbids exposing ACME schemas to a browser through
+  PostgREST or an anonymous key. Supabase Auth, Storage, Realtime and Studio
+  adoption, the object store, hosting environment, backup/restore, upgrade and
+  key lifecycle remain open. No V1 restriction is weakened; no implementation
+  is authorized.
+- Supersession handled explicitly: ADR-0028 keeps its original text and gains a
+  dated partial-supersession note; the product definition gains pointers in its
+  persistence baseline, deferred-decisions list and sources. Neither document
+  was rewritten.
+- ACME-0076 review findings fixed while `Draft`: (1) two minimum verification
+  gates demanded fixtures and implementation proof that the same charter puts
+  Out of Scope, and are now stated as reviews of the specification; (2) the
+  charter did not say whether this task authors the synthetic corpus or only
+  specifies it — it now specifies, and authoring moves to the first
+  implementation slice; (3) one Definition-of-Done item was conditional
+  ("if model comparison is in scope") and another was unmeasurable
+  ("complete enough"), and both are now unconditional and countable against the
+  product definition's concept table and L0–L5 authority ladder. The charter
+  also now references ADR-0029 rather than implying a platform choice.
+- Second revision round, directed by the maintainer in the same session, closed
+  the three items the first round had left open. Mermaid validation is now a
+  required gate rather than an open question: diagrams are reviewed by hand and
+  the absent automated validation is recorded as a deliberately skipped check,
+  because the repository has no Mermaid validator and `check-docs.mjs` verifies
+  internal links and balanced fences only. Documentation Updates is no longer
+  conditional: every target is required, a target whose correct outcome is
+  "unchanged" is closed by recording that outcome and its reason in this
+  journal, and the template's standing "JOURNAL, SYSTEMDOC, CURRENT_STATUS à
+  jour" line is restored to the task summary. `Finalize When Complete` now
+  follows the repository standard and restores `docs/CURRENT_TASK.md` from
+  `docs/template_CURRENT_TASK.md` instead of an unnamed "inactive task
+  template", with the archive filename in the `ACME-NNNN_task-slug.md` form
+  that `docs/TASK_WORKFLOW.md` recommends and every existing file in
+  `docs/finished/` uses.
+- `AGENTS.md` corrected to match reality: its archiving rule asked for a
+  "descriptive dated filename", while `docs/TASK_WORKFLOW.md` and all 75
+  archived files use `ACME-NNNN_task-slug.md` with no date in the name. The
+  rule now names that form. This is a documentation correction, not a
+  convention change; no archived file was renamed and no other document made
+  the dated claim.
+- Verification: `pnpm docs:check` checked 153 Markdown files with internal
+  links and fences clean; `git diff --check` passed. No code, schema or stored
+  data changed, so no code gates were applicable.
+- Handoff: ACME-0076 remains `Draft` and unfrozen. The next step is the
+  maintainer's review of the revised charter and the nine technical questions,
+  then a `Ready` transition.
+- Signature: Claude
+
 ## 2026-08-10 — ACME-0075 open-source concepts
 
 - Date: 2026-08-10

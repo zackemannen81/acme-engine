@@ -122,6 +122,13 @@ local/offline reference.
 No managed PostgreSQL, identity, object-storage or hosting vendor is selected.
 No implementation is authorized by this ADR.
 
+> Superseded in part on 2026-08-11:
+> [ADR-0029](0029-poc-1-self-hosted-supabase-persistence-platform.md) selects
+> self-hosted Supabase as POC #1's persistence platform and requires the ACME
+> adapter to target plain PostgreSQL. The identity provider, object-storage
+> vendor and hosting platform remain unselected, and no implementation is
+> authorized by either ADR.
+
 ### Evaluation boundary
 
 V1 is precision-first and may abstain. The release-blocking golden-corpus gates

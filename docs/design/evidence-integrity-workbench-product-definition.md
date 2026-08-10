@@ -309,7 +309,8 @@ The accepted POC design baseline is:
 - Fastify product API;
 - a logically separate Node worker using the same modular-monolith codebase;
 - the existing OpenAI Responses adapter behind ACME's provider port;
-- managed PostgreSQL through a new conformant ACME adapter for the hosted POC;
+- self-hosted Supabase PostgreSQL through a new conformant ACME adapter for the
+  hosted POC (ADR-0029);
 - S3-compatible object storage for artifact bytes; and
 - structured logs, traces and metrics keyed by workspace, job, execution and
   operation identifiers without logging corpus content by default.
@@ -317,8 +318,12 @@ The accepted POC design baseline is:
 SQLite remains the implemented local/offline reference adapter and is used for
 deterministic development. PostgreSQL is the hosted-product target because the
 POC is designed for concurrent users and stateless API/worker processes. The
-managed PostgreSQL vendor, identity provider, object-storage vendor and hosting
-platform remain deliberately deferred.
+PostgreSQL platform is decided by
+[ADR-0029](../adr/0029-poc-1-self-hosted-supabase-persistence-platform.md): POC
+#1 uses self-hosted Supabase, and the ACME adapter targets plain PostgreSQL
+over the wire protocol rather than any Supabase-specific API. The identity
+provider, object-storage vendor and hosting platform remain deliberately
+deferred.
 
 No browser-to-database access is allowed. Product tables and ACME persistence
 may use separate PostgreSQL schemas, but one adapter-owned transaction must
@@ -523,7 +528,9 @@ Sandbox code sketches, task names and event names are not public contracts.
 - exact EvidenceModule task and schema versions;
 - whether relations are memory records, documents or a derived projection;
 - PostgreSQL adapter design and migration plan;
-- managed PostgreSQL, identity, object-storage and hosting vendors;
+- identity, object-storage and hosting vendors, and whether Supabase Auth,
+  Storage, Realtime or Studio are adopted at all; the PostgreSQL platform
+  itself is decided by ADR-0029;
 - exact synthetic case narrative and annotation workflow;
 - semantic baseline values and frozen model-comparison thresholds;
 - OCR, PDF, audio, image and video ingestion; and
@@ -551,6 +558,7 @@ any regulatory classification.
 - [ADR-0017 — Durable execution resume](../adr/0017-durable-execution-resume.md)
 - [ADR-0018 — Outbox delivery boundary](../adr/0018-outbox-delivery-boundary.md)
 - [ADR-0025 — Post-execution quality evaluation](../adr/0025-post-execution-quality-evaluation.md)
+- [ADR-0029 — POC #1 persistence platform is self-hosted Supabase](../adr/0029-poc-1-self-hosted-supabase-persistence-platform.md)
 
 The earlier Legal/Evidence material under `docs/concepts_sandbox/` supplied
 comparison input only. This document and ADR-0028 are the accepted authority;
