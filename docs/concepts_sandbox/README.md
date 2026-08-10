@@ -19,6 +19,8 @@ Each document should state:
 | Path | Notes |
 | --- | --- |
 | `POC_interfacing.md` | Concept notes only |
+| `docs-first-open-source-packaging.md` | Candidate extraction of ACME's latest docs-first workflow into an agent-neutral continuity protocol, templates, profiles and conformance model. |
+| `acme-open-source-strategy.md` | Candidate uncrippled-community-core, licensing, compatibility, certification and staged public-release strategy for ACME. No release decision. |
 | `audioleaf-kids-on-acme/` | Design sketch: full AudioLeaf Kids book path on ACME (architecture, package API, task/event map). |
 | `research-paper-composer-on-acme/` | Design sketch: research paper composer/validator on ACME (evidence, outline, draft, validate, revise). |
 | `legal-evidence-on-acme/` | Design sketch: legal/evidence — interrogation support, classification, cross-ref, assessments with strict provenance. |

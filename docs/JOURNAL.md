@@ -2,6 +2,55 @@
 
 Add one dated, signed entry for every meaningful work session or handoff.
 
+## 2026-08-10 — ACME-0075 open-source concepts
+
+- Date: 2026-08-10
+- Author: Codex
+- Task: ACME-0075
+- Branch: `plan/legal-evidence`
+- Summary: Added two explicitly non-authoritative strategy documents under
+  `docs/concepts_sandbox/`. `docs-first-open-source-packaging.md` extracts the
+  latest ACME docs-first iteration into a candidate agent-neutral continuity
+  protocol with the technician test, semantic document ownership, frozen task
+  lifecycle, progressive context loading, profiles, conformance levels,
+  evidence framing and staged extraction. `acme-open-source-strategy.md`
+  proposes a complete uncrippled community core, Compatible/Certified/Fork
+  identities, license decision matrix, commercial value layers, contribution
+  and supply-chain prerequisites, two-consumer-application gate and staged
+  public release.
+- Evidence boundary: recorded a bounded snapshot of at least 654 author-tagged
+  journal entries across four top-level private repositories, explicitly not
+  unique tasks or independent experiments. Additional repositories and two
+  external creative-production users are retained as transferability signals,
+  not quantified productivity proof. Private journals are not approved for
+  publication.
+- Licensing boundary: checked terminology against official OSI, GNU, Apache,
+  MariaDB and Elastic sources. Apache-2.0 and AGPL-3.0 remain decision
+  candidates; BSL 1.1 and ELv2 are described as source-available alternatives,
+  not immediate open-source releases. No license, CLA, DCO, trademark policy,
+  package publication or public release was selected or performed.
+- Verification: `pnpm docs:check` checked 151 Markdown files with internal
+  links and fences clean; `git diff --check` passed. The existing HRD journal
+  entry and `docs/backlog/hrd-documentation-update.md` were preserved; two
+  trailing spaces in that journal entry were removed without changing its
+  content. Code and runtime tests were not run because ACME-0075 changes only
+  non-authoritative concept documentation and repository indexes.
+- Handoff: ACME-0075 is archived. ACME-0076 is the next active `Draft` and
+  should specify the Evidence Integrity Workbench's synthetic golden corpus,
+  minimal Evidence contracts, versioned views, proof matrix and staged
+  implementation slices before any product code is authorized.
+- Signature: Codex
+
+## 2026-08-10 — hrd documents removal
+- Date: 2026-08-10
+- Author: Rickard Zakrisson
+- Task: no task created
+- Branch: `plan/legal-evidence`
+- Summary: Removed the hrd documents details and to not interrupt or
+  pollute current task the documentation update was left as a
+  backlog / followup in: docs/backlog/hrd-documentation-update.md
+- Signature: mrWhite / Rickard Zakrisson
+
 ## 2026-08-09 — ACME-0074 Evidence Integrity Workbench locked as POC #1
 
 - Date: 2026-08-09

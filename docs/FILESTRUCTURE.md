@@ -379,6 +379,7 @@ acme-engine/
 │   ├── concepts_sandbox/
 │   │   ├── README.md
 │   │   ├── POC_interfacing.md
+│   │   ├── acme-open-source-strategy.md
 │   │   ├── acme_cm_001_memory_conflict_benchmark.md
 │   │   ├── acme_cm_001_memory_conflict_benchmark/
 │   │   │   ├── README.md
@@ -390,6 +391,7 @@ acme-engine/
 │   │   │   ├── 01-architecture.md
 │   │   │   ├── 02-package-api.md
 │   │   │   └── 03-task-and-event-map.md
+│   │   ├── docs-first-open-source-packaging.md
 │   │   ├── legal-evidence-on-acme/
 │   │   │   ├── README.md
 │   │   │   ├── 01-architecture.md
@@ -493,6 +495,7 @@ acme-engine/
 │   │   ├── ACME-0072_openai-fde-presentation-markdown.md
 │   │   ├── ACME-0073_first-poc-application-discovery.md
 │   │   ├── ACME-0074_lock-evidence-integrity-workbench.md
+│   │   ├── ACME-0075_open-source-concepts.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
