@@ -20,6 +20,10 @@ export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
   'evidence-primary-timeline-view/1' as const;
 export const EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION =
   'evidence-primary-open-questions-view/1' as const;
+export const EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION =
+  'evidence-technical-provenance-view/1' as const;
+export const EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION =
+  'evidence-technical-replay-view/1' as const;
 
 const CitationSchema = z
   .object({
@@ -472,4 +476,38 @@ export type EvidencePrimaryTimelineView = z.infer<
 >;
 export type EvidencePrimaryOpenQuestionsView = z.infer<
   typeof EvidencePrimaryOpenQuestionsViewSchema
+>;
+
+export const EvidenceTechnicalProvenanceViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION),
+    classification: z.literal('technical-audit'),
+    domainObjectId: EvidenceNonBlankStringSchema,
+    executionId: EvidenceNonBlankStringSchema,
+    contractId: EvidenceNonBlankStringSchema,
+    contractVersion: EvidenceNonBlankStringSchema,
+    contractFingerprint: EvidenceNonBlankStringSchema,
+    operationDigest: EvidenceNonBlankStringSchema.nullable(),
+    retainedCallAvailable: z.boolean(),
+  })
+  .strict();
+
+export const EvidenceTechnicalReplayViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION),
+    classification: z.literal('technical-audit'),
+    executionId: EvidenceNonBlankStringSchema,
+    replayVerdict: z.enum(['match', 'different', 'unavailable']),
+    recordedDigest: EvidenceNonBlankStringSchema.nullable(),
+    currentDigest: EvidenceNonBlankStringSchema.nullable(),
+    reason: EvidenceNonBlankStringSchema,
+    providerCallCount: z.literal(0),
+  })
+  .strict();
+
+export type EvidenceTechnicalProvenanceView = z.infer<
+  typeof EvidenceTechnicalProvenanceViewSchema
+>;
+export type EvidenceTechnicalReplayView = z.infer<
+  typeof EvidenceTechnicalReplayViewSchema
 >;

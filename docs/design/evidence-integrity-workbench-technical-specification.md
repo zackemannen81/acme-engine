@@ -27,11 +27,11 @@ The keywords **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD** and **MAY** are
 normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
-Implementation status: ACME-0077–0082 delivered slices 0–5 domain foundations
-(observe, relate, timeline, propose-assessment, attention/export helpers and
-product assessment storage). Primary views cover work-queue through open
-questions; relation and timeline surfaces are wired. Slices 6–9
-(technical audit, PostgreSQL, hosted shell, readiness) remain separately
+Implementation status: ACME-0077–0083 delivered slices 0–6 domain and local
+product foundations (observe, relate, timeline, propose-assessment,
+attention/export, gated technical-audit views). Primary views cover
+work-queue through open questions; technical audit is disabled by default.
+Slices 7–9 (PostgreSQL, hosted shell, readiness) remain separately
 activatable. ADR-0032 fixes the conservative V1 correction-occurrence pairing
 used by both projection and views.
 
@@ -1088,7 +1088,7 @@ byte determinism and full domain black-box journey.
 Documentation: reviewer outcome semantics, export format and synthetic-only
 refusal.
 
-### Slice 6 — Secondary technical audit
+### Slice 6 — Secondary technical audit (delivered by ACME-0083)
 
 Reviewer capability: optionally follow a domain object to technical provenance
 and verify replay without cluttering or depending on the primary workflow.

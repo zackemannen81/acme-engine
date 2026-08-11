@@ -21,6 +21,8 @@ import {
   buildEvidencePrimarySourceReviewView,
   buildEvidencePrimaryTimelineView,
   buildEvidencePrimaryWorkQueueView,
+  buildEvidenceTechnicalProvenanceView,
+  buildEvidenceTechnicalReplayView,
 } from '@acme/evidence-views';
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
@@ -55,6 +57,19 @@ export function createEvidenceWorkbenchApi(options: {
   readonly workspaceId: string;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState;
+  readonly technicalAuditSource?: () => {
+    readonly domainObjectId: string;
+    readonly executionId: string;
+    readonly contractId: string;
+    readonly contractVersion: string;
+    readonly contractFingerprint: string;
+    readonly operationDigest: string | null;
+    readonly retainedCallAvailable: boolean;
+    readonly replayVerdict: 'match' | 'different' | 'unavailable';
+    readonly recordedDigest: string | null;
+    readonly currentDigest: string | null;
+    readonly replayReason: string;
+  };
 }): Server {
   const technicalAuditEnabled = options.technicalAudit?.enabled ?? false;
   return createServer(async (request, response) => {
@@ -74,13 +89,52 @@ export function createEvidenceWorkbenchApi(options: {
         return;
       }
       if (url.pathname.startsWith('/api/technical')) {
-        send(
-          response,
-          404,
-          technicalAuditEnabled
-            ? 'No technical audit view is implemented in this slice.'
-            : 'Not found.',
-        );
+        if (!technicalAuditEnabled) {
+          send(response, 404, 'Not found.');
+          return;
+        }
+        const source = options.technicalAuditSource?.();
+        if (source === undefined) {
+          send(response, 404, 'Technical audit source unavailable.');
+          return;
+        }
+        if (
+          request.method === 'GET' &&
+          url.pathname === '/api/technical/provenance'
+        ) {
+          send(
+            response,
+            200,
+            buildEvidenceTechnicalProvenanceView({
+              domainObjectId: source.domainObjectId,
+              executionId: source.executionId,
+              contractId: source.contractId,
+              contractVersion: source.contractVersion,
+              contractFingerprint: source.contractFingerprint,
+              operationDigest: source.operationDigest,
+              retainedCallAvailable: source.retainedCallAvailable,
+            }),
+          );
+          return;
+        }
+        if (
+          request.method === 'GET' &&
+          url.pathname === '/api/technical/replay'
+        ) {
+          send(
+            response,
+            200,
+            buildEvidenceTechnicalReplayView({
+              executionId: source.executionId,
+              replayVerdict: source.replayVerdict,
+              recordedDigest: source.recordedDigest,
+              currentDigest: source.currentDigest,
+              reason: source.replayReason,
+            }),
+          );
+          return;
+        }
+        send(response, 404, 'Unknown technical audit route.');
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/work-queue') {

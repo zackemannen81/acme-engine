@@ -349,9 +349,10 @@ technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
 The direction, platform and implementation plan are accepted. Slices 0–5
 exist for domain and product foundations: observe/relate/timeline/assessment
-tasks, attention/export helpers, primary views through open questions, and
-product assessment storage. Technical-audit UI, PostgreSQL adapter, hosted
-shell, deployment and non-synthetic paths remain unimplemented.
+tasks, attention/export helpers, primary views through open questions, product
+assessment storage and gated technical-audit views (disabled by default).
+PostgreSQL adapter, hosted shell, deployment and non-synthetic paths remain
+unimplemented.
 
 ## Active Work
 
@@ -391,12 +392,17 @@ observations@1.0.0`, eight golden L3 relations, three open questions, contest
 projection for scoped contradictions, primary relation review and evaluation
 seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
 overlap helper, and primary timeline/open-question views. The recommended next
-product task is slice 6, secondary technical audit.
+product task is slice 7, self-hosted Supabase PostgreSQL adapter.
 Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0083:** Delivered Evidence Integrity slice 6: technical provenance and
+  replay view contracts/builders and API routes gated by
+  `technicalAudit.enabled` (default off). Primary black-box remains unchanged
+  when audit is disabled.
 
 - **ACME-0082:** Delivered Evidence Integrity slice 5 domain core:
   `evidence.propose-assessment@1.0.0`, attention-tier and change-set helpers,

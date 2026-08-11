@@ -1,5 +1,17 @@
 # Journal
 
+## 2026-08-11 — ACME-0083 Secondary technical audit
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0083
+- Branch: `grok/poc_3-8`
+- Summary: Added technical provenance and replay view contracts/builders and
+  API routes under `/api/technical/*` that return 404 when
+  `technicalAudit.enabled` is false (default). Primary journey unchanged.
+- Handoff: slice 7 PostgreSQL adapter next (ADR-0029 platform).
+- Signature: Grok
+
 ## 2026-08-11 — ACME-0082 Assessment and re-review core
 
 - Date: 2026-08-11

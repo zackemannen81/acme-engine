@@ -25,6 +25,8 @@ import {
   EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
+  EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
+  EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
   EvidencePrimaryOpenQuestionsViewSchema,
@@ -32,6 +34,8 @@ import {
   EvidencePrimarySourceReviewViewSchema,
   EvidencePrimaryTimelineViewSchema,
   EvidencePrimaryWorkQueueViewSchema,
+  EvidenceTechnicalProvenanceViewSchema,
+  EvidenceTechnicalReplayViewSchema,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryObservationLedgerView,
   type EvidencePrimaryOpenQuestionsView,
@@ -39,6 +43,8 @@ import {
   type EvidencePrimarySourceReviewView,
   type EvidencePrimaryTimelineView,
   type EvidencePrimaryWorkQueueView,
+  type EvidenceTechnicalProvenanceView,
+  type EvidenceTechnicalReplayView,
 } from './schemas.js';
 
 function freeze<T>(value: T, seen = new WeakSet<object>()): T {
@@ -776,6 +782,51 @@ export function buildEvidencePrimaryOpenQuestionsView(input: {
       explanation:
         'Open questions mark gaps exposed by the evidence. Absence of an answer is not treated as falsity.',
       questions,
+    }),
+  );
+}
+
+export function buildEvidenceTechnicalProvenanceView(input: {
+  readonly domainObjectId: string;
+  readonly executionId: string;
+  readonly contractId: string;
+  readonly contractVersion: string;
+  readonly contractFingerprint: string;
+  readonly operationDigest: string | null;
+  readonly retainedCallAvailable: boolean;
+}): EvidenceTechnicalProvenanceView {
+  return detached(
+    EvidenceTechnicalProvenanceViewSchema.parse({
+      schemaVersion: EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
+      classification: 'technical-audit',
+      domainObjectId: input.domainObjectId,
+      executionId: input.executionId,
+      contractId: input.contractId,
+      contractVersion: input.contractVersion,
+      contractFingerprint: input.contractFingerprint,
+      operationDigest: input.operationDigest,
+      retainedCallAvailable: input.retainedCallAvailable,
+    }),
+  );
+}
+
+export function buildEvidenceTechnicalReplayView(input: {
+  readonly executionId: string;
+  readonly replayVerdict: 'match' | 'different' | 'unavailable';
+  readonly recordedDigest: string | null;
+  readonly currentDigest: string | null;
+  readonly reason: string;
+}): EvidenceTechnicalReplayView {
+  return detached(
+    EvidenceTechnicalReplayViewSchema.parse({
+      schemaVersion: EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
+      classification: 'technical-audit',
+      executionId: input.executionId,
+      replayVerdict: input.replayVerdict,
+      recordedDigest: input.recordedDigest,
+      currentDigest: input.currentDigest,
+      reason: input.reason,
+      providerCallCount: 0,
     }),
   );
 }
