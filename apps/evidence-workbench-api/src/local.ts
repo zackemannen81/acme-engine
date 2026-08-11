@@ -31,11 +31,16 @@ import {
   developmentObserveArtifactInput,
   developmentObserveArtifactOutput,
 } from '@acme/evidence-testing';
+import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
   EvidenceObservationSchema,
+  EvidenceStateSchema,
   evidenceModule,
   evidenceObserveArtifactContract,
+  initialEvidenceState,
+  type EvidenceObserveArtifactInput,
+  type EvidenceObserveArtifactOutput,
 } from '@acme/module-evidence';
 import { createEvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
 
@@ -47,10 +52,39 @@ import {
 const WORKSPACE_ID = 'rillford-annex-local';
 const DEVELOPMENT_COMMAND_KEY = 'development-observe-dev-t01-v1';
 const SELECTION: ModelSelection = {
-  profile: 'evidence-development-fixture',
+  profile: 'evidence-offline-fixture',
   providerHint: 'deterministic-fixture',
   modelHint: 'evidence-observe-1',
 };
+
+type SeedMode = 'development' | 'evaluation' | 'none';
+
+interface ObserveFixture {
+  readonly commandKey: string;
+  readonly requestHash: string;
+  readonly input: EvidenceObserveArtifactInput;
+  readonly output: EvidenceObserveArtifactOutput;
+}
+
+function fixtures(mode: SeedMode): readonly ObserveFixture[] {
+  if (mode === 'none') return [];
+  if (mode === 'development') {
+    return [
+      {
+        commandKey: DEVELOPMENT_COMMAND_KEY,
+        requestHash: EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
+        input: developmentObserveArtifactInput(),
+        output: developmentObserveArtifactOutput(),
+      },
+    ];
+  }
+  return evaluationObserveCases().map((item) => ({
+    commandKey: item.caseId,
+    requestHash: item.requestHash,
+    input: item.input,
+    output: item.output,
+  }));
+}
 
 function systemClock(): Clock & EvidenceProductClock {
   return { now: () => new Date().toISOString() };
@@ -65,7 +99,7 @@ function productIds(): EvidenceProductIds {
 }
 
 function fixtureGateway(
-  requestKey: string,
+  seedFixtures: readonly ObserveFixture[],
   clock: EvidenceProductClock,
 ): ScriptedModelGateway {
   return createScriptedModelGateway({
@@ -81,27 +115,28 @@ function fixtureGateway(
         },
       },
     ],
-    calls: [
-      {
+    calls: seedFixtures.map((fixture) => {
+      const requestKey = `import:${fixture.commandKey}`;
+      return {
         executionId: deriveExecutionId('evidence', requestKey),
         callKey: 'model:0',
         selection: SELECTION,
-        expectedRequestHash: EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
+        expectedRequestHash: fixture.requestHash,
         outcome: {
           kind: 'response',
           response: {
             provider: 'deterministic-fixture',
             model: 'evidence-observe-1',
-            providerResponseId: 'development-observe-dev-t01-v1',
+            providerResponseId: fixture.commandKey,
             receivedAt: clock.now(),
             finishReason: 'stop',
-            text: canonicalJson(developmentObserveArtifactOutput() as never),
+            text: canonicalJson(fixture.output as never),
             usage: { inputTokens: 480, outputTokens: 190, totalTokens: 670 },
-            metadata: { fixture: 'development-observe-dev-t01-v1' },
+            metadata: { fixture: fixture.commandKey },
           },
         },
-      },
-    ],
+      };
+    }),
   });
 }
 
@@ -112,13 +147,21 @@ export async function createLocalEvidenceWorkbench(
     readonly ids?: IdGenerator;
     readonly reviewIds?: EvidenceProductIds;
     readonly seedDevelopmentSource?: boolean;
+    readonly seedMode?: SeedMode;
   } = {},
 ) {
   const clock = options.clock ?? systemClock();
   const ids = options.ids ?? systemIds();
   const reviewIds = options.reviewIds ?? productIds();
+  const seedMode =
+    options.seedMode ??
+    (options.seedDevelopmentSource === false ? 'none' : 'development');
+  const seedFixtures = fixtures(seedMode);
   const dataFile = path.resolve(
-    options.dataFile ?? '.local/evidence-workbench/product.json',
+    options.dataFile ??
+      (seedMode === 'evaluation'
+        ? '.local/evidence-workbench/evaluation-product.json'
+        : '.local/evidence-workbench/product.json'),
   );
   const productRepository = createFileEvidenceProductRepository({
     filePath: dataFile,
@@ -140,7 +183,6 @@ export async function createLocalEvidenceWorkbench(
     productSnapshot = await productRepository.snapshot();
   }
 
-  const requestKey = `import:${DEVELOPMENT_COMMAND_KEY}`;
   const ledger = createInMemoryExecutionRepository({
     ids,
     payloadEncryptor: createAes256GcmPayloadEncryptor({
@@ -148,7 +190,7 @@ export async function createLocalEvidenceWorkbench(
       keyId: 'ephemeral-local-session',
     }),
   });
-  const gateway = fixtureGateway(requestKey, clock);
+  const gateway = fixtureGateway(seedFixtures, clock);
   const engine = createExecutionEngine({
     clock,
     ids,
@@ -203,20 +245,18 @@ export async function createLocalEvidenceWorkbench(
     },
   });
 
-  if (
-    options.seedDevelopmentSource !== false &&
-    productSnapshot.sources.length === 0
-  ) {
-    const fixture = developmentObserveArtifactInput();
-    const job = await worker.start({
-      schemaVersion: 'evidence-import-command/1',
-      workspaceId: WORKSPACE_ID,
-      commandKey: DEVELOPMENT_COMMAND_KEY,
-      artifactVersion: fixture.artifactVersion,
-      actorRoster: fixture.actorRoster,
-    });
-    const completed = await worker.wait(job.jobId);
-    if (completed.phase !== 'completed') throw new Error(completed.message);
+  if (productSnapshot.sources.length === 0) {
+    for (const fixture of seedFixtures) {
+      const job = await worker.start({
+        schemaVersion: 'evidence-import-command/1',
+        workspaceId: WORKSPACE_ID,
+        commandKey: fixture.commandKey,
+        artifactVersion: fixture.input.artifactVersion,
+        actorRoster: fixture.input.actorRoster,
+      });
+      const completed = await worker.wait(job.jobId);
+      if (completed.phase !== 'completed') throw new Error(completed.message);
+    }
   }
 
   const server = createEvidenceWorkbenchApi({
@@ -226,6 +266,12 @@ export async function createLocalEvidenceWorkbench(
     ids: reviewIds,
     workspaceId: WORKSPACE_ID,
     technicalAudit: { enabled: false },
+    evidenceProjection() {
+      const latest = ledger.snapshot().state.snapshots.at(-1);
+      return latest === undefined
+        ? initialEvidenceState()
+        : EvidenceStateSchema.parse(latest.value);
+    },
   });
   return {
     server,

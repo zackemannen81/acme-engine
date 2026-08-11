@@ -11,6 +11,16 @@ if (!Number.isSafeInteger(port) || port < 0 || port > 65_535) {
   );
 }
 
-const local = await createLocalEvidenceWorkbench();
+const seedValue = process.env['EVIDENCE_WORKBENCH_SEED'] ?? 'development';
+if (!['development', 'evaluation', 'none'].includes(seedValue)) {
+  throw new Error(
+    'EVIDENCE_WORKBENCH_SEED must be development, evaluation or none.',
+  );
+}
+const dataFile = process.env['EVIDENCE_WORKBENCH_DATA_FILE'];
+const local = await createLocalEvidenceWorkbench({
+  seedMode: seedValue as 'development' | 'evaluation' | 'none',
+  ...(dataFile === undefined ? {} : { dataFile }),
+});
 const address = await listenEvidenceWorkbenchApi(local.server, { port });
 process.stdout.write(`Evidence Integrity Workbench ready at ${address.url}\n`);

@@ -9,6 +9,12 @@ sealed truth is not. It also exposes the deterministic `DEV-T01` observation
 input/output fixture, its exact model-request hash and the labelled 2/2
 development metric targets.
 
+Slice 2 adds five fixed candidate-response cases on the explicit
+`@acme/evidence-testing/evaluation-candidates` entry point. They contain source
+inputs, response candidates and frozen request hashes, but import no sealed
+truth. The offline evaluation scenario executes and validates all five cases
+before dynamically opening the separate truth entry point for comparison.
+
 Sealed evaluation truth requires an explicit import:
 
 ```ts

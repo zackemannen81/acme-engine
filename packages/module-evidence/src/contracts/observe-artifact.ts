@@ -154,7 +154,7 @@ const contract: PromptContract<
         );
       }
 
-      const key = `${observation.startLine}:${observation.endLine}:${observation.exactQuote}`;
+      const key = canonicalJson(observation as unknown as JsonValue);
       const previous = seen.get(key);
       if (previous !== undefined) {
         issues.push(

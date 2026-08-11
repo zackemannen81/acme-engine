@@ -16,6 +16,10 @@
       "types": "./dist/evaluation.d.ts",
       "default": "./dist/evaluation.js"
     },
+    "./evaluation-candidates": {
+      "types": "./dist/evaluation-candidates.d.ts",
+      "default": "./dist/evaluation-candidates.js"
+    },
     "./product-conformance": {
       "types": "./dist/product-conformance.d.ts",
       "default": "./dist/product-conformance.js"

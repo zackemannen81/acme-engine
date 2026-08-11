@@ -37,7 +37,8 @@ acme-engine/
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   └── src/index.ts
+│   │   ├── src/index.ts
+│   │   └── test/index.test.ts
 │   ├── evidence-workbench-worker/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -250,6 +251,7 @@ acme-engine/
 │   │   ├── src/
 │   │   │   ├── corpus.ts
 │   │   │   ├── development-observe.ts
+│   │   │   ├── evaluation-candidates.ts
 │   │   │   ├── evaluation.ts
 │   │   │   ├── golden.ts
 │   │   │   ├── index.ts
@@ -263,8 +265,10 @@ acme-engine/
 │   │   │   ├── development/{sources,truth.json,golden.json}
 │   │   │   └── evaluation/{sources,truth.json,golden.json}
 │   │   └── test/
+│   │       ├── account-views.test.ts
 │   │       ├── corpus.test.ts
 │   │       ├── development-observe.test.ts
+│   │       ├── evaluation-candidates.test.ts
 │   │       ├── identity-vectors.test.ts
 │   │       └── prompt-guard.test.ts
 │   ├── evidence-views/
@@ -279,6 +283,7 @@ acme-engine/
 │   │   │   ├── canonical-text.ts
 │   │   │   ├── catalogue.ts
 │   │   │   ├── contracts/observe-artifact.ts
+│   │   │   ├── correction.ts
 │   │   │   ├── identity.ts
 │   │   │   ├── immutable.ts
 │   │   │   ├── index.ts
@@ -398,6 +403,7 @@ acme-engine/
 │       │   ├── inputs/chapter-1.json
 │       │   ├── responses/chapter-1.json
 │       │   └── narrative-phase-5.yaml
+│       ├── evidence-account-comparison.test.ts
 │       ├── narrative-phase-5.test.ts
 │       ├── research-phase-5.test.ts
 │       ├── scenario-runner.test.ts
@@ -452,6 +458,7 @@ acme-engine/
 │   │   ├── 0029-poc-1-self-hosted-supabase-persistence-platform.md
 │   │   ├── 0030-evidence-v1-identity-and-canonical-placement.md
 │   │   ├── 0031-evidence-review-overlay-and-versioned-views.md
+│   │   ├── 0032-evidence-v1-correction-occurrence-pairing.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -578,6 +585,7 @@ acme-engine/
 │   │   ├── ACME-0076_evidence-integrity-workbench-technical-specification.md
 │   │   ├── ACME-0077_evidence-corpus-contracts-foundation.md
 │   │   ├── ACME-0078_evidence-review-one-source.md
+│   │   ├── ACME-0079_compare-evidence-accounts.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -663,20 +671,22 @@ content remains intentionally omitted here.
   source and independence identity, deterministic observe-evidence
   contract/task, corroboration and contradiction policy, and a pure reducer.
 - `@acme/module-evidence`: Evidence Integrity domain foundation plus the
-  slice-1 `evidence.observe-artifact@1.0.0` task. It owns strict V1 schemas,
-  named content-derived identities, source-bound candidate validation, compact
-  state/delta, pure reducer/invariants and memory policy.
+  slices 1–2 `evidence.observe-artifact@1.0.0` task and correction projection.
+  It owns strict V1 schemas, named content-derived identities, source-bound
+  candidate validation, conservative correction pairing, compact state/delta,
+  pure reducer/invariants and memory policy.
 - `@acme/evidence-product-contracts`: local workspace, source-import, job and
   append-only exact-version review contracts plus the product repository port.
 - `@acme/adapter-evidence-product-file`: atomic local JSON-file implementation
   of the product repository, separate from the ACME ledger.
-- `@acme/evidence-views`: pure registered primary work-queue and source-review
-  view contracts/builders with stable citations and the vocabulary guard.
+- `@acme/evidence-views`: pure registered primary work-queue, source-review,
+  observation-ledger and account-comparison view contracts/builders with
+  stable citations and the vocabulary guard.
 - `@acme/evidence-testing`: exact synthetic corpus plus manifest/open/sealed
   truth loaders, deterministic golden builder, identity vectors, the `DEV-T01`
-  mock fixture and product/view conformance registrars. Sealed evaluation truth
-  is isolated on `./evaluation`; prompt-capable source is blocked from importing
-  it.
+  mock fixture, truth-free deterministic evaluation candidates and product/view
+  conformance registrars. Sealed evaluation truth is isolated on
+  `./evaluation`; prompt-capable source is blocked from importing it.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway, DomainModule
   and QualityEvaluationStore conformance, typed test support and the
   ScenarioRunner over `acme-scenario/1` and `acme-scenario/2`. It depends only
@@ -701,10 +711,11 @@ content remains intentionally omitted here.
   synchronous `launchPlan` stays available. Default entry performs no I/O;
   discovery on `./node-source`. Leaf package.
 - `@acme/evidence-workbench-api`, `@acme/evidence-workbench-worker` and
-  `@acme/evidence-workbench-web`: the slice-1 loopback reviewer composition.
+  `@acme/evidence-workbench-web`: the slices 1–2 loopback reviewer composition.
   The API owns commands/queries and local composition, the bounded in-process
   worker owns job progress/cancellation, and the dependency-free HTML shell
-  consumes only product endpoints. Technical audit defaults to disabled.
+  consumes only product endpoints. It serves source review, the observation
+  ledger and account comparison; technical audit defaults to disabled.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -739,11 +750,12 @@ single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
 
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
-normative POC #1 implementation plan. Slices 0 and 1 delivered the corpus,
-Evidence module/task, product contracts/repository, primary views and local
-web/API/worker boundary. ADR-0030 and ADR-0031 fix their identity/placement and
-reviewer/view boundaries. Account comparison and every later slice remain
-planned and require a separately activated task.
+normative POC #1 implementation plan. Slices 0–2 delivered the corpus, Evidence
+module/task, product contracts/repository, primary source-review, observation-
+ledger and account-comparison views and the local web/API/worker boundary.
+ADR-0030 through ADR-0032 fix their identity/placement, reviewer/view and
+correction-pairing boundaries. General relation analysis begins in planned
+slice 3 and requires a separately activated task.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

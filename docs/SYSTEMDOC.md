@@ -1046,7 +1046,9 @@ is the normative implementation plan. ADR-0030 fixes the V1 Evidence identity
 algorithms, correction-versus-changed-account semantics, compact state and
 document/memory placement. ADR-0031 fixes the application-owned append-only
 review overlay, versioned primary versus secondary views, deterministic
-new-evidence attention rule and Primary Product Rule.
+new-evidence attention rule and Primary Product Rule. ADR-0032 fixes the
+conservative V1 correction-occurrence pairing shared by state projection and
+account views.
 
 The V1 proof corpus is exactly seven logical synthetic text artifacts in eight
 immutable versions: one prompt-scratch transcript, an open development
@@ -1056,8 +1058,9 @@ relations, three open questions and two assessment versions. Canonicalization
 is UTF-8, LF and NFC; locators are one-based inclusive line ranges and accepted
 quotes must match exactly once within their addressed range.
 
-ACME-0077 delivered the Evidence contract/corpus foundation and ACME-0078
-delivered the first executable reviewer slice. `@acme/module-evidence`,
+ACME-0077 delivered the Evidence contract/corpus foundation, ACME-0078
+delivered the first executable reviewer slice and ACME-0079 delivered account
+comparison. `@acme/module-evidence`,
 namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
@@ -1068,12 +1071,25 @@ kind, actor, temporal and prohibited-authority candidates before commit.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing.
 
+For an explicit adjacent `transcription-correction`, the observation task now
+pairs complete predecessor/successor occurrence sets through the ADR-0032 V1
+key: observation kind, exact line range, source actor label/role and temporal
+kind/role. The quote, resolved actor identity and clock value may change. A
+pair must be unique and complete; ambiguity, missing occurrences or a
+different logical artifact is refused. The predecessor becomes `superseded`
+only when its successor becomes `current` in the same Evidence revision. This
+is the mechanical correction boundary, not the general relation task.
+
 `@acme/evidence-testing` owns the synthetic corpus, manifest and open truth
 loaders, deterministic golden builder, `DEV-T01` mock response/request hash,
-product/view conformance registrars and the explicit `./evaluation` entry point
-for sealed truth. Prompt-capable module/application source is forbidden from
-importing that evaluation entry point. Model output remains candidate evidence;
-relations, timeline and assessment stay separate later task boundaries.
+five fixed sealed-source candidate responses/request hashes, product/view
+conformance registrars and the explicit `./evaluation` entry point for sealed
+truth. Candidate fixtures live on `./evaluation-candidates` and import no
+truth. The offline scenario executes and validates all candidates before it
+dynamically opens the truth entry point. Prompt-capable module/application
+source is forbidden from importing sealed truth. Model output remains
+candidate evidence; general relations, timeline and assessment stay separate
+later task boundaries.
 
 Slice 1 also adds `@acme/evidence-product-contracts`, a file-backed product
 adapter and `@acme/evidence-views`. Source/job/review records are separate from
@@ -1086,6 +1102,14 @@ polling/SSE and review commands, and defaults technical audit to disabled.
 The local shell is dependency-free Node/HTML; the accepted React/Vite/Fastify
 baseline remains for the later hosted shell.
 
+Slice 2 adds the pure observation-ledger and account-comparison builders plus
+product routes and browser navigation. The full five-version evaluation seed
+produces ten immutable observations: eight remain `current` and the two
+`EVAL-T01` v1 occurrences become `superseded`. The view shows those paired
+corrections beside the separately retained `EVAL-T02` account and links every
+prior source version. Technical audit remains disabled, and annotation truth
+ids never enter product responses.
+
 Primary reviewer contracts cover work queue, source review, observation
 ledger, account comparison, relations, timeline, open questions, assessment
 and review history. Technical provenance and replay are secondary and may be
@@ -1094,8 +1118,8 @@ a separate product repository; approval never mutates Evidence records or an
 operation digest.
 
 Implementation is divided into separately activatable slices 0–9. Slices 0
-(corpus and contracts) and 1 (one-source review) are delivered; the remaining
-slices are account comparison; relations; timeline/open
+(corpus and contracts), 1 (one-source review) and 2 (account comparison) are
+delivered; the remaining slices are general relations; timeline/open
 questions; assessment/re-review; optional technical audit; self-hosted
 Supabase PostgreSQL adapter; hosted shell; and a separate readiness gate before
 any non-synthetic data. SQLite remains the local/CI default through the first

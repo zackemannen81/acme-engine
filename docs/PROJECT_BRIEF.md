@@ -205,12 +205,14 @@ transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
 No implementation deliverable is currently active against this brief.
-ACME-0077 delivered Evidence Integrity slice 0: the fixed seven-artifact,
-eight-version synthetic corpus, truth/golden fixtures and the first Evidence
-contract, identity, state and testing packages. It added no executable Evidence
-task or reviewer surface. Product implementation still requires a separate
-activated task; the recommended next product task is slice 1, review one
-source. The Domain Test UI
+ACME-0077 through ACME-0079 delivered Evidence Integrity slices 0–2: the fixed
+seven-artifact/eight-version synthetic corpus; Evidence contracts, identity,
+state and deterministic source-observation task; the append-only reviewer
+overlay; source review; an immutable observation ledger; and corrected-versus-
+changed account comparison. The offline evaluation path retains all ten
+observations, marks exactly two corrected predecessors superseded and keeps the
+later changed account separate. The recommended next product task is slice 3,
+relate observations. The Domain Test UI
 decision gates and the evaluation/quality-scoring foundation are delivered,
 and the operational surfaces this brief never claimed — durable quality-result
 storage, a real event transport, redrive for dead-lettered events,

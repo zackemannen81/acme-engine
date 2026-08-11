@@ -184,11 +184,12 @@ export function evidenceDeltaInvariants(
       const predecessor = versions.get(lineage.predecessorArtifactVersionId);
       const successor = versions.get(lineage.successorArtifactVersionId);
       if (
-        predecessor === undefined ||
-        successor === undefined ||
-        predecessor.logicalArtifactId !== lineage.logicalArtifactId ||
-        successor.logicalArtifactId !== lineage.logicalArtifactId ||
-        successor.predecessorVersionId !== predecessor.artifactVersionId
+        artifactVersions.length > 0 &&
+        (predecessor === undefined ||
+          successor === undefined ||
+          predecessor.logicalArtifactId !== lineage.logicalArtifactId ||
+          successor.logicalArtifactId !== lineage.logicalArtifactId ||
+          successor.predecessorVersionId !== predecessor.artifactVersionId)
       ) {
         issues.push(
           issue(

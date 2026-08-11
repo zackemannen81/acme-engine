@@ -1,4 +1,5 @@
 export * from './canonical-text.js';
+export * from './correction.js';
 export * from './catalogue.js';
 export * from './contracts/observe-artifact.js';
 export * from './identity.js';

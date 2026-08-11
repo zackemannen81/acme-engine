@@ -8,6 +8,9 @@ describe('renderEvidenceWorkbenchShell', () => {
 
     expect(html).toContain('data-rationale');
     expect(html).toContain('Reviewed against the exact cited source lines.');
+    expect(html).toContain('Observation ledger');
+    expect(html).toContain('Compare accounts');
+    expect(html).toContain("initialView==='compare'");
     expect(html).not.toContain('prompt(');
   });
 });

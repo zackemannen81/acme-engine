@@ -13,6 +13,10 @@ import {
 
 import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
 import {
+  EvidenceCorrectionPairingError,
+  pairEvidenceCorrectionObservations,
+} from '../correction.js';
+import {
   deriveEvidenceActorReferenceKey,
   deriveEvidenceLocatorId,
   deriveEvidenceObservationId,
@@ -34,6 +38,7 @@ import {
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   EvidenceStateSchema,
+  SourceArtifactVersionSchema,
   type EvidenceActorReference,
   type EvidenceDelta,
   type EvidenceMemoryValue,
@@ -205,6 +210,110 @@ function memory(
   });
 }
 
+function invalidCorrection(code: string, message: string): never {
+  throw new AcmeError({
+    code: 'DOMAIN_INVALID_RESULT',
+    message: `${code}: ${message}`,
+    stage: 'preparing-commit',
+    retryable: false,
+  });
+}
+
+function correctionStandingChanges(
+  input: EvidenceObserveArtifactInput,
+  created: readonly {
+    readonly identityKey: string;
+    readonly objectKind: EvidenceMemoryValue['kind'];
+    readonly value: EvidenceMemoryValue;
+  }[],
+  state: EvidenceState,
+  context: ExecutionReadContext<EvidenceState>,
+): {
+  readonly changes: EvidenceDelta['standingChanges'];
+} {
+  const successorSource = input.artifactVersion;
+  if (successorSource.predecessorVersionId === null || created.length === 0) {
+    return { changes: [] };
+  }
+  const predecessorSource = context.documents
+    .map(({ value }) => SourceArtifactVersionSchema.safeParse(value))
+    .flatMap((parsed) => (parsed.success ? [parsed.data] : []))
+    .find(
+      ({ artifactVersionId }) =>
+        artifactVersionId === successorSource.predecessorVersionId,
+    );
+  if (predecessorSource === undefined) {
+    invalidCorrection(
+      'EVIDENCE_CORRECTION_PREDECESSOR_MISSING',
+      'A corrected artifact requires its exact predecessor source document in the recorded read set.',
+    );
+  }
+  const predecessors = context.memories
+    .map(({ value }) => EvidenceMemoryValueSchema.safeParse(value))
+    .flatMap((parsed) =>
+      parsed.success &&
+      (parsed.data.kind === 'statement-occurrence' ||
+        parsed.data.kind === 'exhibit-assertion') &&
+      parsed.data.artifactVersionId === predecessorSource.artifactVersionId
+        ? [parsed.data]
+        : [],
+    );
+  const successors = created.flatMap(({ value }) =>
+    value.kind === 'statement-occurrence' || value.kind === 'exhibit-assertion'
+      ? [value]
+      : [],
+  );
+  let pairs;
+  try {
+    pairs = pairEvidenceCorrectionObservations({
+      predecessorSource,
+      successorSource,
+      predecessorObservations: predecessors,
+      successorObservations: successors,
+    });
+  } catch (error) {
+    if (error instanceof EvidenceCorrectionPairingError) {
+      invalidCorrection(error.code, error.message);
+    }
+    throw error;
+  }
+  const changes = pairs
+    .map(({ predecessor, successor }) => {
+      const predecessorId = evidenceMemoryIdentity(predecessor);
+      const prior = state.standings.find(
+        ({ objectKind, objectId }) =>
+          objectKind === predecessor.kind && objectId === predecessorId,
+      );
+      if (
+        prior === undefined ||
+        prior.standing === 'superseded' ||
+        prior.standing === 'rejected'
+      ) {
+        invalidCorrection(
+          'EVIDENCE_CORRECTION_PREDECESSOR_NOT_CURRENT',
+          'A correction predecessor must have a current or contested standing.',
+        );
+      }
+      return {
+        objectKind: predecessor.kind,
+        objectId: predecessorId,
+        from: prior.standing,
+        to: 'superseded' as const,
+        transition: 'correction' as const,
+        correctionLineage: {
+          logicalArtifactId: successorSource.logicalArtifactId,
+          predecessorArtifactVersionId: predecessorSource.artifactVersionId,
+          successorArtifactVersionId: successorSource.artifactVersionId,
+          successorObjectId: successor.observationId,
+        },
+      };
+    })
+    .sort((left, right) => left.objectId.localeCompare(right.objectId));
+  return {
+    changes,
+  };
+}
+
 function interpretOutput(
   output: EvidenceObserveArtifactOutput,
   input: EvidenceObserveArtifactInput,
@@ -231,6 +340,18 @@ function interpretOutput(
   const addSource = state.sourceDocumentIds.includes(documentKey)
     ? []
     : [documentKey];
+  const correction = correctionStandingChanges(
+    validatedInput,
+    addSource.length === 0
+      ? []
+      : observations.map((value) => ({
+          identityKey: evidenceMemoryIdentity(value),
+          objectKind: value.kind,
+          value,
+        })),
+    state,
+    context,
+  );
   return immutableEvidence({
     documents: [
       {
@@ -253,7 +374,7 @@ function interpretOutput(
         addSourceDocumentIds: addSource,
         addAssessmentDocumentIds: [],
         addMemoryIds: [],
-        standingChanges: [],
+        standingChanges: correction.changes,
         currentRelationVersionIds: state.currentRelationVersionIds,
         currentOpenQuestionIds: state.currentOpenQuestionIds,
       },
@@ -305,12 +426,12 @@ function projectEvidenceState(
           retryable: false,
         });
       }
-      return { identityKey, objectKind: value.kind } as const;
+      return { identityKey, objectKind: value.kind, value } as const;
     })
     .filter(({ identityKey }) => !state.memoryIds.includes(identityKey))
     .sort((left, right) => left.identityKey.localeCompare(right.identityKey));
   const addMemoryIds = created.map(({ identityKey }) => identityKey);
-  const standingChanges = created.map(({ identityKey, objectKind }) => ({
+  const createdStandingChanges = created.map(({ identityKey, objectKind }) => ({
     objectKind,
     objectId: identityKey,
     from: null,
@@ -318,8 +439,14 @@ function projectEvidenceState(
     transition: 'create' as const,
     correctionLineage: null,
   }));
+  const standingChanges = [
+    ...direct.standingChanges,
+    ...createdStandingChanges,
+  ];
   const changes =
-    direct.addSourceDocumentIds.length > 0 || addMemoryIds.length > 0;
+    direct.addSourceDocumentIds.length > 0 ||
+    addMemoryIds.length > 0 ||
+    direct.standingChanges.length > 0;
   const delta = EvidenceDeltaSchema.parse({
     ...direct,
     nextEvidenceRevision: state.evidenceRevision + (changes ? 1 : 0),

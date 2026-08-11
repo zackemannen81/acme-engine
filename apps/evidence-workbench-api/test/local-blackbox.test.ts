@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { developmentObserveArtifactInput } from '@acme/evidence-testing';
+import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 
 import { listenEvidenceWorkbenchApi } from '../src/index.js';
 import { createLocalEvidenceWorkbench } from '../src/local.js';
@@ -113,6 +114,84 @@ describe('local Evidence workbench', () => {
         status: 'match',
       });
       expect(local.gateway.invocations()).toHaveLength(1);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        local.server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  });
+
+  it('compares corrected and later accounts with every prior source version navigable', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'evidence-comparison-blackbox-'),
+    );
+    directories.push(directory);
+    let coreId = 0;
+    const local = await createLocalEvidenceWorkbench({
+      dataFile: path.join(directory, 'product.json'),
+      seedMode: 'evaluation',
+      clock: { now: () => '2026-08-11T12:00:00.000Z' },
+      ids: { next: (kind) => `${kind}-${String(++coreId).padStart(4, '0')}` },
+      reviewIds: { next: () => 'review-evaluation-0001' },
+    });
+    const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    try {
+      expect(local.gateway.invocations()).toHaveLength(5);
+      const pageText = await (await fetch(address.url)).text();
+      expect(pageText).toContain('Compare accounts');
+
+      const ledgerResponse = await fetch(
+        `${address.url}api/observations?workspaceId=${local.workspaceId}`,
+      );
+      expect(ledgerResponse.status).toBe(200);
+      const ledger = (await ledgerResponse.json()) as {
+        summary: { total: number; current: number; superseded: number };
+      };
+      expect(ledger.summary).toEqual(
+        expect.objectContaining({ total: 10, current: 8, superseded: 2 }),
+      );
+
+      const comparisonResponse = await fetch(
+        `${address.url}api/accounts/compare?workspaceId=${local.workspaceId}`,
+      );
+      expect(comparisonResponse.status).toBe(200);
+      const comparisonText = await comparisonResponse.text();
+      expect(comparisonText).not.toContain('truthId');
+      expect(comparisonText).not.toContain('E-O01');
+      const comparison = JSON.parse(comparisonText) as {
+        correction: { pairs: unknown[] };
+        laterAccounts: unknown[];
+        priorVersionNavigation: { sourcePath: string }[];
+      };
+      expect(comparison.correction.pairs).toHaveLength(2);
+      expect(comparison.laterAccounts).toHaveLength(1);
+      expect(comparison.priorVersionNavigation).toHaveLength(3);
+      for (const { sourcePath } of comparison.priorVersionNavigation) {
+        expect(
+          (
+            await fetch(
+              `${address.url}api${sourcePath}?workspaceId=${local.workspaceId}`,
+            )
+          ).status,
+        ).toBe(200);
+      }
+
+      const fixture = requiredValue(
+        evaluationObserveCases()[0],
+        'first evaluation fixture',
+      );
+      const duplicate = await local.worker.start({
+        schemaVersion: 'evidence-import-command/1',
+        workspaceId: local.workspaceId,
+        commandKey: fixture.caseId,
+        artifactVersion: fixture.input.artifactVersion,
+        actorRoster: fixture.input.actorRoster,
+      });
+      expect(duplicate.phase).toBe('completed');
+      expect(local.gateway.invocations()).toHaveLength(5);
+      expect(
+        (await fetch(`${address.url}api/technical/provenance`)).status,
+      ).toBe(404);
     } finally {
       await new Promise<void>((resolve, reject) =>
         local.server.close((error) => (error ? reject(error) : resolve())),

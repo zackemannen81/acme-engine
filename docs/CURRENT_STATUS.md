@@ -56,6 +56,7 @@ implementation baseline:
 - ADR-0029: POC #1 persistence platform is self-hosted Supabase
 - ADR-0030: Evidence V1 identity and canonical placement
 - ADR-0031: Evidence reviewer overlay and versioned views
+- ADR-0032: Evidence V1 correction-occurrence pairing
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -188,17 +189,25 @@ There is currently:
 - `@acme/module-narrative` with strict v1 schemas, deterministic
   `narrative.observe-document@1.0.0`, pure state/reducer/invariants and a
   domain-owned memory policy
-- `@acme/module-evidence` slice-0 foundation with strict source, locator,
+- `@acme/module-evidence` slices 0–2 foundation and observation path with
+  strict source, locator,
   embedded actor/time, observation, proposition, event, relation, question,
   assessment, state, delta and observe-contract schemas; named ADR-0030
   content-derived identities; source-binding validation; compact pure state;
-  reducer/invariants; domain memory policy; and an intentionally empty
-  executable task registry
+  reducer/invariants; domain memory policy; deterministic
+  `evidence.observe-artifact@1.0.0`; and ADR-0032 correction-occurrence pairing
+  that supersedes only complete adjacent transcription-correction lineages
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
   `rillford-annex-review-1` synthetic corpus, manifest, scratch/development
-  truth, sealed evaluation truth, deterministic golden outputs and identity
-  vectors. Sealed truth is available only from `./evaluation`, with both a
-  prompt dependency guard and a negative dependency-boundary fixture
+  truth, sealed evaluation truth, deterministic golden outputs, identity
+  vectors and fixed evaluation candidates. Sealed truth is available only
+  from `./evaluation`; candidate fixtures import no truth, and both a prompt
+  dependency guard and a negative dependency-boundary fixture enforce that
+  separation
+- pure primary work-queue, source-review, observation-ledger and
+  account-comparison views, plus a loopback Evidence Workbench API/web/worker
+  composition with development and evaluation seed modes. The evaluation seed
+  contains ten immutable observations: eight current and two superseded
 - ADR-0011-compliant `narrative-window-1` and source-backed
   `previous-document-tail-1`, including golden request, entity and context
   fixtures
@@ -309,9 +318,9 @@ There is currently:
   module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
   boundary fixtures (both "the app imports no package internal" and "nothing
   imports the app")
-- 634 passing unit-suite tests across packages (87 files) exercised by
+- 639 passing unit-suite tests across packages (90 files) exercised by
   `pnpm test:unit`, with separate conformance (69 tests, 11 files), integration
-  (57 tests, 11 files) and scenario (24 tests, 5 files) gates. Counts observed
+  (57 tests, 11 files) and scenario (25 tests, 6 files) gates. Counts observed
   2026-08-11
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
@@ -332,12 +341,15 @@ requires the ACME repository adapter to target plain PostgreSQL over the wire
 protocol rather than any Supabase-specific API. ADR-0030 fixes Evidence V1
 identity, correction semantics and document/memory/state placement; ADR-0031
 fixes the append-only review overlay, versioned primary/technical views and
-Primary Product Rule. The normative technical plan is
+Primary Product Rule; ADR-0032 fixes the conservative correction-occurrence
+pairing used by state projection and account comparison. The normative
+technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
-The direction, platform and implementation plan are accepted. Slices 0 and 1
-exist: the corpus/contracts foundation plus one offline reviewer path for
-`DEV-T01`. No account-comparison or later Evidence slice, PostgreSQL adapter,
-hosted shell, deployment or non-synthetic path exists.
+The direction, platform and implementation plan are accepted. Slices 0–2
+exist: the corpus/contracts foundation, one offline reviewer path for
+`DEV-T01`, and offline account comparison over the evaluation corpus. No
+general Evidence relation task or later slice, PostgreSQL adapter, hosted
+shell, deployment or non-synthetic path exists.
 
 ## Active Work
 
@@ -368,12 +380,23 @@ builder and sealed-truth dependency guard. ACME-0078 then delivered slice 1:
 the executable source-observation task, deterministic `DEV-T01` mock, separate
 file-backed product repository and append-only review overlay, pure work-queue
 and source-review views, and a loopback API/web/worker path with technical
-audit disabled. The recommended next product task is slice 2, compare accounts.
+audit disabled. ACME-0079 then delivered slice 2: five deterministic evaluation
+executions yield the exact ten sealed observations, conservative correction
+pairing marks only the two `EVAL-T01` v1 predecessors superseded, and primary
+ledger/account-comparison views keep the later changed account and every source
+version navigable. The recommended next product task is slice 3, relate
+observations.
 Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0079:** Delivered Evidence Integrity slice 2: an offline sealed
+  evaluation harness, exact correction supersession with eight current and two
+  superseded immutable observations, primary observation-ledger and
+  account-comparison views, and a browser-visible evaluation seed. No general
+  relation analysis, live provider or non-synthetic path was added.
 
 - **ACME-0078:** Delivered Evidence Integrity slice 1: one offline source-first
   reviewer path over `DEV-T01`, exact source/actor/time validation, stable

@@ -1,5 +1,49 @@
 # Journal
 
+## 2026-08-11 — ACME-0079 Compare evidence accounts
+
+- Date: 2026-08-11
+- Author: Codex
+- Task: ACME-0079
+- Branch: `main`
+- Summary: Completed Evidence Integrity Workbench slice 2. Five deterministic
+  offline evaluation executions now produce all ten sealed expected
+  observations before the harness opens truth; the immutable ledger retains
+  eight current and two superseded occurrences.
+- Correction boundary: ADR-0032 defines one shared, fail-closed V1 pairing
+  rule over explicit adjacent `transcription-correction` lineage. Exact kind,
+  line range and source actor/time roles pair the two `EVAL-T01` predecessors
+  with their corrected successors. Missing, ambiguous, incomplete,
+  cross-artifact and later changed-account pairings are refused, and the model
+  cannot request supersession.
+- Product boundary: added pure primary observation-ledger and account-
+  comparison views, product API routes, browser navigation to all three
+  relevant source versions, and a bounded evaluation seed mode. The corrected
+  transcript and later `EVAL-T02` account stay visibly distinct; technical
+  audit remains disabled and sealed truth identifiers do not enter browser
+  payloads.
+- Idempotency and proof: exact duplicate import/execution produces no sixth
+  gateway invocation, new observation, standing change or Evidence revision.
+  The sealed scenario proves all ten observation identities, the two
+  `E-R01`/`E-R02` mechanical pairs and the final 8/2 standing projection.
+- Verification: offline install, `typecheck`, `lint`, `format:check`,
+  `boundaries`, `build`, aggregate `test`, `docs:check` and `git diff --check`
+  passed. Tests were 639/639 in 90 main-suite files, 69/69 conformance in 11,
+  57/57 integration in 11 and 25/25 scenario tests in 6. A temporary
+  PATH-local Corepack pnpm 10.34.5 shim was used for nested test scripts and
+  removed afterward. No check was skipped.
+- Browser smoke: started the loopback workbench on port 8790 with a separate
+  evaluation product file, confirmed the 10 total / 8 current / 2 superseded
+  ledger, rendered both correction pairs and the later changed account, and
+  opened the exact original `EVAL-T01` source lines. Existing slice-1 local
+  review data was preserved.
+- Safety: no live provider call, network-backed corpus, provider spend,
+  credential, deployment, publication or non-synthetic data path was used.
+- Handoff: activate slice 3 as a separate charter for general observation
+  relations. Contradiction, qualification, scope mismatch and unresolved-
+  relation review intentionally remain absent from slice 2.
+- Signature: Codex
+
 ## 2026-08-11 — ACME-0078 Evidence review of one source
 
 - Date: 2026-08-11

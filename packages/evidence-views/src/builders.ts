@@ -6,15 +6,26 @@ import {
 } from '@acme/evidence-product-contracts';
 import type {
   EvidenceObservation,
+  EvidenceState,
   EvidenceTemporalBound,
   SourceArtifactVersion,
 } from '@acme/module-evidence';
+import {
+  EvidenceStateSchema,
+  pairEvidenceCorrectionObservations,
+} from '@acme/module-evidence';
 
 import {
+  EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
+  EvidencePrimaryAccountComparisonViewSchema,
+  EvidencePrimaryObservationLedgerViewSchema,
   EvidencePrimarySourceReviewViewSchema,
   EvidencePrimaryWorkQueueViewSchema,
+  type EvidencePrimaryAccountComparisonView,
+  type EvidencePrimaryObservationLedgerView,
   type EvidencePrimarySourceReviewView,
   type EvidencePrimaryWorkQueueView,
 } from './schemas.js';
@@ -102,6 +113,52 @@ function timeDisplay(value: EvidenceTemporalBound): string {
       return `${value.center} ± ${String(value.toleranceMinutes)} min`;
     case 'unknown':
       return 'Time not specified in the quote.';
+  }
+}
+
+function sourceSummary(source: SourceArtifactVersion) {
+  return {
+    artifactVersionId: source.artifactVersionId,
+    logicalArtifactId: source.logicalArtifactId,
+    title: source.title,
+    versionOrdinal: source.versionOrdinal,
+    predecessorVersionId: source.predecessorVersionId,
+    sourcePath: `/sources/${source.artifactVersionId}`,
+  };
+}
+
+function standingMap(stateValue: EvidenceState) {
+  const state = EvidenceStateSchema.parse(stateValue);
+  return new Map(
+    state.standings
+      .filter(({ objectKind }) =>
+        ['statement-occurrence', 'exhibit-assertion'].includes(objectKind),
+      )
+      .map(({ objectId, standing: value }) => [objectId, value]),
+  );
+}
+
+function requireObservationStanding(
+  standings: ReadonlyMap<
+    string,
+    EvidenceState['standings'][number]['standing']
+  >,
+  observationId: string,
+) {
+  const value = standings.get(observationId);
+  if (value === undefined)
+    throw new RangeError(`Missing standing for ${observationId}.`);
+  return value;
+}
+
+function requireProjectionRevision(
+  workspaceRevision: number,
+  state: EvidenceState,
+): void {
+  if (workspaceRevision !== state.evidenceRevision) {
+    throw new RangeError(
+      'Workspace evidence revision does not match the supplied Evidence projection.',
+    );
   }
 }
 
@@ -248,6 +305,193 @@ export function buildEvidencePrimarySourceReviewView(input: {
       },
       heading: 'Source review',
       observations,
+    }),
+  );
+}
+
+export function buildEvidencePrimaryObservationLedgerView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+}): EvidencePrimaryObservationLedgerView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const sources = new Map(
+    snapshot.sources.map((source) => [source.artifactVersionId, source]),
+  );
+  const successorIds = new Set(
+    snapshot.sources.flatMap(({ predecessorVersionId }) =>
+      predecessorVersionId === null ? [] : [predecessorVersionId],
+    ),
+  );
+  const standings = standingMap(state);
+  const entries = snapshot.observations
+    .map((observation) => {
+      const source = sources.get(observation.artifactVersionId);
+      if (source === undefined)
+        throw new RangeError(
+          `Missing source for ${observation.observationId}.`,
+        );
+      const actor = sourceActor(observation);
+      return {
+        observationVersionId: observation.observationId,
+        source: sourceSummary(source),
+        exactQuote: observation.exactQuote,
+        citation: citation(source, observation),
+        actorLabel: actor?.sourceLabel ?? null,
+        timeDisplay:
+          observation.temporalBound === null
+            ? null
+            : timeDisplay(observation.temporalBound),
+        standing: requireObservationStanding(
+          standings,
+          observation.observationId,
+        ),
+        versionRole:
+          source.predecessorVersionId !== null
+            ? ('corrected-version' as const)
+            : successorIds.has(source.artifactVersionId)
+              ? ('original-version' as const)
+              : ('independent-source' as const),
+      };
+    })
+    .sort(
+      (left, right) =>
+        left.citation.display.localeCompare(right.citation.display) ||
+        left.observationVersionId.localeCompare(right.observationVersionId),
+    );
+  const counts = {
+    current: 0,
+    contested: 0,
+    superseded: 0,
+    rejected: 0,
+  };
+  for (const entry of entries) counts[entry.standing] += 1;
+  return detached(
+    EvidencePrimaryObservationLedgerViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        label: workspace.label,
+        evidenceRevision: workspace.evidenceRevision,
+      },
+      heading: 'Observation ledger',
+      summary: { total: entries.length, ...counts },
+      entries,
+    }),
+  );
+}
+
+export function buildEvidencePrimaryAccountComparisonView(input: {
+  readonly workspaceId: string;
+  readonly correctionLogicalArtifactId: string;
+  readonly changedAccountLogicalArtifactIds: readonly string[];
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+}): EvidencePrimaryAccountComparisonView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const correctionSources = snapshot.sources
+    .filter(
+      ({ logicalArtifactId }) =>
+        logicalArtifactId === input.correctionLogicalArtifactId,
+    )
+    .sort((left, right) => left.versionOrdinal - right.versionOrdinal);
+  if (correctionSources.length !== 2) {
+    throw new RangeError(
+      `Account comparison requires exactly two versions of ${input.correctionLogicalArtifactId}.`,
+    );
+  }
+  const originalSource = correctionSources[0];
+  const correctedSource = correctionSources[1];
+  if (originalSource === undefined || correctedSource === undefined) {
+    throw new RangeError('Account comparison correction sources are missing.');
+  }
+  const observationsFor = (source: SourceArtifactVersion) =>
+    snapshot.observations.filter(
+      ({ artifactVersionId }) => artifactVersionId === source.artifactVersionId,
+    );
+  const pairs = pairEvidenceCorrectionObservations({
+    predecessorSource: originalSource,
+    successorSource: correctedSource,
+    predecessorObservations: observationsFor(originalSource),
+    successorObservations: observationsFor(correctedSource),
+  });
+  const standings = standingMap(state);
+  const laterAccounts = input.changedAccountLogicalArtifactIds
+    .flatMap((logicalArtifactId) =>
+      snapshot.sources.filter(
+        (source) => source.logicalArtifactId === logicalArtifactId,
+      ),
+    )
+    .sort(
+      (left, right) =>
+        left.logicalArtifactId.localeCompare(right.logicalArtifactId) ||
+        left.versionOrdinal - right.versionOrdinal,
+    )
+    .map((source) => ({
+      source: sourceSummary(source),
+      label: 'Later changed account — retained separately' as const,
+      observations: observationsFor(source)
+        .map((observation) => ({
+          observationVersionId: observation.observationId,
+          exactQuote: observation.exactQuote,
+          citation: citation(source, observation),
+          standing: requireObservationStanding(
+            standings,
+            observation.observationId,
+          ),
+        }))
+        .sort(
+          (left, right) =>
+            left.citation.startLine - right.citation.startLine ||
+            left.observationVersionId.localeCompare(right.observationVersionId),
+        ),
+    }));
+  const navigationSources = [
+    originalSource,
+    correctedSource,
+    ...laterAccounts.map(({ source }) =>
+      requireSource(snapshot, source.artifactVersionId),
+    ),
+  ];
+  return detached(
+    EvidencePrimaryAccountComparisonViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
+      workspaceId: input.workspaceId,
+      heading: 'Account comparison',
+      explanation:
+        'A corrected transcript replaces only its paired earlier occurrences. A later account remains separately visible.',
+      correction: {
+        logicalArtifactId: input.correctionLogicalArtifactId,
+        originalSource: sourceSummary(originalSource),
+        correctedSource: sourceSummary(correctedSource),
+        pairs: pairs.map(({ predecessor, successor }) => ({
+          predecessorObservationVersionId: predecessor.observationId,
+          successorObservationVersionId: successor.observationId,
+          predecessorCitation: citation(originalSource, predecessor),
+          successorCitation: citation(correctedSource, successor),
+          predecessorQuote: predecessor.exactQuote,
+          successorQuote: successor.exactQuote,
+          predecessorStanding: requireObservationStanding(
+            standings,
+            predecessor.observationId,
+          ),
+          successorStanding: requireObservationStanding(
+            standings,
+            successor.observationId,
+          ),
+        })),
+      },
+      laterAccounts,
+      priorVersionNavigation: navigationSources.map((source) => ({
+        label: `${source.title} — version ${String(source.versionOrdinal)}`,
+        sourcePath: `/sources/${source.artifactVersionId}`,
+      })),
     }),
   );
 }

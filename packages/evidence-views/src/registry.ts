@@ -9,6 +9,16 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     classification: 'primary-domain',
     defaultPath: '/sources/:artifactVersionId',
   },
+  {
+    schemaVersion: 'evidence-primary-observation-ledger-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/observations',
+  },
+  {
+    schemaVersion: 'evidence-primary-account-comparison-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/accounts/compare',
+  },
 ] as const);
 
 export const EVIDENCE_PRIMARY_FORBIDDEN_TOKENS = Object.freeze([

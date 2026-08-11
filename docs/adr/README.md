@@ -66,3 +66,4 @@ current architecture.
 - [`0029-poc-1-self-hosted-supabase-persistence-platform.md`](0029-poc-1-self-hosted-supabase-persistence-platform.md)
 - [`0030-evidence-v1-identity-and-canonical-placement.md`](0030-evidence-v1-identity-and-canonical-placement.md)
 - [`0031-evidence-review-overlay-and-versioned-views.md`](0031-evidence-review-overlay-and-versioned-views.md)
+- [`0032-evidence-v1-correction-occurrence-pairing.md`](0032-evidence-v1-correction-occurrence-pairing.md)

@@ -10,6 +10,10 @@ export const EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION =
   'evidence-primary-work-queue-view/1' as const;
 export const EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION =
   'evidence-primary-source-review-view/1' as const;
+export const EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION =
+  'evidence-primary-observation-ledger-view/1' as const;
+export const EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION =
+  'evidence-primary-account-comparison-view/1' as const;
 
 const CitationSchema = z
   .object({
@@ -29,6 +33,24 @@ const ReviewStandingSchema = z.enum([
   'unresolved',
   'revision-requested',
 ]);
+
+const EvidenceStandingSchema = z.enum([
+  'current',
+  'contested',
+  'superseded',
+  'rejected',
+]);
+
+const SourceSummarySchema = z
+  .object({
+    artifactVersionId: EvidenceNonBlankStringSchema,
+    logicalArtifactId: EvidenceNonBlankStringSchema,
+    title: EvidenceNonBlankStringSchema,
+    versionOrdinal: z.number().int().positive(),
+    predecessorVersionId: EvidenceNonBlankStringSchema.nullable(),
+    sourcePath: EvidenceNonBlankStringSchema,
+  })
+  .strict();
 
 export const EvidencePrimaryWorkQueueViewSchema = z
   .object({
@@ -139,9 +161,118 @@ export const EvidencePrimarySourceReviewViewSchema = z
   })
   .strict();
 
+export const EvidencePrimaryObservationLedgerViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
+    ),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Observation ledger'),
+    summary: z
+      .object({
+        total: z.number().int().nonnegative(),
+        current: z.number().int().nonnegative(),
+        contested: z.number().int().nonnegative(),
+        superseded: z.number().int().nonnegative(),
+        rejected: z.number().int().nonnegative(),
+      })
+      .strict(),
+    entries: z.array(
+      z
+        .object({
+          observationVersionId: EvidenceNonBlankStringSchema,
+          source: SourceSummarySchema,
+          exactQuote: EvidenceNonBlankStringSchema,
+          citation: CitationSchema,
+          actorLabel: EvidenceNonBlankStringSchema.nullable(),
+          timeDisplay: EvidenceNonBlankStringSchema.nullable(),
+          standing: EvidenceStandingSchema,
+          versionRole: z.enum([
+            'original-version',
+            'corrected-version',
+            'independent-source',
+          ]),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const EvidencePrimaryAccountComparisonViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
+    ),
+    workspaceId: EvidenceNonBlankStringSchema,
+    heading: z.literal('Account comparison'),
+    explanation: z.literal(
+      'A corrected transcript replaces only its paired earlier occurrences. A later account remains separately visible.',
+    ),
+    correction: z
+      .object({
+        logicalArtifactId: EvidenceNonBlankStringSchema,
+        originalSource: SourceSummarySchema,
+        correctedSource: SourceSummarySchema,
+        pairs: z.array(
+          z
+            .object({
+              predecessorObservationVersionId: EvidenceNonBlankStringSchema,
+              successorObservationVersionId: EvidenceNonBlankStringSchema,
+              predecessorCitation: CitationSchema,
+              successorCitation: CitationSchema,
+              predecessorQuote: EvidenceNonBlankStringSchema,
+              successorQuote: EvidenceNonBlankStringSchema,
+              predecessorStanding: z.literal('superseded'),
+              successorStanding: z.enum(['current', 'contested']),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+    laterAccounts: z.array(
+      z
+        .object({
+          source: SourceSummarySchema,
+          label: z.literal('Later changed account — retained separately'),
+          observations: z.array(
+            z
+              .object({
+                observationVersionId: EvidenceNonBlankStringSchema,
+                exactQuote: EvidenceNonBlankStringSchema,
+                citation: CitationSchema,
+                standing: z.enum(['current', 'contested']),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+    priorVersionNavigation: z.array(
+      z
+        .object({
+          label: EvidenceNonBlankStringSchema,
+          sourcePath: EvidenceNonBlankStringSchema,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
 export type EvidencePrimaryWorkQueueView = z.infer<
   typeof EvidencePrimaryWorkQueueViewSchema
 >;
 export type EvidencePrimarySourceReviewView = z.infer<
   typeof EvidencePrimarySourceReviewViewSchema
+>;
+export type EvidencePrimaryObservationLedgerView = z.infer<
+  typeof EvidencePrimaryObservationLedgerViewSchema
+>;
+export type EvidencePrimaryAccountComparisonView = z.infer<
+  typeof EvidencePrimaryAccountComparisonViewSchema
 >;

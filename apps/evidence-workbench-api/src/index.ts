@@ -14,11 +14,14 @@ import {
   type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
 import {
+  buildEvidencePrimaryAccountComparisonView,
+  buildEvidencePrimaryObservationLedgerView,
   buildEvidencePrimarySourceReviewView,
   buildEvidencePrimaryWorkQueueView,
 } from '@acme/evidence-views';
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
+import type { EvidenceState } from '@acme/module-evidence';
 
 function send(response: ServerResponse, status: number, value: unknown): void {
   const body = typeof value === 'string' ? value : JSON.stringify(value);
@@ -48,6 +51,7 @@ export function createEvidenceWorkbenchApi(options: {
   readonly ids: EvidenceProductIds;
   readonly workspaceId: string;
   readonly technicalAudit?: { readonly enabled: boolean };
+  readonly evidenceProjection?: () => EvidenceState;
 }): Server {
   const technicalAuditEnabled = options.technicalAudit?.enabled ?? false;
   return createServer(async (request, response) => {
@@ -85,6 +89,46 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryWorkQueueView({
             workspaceId,
             snapshot: await options.repository.snapshot(),
+          }),
+        );
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/observations') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Observation projection is unavailable.');
+        send(
+          response,
+          200,
+          buildEvidencePrimaryObservationLedgerView({
+            workspaceId,
+            snapshot: await options.repository.snapshot(),
+            evidenceState: options.evidenceProjection(),
+          }),
+        );
+        return;
+      }
+      if (
+        request.method === 'GET' &&
+        url.pathname === '/api/accounts/compare'
+      ) {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Account comparison projection is unavailable.');
+        const changed = url.searchParams.getAll('changed');
+        send(
+          response,
+          200,
+          buildEvidencePrimaryAccountComparisonView({
+            workspaceId,
+            correctionLogicalArtifactId:
+              url.searchParams.get('correction') ?? 'EVAL-T01',
+            changedAccountLogicalArtifactIds:
+              changed.length === 0 ? ['EVAL-T02'] : changed,
+            snapshot: await options.repository.snapshot(),
+            evidenceState: options.evidenceProjection(),
           }),
         );
         return;

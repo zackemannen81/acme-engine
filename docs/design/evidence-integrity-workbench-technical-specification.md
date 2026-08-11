@@ -27,11 +27,14 @@ The keywords **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD** and **MAY** are
 normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
-Implementation status: ACME-0077 delivered slice 0 and ACME-0078 delivered
-slice 1. The canonical corpus and validation boundary exist; the first
-source-observation task, local product repository, work-queue/source-review
-views and offline loopback reviewer path are implemented. Slices 2–9 remain
-separately activatable and unimplemented.
+Implementation status: ACME-0077 delivered slice 0, ACME-0078 delivered slice
+1 and ACME-0079 delivered slice 2. The canonical corpus and validation
+boundary, source-observation task, correction standing projection, local
+product repository, work-queue/source-review/observation-ledger/account-
+comparison views and offline loopback reviewer path are implemented. Slices
+3–9 remain separately activatable and unimplemented. ADR-0032 fixes the
+conservative V1 correction-occurrence pairing used by both projection and
+views.
 
 ## 2. Outcome, Non-goals and Product Separation
 
@@ -1019,7 +1022,7 @@ and injected resume.
 Documentation: module contract, local run instructions, known limitations and
 signed verification handoff.
 
-### Slice 2 — Compare accounts
+### Slice 2 — Compare accounts (delivered by ACME-0079)
 
 Reviewer capability: compare `EVAL-T01` versions and `EVAL-T02`, distinguish a
 correction from a later changed account and see that nothing was overwritten.
