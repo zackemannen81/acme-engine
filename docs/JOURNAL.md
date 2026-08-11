@@ -50,6 +50,34 @@ Add one dated, signed entry for every meaningful work session or handoff.
   template", with the archive filename in the `ACME-NNNN_task-slug.md` form
   that `docs/TASK_WORKFLOW.md` recommends and every existing file in
   `docs/finished/` uses.
+- Third revision round closed the nine technical questions the Draft had left
+  open and added the product separation the maintainer's review identified as
+  the real risk. The named failure mode is an application whose visible result
+  is execution status, quality scores or internal state, which would be a second
+  Domain Test UI rather than proof that ACME supports a real application. The
+  charter now carries a normative Primary Product Rule, the domain-provenance
+  versus engine-provenance distinction, two product acceptance tests
+  (domain black-box and ACME contribution), a required primary/secondary
+  classification of every view, an accepted derived-staleness model with its
+  reviewer-facing behavior, and a slice order restated as reviewer capabilities
+  where only the foundation slice may end without a visible capability.
+- Five corrections were made to the proposed freeze points rather than adopting
+  them unchanged: the corpus split drops the word "train" and becomes
+  development plus sealed evaluation, with thresholds expressed as absolute
+  counts wherever the denominator is small and every threshold written with its
+  denominator; canonicalization and line-range locator semantics are frozen so
+  the exact-quote gate is mechanically decidable; `EventOccurrence` is removed
+  from the first execution task; any measure whose correct value is 100% moves
+  from the comparison table into the hard gates; and every V1 review decision
+  records that its principal is unauthenticated so the hosted slice can tell V1
+  approvals apart without rewriting history.
+- Both product acceptance tests were specified as mechanical checks rather than
+  review opinions: a disable-technical-audit configuration the primary journey
+  is exercised behind, and a forbidden-vocabulary check over primary view
+  contract field names and user-facing strings. The two-tier staleness ranking
+  is deterministic set intersection over citation identity, and the charter
+  records that it must never become a model-scored relevance ranking, because
+  ADR-0028 forbids the model from acting as relevance authority.
 - `AGENTS.md` corrected to match reality: its archiving rule asked for a
   "descriptive dated filename", while `docs/TASK_WORKFLOW.md` and all 75
   archived files use `ACME-NNNN_task-slug.md` with no date in the name. The
@@ -59,9 +87,13 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Verification: `pnpm docs:check` checked 153 Markdown files with internal
   links and fences clean; `git diff --check` passed. No code, schema or stored
   data changed, so no code gates were applicable.
-- Handoff: ACME-0076 remains `Draft` and unfrozen. The next step is the
-  maintainer's review of the revised charter and the nine technical questions,
-  then a `Ready` transition.
+- Handoff: ACME-0076 remains `Draft` and unfrozen, but nothing blocks freezing
+  it. The nine technical questions are answered in the charter, the product
+  separation is accepted, and the next step is a `Ready` transition followed by
+  writing the specification against the accepted answers. The two ADRs the
+  charter names — Evidence V1 identity and canonical placement, and Evidence
+  reviewer, review overlay and versioned view boundary — are identified but not
+  written; the second must carry the Primary Product Rule.
 - Signature: Claude
 
 ## 2026-08-10 — ACME-0075 open-source concepts
