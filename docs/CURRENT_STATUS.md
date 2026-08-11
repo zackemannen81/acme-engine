@@ -54,6 +54,8 @@ implementation baseline:
 - ADR-0027: Async launch job progress and cancellation
 - ADR-0028: First POC is the Evidence Integrity Workbench
 - ADR-0029: POC #1 persistence platform is self-hosted Supabase
+- ADR-0030: Evidence V1 identity and canonical placement
+- ADR-0031: Evidence reviewer overlay and versioned views
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -186,6 +188,17 @@ There is currently:
 - `@acme/module-narrative` with strict v1 schemas, deterministic
   `narrative.observe-document@1.0.0`, pure state/reducer/invariants and a
   domain-owned memory policy
+- `@acme/module-evidence` slice-0 foundation with strict source, locator,
+  embedded actor/time, observation, proposition, event, relation, question,
+  assessment, state, delta and observe-contract schemas; named ADR-0030
+  content-derived identities; source-binding validation; compact pure state;
+  reducer/invariants; domain memory policy; and an intentionally empty
+  executable task registry
+- `@acme/evidence-testing` with the exact seven-artifact/eight-version
+  `rillford-annex-review-1` synthetic corpus, manifest, scratch/development
+  truth, sealed evaluation truth, deterministic golden outputs and identity
+  vectors. Sealed truth is available only from `./evaluation`, with both a
+  prompt dependency guard and a negative dependency-boundary fixture
 - ADR-0011-compliant `narrative-window-1` and source-backed
   `previous-document-tail-1`, including golden request, entity and context
   fixtures
@@ -296,10 +309,10 @@ There is currently:
   module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
   boundary fixtures (both "the app imports no package internal" and "nothing
   imports the app")
-- 603 passing unit-suite tests across packages (73 files) exercised by
-  `pnpm test:unit`, with separate conformance (64 tests, 9 files), integration
-  (56 tests, 10 files) and scenario (24 tests, 5 files) gates. Counts observed
-  2026-08-09
+- 634 passing unit-suite tests across packages (87 files) exercised by
+  `pnpm test:unit`, with separate conformance (69 tests, 11 files), integration
+  (57 tests, 11 files) and scenario (24 tests, 5 files) gates. Counts observed
+  2026-08-11
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
@@ -316,8 +329,15 @@ normative boundary is
 [`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
 ADR-0029 selects self-hosted Supabase as POC #1's persistence platform and
 requires the ACME repository adapter to target plain PostgreSQL over the wire
-protocol rather than any Supabase-specific API. The direction and the platform
-are accepted; no product implementation and no adapter exist yet.
+protocol rather than any Supabase-specific API. ADR-0030 fixes Evidence V1
+identity, correction semantics and document/memory/state placement; ADR-0031
+fixes the append-only review overlay, versioned primary/technical views and
+Primary Product Rule. The normative technical plan is
+[`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
+The direction, platform and implementation plan are accepted. Slices 0 and 1
+exist: the corpus/contracts foundation plus one offline reviewer path for
+`DEV-T01`. No account-comparison or later Evidence slice, PostgreSQL adapter,
+hosted shell, deployment or non-synthetic path exists.
 
 ## Active Work
 
@@ -337,14 +357,34 @@ Integrity Workbench** as POC #1 under ADR-0028, locked its synthetic-corpus,
 source-bound, immutable-evidence and human-review boundaries, and retained
 Research Synthesis as the intended POC #2. The product selection and boundary
 are now authoritative, and ADR-0029 has since decided the POC #1 persistence
-platform; implementation, deployment and any real-data path remain unapproved.
-`docs/CURRENT_TASK.md` holds ACME-0076 as a `Draft`: the Evidence Integrity
-Workbench technical specification, not yet frozen at `Ready`. Alternatives if
-that Draft is deferred: E1 trust-stage evidence (G12) or the remaining WP-T
-residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
-browser CI smoke).
+platform. ACME-0076 then delivered the normative technical specification and
+ADRs 0030–0031: exactly seven logical synthetic artifacts in eight versions,
+the first Evidence task and identity family, primary versus technical views,
+append-only review decisions, deterministic assessment export, frozen proof
+gates and separately activatable slices 0–9. ACME-0077 then delivered slice 0:
+the exact synthetic corpus and truth, public Evidence contracts and identities,
+compact state/reducer/invariants, memory/module scaffold, deterministic golden
+builder and sealed-truth dependency guard. ACME-0078 then delivered slice 1:
+the executable source-observation task, deterministic `DEV-T01` mock, separate
+file-backed product repository and append-only review overlay, pure work-queue
+and source-review views, and a loopback API/web/worker path with technical
+audit disabled. The recommended next product task is slice 2, compare accounts.
+Independent alternatives remain E1
+trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
+adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0078:** Delivered Evidence Integrity slice 1: one offline source-first
+  reviewer path over `DEV-T01`, exact source/actor/time validation, stable
+  observations, durable product review decisions, pure primary views and
+  replay/resume proof with one deterministic mock call. No live provider or
+  later Evidence slice was added.
+
+- **ACME-0077:** Delivered Evidence Integrity slice 0: deterministic corpus,
+  contract/identity/state foundation, test-support package, sealed-truth guard
+  and offline golden/conformance proof. No model-backed task or product UI was
+  added.
 
 - **ACME-0017–0023:** Narrative and Research reference modules, offline Phase 5
   scenarios, ExecutionEngine (ADR-0012), SQLite durability (ADR-0013).
@@ -463,6 +503,11 @@ browser CI smoke).
   changed accounts, requires source locators and human review, prohibits
   credibility/guilt/legal-sufficiency decisions, and keeps Research Synthesis
   as the intended POC #2. No code or real-data authorization was added.
+- **ACME-0076:** Delivered the Evidence Integrity Workbench technical
+  specification plus ADR-0030 and ADR-0031. It freezes the bounded synthetic
+  corpus contract, Evidence identity and placement, product/reviewer view
+  boundary, proof matrix and local-first implementation slices without adding
+  code, provider calls or real-data authority.
 
 ### Domain Test UI (phases 0–6 and S1–S10 browser flow delivered)
 

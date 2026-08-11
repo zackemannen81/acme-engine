@@ -26,6 +26,21 @@
       "path": "./packages/module-research"
     },
     {
+      "path": "./packages/module-evidence"
+    },
+    {
+      "path": "./packages/evidence-testing"
+    },
+    {
+      "path": "./packages/evidence-product-contracts"
+    },
+    {
+      "path": "./packages/adapter-evidence-product-file"
+    },
+    {
+      "path": "./packages/evidence-views"
+    },
+    {
       "path": "./packages/testing"
     },
     {
@@ -33,6 +48,15 @@
     },
     {
       "path": "./apps/test-ui"
+    },
+    {
+      "path": "./apps/evidence-workbench-worker"
+    },
+    {
+      "path": "./apps/evidence-workbench-web"
+    },
+    {
+      "path": "./apps/evidence-workbench-api"
     }
   ]
 }

@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "evidence-corpus-manifest/1",
+  "corpusId": "rillford-annex-review-1",
+  "fictionNotice": "All people, organizations, places and events in this corpus are synthetic.",
+  "sourcePolicy": {
+    "data": "synthetic-only",
+    "media": "text-only",
+    "context": "no-criminal-offence-context"
+  },
+  "partitions": [
+    {
+      "id": "scratch",
+      "actorNamespace": "rillford-scratch-actors-1",
+      "eventNamespace": "rillford-scratch-events-1"
+    },
+    {
+      "id": "development",
+      "actorNamespace": "rillford-development-actors-1",
+      "eventNamespace": "rillford-development-events-1"
+    },
+    {
+      "id": "evaluation",
+      "actorNamespace": "rillford-evaluation-actors-1",
+      "eventNamespace": "rillford-evaluation-events-1"
+    }
+  ],
+  "artifacts": [
+    {
+      "partition": "development",
+      "logicalArtifactId": "DEV-E01",
+      "title": "Greenhouse hatch controller log",
+      "kind": "structured-exhibit-text",
+      "versionOrdinals": [1]
+    },
+    {
+      "partition": "development",
+      "logicalArtifactId": "DEV-T01",
+      "title": "Nera Sol maintenance interview",
+      "kind": "interview-transcript",
+      "versionOrdinals": [1]
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-E01",
+      "title": "Service corridor access log",
+      "kind": "structured-exhibit-text",
+      "versionOrdinals": [1]
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T01",
+      "title": "Iven Marr first maintenance interview",
+      "kind": "interview-transcript",
+      "versionOrdinals": [1, 2]
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T02",
+      "title": "Iven Marr follow-up maintenance interview",
+      "kind": "interview-transcript",
+      "versionOrdinals": [1]
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T03",
+      "title": "Iva Marn maintenance interview",
+      "kind": "interview-transcript",
+      "versionOrdinals": [1]
+    },
+    {
+      "partition": "scratch",
+      "logicalArtifactId": "SCR-T01",
+      "title": "Lio Fen atrium-light interview",
+      "kind": "interview-transcript",
+      "versionOrdinals": [1]
+    }
+  ],
+  "versions": [
+    {
+      "partition": "development",
+      "logicalArtifactId": "DEV-E01",
+      "artifactVersionId": "evidence_artifact_00c6f7bab5dcce286456b2a5e30515294b10405522bf2d8450a687af7a7de79c",
+      "versionOrdinal": 1,
+      "kind": "structured-exhibit-text",
+      "title": "Greenhouse hatch controller log",
+      "contentPath": "development/sources/DEV-E01-v1.txt",
+      "contentSha256": "f4b8f8d1519e8e6d41d38cd58624a466fe6eac793dc94e23ea3d21fb10d6a8d8",
+      "locatorScheme": "line-range-1",
+      "lineCount": 4,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "development",
+      "logicalArtifactId": "DEV-T01",
+      "artifactVersionId": "evidence_artifact_b686398587beb5aff3a84b8a909cfd67b19b9500046d26da658f7ae32b7d7d29",
+      "versionOrdinal": 1,
+      "kind": "interview-transcript",
+      "title": "Nera Sol maintenance interview",
+      "contentPath": "development/sources/DEV-T01-v1.txt",
+      "contentSha256": "a1fa463e1ebc5ea84a29112eb7dc2941301e2dcc613275a199cdbdfabed93715",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-E01",
+      "artifactVersionId": "evidence_artifact_0eb756eddeb54cfec1728f7e0706224defe66e32ce8ec116df9ac7ac9a6d5178",
+      "versionOrdinal": 1,
+      "kind": "structured-exhibit-text",
+      "title": "Service corridor access log",
+      "contentPath": "evaluation/sources/EVAL-E01-v1.txt",
+      "contentSha256": "9d1e15f987efac5a62fe190d13bc8fc9b9a9b6a0109674ea6e72527aa29b780f",
+      "locatorScheme": "line-range-1",
+      "lineCount": 3,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T01",
+      "artifactVersionId": "evidence_artifact_4f48afe2dd7197c0eb74531f502f2eb32ec4d5c209e1a1cc589ec982e573da1b",
+      "versionOrdinal": 1,
+      "kind": "interview-transcript",
+      "title": "Iven Marr first maintenance interview",
+      "contentPath": "evaluation/sources/EVAL-T01-v1.txt",
+      "contentSha256": "31490df08f27209d473889407f429c740b820ca37754107512242b2ddc76f66b",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T01",
+      "artifactVersionId": "evidence_artifact_6d28c72d67b3be603fc266f25216bf4a4e4c4d058a6e4877724c4116dd10f913",
+      "versionOrdinal": 2,
+      "kind": "interview-transcript",
+      "title": "Iven Marr first maintenance interview (corrected transcript)",
+      "contentPath": "evaluation/sources/EVAL-T01-v2.txt",
+      "contentSha256": "ada0540e2fe1620be3431a06e48f6771bf174eedd53a3bdb6c900625e5b12b7c",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": "evidence_artifact_4f48afe2dd7197c0eb74531f502f2eb32ec4d5c209e1a1cc589ec982e573da1b",
+      "correctionReason": "transcription-correction"
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T02",
+      "artifactVersionId": "evidence_artifact_3001b8c284d27a618bcde9f6940bbece1bfef8efa87196122485897c06c05ff8",
+      "versionOrdinal": 1,
+      "kind": "interview-transcript",
+      "title": "Iven Marr follow-up maintenance interview",
+      "contentPath": "evaluation/sources/EVAL-T02-v1.txt",
+      "contentSha256": "c314f3fcc3bff95992c5150fdf42deb736725302409aead792ae993dcd80b67f",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "evaluation",
+      "logicalArtifactId": "EVAL-T03",
+      "artifactVersionId": "evidence_artifact_9c92569b2b986c2753b937cd8c21e82691d1ec33bbeeb020c32a075f608d95e9",
+      "versionOrdinal": 1,
+      "kind": "interview-transcript",
+      "title": "Iva Marn maintenance interview",
+      "contentPath": "evaluation/sources/EVAL-T03-v1.txt",
+      "contentSha256": "2df116a8baf1818e1ffd14eda5911b644057895c452b2eae18a230b25b2fcd6f",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    },
+    {
+      "partition": "scratch",
+      "logicalArtifactId": "SCR-T01",
+      "artifactVersionId": "evidence_artifact_b37eb4d0a93cc60298d8f2a4074e4eaaf1a27af5663a49bf35b81987dfbb7305",
+      "versionOrdinal": 1,
+      "kind": "interview-transcript",
+      "title": "Lio Fen atrium-light interview",
+      "contentPath": "scratch/sources/SCR-T01-v1.txt",
+      "contentSha256": "afecde9a13632bead02d28d382e7d58625a0141b1a94d62fc33ba34edd00306f",
+      "locatorScheme": "line-range-1",
+      "lineCount": 6,
+      "predecessorVersionId": null,
+      "correctionReason": null
+    }
+  ]
+}

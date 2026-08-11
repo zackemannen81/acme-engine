@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "evidence-identity-vectors/1",
+  "canonicalization": {
+    "algorithm": "evidence-text-canonicalization-1",
+    "input": "A\r\nCafe\u0301\r\n",
+    "canonical": "A\nCaf\u00e9\n"
+  },
+  "contentHash": {
+    "inputArtifactVersionId": "evidence_artifact_4f48afe2dd7197c0eb74531f502f2eb32ec4d5c209e1a1cc589ec982e573da1b",
+    "expected": "31490df08f27209d473889407f429c740b820ca37754107512242b2ddc76f66b"
+  },
+  "artifactVersion": {
+    "algorithm": "evidence-artifact-version-id-1",
+    "expected": "evidence_artifact_4f48afe2dd7197c0eb74531f502f2eb32ec4d5c209e1a1cc589ec982e573da1b"
+  },
+  "locator": {
+    "algorithm": "evidence-locator-id-1",
+    "input": {
+      "artifactVersionId": "evidence_artifact_6d28c72d67b3be603fc266f25216bf4a4e4c4d058a6e4877724c4116dd10f913",
+      "startLine": 4,
+      "endLine": 4
+    },
+    "expected": "evidence_locator_30cf44f91b4f68dd94eed3edf22b97ab762f1494820b495bf709732902423284"
+  },
+  "actorReference": {
+    "algorithm": "evidence-actor-reference-key-1",
+    "input": {
+      "artifactVersionId": "evidence_artifact_6d28c72d67b3be603fc266f25216bf4a4e4c4d058a6e4877724c4116dd10f913",
+      "locatorId": "evidence_locator_30cf44f91b4f68dd94eed3edf22b97ab762f1494820b495bf709732902423284",
+      "sourceLabel": "Iven Marr",
+      "sourceRole": "speaker"
+    },
+    "expected": "evidence_actor_a6e7994f2e0dd279bd94bbce85fa2b474711f160e3a7a666768e2e23fc394e1f"
+  },
+  "observation": {
+    "algorithm": "evidence-observation-id-1",
+    "truthId": "E-O03",
+    "expected": "evidence_observation_ac1424d2780a3622869a69803f997bf08bb6d58463e7ea90dd3ec91871bdc07d"
+  },
+  "proposition": {
+    "algorithm": "evidence-proposition-id-1",
+    "input": {
+      "observationIds": [
+        "evidence_observation_ac1424d2780a3622869a69803f997bf08bb6d58463e7ea90dd3ec91871bdc07d"
+      ],
+      "normalizedProposition": "Iven Marr reported arriving at approximately 09:08."
+    },
+    "expected": "evidence_proposition_99b68b71b030b5a5362e924b021e7187fc7cb26518c4a73d437555092c59ac55"
+  },
+  "event": {
+    "algorithm": "evidence-event-id-1",
+    "input": {
+      "supportingObservationIds": [
+        "evidence_observation_b6510a4a525a816fa6e5940d9cd5d23242e55ca975dfc121524bf4aab634b75f"
+      ],
+      "actorReferenceKeys": [],
+      "temporalBound": {
+        "schemaVersion": "evidence-temporal-bound/1",
+        "role": "document-time",
+        "artifactVersionId": "evidence_artifact_0eb756eddeb54cfec1728f7e0706224defe66e32ce8ec116df9ac7ac9a6d5178",
+        "locatorId": "evidence_locator_9b52ad09c0f2a9b1132877afb1f3a5449e7f5bc719c8deaa80b46b5aed6461fa",
+        "kind": "exact",
+        "at": "2026-04-18T09:16:00Z"
+      }
+    },
+    "expected": "evidence_event_421e2b29423f20d664da0153b708d9186c8253ba049eabd69878fa18aa64d47d"
+  },
+  "relation": {
+    "algorithm": "evidence-relation-id-1",
+    "truthId": "E-R05",
+    "expected": "evidence_relation_58fa9d63cd17c9e2f0760e1efa97aba816cdca6aed3bc94d409d852f8a5088fd"
+  },
+  "openQuestion": {
+    "algorithm": "evidence-open-question-id-1",
+    "truthId": "E-Q01",
+    "expected": "evidence_question_29d6f680fcfdae01588c51e2e115ef6919fd22020f85a0346785193a1ae7bcca"
+  },
+  "assessment": {
+    "contentHashAlgorithm": "evidence-assessment-content-hash-1",
+    "idAlgorithm": "evidence-assessment-id-1",
+    "truthId": "E-A01",
+    "expectedContentHash": "1d0f5e509fe86d6df7218e66939f93cee8e3cb7f55897a0168901fc74a67a48a",
+    "expectedId": "evidence_assessment_fa93461c648a4dc372ec19773c036bd5888e52e0a59f894ca26f38875917dedf"
+  }
+}

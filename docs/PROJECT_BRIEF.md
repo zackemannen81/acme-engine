@@ -165,6 +165,10 @@ The first platform version is successful when:
 The first real product POC is the **Evidence Integrity Workbench**, accepted by
 [ADR-0028](adr/0028-first-poc-evidence-integrity-workbench.md) and defined in
 [`docs/design/evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
+Its implementation-ready plan is
+[`docs/design/evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md),
+with Evidence identity/placement fixed by ADR-0030 and the reviewer/view
+boundary fixed by ADR-0031.
 
 It operates over a fixed synthetic evidence corpus and helps a non-adjudicative
 reviewer establish what each source contains, where an observation occurs, how
@@ -200,9 +204,13 @@ call is recoverable without calling the provider again, an interrupted
 transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
-No implementation deliverable is currently outstanding against this brief.
-The next product-design input is fixed by the First Product POC section, but
-implementation still requires a separate activated task. The Domain Test UI
+No implementation deliverable is currently active against this brief.
+ACME-0077 delivered Evidence Integrity slice 0: the fixed seven-artifact,
+eight-version synthetic corpus, truth/golden fixtures and the first Evidence
+contract, identity, state and testing packages. It added no executable Evidence
+task or reviewer surface. Product implementation still requires a separate
+activated task; the recommended next product task is slice 1, review one
+source. The Domain Test UI
 decision gates and the evaluation/quality-scoring foundation are delivered,
 and the operational surfaces this brief never claimed — durable quality-result
 storage, a real event transport, redrive for dead-lettered events,
@@ -214,6 +222,5 @@ trust-stage evidence granularity, the remaining Domain Test UI residuals
 (plan `measurements`, adapter discovery, browser CI) and the deliberately
 deferred provider-reconciliation and key-lifecycle work. The next
 implementation deliverable must still be explicitly approved before
-activation. For product work, the next recommended deliverable is the Evidence
-Integrity technical specification and synthetic golden-corpus plan. Platform-
-only work may still activate trust-stage evidence (E1) independently.
+activation. Platform-only work may still activate trust-stage evidence (E1)
+independently.

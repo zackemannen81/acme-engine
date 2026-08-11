@@ -13,6 +13,14 @@ Team implementation guides:
 
 Application surfaces:
 
+- [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
+  — normative implementation plan for POC #1. It freezes the seven-artifact,
+  eight-version synthetic corpus contract, Evidence identities and placement,
+  primary versus technical-audit views, review overlay, deterministic export,
+  proof matrix and separately activatable slices 0–9 under ADR-0030 and
+  ADR-0031. ACME-0077 delivered slice 0's corpus/contracts foundation; later
+  slices and every non-synthetic data path still require separate authority.
+
 - [`evidence-integrity-workbench-product-definition.md`](evidence-integrity-workbench-product-definition.md)
   — accepted normative product definition for ACME's first real POC under
   [`ADR-0028`](../adr/0028-first-poc-evidence-integrity-workbench.md). It fixes

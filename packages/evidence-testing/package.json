@@ -1,0 +1,38 @@
+{
+  "name": "@acme/evidence-testing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist",
+    "fixtures"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./evaluation": {
+      "types": "./dist/evaluation.d.ts",
+      "default": "./dist/evaluation.js"
+    },
+    "./product-conformance": {
+      "types": "./dist/product-conformance.d.ts",
+      "default": "./dist/product-conformance.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/core": "workspace:*",
+    "@acme/evidence-product-contracts": "workspace:*",
+    "@acme/evidence-views": "workspace:*",
+    "@acme/module-evidence": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "4.0.18"
+  }
+}

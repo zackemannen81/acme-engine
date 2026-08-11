@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-09
+Last updated: 2026-08-11
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -28,6 +28,20 @@ acme-engine/
 │   │   └── test/
 │   │       ├── cli.test.ts
 │   │       └── outbox-file-dispatcher.test.ts
+│   ├── evidence-workbench-api/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/{index.ts,local.ts,local-main.ts}
+│   │   └── test/local-blackbox.test.ts
+│   ├── evidence-workbench-web/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/index.ts
+│   ├── evidence-workbench-worker/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/index.ts
 │   └── test-ui/
 │       ├── package.json
 │       ├── tsconfig.json
@@ -220,6 +234,65 @@ acme-engine/
 │   │   └── test/
 │   │       ├── live-judge.test.ts
 │   │       └── quality-evaluation.test.ts
+│   ├── adapter-evidence-product-file/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/repository.test.ts
+│   ├── evidence-product-contracts/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/{index.ts,repository.ts,review.ts,schemas.ts}
+│   ├── evidence-testing/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── corpus.ts
+│   │   │   ├── development-observe.ts
+│   │   │   ├── evaluation.ts
+│   │   │   ├── golden.ts
+│   │   │   ├── index.ts
+│   │   │   ├── product-conformance.ts
+│   │   │   ├── prompt-guard.ts
+│   │   │   └── schemas.ts
+│   │   ├── fixtures/rillford-annex-review-1/
+│   │   │   ├── manifest.json
+│   │   │   ├── identity-vectors.json
+│   │   │   ├── scratch/{sources,truth.json,golden.json}
+│   │   │   ├── development/{sources,truth.json,golden.json}
+│   │   │   └── evaluation/{sources,truth.json,golden.json}
+│   │   └── test/
+│   │       ├── corpus.test.ts
+│   │       ├── development-observe.test.ts
+│   │       ├── identity-vectors.test.ts
+│   │       └── prompt-guard.test.ts
+│   ├── evidence-views/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/{builders.ts,index.ts,registry.ts,schemas.ts}
+│   ├── module-evidence/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── canonical-text.ts
+│   │   │   ├── catalogue.ts
+│   │   │   ├── contracts/observe-artifact.ts
+│   │   │   ├── identity.ts
+│   │   │   ├── immutable.ts
+│   │   │   ├── index.ts
+│   │   │   ├── memory-policy.ts
+│   │   │   ├── module.ts
+│   │   │   ├── schemas.ts
+│   │   │   ├── state.ts
+│   │   │   ├── tasks/observe-artifact.ts
+│   │   │   └── validation.ts
+│   │   └── test/
+│   │       ├── identity-and-schemas.test.ts
+│   │       ├── memory-and-module.test.ts
+│   │       ├── observe-artifact.test.ts
+│   │       └── state.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -293,6 +366,7 @@ acme-engine/
 │   │   ├── adapter-model-openai.test.ts
 │   │   ├── adapter-sqlite.test.ts
 │   │   ├── domain-module.test.ts
+│   │   ├── module-evidence.test.ts
 │   │   ├── module-narrative.test.ts
 │   │   ├── module-research.test.ts
 │   │   ├── quality-evaluation-memory.test.ts
@@ -339,7 +413,8 @@ acme-engine/
 │   │       ├── packages/core/src/forbidden-provider.ts
 │   │       ├── packages/evaluation/src/forbidden-adapter.ts
 │   │       ├── packages/module-fixture/src/forbidden.ts
-│   │       └── packages/module-fixture/src/forbidden-module.ts
+│   │       ├── packages/module-fixture/src/forbidden-module.ts
+│   │       └── packages/module-fixture/src/forbidden-sealed-truth.ts
 │   ├── docs/
 │   │   └── check-docs.mjs
 │   └── typescript/
@@ -375,6 +450,8 @@ acme-engine/
 │   │   ├── 0027-async-launch-job-progress-cancellation.md
 │   │   ├── 0028-first-poc-evidence-integrity-workbench.md
 │   │   ├── 0029-poc-1-self-hosted-supabase-persistence-platform.md
+│   │   ├── 0030-evidence-v1-identity-and-canonical-placement.md
+│   │   ├── 0031-evidence-review-overlay-and-versioned-views.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -417,6 +494,7 @@ acme-engine/
 │   │   ├── acme-design-and-development-spec.md
 │   │   ├── domain-test-ui-specification.md
 │   │   ├── evidence-integrity-workbench-product-definition.md
+│   │   ├── evidence-integrity-workbench-technical-specification.md
 │   │   ├── first-poc-application-discovery.md
 │   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md
@@ -497,6 +575,9 @@ acme-engine/
 │   │   ├── ACME-0073_first-poc-application-discovery.md
 │   │   ├── ACME-0074_lock-evidence-integrity-workbench.md
 │   │   ├── ACME-0075_open-source-concepts.md
+│   │   ├── ACME-0076_evidence-integrity-workbench-technical-specification.md
+│   │   ├── ACME-0077_evidence-corpus-contracts-foundation.md
+│   │   ├── ACME-0078_evidence-review-one-source.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -581,6 +662,21 @@ content remains intentionally omitted here.
 - `@acme/module-research`: strict Research v1 schemas, ADR-0009 proposition,
   source and independence identity, deterministic observe-evidence
   contract/task, corroboration and contradiction policy, and a pure reducer.
+- `@acme/module-evidence`: Evidence Integrity domain foundation plus the
+  slice-1 `evidence.observe-artifact@1.0.0` task. It owns strict V1 schemas,
+  named content-derived identities, source-bound candidate validation, compact
+  state/delta, pure reducer/invariants and memory policy.
+- `@acme/evidence-product-contracts`: local workspace, source-import, job and
+  append-only exact-version review contracts plus the product repository port.
+- `@acme/adapter-evidence-product-file`: atomic local JSON-file implementation
+  of the product repository, separate from the ACME ledger.
+- `@acme/evidence-views`: pure registered primary work-queue and source-review
+  view contracts/builders with stable citations and the vocabulary guard.
+- `@acme/evidence-testing`: exact synthetic corpus plus manifest/open/sealed
+  truth loaders, deterministic golden builder, identity vectors, the `DEV-T01`
+  mock fixture and product/view conformance registrars. Sealed evaluation truth
+  is isolated on `./evaluation`; prompt-capable source is blocked from importing
+  it.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway, DomainModule
   and QualityEvaluationStore conformance, typed test support and the
   ScenarioRunner over `acme-scenario/1` and `acme-scenario/2`. It depends only
@@ -604,6 +700,11 @@ content remains intentionally omitted here.
   `src/job-record.ts`, so browser launch enqueues and can be cancelled while
   synchronous `launchPlan` stays available. Default entry performs no I/O;
   discovery on `./node-source`. Leaf package.
+- `@acme/evidence-workbench-api`, `@acme/evidence-workbench-worker` and
+  `@acme/evidence-workbench-web`: the slice-1 loopback reviewer composition.
+  The API owns commands/queries and local composition, the bounded in-process
+  worker owns job progress/cancellation, and the dependency-free HTML shell
+  consumes only product endpoints. Technical audit defaults to disabled.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -636,6 +737,13 @@ launch, progress and cancellation under ADR-0027. Multi-step live scenarios run
 through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 stays
 single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
+
+`docs/design/evidence-integrity-workbench-technical-specification.md` is the
+normative POC #1 implementation plan. Slices 0 and 1 delivered the corpus,
+Evidence module/task, product contracts/repository, primary views and local
+web/API/worker boundary. ADR-0030 and ADR-0031 fix their identity/placement and
+reviewer/view boundaries. Account comparison and every later slice remain
+planned and require a separately activated task.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "evidence-golden-run/1",
+  "corpusId": "rillford-annex-review-1",
+  "partition": "development",
+  "scenarioId": "development-open-truth-1",
+  "inputArtifactVersionIds": [
+    "evidence_artifact_00c6f7bab5dcce286456b2a5e30515294b10405522bf2d8450a687af7a7de79c",
+    "evidence_artifact_b686398587beb5aff3a84b8a909cfd67b19b9500046d26da658f7ae32b7d7d29"
+  ],
+  "expectedObservationIds": [
+    "evidence_observation_5a5ad3d7d5848740327e165a882a89da3e685363d9703019bce64ad21ef1ed17",
+    "evidence_observation_5b66e1929103d4b6b936a06966fd1f026f9782c2e9e61407d3459a2c4b4d216d",
+    "evidence_observation_94b25af693964c11f8cf6abec6b132f25abef1d85fea7fa4c273827b9898a069",
+    "evidence_observation_9b277034b271d7b7fb8b77c913ef797ade1ef1f3ea90e49a727a7d29d8ff373a"
+  ],
+  "expectedRelationIds": [
+    "evidence_relation_6e55f7992dfe323f767f6c2a7e894f11dbbbe0e2431ac936b6d5e7321c5c9ae7"
+  ],
+  "expectedOpenQuestionIds": [
+    "evidence_question_a66780b6ae0cc6c080f2beb270b91c480b16c65ef044b3ad15ddec11006e418f"
+  ],
+  "expectedAssessmentVersionIds": [],
+  "expectedStandings": [
+    {
+      "objectKind": "evidence-relation",
+      "objectId": "evidence_relation_6e55f7992dfe323f767f6c2a7e894f11dbbbe0e2431ac936b6d5e7321c5c9ae7",
+      "standing": "current"
+    },
+    {
+      "objectKind": "exhibit-assertion",
+      "objectId": "evidence_observation_5b66e1929103d4b6b936a06966fd1f026f9782c2e9e61407d3459a2c4b4d216d",
+      "standing": "current"
+    },
+    {
+      "objectKind": "exhibit-assertion",
+      "objectId": "evidence_observation_94b25af693964c11f8cf6abec6b132f25abef1d85fea7fa4c273827b9898a069",
+      "standing": "current"
+    },
+    {
+      "objectKind": "open-question",
+      "objectId": "evidence_question_a66780b6ae0cc6c080f2beb270b91c480b16c65ef044b3ad15ddec11006e418f",
+      "standing": "current"
+    },
+    {
+      "objectKind": "statement-occurrence",
+      "objectId": "evidence_observation_5a5ad3d7d5848740327e165a882a89da3e685363d9703019bce64ad21ef1ed17",
+      "standing": "current"
+    },
+    {
+      "objectKind": "statement-occurrence",
+      "objectId": "evidence_observation_9b277034b271d7b7fb8b77c913ef797ade1ef1f3ea90e49a727a7d29d8ff373a",
+      "standing": "current"
+    }
+  ],
+  "expectedEvidenceRevision": 3,
+  "expectedReviewOverlay": [],
+  "expectedRefusals": [],
+  "expectedReplayVerdicts": []
+}

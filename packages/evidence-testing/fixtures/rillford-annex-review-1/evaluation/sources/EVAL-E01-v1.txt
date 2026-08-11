@@ -1,0 +1,3 @@
+Synthetic service-corridor controller log — Rillford Annex
+Record format: local_time | device | event | operator_label.
+09:16:00 | SC-4 | panel_changed_to_closed | I. Mar

@@ -153,7 +153,19 @@ export default {
         path: '(?:^|/)packages/module-[^/]+/src',
       },
       to: {
-        path: '^(?:apps|packages/(?:adapter-[^/]+|testing)(?:/|$))',
+        path: '^(?:apps|packages/(?:adapter-[^/]+|testing|evidence-testing)(?:/|$))',
+      },
+    },
+    {
+      name: 'sealed-evaluation-truth-stays-out-of-prompts',
+      severity: 'error',
+      comment:
+        'Prompt-capable module and app source may use evaluation source text, but cannot import the sealed evaluation-truth entry point.',
+      from: {
+        path: '(?:^|/)(?:packages/module-[^/]+|apps/[^/]+)/src',
+      },
+      to: {
+        path: '(?:^|/)packages/evidence-testing/src/evaluation\\.ts$',
       },
     },
   ],

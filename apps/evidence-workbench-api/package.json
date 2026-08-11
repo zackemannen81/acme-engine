@@ -1,0 +1,36 @@
+{
+  "name": "@acme/evidence-workbench-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./local": {
+      "types": "./dist/local.d.ts",
+      "default": "./dist/local.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false",
+    "start:local": "node ./dist/local-main.js"
+  },
+  "dependencies": {
+    "@acme/adapter-evidence-product-file": "workspace:*",
+    "@acme/adapter-memory": "workspace:*",
+    "@acme/adapter-model-mock": "workspace:*",
+    "@acme/core": "workspace:*",
+    "@acme/evidence-product-contracts": "workspace:*",
+    "@acme/evidence-testing": "workspace:*",
+    "@acme/evidence-views": "workspace:*",
+    "@acme/evidence-workbench-web": "workspace:*",
+    "@acme/evidence-workbench-worker": "workspace:*",
+    "@acme/module-evidence": "workspace:*"
+  }
+}

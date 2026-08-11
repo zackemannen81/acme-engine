@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "evidence-golden-run/1",
+  "corpusId": "rillford-annex-review-1",
+  "partition": "scratch",
+  "scenarioId": "scratch-quote-binding-1",
+  "inputArtifactVersionIds": [
+    "evidence_artifact_b37eb4d0a93cc60298d8f2a4074e4eaaf1a27af5663a49bf35b81987dfbb7305"
+  ],
+  "expectedObservationIds": [
+    "evidence_observation_2e5c74163cd58e887547d32c358642609af2141c040e3b15cfaa438da7db9a66",
+    "evidence_observation_c0e422c2675f89dc9cbaea03c067590ad10a7216fa770114c76385c3dc2e963a"
+  ],
+  "expectedRelationIds": [],
+  "expectedOpenQuestionIds": [],
+  "expectedAssessmentVersionIds": [],
+  "expectedStandings": [
+    {
+      "objectKind": "statement-occurrence",
+      "objectId": "evidence_observation_2e5c74163cd58e887547d32c358642609af2141c040e3b15cfaa438da7db9a66",
+      "standing": "current"
+    },
+    {
+      "objectKind": "statement-occurrence",
+      "objectId": "evidence_observation_c0e422c2675f89dc9cbaea03c067590ad10a7216fa770114c76385c3dc2e963a",
+      "standing": "current"
+    }
+  ],
+  "expectedEvidenceRevision": 1,
+  "expectedReviewOverlay": [],
+  "expectedRefusals": [],
+  "expectedReplayVerdicts": []
+}

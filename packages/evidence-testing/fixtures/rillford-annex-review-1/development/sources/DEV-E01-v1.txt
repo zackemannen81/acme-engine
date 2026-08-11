@@ -1,0 +1,4 @@
+Synthetic greenhouse controller log — Rillford Annex
+Record format: local_time | device | observation | operator.
+14:06 | GH-22 | indicator=amber | operator=DEV-B7
+14:07 | GH-22 | hatch=open | operator=DEV-B7

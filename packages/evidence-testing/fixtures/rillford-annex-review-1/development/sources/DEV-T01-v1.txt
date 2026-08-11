@@ -1,0 +1,6 @@
+Synthetic development transcript — Rillford Annex
+Incident: greenhouse supply-hatch check in the development partition.
+Interviewer: When did you reach the greenhouse hatch?
+Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.
+Interviewer: What did the indicator and hatch show?
+Nera Sol: The indicator showed amber while the hatch was open.

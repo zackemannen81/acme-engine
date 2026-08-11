@@ -10,6 +10,7 @@ coverage/
 .env.*
 !.env.example
 .env.live
+.local/
 
 # Logs and temporary files
 *.log

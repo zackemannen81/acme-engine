@@ -1,6 +1,195 @@
 # Journal
 
+## 2026-08-11 — ACME-0078 Evidence review of one source
+
+- Date: 2026-08-11
+- Author: Codex
+- Task: ACME-0078
+- Branch: `main`
+- Summary: Completed Evidence Integrity Workbench slice 1. The new offline
+  reviewer journey imports immutable `DEV-T01` v1, runs the deterministic
+  `evidence.observe-artifact@1.0.0` task through the unchanged ACME engine,
+  presents exact numbered source lines and source-bound proposed observations,
+  and records append-only version-bound review decisions.
+- Domain boundary: implemented strict quote, kind, actor-roster, ambiguity,
+  clock-source and prohibited-conclusion validation before canonical commit.
+  Stable documents, observation memories, Evidence state projection,
+  diagnostics and a bounded event are derived only after validation.
+- Product boundary: added separate product contracts, an atomic file-backed
+  source/job/review repository, pure work-queue and source-review views, and a
+  minimal loopback API/web/worker composition. Technical-audit routes remain
+  absent by default and the local composition seeds only synthetic development
+  data.
+- Replay and resilience: repeated import is idempotent; divergent command-key
+  reuse is rejected; replay reports `match`; and an injected interruption after
+  the provider record resumes with one total gateway invocation.
+- Development metrics: 2/2 exact quote binds, 2/2 actor resolutions and 2/2
+  temporal normalizations on the finite `DEV-T01` fixture. These are labelled
+  development-corpus results, not a model comparison or production claim.
+- Verification: `typecheck`, `lint`, `format:check`, `boundaries`, `docs:check`,
+  `build` and `git diff --check` passed. The offline aggregate test passed with
+  634/634 tests in 87 main-suite files, 69/69 conformance, 57/57 integration
+  and 24/24 scenario tests. A temporary PATH-local Corepack pnpm 10.34.5 shim
+  was used because nested scripts otherwise resolved desktop pnpm 11.16.0; it
+  was removed afterward. A browser smoke test also opened an exact citation,
+  recorded an accepted review and verified that the second proposal remained
+  queued; a regression test prevents blocking prompt-based review. No checks
+  were skipped.
+- Safety: no live provider call, network-backed corpus, provider spend,
+  deployment, publication, credential or non-synthetic data path was used.
+- Documentation: synchronized the task charter, project/status/system/structure
+  docs, Evidence technical specification, package/app readmes and this handoff.
+  ADR-0030 and ADR-0031 remained sufficient; no new architecture decision was
+  needed.
+- Handoff: activate a separate slice-2 charter to compare corrected and changed
+  accounts over the sealed evaluation harness. Hosted framework migration,
+  cross-process recovery and later Evidence views remain outside this slice.
+- Signature: Codex
+
 Add one dated, signed entry for every meaningful work session or handoff.
+
+## 2026-08-11 — ACME-0077 Evidence corpus and contracts foundation
+
+- Date: 2026-08-11
+- Author: Codex
+- Task: ACME-0077
+- Branch: `main`
+- Summary: Completed and archived Evidence Integrity Workbench slice 0. Added
+  the pure `@acme/module-evidence` domain foundation and the
+  `@acme/evidence-testing` corpus/golden package without adding an executable
+  Evidence task, reviewer surface, provider call, database or product claim.
+- Corpus: authored the exact `rillford-annex-review-1` inventory — seven
+  logical synthetic, non-criminal text artifacts in eight immutable versions.
+  The manifest pins canonical UTF-8/LF/NFC bytes, content hashes, line counts,
+  partition namespaces and the explicit `EVAL-T01` v1→v2 transcription-
+  correction lineage. Scratch, development and evaluation actors/events are
+  disjoint.
+- Truth and golden proof: authored scratch and open development truth plus the
+  separately loaded sealed evaluation truth. The evaluation set validates ten
+  source-bound observations, eight scoped relations, three open questions,
+  two immutable assessment versions, exact actor/time counts, scenarios and
+  coupling groups. Every quote resolves exactly once in its declared line
+  range and every truth/citation/correction/actor/relation reference resolves.
+  Committed `evidence-golden-run/1` outputs rebuild by value and the identity
+  vectors cover source, locator, actor, observation, proposition, event,
+  relation, question and assessment algorithms.
+- Domain foundation: exported every ADR-0030 V1 schema identifier, named
+  canonical-JSON/SHA-256 identities, source/observation invariants, compact
+  identifier-only `evidence-state/1` and `evidence-delta/1`, pure reducer,
+  revision/standing/correction/relation/assessment invariants and a
+  deterministic memory policy. Correction deltas name and create the current
+  successor in the same operation. The four future task identities are frozen
+  catalogue metadata with `implemented: false`; `evidenceModule.tasks` is
+  empty by design.
+- Sealed boundary: the normal testing entry exposes manifest, source bytes and
+  scratch/development truth only. Evaluation truth requires
+  `@acme/evidence-testing/evaluation`. A prompt dependency guard, dependency-
+  cruiser rule and negative fixture prove prompt-capable module/app source
+  cannot import it.
+- Tests: added 18 focused corpus, golden, identity, schema, state, invariant,
+  memory, module and prompt-guard tests plus Evidence module conformance.
+  Repository totals observed after the change are 621 tests across 80 files in
+  the main Vitest configuration, 66 conformance tests, 56 integration tests
+  and 24 scenario tests.
+- Verification: `corepack pnpm install --offline`, `typecheck`, `lint`,
+  `format:check`, `boundaries`, exact aggregate `test`, `docs:check` (159
+  Markdown files), `build` and `git diff --check` passed. Deterministic open
+  and sealed corpus validation returned no issues and all committed golden
+  runs matched their rebuild. The desktop PATH initially exposed global pnpm
+  11.16.0 to nested scripts; a temporary PATH-local shim invoked the
+  repository-pinned Corepack pnpm 10.34.5 for the exact aggregate test and was
+  removed immediately afterward. No verification was skipped.
+- Safety: no live gate, model/provider call, external corpus acquisition,
+  network dependency fetch, deployment, remote mutation, publication or spend
+  occurred. The pre-existing untracked `package-lock.json` and all ACME-0076
+  work were preserved.
+- Documentation: synchronized the technical specification implementation
+  status, `PROJECT_BRIEF`, `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`,
+  package READMEs and this journal. No new architecture decision surfaced, so
+  ADR-0030/0031 remain sufficient.
+- Handoff: slice 0 is complete. The next recommended product task is a
+  separately frozen slice 1 charter for one-source import, proposed observation
+  review and exact source navigation. Product review storage/views, relation,
+  timeline, assessment, PostgreSQL, hosting and non-synthetic data remain out
+  of scope and absent.
+- Signature: Codex
+
+## 2026-08-11 — ACME-0076 Evidence Integrity technical specification
+
+- Date: 2026-08-11
+- Author: Codex
+- Task: ACME-0076
+- Branch: `main`
+- Summary: Completed and archived the implementation-ready technical plan for
+  the Evidence Integrity Workbench without adding product code. The normative
+  `docs/design/evidence-integrity-workbench-technical-specification.md` now
+  fixes the synthetic corpus contract, annotation/golden-output protocol,
+  Evidence-domain contracts and placement, primary and secondary views,
+  reviewer overlay, deterministic assessment export, proof matrix and ordered
+  slices 0–9.
+- Corpus freeze: one fictional non-criminal administrative matter, exactly
+  seven logical text artifacts in eight immutable versions. Prompt scratch is
+  separate from the open development transcript/exhibit pair and the sealed
+  evaluation core. The sealed truth requires ten L1 observations with exact
+  final standings, eight L3 relations, three open questions, two assessment
+  versions, ten temporal expectations and an explicit duplicate/replay/resume
+  scenario order. Canonical text is UTF-8/LF/NFC and citations use one-based
+  inclusive line ranges with unique exact-substring validation.
+- ADR-0030: accepted Evidence V1 identity and canonical placement. It freezes
+  named canonical-JSON/SHA-256 identities, correction lineage versus changed
+  accounts, product-side immutable source documents, domain memory for
+  observations/relations/questions, ACME immutable assessment documents and a
+  compact revisioned state index. `evidence.observe-artifact@1.0.0` is the
+  first model-backed task; relation, timeline and assessment work stay in later
+  task boundaries.
+- ADR-0031: accepted the append-only, application-owned review overlay and
+  versioned view boundary. Nine primary-domain views form the reviewer path;
+  two secondary views expose technical provenance/replay only when enabled.
+  Every decision targets an exact immutable version and V1 records
+  `unauthenticated-local` principal assurance. Shareability and new-evidence
+  attention are derived without mutating evidence or model-scored relevance.
+- Product proof: froze the Primary Product Rule, a full domain black-box test
+  with `technicalAudit.enabled = false`, and a schema/string
+  forbidden-vocabulary scan. The main result must be reviewer work, never
+  execution status, test results, a quality score or internal state. The ACME
+  contribution table separately maps exact source tracing, coexistence,
+  uncertainty, scoped contradiction, immutable revisions, resume and replay to
+  their engine properties.
+- Evaluation: every correct-at-100% requirement is a hard gate. Small semantic
+  denominators use absolute counts, abstention is a false negative where truth
+  exists, correct unresolved output is positive for the ambiguous case and
+  eligible configurations compare precision, recall, cost and latency without
+  a composite score. Ten negative-fixture categories cover prohibited legal,
+  credibility, sensitive-inference, actor-merge, time and quote outputs.
+- Delivery boundary: SQLite remains the local/CI default. Slice 7 requires a
+  new PostgreSQL schema/transaction/migration ADR and targets self-hosted
+  Supabase through plain PostgreSQL wire only. Identity/authorization,
+  object-store consistency and every non-synthetic path retain separate later
+  ADR gates. No Supabase component beyond the decided PostgreSQL platform was
+  adopted.
+- Documentation: synchronized `PROJECT_BRIEF`, `CURRENT_STATUS`, `SYSTEMDOC`,
+  `FILESTRUCTURE`, the design/ADR indexes and this journal. ACME-0076 is
+  archived under `docs/finished/`; `docs/CURRENT_TASK.md` is restored from the
+  repository template with no next task activated.
+- Verification: deterministic structure review confirmed 7 corpus inventory
+  rows, 10 evaluation observation rows, 8 evaluation relation rows, 9 primary
+  views, 2 secondary views, 10 slices and one Mermaid block. Authority,
+  product separation, attention derivation and dependency directions were
+  reviewed against the traceability matrix. `corepack pnpm docs:check` checked
+  157 Markdown files with links and fences clean; Prettier accepted every
+  changed Markdown file; `git diff --check` passed. The specification's one
+  Mermaid diagram was reviewed by hand. Automated Mermaid validation was
+  deliberately skipped for this exact reason: the repository has no Mermaid
+  validator, and `tooling/docs/check-docs.mjs` verifies internal links and
+  balanced fences only. Code gates were not run because the task changes only
+  documentation and accepted architecture. The pre-existing untracked
+  `package-lock.json` was preserved and untouched. No network or provider call,
+  deployment, package publication or spend occurred.
+- Handoff: no blocker remains in the planning task. The recommended next
+  product task is a separately approved slice 0 charter: author the corpus and
+  golden truth, implement the Evidence schema/identity/state foundation and
+  prove its deterministic conformance. No implementation is active yet.
+- Signature: Codex
 
 ## 2026-08-11 — ADR-0029 persistence platform and ACME-0076 Draft revision
 

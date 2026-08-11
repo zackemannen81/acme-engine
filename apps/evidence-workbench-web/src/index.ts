@@ -1,0 +1,34 @@
+function safeJson(value: string): string {
+  return JSON.stringify(value).replace(/</gu, '\\u003c');
+}
+
+export function renderEvidenceWorkbenchShell(options: {
+  readonly workspaceId: string;
+}): string {
+  const workspaceId = safeJson(options.workspaceId);
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Evidence Integrity Workbench</title>
+  <style>
+    :root{color-scheme:light;--ink:#192421;--muted:#64706c;--paper:#f5f1e8;--card:#fffdf8;--line:#d9d1c2;--accent:#166b58;--accent2:#e3f2eb;--warn:#9a5d13}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,sans-serif}header{padding:28px max(24px,calc((100vw - 1100px)/2));border-bottom:1px solid var(--line);background:#203b35;color:#fff}header p{margin:4px 0 0;color:#d4e4df}main{max-width:1100px;margin:0 auto;padding:28px 24px 64px}.grid{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:24px}@media(max-width:800px){.grid{grid-template-columns:1fr}}.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 5px 18px #21332c12}h1,h2,h3{line-height:1.15;margin-top:0}button{border:0;border-radius:9px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:650;cursor:pointer}button.secondary{background:#edf0ed;color:var(--ink);border:1px solid var(--line)}button.danger{background:#854332}.queue-item{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:1px solid var(--line);padding:14px;margin:10px 0}.queue-item strong,.citation{display:block}.citation{font-family:ui-monospace,monospace;color:var(--accent);margin-top:5px}.source-lines{counter-reset:line;list-style:none;padding:0;margin:0}.source-lines li{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:7px 9px;border-radius:7px}.source-lines li.marked{background:#fff0bd}.line-no{color:var(--muted);text-align:right;font:13px ui-monospace,monospace}.observation{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}.actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:var(--muted)}.empty{padding:22px;border:1px dashed var(--line);border-radius:10px}.error{color:#7b291f}.badge{display:inline-block;border-radius:999px;padding:3px 9px;background:var(--accent2);color:var(--accent);font-size:13px;font-weight:650}
+    .observation label{display:grid;gap:6px;margin:12px 0;color:var(--muted);font-size:14px}.observation input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:#fff;color:var(--ink)}
+  </style>
+</head>
+<body>
+<header><h1>Evidence Integrity Workbench</h1><p>Review source-bound observations beside their exact lines.</p></header>
+<main><div class="grid"><section class="panel"><h2>Review queue</h2><div id="queue" aria-live="polite">Loading…</div></section><section class="panel" id="detail"><h2>Source review</h2><p class="muted">Choose an item to inspect the exact source context.</p></section></div></main>
+<script type="module">
+const workspaceId=${workspaceId};
+const queue=document.querySelector('#queue');const detail=document.querySelector('#detail');
+const esc=(value)=>String(value).replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function json(path,options){const response=await fetch(path,options);if(!response.ok)throw new Error(await response.text());return response.json()}
+async function loadQueue(){try{const view=await json('/api/work-queue?workspaceId='+encodeURIComponent(workspaceId));queue.innerHTML=view.nextItems.length?'':'<div class="empty">All current observations have a decision.</div>';for(const item of view.nextItems){const button=document.createElement('button');button.className='queue-item';button.innerHTML='<strong>'+esc(item.sourceTitle)+'</strong><span>'+esc(item.reason==='new-source-observation'?'New observation needs review':'A new decision was requested')+'</span><span class="citation">'+esc(item.citation.display)+'</span>';button.onclick=()=>loadSource(item.citation.artifactVersionId,item.observationVersionId);queue.append(button)}}catch(error){queue.innerHTML='<p class="error">'+esc(error.message)+'</p>'}}
+async function loadSource(artifactVersionId,focusId){try{const view=await json('/api/sources/'+encodeURIComponent(artifactVersionId)+'?workspaceId='+encodeURIComponent(workspaceId));const marked=new Set();for(const item of view.observations){if(item.observationVersionId===focusId)for(let n=item.citation.startLine;n<=item.citation.endLine;n++)marked.add(n)}detail.innerHTML='<h2>'+esc(view.heading)+'</h2><h3>'+esc(view.source.title)+'</h3><p><span class="badge">Version '+esc(view.source.versionOrdinal)+'</span></p><ol class="source-lines">'+view.source.lines.map(line=>'<li class="'+(marked.has(line.lineNumber)?'marked':'')+'"><span class="line-no">'+line.lineNumber+'</span><span>'+esc(line.text)+'</span></li>').join('')+'</ol>'+view.observations.map(item=>'<article class="observation"><span class="citation">'+esc(item.citation.display)+'</span><blockquote>'+esc(item.exactQuote)+'</blockquote><p class="muted">'+esc(item.actor?item.actor.sourceLabel+' · '+item.actor.resolution:'No source actor')+(item.time?' · '+esc(item.time.display):'')+'</p><p><span class="badge">'+esc(item.reviewStanding)+'</span></p><label>Review note <input data-rationale value="Reviewed against the exact cited source lines."></label><div class="actions">'+item.reviewChoices.map(action=>'<button class="'+(action==='reject'?'danger':action==='accept'?'':'secondary')+'" data-action="'+esc(action)+'" data-target="'+esc(item.observationVersionId)+'">'+esc(action.replaceAll('-',' '))+'</button>').join('')+'</div></article>').join('');for(const button of detail.querySelectorAll('[data-action]'))button.onclick=()=>review(button.dataset.target,button.dataset.action,artifactVersionId,button.closest('article').querySelector('[data-rationale]').value)}catch(error){detail.innerHTML='<p class="error">'+esc(error.message)+'</p>'}}
+async function review(targetVersionId,action,artifactVersionId,rationale){if(!rationale||!rationale.trim())return;await json('/api/reviews',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({schemaVersion:'evidence-review-command/1',workspaceId,commandKey:'review-'+crypto.randomUUID(),targetKind:'observation',targetVersionId,action,reviewerRef:'local-reviewer',rationale:rationale.trim(),basisEvidenceRevision:null})});await Promise.all([loadQueue(),loadSource(artifactVersionId,targetVersionId)])}
+await loadQueue();
+</script>
+</body></html>`;
+}

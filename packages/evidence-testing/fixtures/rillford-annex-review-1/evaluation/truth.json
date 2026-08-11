@@ -1,0 +1,632 @@
+{
+  "schemaVersion": "evidence-corpus-truth/1",
+  "corpusId": "rillford-annex-review-1",
+  "partition": "evaluation",
+  "annotation": {
+    "status": "sealed",
+    "firstAnnotator": "ACME corpus author A",
+    "secondAnnotator": "ACME corpus author B",
+    "resolutionNote": "All quotes, correction lineage, actor distinctions, time roles, scoped relations, question triggers and assessment references were independently checked before sealing."
+  },
+  "observations": [
+    {
+      "truthId": "E-O01",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T01",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Iven Marr: I arrived at about 09:18.",
+      "meaning": "The first actor gives an approximate arrival time of 09:18.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "approximate",
+        "role": "claimed-event-time",
+        "center": "2026-04-18T09:18:00Z",
+        "toleranceMinutes": 5
+      },
+      "finalStanding": "superseded"
+    },
+    {
+      "truthId": "E-O02",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T01",
+      "versionOrdinal": 1,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Iven Marr: The panel was open from 09:10 to 09:20.",
+      "meaning": "The first actor initially reports the panel open from 09:10 through 09:20.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "range",
+        "role": "claimed-event-time",
+        "from": "2026-04-18T09:10:00Z",
+        "to": "2026-04-18T09:20:00Z"
+      },
+      "finalStanding": "superseded"
+    },
+    {
+      "truthId": "E-O03",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T01",
+      "versionOrdinal": 2,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Iven Marr: I arrived at about 09:08.",
+      "meaning": "The corrected transcript records the first actor's approximate arrival time as 09:08.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "approximate",
+        "role": "claimed-event-time",
+        "center": "2026-04-18T09:08:00Z",
+        "toleranceMinutes": 5
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "E-O04",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T01",
+      "versionOrdinal": 2,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Iven Marr: The panel was closed from 09:10 to 09:20.",
+      "meaning": "The corrected transcript records the first actor's panel-position account as closed from 09:10 through 09:20.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "range",
+        "role": "claimed-event-time",
+        "from": "2026-04-18T09:10:00Z",
+        "to": "2026-04-18T09:20:00Z"
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "E-O05",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T02",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Iven Marr: I arrived between 09:20 and 09:30, before the panel changed.",
+      "meaning": "The same actor later gives a changed bounded arrival account and places it before the panel change.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "range",
+        "role": "claimed-event-time",
+        "from": "2026-04-18T09:20:00Z",
+        "to": "2026-04-18T09:30:00Z"
+      },
+      "finalStanding": "contested"
+    },
+    {
+      "truthId": "E-O06",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T02",
+      "versionOrdinal": 1,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Iven Marr: The panel had been open before I arrived, but I cannot place when.",
+      "meaning": "The same actor later reports the panel had been open but expressly cannot place the time.",
+      "sourceActor": {
+        "sourceLabel": "Iven Marr",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iven-marr"
+        }
+      },
+      "temporalBound": {
+        "kind": "unknown",
+        "role": "claimed-event-time",
+        "reason": "The source expressly says the actor cannot place when the panel was open."
+      },
+      "finalStanding": "contested"
+    },
+    {
+      "truthId": "E-O07",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T03",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Iva Marn: I saw the panel open at about 09:18, before it changed.",
+      "meaning": "The second actor reports the panel open at approximately 09:18 before a change.",
+      "sourceActor": {
+        "sourceLabel": "Iva Marn",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iva-marn"
+        }
+      },
+      "temporalBound": {
+        "kind": "approximate",
+        "role": "claimed-event-time",
+        "center": "2026-04-18T09:18:00Z",
+        "toleranceMinutes": 5
+      },
+      "finalStanding": "contested"
+    },
+    {
+      "truthId": "E-O08",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "EVAL-T03",
+      "versionOrdinal": 1,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Iva Marn: The operator at the control wore a blue service badge.",
+      "meaning": "The second actor separately describes the operator at the panel control.",
+      "sourceActor": {
+        "sourceLabel": "Iva Marn",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "evaluation-actor-iva-marn"
+        }
+      },
+      "temporalBound": {
+        "kind": "unknown",
+        "role": "claimed-event-time",
+        "reason": "The source supplies no time for the operator description."
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "E-O09",
+      "kind": "exhibit-assertion",
+      "logicalArtifactId": "EVAL-E01",
+      "versionOrdinal": 1,
+      "startLine": 3,
+      "endLine": 3,
+      "exactQuote": "09:16:00 | SC-4 | panel_changed_to_closed | I. Mar",
+      "meaning": "The controller log records the panel changing to closed at exactly 09:16.",
+      "sourceActor": null,
+      "temporalBound": {
+        "kind": "exact",
+        "role": "document-time",
+        "at": "2026-04-18T09:16:00Z"
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "E-O10",
+      "kind": "exhibit-assertion",
+      "logicalArtifactId": "EVAL-E01",
+      "versionOrdinal": 1,
+      "startLine": 3,
+      "endLine": 3,
+      "exactQuote": "09:16:00 | SC-4 | panel_changed_to_closed | I. Mar",
+      "meaning": "The controller log uses operator label I. Mar, which is ambiguous between the two evaluation actors.",
+      "sourceActor": {
+        "sourceLabel": "I. Mar",
+        "sourceRole": "operator-label",
+        "resolution": {
+          "status": "unresolved",
+          "candidateActorKeys": [
+            "evaluation-actor-iva-marn",
+            "evaluation-actor-iven-marr"
+          ]
+        }
+      },
+      "temporalBound": {
+        "kind": "exact",
+        "role": "document-time",
+        "at": "2026-04-18T09:16:00Z"
+      },
+      "finalStanding": "current"
+    }
+  ],
+  "correctionLineage": [
+    {
+      "truthId": "E-C01",
+      "predecessorObservationTruthId": "E-O01",
+      "successorObservationTruthId": "E-O03",
+      "reason": "transcription-correction"
+    },
+    {
+      "truthId": "E-C02",
+      "predecessorObservationTruthId": "E-O02",
+      "successorObservationTruthId": "E-O04",
+      "reason": "transcription-correction"
+    }
+  ],
+  "actorResolutions": [
+    {
+      "truthId": "E-AR01",
+      "observationTruthId": "E-O01",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR02",
+      "observationTruthId": "E-O02",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR03",
+      "observationTruthId": "E-O03",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR04",
+      "observationTruthId": "E-O04",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR05",
+      "observationTruthId": "E-O05",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR06",
+      "observationTruthId": "E-O06",
+      "sourceLabel": "Iven Marr",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iven-marr"
+      }
+    },
+    {
+      "truthId": "E-AR07",
+      "observationTruthId": "E-O07",
+      "sourceLabel": "Iva Marn",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iva-marn"
+      }
+    },
+    {
+      "truthId": "E-AR08",
+      "observationTruthId": "E-O08",
+      "sourceLabel": "Iva Marn",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "evaluation-actor-iva-marn"
+      }
+    },
+    {
+      "truthId": "E-AR09",
+      "observationTruthId": "E-O10",
+      "sourceLabel": "I. Mar",
+      "resolution": {
+        "status": "unresolved",
+        "candidateActorKeys": [
+          "evaluation-actor-iva-marn",
+          "evaluation-actor-iven-marr"
+        ]
+      }
+    }
+  ],
+  "relations": [
+    {
+      "truthId": "E-R01",
+      "relationKind": "correction",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O01" },
+        { "kind": "observation", "ref": "E-O03" }
+      ],
+      "comparableScope": {
+        "subject": "Iven Marr arrival account",
+        "aspect": "transcription of approximate arrival time",
+        "actorReferenceTruthIds": ["E-AR01", "E-AR03"],
+        "temporalObservationTruthIds": ["E-O01", "E-O03"]
+      },
+      "rationaleCode": "TRANSCRIPTION_CORRECTION_ARRIVAL",
+      "rationale": "The successor is the explicit corrected transcript of the same logical artifact and underlying arrival occurrence.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R02",
+      "relationKind": "correction",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O02" },
+        { "kind": "observation", "ref": "E-O04" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor panel",
+        "aspect": "transcription of bounded panel position",
+        "actorReferenceTruthIds": ["E-AR02", "E-AR04"],
+        "temporalObservationTruthIds": ["E-O02", "E-O04"]
+      },
+      "rationaleCode": "TRANSCRIPTION_CORRECTION_PANEL",
+      "rationale": "The successor is the explicit corrected transcript of the same logical artifact and underlying panel-position occurrence.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R03",
+      "relationKind": "contradicts",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O04" },
+        { "kind": "observation", "ref": "E-O06" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor panel",
+        "aspect": "panel position",
+        "actorReferenceTruthIds": ["E-AR04", "E-AR06"],
+        "temporalObservationTruthIds": ["E-O04", "E-O06"]
+      },
+      "rationaleCode": "PANEL_POSITION_INCOMPATIBLE",
+      "rationale": "The corrected bounded closed-panel account is incompatible only with the later open-panel account; the arrival account is outside scope.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R04",
+      "relationKind": "qualifies",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O06" },
+        { "kind": "observation", "ref": "E-O07" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor panel",
+        "aspect": "open-panel timing",
+        "actorReferenceTruthIds": ["E-AR06", "E-AR07"],
+        "temporalObservationTruthIds": ["E-O06", "E-O07"]
+      },
+      "rationaleCode": "OPEN_TIME_NARROWED",
+      "rationale": "The second actor supplies an approximate time that narrows, without wholly negating, the first actor's unplaced open-panel account.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R05",
+      "relationKind": "contradicts",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O05" },
+        { "kind": "observation", "ref": "E-O09" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor panel change",
+        "aspect": "arrival-before-change temporal order",
+        "actorReferenceTruthIds": ["E-AR05"],
+        "temporalObservationTruthIds": ["E-O05", "E-O09"]
+      },
+      "rationaleCode": "ARRIVAL_ORDER_CONFLICT",
+      "rationale": "A 09:20 to 09:30 arrival cannot precede the log's exact 09:16 panel change; only the temporal claim is contradicted.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R06",
+      "relationKind": "contradicts",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O07" },
+        { "kind": "observation", "ref": "E-O09" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor panel change",
+        "aspect": "panel state near exact transition",
+        "actorReferenceTruthIds": ["E-AR07"],
+        "temporalObservationTruthIds": ["E-O07", "E-O09"]
+      },
+      "rationaleCode": "PANEL_TRANSITION_TIME_CONFLICT",
+      "rationale": "The approximate 09:18 open-before-change account conflicts with the exact 09:16 changed-to-closed log within the comparable panel-state scope.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R07",
+      "relationKind": "scope-mismatch",
+      "endpoints": [
+        { "kind": "observation", "ref": "E-O03" },
+        { "kind": "observation", "ref": "E-O07" }
+      ],
+      "comparableScope": {
+        "subject": "service corridor references near 09:18",
+        "aspect": "different event and time roles",
+        "actorReferenceTruthIds": ["E-AR03", "E-AR07"],
+        "temporalObservationTruthIds": ["E-O03", "E-O07"]
+      },
+      "rationaleCode": "NON_COMPARABLE_TIME_ROLE",
+      "rationale": "Similar time wording concerns an arrival occurrence in one source and panel state in the other, so neither endpoint is contested by this relation.",
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-R08",
+      "relationKind": "unresolved",
+      "endpoints": [
+        { "kind": "actor", "ref": "evaluation-actor-iva-marn" },
+        { "kind": "actor", "ref": "evaluation-actor-iven-marr" },
+        { "kind": "observation", "ref": "E-O10" }
+      ],
+      "comparableScope": {
+        "subject": "controller operator label I. Mar",
+        "aspect": "actor identity",
+        "actorReferenceTruthIds": ["E-AR09"],
+        "temporalObservationTruthIds": ["E-O10"]
+      },
+      "rationaleCode": "AMBIGUOUS_OPERATOR_LABEL",
+      "rationale": "The abbreviated label is compatible with both complete actor keys, so no automatic actor merge is permitted.",
+      "expectedStanding": "current"
+    }
+  ],
+  "openQuestions": [
+    {
+      "truthId": "E-Q01",
+      "questionCode": "LOG_ACTOR_IDENTITY",
+      "questionText": "Which actor, if either, does the controller label I. Mar identify?",
+      "triggeringTruthIds": ["E-O08", "E-O10", "E-R08"],
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-Q02",
+      "questionCode": "BOUNDED_EXACT_TIME_DIFFERENCE",
+      "questionText": "What explains the difference between the bounded account and the exact controller-log transition time?",
+      "triggeringTruthIds": ["E-O05", "E-O09", "E-R05"],
+      "expectedStanding": "current"
+    },
+    {
+      "truthId": "E-Q03",
+      "questionCode": "UNOBSERVED_PANEL_TRANSITION",
+      "questionText": "Did an unobserved panel transition occur between the source time bounds?",
+      "triggeringTruthIds": [
+        "E-O04",
+        "E-O06",
+        "E-O07",
+        "E-O09",
+        "E-R03",
+        "E-R04",
+        "E-R06"
+      ],
+      "expectedStanding": "current"
+    }
+  ],
+  "assessments": [
+    {
+      "truthId": "E-A01",
+      "workspaceId": "rillford-evaluation-workspace-1",
+      "sequence": 1,
+      "basisEvidenceRevision": 5,
+      "claims": [
+        {
+          "claimKey": "pre-log-panel-account",
+          "text": "The reviewed accounts place the panel in differing states and leave the transition time unresolved.",
+          "supportObservationTruthIds": ["E-O03", "E-O04", "E-O08"],
+          "conflictRelationTruthIds": ["E-R03"],
+          "qualificationRelationTruthIds": ["E-R04"],
+          "supportUnresolved": false,
+          "uncertainty": "high",
+          "uncertaintyRationale": "The available accounts differ and no controller log has yet been imported."
+        }
+      ],
+      "openQuestionTruthIds": ["E-Q02", "E-Q03"],
+      "citationTruthIds": ["E-O03", "E-O04", "E-O08", "E-R03", "E-R04"],
+      "predecessorAssessmentTruthId": null,
+      "reviewExpectation": "accepted"
+    },
+    {
+      "truthId": "E-A02",
+      "workspaceId": "rillford-evaluation-workspace-1",
+      "sequence": 2,
+      "basisEvidenceRevision": 7,
+      "claims": [
+        {
+          "claimKey": "post-log-panel-account",
+          "text": "The controller log records a closed-panel transition at 09:16 while the operator label remains unresolved.",
+          "supportObservationTruthIds": ["E-O09", "E-O10"],
+          "conflictRelationTruthIds": ["E-R05", "E-R06"],
+          "qualificationRelationTruthIds": [],
+          "supportUnresolved": false,
+          "uncertainty": "medium",
+          "uncertaintyRationale": "The transition time is exact in the log, but the operator identity and account differences remain unresolved."
+        }
+      ],
+      "openQuestionTruthIds": ["E-Q01", "E-Q02", "E-Q03"],
+      "citationTruthIds": ["E-O09", "E-O10", "E-R05", "E-R06", "E-R08"],
+      "predecessorAssessmentTruthId": "E-A01",
+      "reviewExpectation": "reviewed-revision"
+    }
+  ],
+  "scenarios": [
+    {
+      "scenarioId": "evaluation-ordered-review-1",
+      "orderedSteps": [
+        "Import and observe EVAL-T01 v1.",
+        "Import and observe corrected EVAL-T01 v2.",
+        "Import and observe EVAL-T02 v1 and EVAL-T03 v1.",
+        "Build and review the available relations and open questions.",
+        "Create and accept E-A01 at evidence revision 5.",
+        "Re-import a processed version and assert an idempotent no-op.",
+        "Import and observe EVAL-E01 v1 as one job.",
+        "Assert one tier-A new-evidence notice while E-A01 remains unchanged.",
+        "Create and accept E-A02 at evidence revision 7.",
+        "Replay retained executions and resume one injected interruption without a second provider call."
+      ],
+      "inputArtifactVersionIds": [
+        "evidence_artifact_0eb756eddeb54cfec1728f7e0706224defe66e32ce8ec116df9ac7ac9a6d5178",
+        "evidence_artifact_3001b8c284d27a618bcde9f6940bbece1bfef8efa87196122485897c06c05ff8",
+        "evidence_artifact_4f48afe2dd7197c0eb74531f502f2eb32ec4d5c209e1a1cc589ec982e573da1b",
+        "evidence_artifact_6d28c72d67b3be603fc266f25216bf4a4e4c4d058a6e4877724c4116dd10f913",
+        "evidence_artifact_9c92569b2b986c2753b937cd8c21e82691d1ec33bbeeb020c32a075f608d95e9"
+      ],
+      "expectedEvidenceRevision": 7,
+      "expectedReviewOverlay": ["new-evidence:E-A01:tier-a"],
+      "expectedRefusals": [],
+      "expectedReplayVerdicts": [
+        "interruption-resume:no-second-provider-call",
+        "retained-executions:equivalent"
+      ]
+    }
+  ],
+  "couplingGroups": [
+    {
+      "groupId": "E-CG01",
+      "truthIds": ["E-C01", "E-O01", "E-O03", "E-R01"],
+      "rationale": "The arrival correction shares one logical artifact lineage and underlying occurrence."
+    },
+    {
+      "groupId": "E-CG02",
+      "truthIds": ["E-C02", "E-O02", "E-O04", "E-R02"],
+      "rationale": "The panel-position correction shares one logical artifact lineage and underlying occurrence."
+    },
+    {
+      "groupId": "E-CG03",
+      "truthIds": ["E-O09", "E-O10", "E-Q01", "E-R08"],
+      "rationale": "One controller-log line supplies both the exact transition and ambiguous actor-label traps."
+    },
+    {
+      "groupId": "E-CG04",
+      "truthIds": [
+        "E-O05",
+        "E-O07",
+        "E-O09",
+        "E-Q02",
+        "E-Q03",
+        "E-R05",
+        "E-R06"
+      ],
+      "rationale": "The temporal contradictions and questions depend on the same exact log transition."
+    }
+  ]
+}

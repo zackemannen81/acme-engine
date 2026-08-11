@@ -1,0 +1,27 @@
+{
+  "name": "@acme/adapter-evidence-product-file",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/core": "workspace:*",
+    "@acme/evidence-product-contracts": "workspace:*",
+    "@acme/module-evidence": "workspace:*"
+  },
+  "devDependencies": {
+    "@acme/evidence-testing": "workspace:*"
+  }
+}

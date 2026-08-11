@@ -1,0 +1,208 @@
+{
+  "schemaVersion": "evidence-corpus-truth/1",
+  "corpusId": "rillford-annex-review-1",
+  "partition": "development",
+  "annotation": {
+    "status": "open",
+    "firstAnnotator": "ACME corpus author A",
+    "secondAnnotator": "ACME corpus author B",
+    "resolutionNote": "Exact quotes, distinct actor identities, temporal roles, support scope and the open-question trigger were independently checked."
+  },
+  "observations": [
+    {
+      "truthId": "D-O01",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "DEV-T01",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.",
+      "meaning": "Nera Sol gives a bounded arrival time at the greenhouse hatch.",
+      "sourceActor": {
+        "sourceLabel": "Nera Sol",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "development-actor-nera-sol"
+        }
+      },
+      "temporalBound": {
+        "kind": "range",
+        "role": "claimed-event-time",
+        "from": "2026-03-12T14:00:00Z",
+        "to": "2026-03-12T14:10:00Z"
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "D-O02",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "DEV-T01",
+      "versionOrdinal": 1,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Nera Sol: The indicator showed amber while the hatch was open.",
+      "meaning": "Nera Sol reports an amber indicator while the hatch was open.",
+      "sourceActor": {
+        "sourceLabel": "Nera Sol",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "development-actor-nera-sol"
+        }
+      },
+      "temporalBound": {
+        "kind": "unknown",
+        "role": "claimed-event-time",
+        "reason": "The statement gives no exact time for the simultaneous indicator and hatch state."
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "D-O03",
+      "kind": "exhibit-assertion",
+      "logicalArtifactId": "DEV-E01",
+      "versionOrdinal": 1,
+      "startLine": 3,
+      "endLine": 3,
+      "exactQuote": "14:06 | GH-22 | indicator=amber | operator=DEV-B7",
+      "meaning": "The controller log records an amber indicator at 14:06 under operator label DEV-B7.",
+      "sourceActor": {
+        "sourceLabel": "DEV-B7",
+        "sourceRole": "operator-label",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "development-actor-controller-b7"
+        }
+      },
+      "temporalBound": {
+        "kind": "exact",
+        "role": "document-time",
+        "at": "2026-03-12T14:06:00Z"
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "D-O04",
+      "kind": "exhibit-assertion",
+      "logicalArtifactId": "DEV-E01",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "14:07 | GH-22 | hatch=open | operator=DEV-B7",
+      "meaning": "The controller log records the hatch open at 14:07 under operator label DEV-B7.",
+      "sourceActor": {
+        "sourceLabel": "DEV-B7",
+        "sourceRole": "operator-label",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "development-actor-controller-b7"
+        }
+      },
+      "temporalBound": {
+        "kind": "exact",
+        "role": "document-time",
+        "at": "2026-03-12T14:07:00Z"
+      },
+      "finalStanding": "current"
+    }
+  ],
+  "correctionLineage": [],
+  "actorResolutions": [
+    {
+      "truthId": "D-AR01",
+      "observationTruthId": "D-O01",
+      "sourceLabel": "Nera Sol",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "development-actor-nera-sol"
+      }
+    },
+    {
+      "truthId": "D-AR02",
+      "observationTruthId": "D-O02",
+      "sourceLabel": "Nera Sol",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "development-actor-nera-sol"
+      }
+    },
+    {
+      "truthId": "D-AR03",
+      "observationTruthId": "D-O03",
+      "sourceLabel": "DEV-B7",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "development-actor-controller-b7"
+      }
+    },
+    {
+      "truthId": "D-AR04",
+      "observationTruthId": "D-O04",
+      "sourceLabel": "DEV-B7",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "development-actor-controller-b7"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "truthId": "D-R01",
+      "relationKind": "supports",
+      "endpoints": [
+        { "kind": "observation", "ref": "D-O02" },
+        { "kind": "observation", "ref": "D-O04" }
+      ],
+      "comparableScope": {
+        "subject": "greenhouse supply hatch",
+        "aspect": "hatch position",
+        "actorReferenceTruthIds": ["D-AR02", "D-AR04"],
+        "temporalObservationTruthIds": ["D-O02", "D-O04"]
+      },
+      "rationaleCode": "DEV_HATCH_POSITION_SUPPORT",
+      "rationale": "The interview and controller log both describe the hatch as open within the bounded maintenance interval.",
+      "expectedStanding": "current"
+    }
+  ],
+  "openQuestions": [
+    {
+      "truthId": "D-Q01",
+      "questionCode": "DEV_OPERATOR_IDENTITY",
+      "questionText": "Who does the controller label DEV-B7 identify?",
+      "triggeringTruthIds": ["D-O03", "D-O04"],
+      "expectedStanding": "current"
+    }
+  ],
+  "assessments": [],
+  "scenarios": [
+    {
+      "scenarioId": "development-open-truth-1",
+      "orderedSteps": [
+        "Load DEV-T01 v1 and DEV-E01 v1.",
+        "Bind four observations.",
+        "Build one support relation and one open question."
+      ],
+      "inputArtifactVersionIds": [
+        "evidence_artifact_00c6f7bab5dcce286456b2a5e30515294b10405522bf2d8450a687af7a7de79c",
+        "evidence_artifact_b686398587beb5aff3a84b8a909cfd67b19b9500046d26da658f7ae32b7d7d29"
+      ],
+      "expectedEvidenceRevision": 3,
+      "expectedReviewOverlay": [],
+      "expectedRefusals": [],
+      "expectedReplayVerdicts": []
+    }
+  ],
+  "couplingGroups": [
+    {
+      "groupId": "D-C01",
+      "truthIds": ["D-O03", "D-O04", "D-Q01"],
+      "rationale": "The operator-identity question depends on both lines of the same controller log."
+    },
+    {
+      "groupId": "D-C02",
+      "truthIds": ["D-O02", "D-O04", "D-R01"],
+      "rationale": "The support relation depends on the paired hatch-position observations."
+    }
+  ]
+}

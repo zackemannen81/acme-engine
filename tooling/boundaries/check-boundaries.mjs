@@ -45,6 +45,10 @@ const testUiLeafFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/apps/cli/src/forbidden-test-ui.ts',
 );
+const sealedTruthFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden-sealed-truth.ts',
+);
 const forbiddenTerms = [
   'narrative',
   'research',
@@ -167,7 +171,11 @@ verifyForbiddenFixture(
   testUiLeafFixturePath,
   'nothing-imports-the-test-ui-app',
 );
+verifyForbiddenFixture(
+  sealedTruthFixturePath,
+  'sealed-evaluation-truth-stays-out-of-prompts',
+);
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/evaluation/module/cross-module/provider/driver/test-ui fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/evaluation/module/cross-module/provider/driver/test-ui/sealed-truth fixture checks passed.\n',
 );

@@ -1,0 +1,22 @@
+{
+  "extends": "../../tooling/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/adapter-memory" },
+    { "path": "../../packages/adapter-model-mock" },
+    { "path": "../../packages/adapter-evidence-product-file" },
+    { "path": "../../packages/module-evidence" },
+    { "path": "../../packages/evidence-testing" },
+    { "path": "../../packages/evidence-product-contracts" },
+    { "path": "../../packages/evidence-views" },
+    { "path": "../evidence-workbench-worker" },
+    { "path": "../evidence-workbench-web" }
+  ]
+}

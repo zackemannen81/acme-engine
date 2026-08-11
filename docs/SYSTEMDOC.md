@@ -1018,8 +1018,8 @@ V1 is constrained to a purpose-built synthetic text corpus. Every accepted
 quoted observation must resolve to an exact artifact version and valid locator;
 changed accounts remain distinct; supersession is limited to explicit
 correction lineage; uncertain time remains typed; relations retain all
-endpoints; and new evidence makes affected assessments stale without modifying
-history. The model remains a candidate generator behind the existing trust
+endpoints; and new evidence makes earlier assessments due for attention without
+modifying history. The model remains a candidate generator behind the existing trust
 pipeline. Human acceptance makes an assessment shareable within the POC, not
 legally true.
 
@@ -1033,11 +1033,73 @@ Evidence Integrity web / API / worker
 ```
 
 The accepted baseline is React/Vite, Fastify, a separate Node worker, the
-existing OpenAI Responses adapter, managed PostgreSQL through a new conformant
-adapter and S3-compatible object storage. This is a design constraint for the
-future technical specification, not delivered implementation. Managed
-providers, authentication, hosting, ingestion formats and PostgreSQL adapter
-details remain deferred.
+existing OpenAI Responses adapter, self-hosted Supabase PostgreSQL through a
+new plain-wire conformant adapter and S3-compatible object storage. This is a
+design constraint for later implementation, not delivered behavior. Identity,
+hosting, ingestion formats, the PostgreSQL schema and adoption of any other
+Supabase component remain deferred.
+
+### Accepted Evidence technical plan
+
+[`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md)
+is the normative implementation plan. ADR-0030 fixes the V1 Evidence identity
+algorithms, correction-versus-changed-account semantics, compact state and
+document/memory placement. ADR-0031 fixes the application-owned append-only
+review overlay, versioned primary versus secondary views, deterministic
+new-evidence attention rule and Primary Product Rule.
+
+The V1 proof corpus is exactly seven logical synthetic text artifacts in eight
+immutable versions: one prompt-scratch transcript, an open development
+transcript/exhibit pair and a sealed evaluation core of four logical artifacts
+in five versions. The sealed truth requires ten observations, eight scoped
+relations, three open questions and two assessment versions. Canonicalization
+is UTF-8, LF and NFC; locators are one-based inclusive line ranges and accepted
+quotes must match exactly once within their addressed range.
+
+ACME-0077 delivered the Evidence contract/corpus foundation and ACME-0078
+delivered the first executable reviewer slice. `@acme/module-evidence`,
+namespace `evidence`, exports strict V1 schemas, canonical
+source/locator/actor/observation/meaning/relation/question/assessment
+identities, source binding, compact state/delta contracts, a pure reducer,
+invariants and a domain memory policy. Its registered
+`evidence.observe-artifact@1.0.0` task projects one immutable source plus an
+explicit actor roster, uses strict structured output and refuses invalid quote,
+kind, actor, temporal and prohibited-authority candidates before commit.
+Applied observation identities and their source document advance Evidence
+revision once; exact duplicates advance nothing.
+
+`@acme/evidence-testing` owns the synthetic corpus, manifest and open truth
+loaders, deterministic golden builder, `DEV-T01` mock response/request hash,
+product/view conformance registrars and the explicit `./evaluation` entry point
+for sealed truth. Prompt-capable module/application source is forbidden from
+importing that evaluation entry point. Model output remains candidate evidence;
+relations, timeline and assessment stay separate later task boundaries.
+
+Slice 1 also adds `@acme/evidence-product-contracts`, a file-backed product
+adapter and `@acme/evidence-views`. Source/job/review records are separate from
+the ACME ledger. Review decisions are append-only and exact-version bound;
+identical command-key reuse is idempotent and divergent reuse is refused. The
+pure work-queue and source-review builders return detached, deterministically
+sorted primary views with stable line citations. A minimal loopback
+API/web/worker composition imports the open development source, exposes job
+polling/SSE and review commands, and defaults technical audit to disabled.
+The local shell is dependency-free Node/HTML; the accepted React/Vite/Fastify
+baseline remains for the later hosted shell.
+
+Primary reviewer contracts cover work queue, source review, observation
+ledger, account comparison, relations, timeline, open questions, assessment
+and review history. Technical provenance and replay are secondary and may be
+disabled completely. Human decisions bind exact immutable versions and live in
+a separate product repository; approval never mutates Evidence records or an
+operation digest.
+
+Implementation is divided into separately activatable slices 0–9. Slices 0
+(corpus and contracts) and 1 (one-source review) are delivered; the remaining
+slices are account comparison; relations; timeline/open
+questions; assessment/re-review; optional technical audit; self-hosted
+Supabase PostgreSQL adapter; hosted shell; and a separate readiness gate before
+any non-synthetic data. SQLite remains the local/CI default through the first
+product proof. No later slice is active merely because the plan exists.
 
 ## Remaining Implementation Baseline
 

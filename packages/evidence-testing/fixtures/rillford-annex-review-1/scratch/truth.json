@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "evidence-corpus-truth/1",
+  "corpusId": "rillford-annex-review-1",
+  "partition": "scratch",
+  "annotation": {
+    "status": "scratch",
+    "firstAnnotator": "ACME corpus author A",
+    "secondAnnotator": "ACME corpus author B",
+    "resolutionNote": "Quote binding and source roles checked; this partition is never scored."
+  },
+  "observations": [
+    {
+      "truthId": "S-O01",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "SCR-T01",
+      "versionOrdinal": 1,
+      "startLine": 4,
+      "endLine": 4,
+      "exactQuote": "Lio Fen: I checked the atrium lamp shortly after noon.",
+      "meaning": "Lio Fen gives an approximate time for inspecting the atrium lamp.",
+      "sourceActor": {
+        "sourceLabel": "Lio Fen",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "scratch-actor-lio-fen"
+        }
+      },
+      "temporalBound": {
+        "kind": "approximate",
+        "role": "claimed-event-time",
+        "center": "2026-02-02T12:10:00Z",
+        "toleranceMinutes": 15
+      },
+      "finalStanding": "current"
+    },
+    {
+      "truthId": "S-O02",
+      "kind": "statement-occurrence",
+      "logicalArtifactId": "SCR-T01",
+      "versionOrdinal": 1,
+      "startLine": 6,
+      "endLine": 6,
+      "exactQuote": "Lio Fen: The west lamp was dim, and I did not inspect the east lamp.",
+      "meaning": "Lio Fen describes the west lamp and explicitly limits the inspection scope.",
+      "sourceActor": {
+        "sourceLabel": "Lio Fen",
+        "sourceRole": "speaker",
+        "resolution": {
+          "status": "resolved",
+          "actorKey": "scratch-actor-lio-fen"
+        }
+      },
+      "temporalBound": {
+        "kind": "unknown",
+        "role": "claimed-event-time",
+        "reason": "The source gives no time for this observation beyond the separate inspection account."
+      },
+      "finalStanding": "current"
+    }
+  ],
+  "correctionLineage": [],
+  "actorResolutions": [
+    {
+      "truthId": "S-AR01",
+      "observationTruthId": "S-O01",
+      "sourceLabel": "Lio Fen",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "scratch-actor-lio-fen"
+      }
+    },
+    {
+      "truthId": "S-AR02",
+      "observationTruthId": "S-O02",
+      "sourceLabel": "Lio Fen",
+      "resolution": {
+        "status": "resolved",
+        "actorKey": "scratch-actor-lio-fen"
+      }
+    }
+  ],
+  "relations": [],
+  "openQuestions": [],
+  "assessments": [],
+  "scenarios": [
+    {
+      "scenarioId": "scratch-quote-binding-1",
+      "orderedSteps": [
+        "Load SCR-T01 v1.",
+        "Bind both exact quotes to their declared lines."
+      ],
+      "inputArtifactVersionIds": [
+        "evidence_artifact_b37eb4d0a93cc60298d8f2a4074e4eaaf1a27af5663a49bf35b81987dfbb7305"
+      ],
+      "expectedEvidenceRevision": 1,
+      "expectedReviewOverlay": [],
+      "expectedRefusals": [],
+      "expectedReplayVerdicts": []
+    }
+  ],
+  "couplingGroups": [
+    {
+      "groupId": "S-C01",
+      "truthIds": ["S-O01", "S-O02"],
+      "rationale": "Both quote-binding checks share one scratch artifact."
+    }
+  ]
+}
