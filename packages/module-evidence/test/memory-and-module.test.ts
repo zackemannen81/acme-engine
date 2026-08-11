@@ -84,6 +84,7 @@ describe('Evidence memory and module scaffold', () => {
     expect(Object.keys(evidenceModule.tasks)).toEqual([
       'observe-artifact',
       'relate-observations',
+      'build-timeline',
     ]);
   });
 });

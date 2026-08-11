@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-11 — ACME-0081 Timeline and open questions
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0081
+- Branch: `grok/poc_3-8`
+- Summary: Completed Evidence Integrity Workbench slice 4. Added pure
+  `evidence-temporal-overlap-1` and `buildEvidenceTimelineEntries`, registered
+  deterministic `evidence.build-timeline@1.0.0`, and pure primary timeline and
+  open-question views with API/web navigation. Timeline ordering is
+  permutation-stable; unknown never overlaps; overlapping non-exact bounds
+  form ambiguity bands without inventing precision.
+- Verification: typecheck, lint, format:check, full test (644 unit / 69
+  conformance / 57 integration / 26 scenario), docs:check and build passed.
+- Safety: no live provider or non-synthetic path.
+- Handoff: activate slice 5 assessment and re-review next.
+- Signature: Grok
+
 ## 2026-08-11 — ACME-0080 Evidence relations and uncertainty
 
 - Date: 2026-08-11

@@ -320,7 +320,7 @@ There is currently:
   module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
   boundary fixtures (both "the app imports no package internal" and "nothing
   imports the app")
-- 641 passing unit-suite tests across packages (92 files) exercised by
+- 644 passing unit-suite tests across packages (93 files) exercised by
   `pnpm test:unit`, with separate conformance (69 tests, 11 files), integration
   (57 tests, 11 files) and scenario (26 tests, 7 files) gates. Counts observed
   2026-08-11
@@ -347,13 +347,13 @@ Primary Product Rule; ADR-0032 fixes the conservative correction-occurrence
 pairing used by state projection and account comparison. The normative
 technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
-The direction, platform and implementation plan are accepted. Slices 0–3
+The direction, platform and implementation plan are accepted. Slices 0–4
 exist: the corpus/contracts foundation, one offline reviewer path for
-`DEV-T01`, offline account comparison over the evaluation corpus, and
-`evidence.relate-observations@1.0.0` with eight golden relations, three open
-questions, contest standings and a primary relation-review view. No timeline,
-assessment, technical-audit, PostgreSQL adapter, hosted shell, deployment or
-non-synthetic path exists.
+`DEV-T01`, offline account comparison, relation analysis with eight golden
+relations and three open questions, and deterministic timeline/open-question
+primary views with `evidence-temporal-overlap-1`. No assessment,
+technical-audit, PostgreSQL adapter, hosted shell, deployment or non-synthetic
+path exists.
 
 ## Active Work
 
@@ -391,13 +391,18 @@ ledger/account-comparison views keep the later changed account and every source
 version navigable. ACME-0080 then delivered slice 3: `evidence.relate-
 observations@1.0.0`, eight golden L3 relations, three open questions, contest
 projection for scoped contradictions, primary relation review and evaluation
-seed. The recommended next product task is slice 4, timeline and open-question
-views.
+seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
+overlap helper, and primary timeline/open-question views. The recommended next
+product task is slice 5, assessment and re-review.
 Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0081:** Delivered Evidence Integrity slice 4: pure
+  `evidence.build-timeline@1.0.0` / temporal-overlap helper, primary timeline
+  and open-question views, API/web navigation. No assessment or live path.
 
 - **ACME-0080:** Delivered Evidence Integrity slice 3: model-backed
   `evidence.relate-observations@1.0.0`, sealed eight-relation and three open-

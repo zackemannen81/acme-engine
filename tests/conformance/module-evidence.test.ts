@@ -18,6 +18,7 @@ describe('Evidence module foundation conformance', () => {
     expect(Object.keys(evidenceModule.tasks)).toEqual([
       'observe-artifact',
       'relate-observations',
+      'build-timeline',
     ]);
     expect(EVIDENCE_TASK_CATALOGUE).toHaveLength(4);
   });

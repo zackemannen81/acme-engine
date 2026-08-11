@@ -16,6 +16,10 @@ export const EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION =
   'evidence-primary-account-comparison-view/1' as const;
 export const EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION =
   'evidence-primary-relation-review-view/1' as const;
+export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
+  'evidence-primary-timeline-view/1' as const;
+export const EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION =
+  'evidence-primary-open-questions-view/1' as const;
 
 const CitationSchema = z
   .object({
@@ -382,4 +386,90 @@ export const EvidencePrimaryRelationReviewViewSchema = z
 
 export type EvidencePrimaryRelationReviewView = z.infer<
   typeof EvidencePrimaryRelationReviewViewSchema
+>;
+
+export const EvidencePrimaryTimelineViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Timeline'),
+    explanation: z.literal(
+      'Entries keep exact, range, approximate and unknown labels. Overlapping non-exact bounds form ambiguity bands. Precision is never invented.',
+    ),
+    entries: z.array(
+      z
+        .object({
+          entryId: EvidenceNonBlankStringSchema,
+          bandKind: z.enum([
+            'exact',
+            'range',
+            'approximate',
+            'unknown',
+            'ambiguity',
+          ]),
+          display: EvidenceNonBlankStringSchema,
+          observationVersionIds: z.array(EvidenceNonBlankStringSchema),
+          sourceLinks: z.array(
+            z
+              .object({
+                observationVersionId: EvidenceNonBlankStringSchema,
+                citation: CitationSchema,
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const EvidencePrimaryOpenQuestionsViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION,
+    ),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Open questions'),
+    explanation: z.literal(
+      'Open questions mark gaps exposed by the evidence. Absence of an answer is not treated as falsity.',
+    ),
+    questions: z.array(
+      z
+        .object({
+          openQuestionId: EvidenceNonBlankStringSchema,
+          questionCode: EvidenceNonBlankStringSchema,
+          questionText: EvidenceNonBlankStringSchema,
+          standing: EvidenceStandingSchema,
+          triggeringEvidenceIds: z.array(EvidenceNonBlankStringSchema),
+          sourceLinks: z.array(
+            z
+              .object({
+                observationVersionId: EvidenceNonBlankStringSchema,
+                citation: CitationSchema,
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidencePrimaryTimelineView = z.infer<
+  typeof EvidencePrimaryTimelineViewSchema
+>;
+export type EvidencePrimaryOpenQuestionsView = z.infer<
+  typeof EvidencePrimaryOpenQuestionsViewSchema
 >;

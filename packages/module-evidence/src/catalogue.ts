@@ -58,7 +58,7 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
         earliestSlice: 4,
         role: 'transformer',
         modelBacked: false,
-        implemented: false,
+        implemented: true,
       },
       {
         id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
@@ -78,5 +78,10 @@ export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF = immutableEvidence({
 
 export const EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF = immutableEvidence({
   id: EVIDENCE_RELATE_OBSERVATIONS_TASK,
+  version: EVIDENCE_TASK_VERSION,
+});
+
+export const EVIDENCE_BUILD_TIMELINE_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_BUILD_TIMELINE_TASK,
   version: EVIDENCE_TASK_VERSION,
 });

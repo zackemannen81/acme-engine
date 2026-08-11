@@ -1,6 +1,7 @@
 export * from './canonical-text.js';
 export * from './correction.js';
 export * from './catalogue.js';
+export * from './contracts/build-timeline.js';
 export * from './contracts/observe-artifact.js';
 export * from './contracts/relate-observations.js';
 export * from './identity.js';
@@ -8,6 +9,8 @@ export * from './memory-policy.js';
 export * from './module.js';
 export * from './schemas.js';
 export * from './state.js';
+export * from './tasks/build-timeline.js';
 export * from './tasks/observe-artifact.js';
 export * from './tasks/relate-observations.js';
+export * from './temporal.js';
 export * from './validation.js';

@@ -16,8 +16,10 @@ import {
 import {
   buildEvidencePrimaryAccountComparisonView,
   buildEvidencePrimaryObservationLedgerView,
+  buildEvidencePrimaryOpenQuestionsView,
   buildEvidencePrimaryRelationReviewView,
   buildEvidencePrimarySourceReviewView,
+  buildEvidencePrimaryTimelineView,
   buildEvidencePrimaryWorkQueueView,
 } from '@acme/evidence-views';
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
@@ -143,6 +145,35 @@ export function createEvidenceWorkbenchApi(options: {
           response,
           200,
           buildEvidencePrimaryRelationReviewView({
+            workspaceId,
+            snapshot: await options.repository.snapshot(),
+            evidenceState: options.evidenceProjection(),
+          }),
+        );
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/timeline') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        send(
+          response,
+          200,
+          buildEvidencePrimaryTimelineView({
+            workspaceId,
+            snapshot: await options.repository.snapshot(),
+          }),
+        );
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/open-questions') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Open-question projection is unavailable.');
+        send(
+          response,
+          200,
+          buildEvidencePrimaryOpenQuestionsView({
             workspaceId,
             snapshot: await options.repository.snapshot(),
             evidenceState: options.evidenceProjection(),

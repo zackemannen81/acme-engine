@@ -750,13 +750,13 @@ single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
 
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
-normative POC #1 implementation plan. Slices 0–3 delivered the corpus, Evidence
-observe and relate tasks, product contracts/repository (including relations and
-open questions), primary source-review, observation-ledger, account-comparison
-and relation-review views and the local web/API/worker boundary. ADR-0030
-through ADR-0032 fix their identity/placement, reviewer/view and
-correction-pairing boundaries. Timeline and open-question primary views begin
-in planned slice 4 and require a separately activated task.
+normative POC #1 implementation plan. Slices 0–4 delivered the corpus, Evidence
+observe/relate/timeline tasks, product contracts/repository (including
+relations and open questions), primary source-review, observation-ledger,
+account-comparison, relation-review, timeline and open-question views and the
+local web/API/worker boundary. ADR-0030 through ADR-0032 fix their
+identity/placement, reviewer/view and correction-pairing boundaries. Assessment
+and re-review begin in planned slice 5 and require a separately activated task.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

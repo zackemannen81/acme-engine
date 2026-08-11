@@ -15,12 +15,14 @@ import {
   initialEvidenceState,
   reduceEvidenceState,
 } from './state.js';
+import { evidenceBuildTimelineTask } from './tasks/build-timeline.js';
 import { evidenceObserveArtifactTask } from './tasks/observe-artifact.js';
 import { evidenceRelateObservationsTask } from './tasks/relate-observations.js';
 
 export const evidenceTasks = Object.freeze({
   'observe-artifact': evidenceObserveArtifactTask,
   'relate-observations': evidenceRelateObservationsTask,
+  'build-timeline': evidenceBuildTimelineTask,
 });
 
 export const evidenceModule = defineModule<

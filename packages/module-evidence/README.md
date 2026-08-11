@@ -10,7 +10,8 @@ occurrence-pairing rule and projects correction standings through that same
 task without changing its closed model contract. Slice 3 implements
 `evidence.relate-observations@1.0.0`, which proposes scoped relations and open
 questions over accepted observations and contests only the endpoints that
-scoped `contradicts` relations require.
+scoped `contradicts` relations require. Slice 4 adds pure timeline ordering
+via `evidence.build-timeline@1.0.0` and `evidence-temporal-overlap-1`.
 
 The observation task accepts one immutable source artifact version and an
 explicit actor roster. Its prompt contract requires strict structured output;

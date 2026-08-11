@@ -33,6 +33,10 @@ export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
   'evidence-relate-observations-input/1' as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
   'evidence-relate-observations-output/1' as const;
+export const EVIDENCE_BUILD_TIMELINE_INPUT_SCHEMA_VERSION =
+  'evidence-build-timeline-input/1' as const;
+export const EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION =
+  'evidence-build-timeline-output/1' as const;
 export const EVIDENCE_MEMORY_SCHEMA_VERSION = 'evidence-memory/1' as const;
 export const EVIDENCE_LOCATOR_SCHEME = 'line-range-1' as const;
 
@@ -721,6 +725,29 @@ export const EvidenceRelateObservationsOutputSchema = z
   })
   .strict();
 
+export const EvidenceBuildTimelineInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_BUILD_TIMELINE_INPUT_SCHEMA_VERSION),
+    observations: z
+      .array(
+        z
+          .object({
+            observationId: EvidenceNonBlankStringSchema,
+            temporalBound: EvidenceTemporalBoundSchema,
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+
+/** Empty model payload — timeline is derived purely from input. */
+export const EvidenceBuildTimelineOutputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION),
+  })
+  .strict();
+
 export const EvidenceMemoryValueSchema = z.discriminatedUnion('kind', [
   EvidenceStatementOccurrenceSchema,
   EvidenceExhibitAssertionSchema,
@@ -778,5 +805,11 @@ export type EvidenceRelateObservationsInput = z.infer<
 >;
 export type EvidenceRelateObservationsOutput = z.infer<
   typeof EvidenceRelateObservationsOutputSchema
+>;
+export type EvidenceBuildTimelineInput = z.infer<
+  typeof EvidenceBuildTimelineInputSchema
+>;
+export type EvidenceBuildTimelineOutput = z.infer<
+  typeof EvidenceBuildTimelineOutputSchema
 >;
 export type EvidenceMemoryValue = z.infer<typeof EvidenceMemoryValueSchema>;

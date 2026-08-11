@@ -12,6 +12,7 @@ import type {
   SourceArtifactVersion,
 } from '@acme/module-evidence';
 import {
+  buildEvidenceTimelineEntries,
   EvidenceStateSchema,
   pairEvidenceCorrectionObservations,
 } from '@acme/module-evidence';
@@ -19,18 +20,24 @@ import {
 import {
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
+  EvidencePrimaryOpenQuestionsViewSchema,
   EvidencePrimaryRelationReviewViewSchema,
   EvidencePrimarySourceReviewViewSchema,
+  EvidencePrimaryTimelineViewSchema,
   EvidencePrimaryWorkQueueViewSchema,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryObservationLedgerView,
+  type EvidencePrimaryOpenQuestionsView,
   type EvidencePrimaryRelationReviewView,
   type EvidencePrimarySourceReviewView,
+  type EvidencePrimaryTimelineView,
   type EvidencePrimaryWorkQueueView,
 } from './schemas.js';
 
@@ -649,6 +656,126 @@ export function buildEvidencePrimaryRelationReviewView(input: {
       },
       relations,
       openQuestions,
+    }),
+  );
+}
+
+export function buildEvidencePrimaryTimelineView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+}): EvidencePrimaryTimelineView {
+  const snapshot = structuredClone(input.snapshot);
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  const sources = new Map(
+    snapshot.sources.map((source) => [source.artifactVersionId, source]),
+  );
+  const observations = snapshot.observations.filter(
+    (observation) => observation.temporalBound !== null,
+  );
+  const entries = buildEvidenceTimelineEntries(
+    observations.map((observation) => ({
+      observationId: observation.observationId,
+      temporalBound: observation.temporalBound as EvidenceTemporalBound,
+    })),
+  ).map((entry) => {
+    const sourceLinks = entry.observationIds.flatMap((observationId) => {
+      const observation = observations.find(
+        (item) => item.observationId === observationId,
+      );
+      if (observation === undefined) return [];
+      const source = sources.get(observation.artifactVersionId);
+      if (source === undefined) return [];
+      return [
+        {
+          observationVersionId: observationId,
+          citation: citation(source, observation),
+        },
+      ];
+    });
+    return {
+      entryId: entry.entryId,
+      bandKind: entry.bandKind,
+      display: entry.display,
+      observationVersionIds: [...entry.observationIds],
+      sourceLinks,
+    };
+  });
+  return detached(
+    EvidencePrimaryTimelineViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        label: workspace.label,
+        evidenceRevision: workspace.evidenceRevision,
+      },
+      heading: 'Timeline',
+      explanation:
+        'Entries keep exact, range, approximate and unknown labels. Overlapping non-exact bounds form ambiguity bands. Precision is never invented.',
+      entries,
+    }),
+  );
+}
+
+export function buildEvidencePrimaryOpenQuestionsView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+}): EvidencePrimaryOpenQuestionsView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const sources = new Map(
+    snapshot.sources.map((source) => [source.artifactVersionId, source]),
+  );
+  const observations = new Map(
+    snapshot.observations.map((observation) => [
+      observation.observationId,
+      observation,
+    ]),
+  );
+  const standings = objectStandingMap(state);
+  const questions = [...(snapshot.openQuestions ?? [])]
+    .sort((left, right) =>
+      left.openQuestionId.localeCompare(right.openQuestionId),
+    )
+    .map((question) => {
+      const sourceLinks = question.triggeringEvidenceIds.flatMap(
+        (evidenceId) => {
+          const observation = observations.get(evidenceId);
+          if (observation === undefined) return [];
+          const source = sources.get(observation.artifactVersionId);
+          if (source === undefined) return [];
+          return [
+            {
+              observationVersionId: observation.observationId,
+              citation: citation(source, observation),
+            },
+          ];
+        },
+      );
+      return {
+        openQuestionId: question.openQuestionId,
+        questionCode: question.questionCode,
+        questionText: question.questionText,
+        standing:
+          standings.get(question.openQuestionId) ?? ('current' as const),
+        triggeringEvidenceIds: [...question.triggeringEvidenceIds],
+        sourceLinks,
+      };
+    });
+  return detached(
+    EvidencePrimaryOpenQuestionsViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        label: workspace.label,
+        evidenceRevision: workspace.evidenceRevision,
+      },
+      heading: 'Open questions',
+      explanation:
+        'Open questions mark gaps exposed by the evidence. Absence of an answer is not treated as falsity.',
+      questions,
     }),
   );
 }
