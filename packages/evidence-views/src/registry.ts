@@ -19,6 +19,11 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     classification: 'primary-domain',
     defaultPath: '/accounts/compare',
   },
+  {
+    schemaVersion: 'evidence-primary-relation-review-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/relations',
+  },
 ] as const);
 
 export const EVIDENCE_PRIMARY_FORBIDDEN_TOKENS = Object.freeze([

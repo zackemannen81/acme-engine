@@ -29,6 +29,10 @@ export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION =
   'evidence-observe-artifact-input/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
   'evidence-observe-artifact-output/1' as const;
+export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
+  'evidence-relate-observations-input/1' as const;
+export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
+  'evidence-relate-observations-output/1' as const;
 export const EVIDENCE_MEMORY_SCHEMA_VERSION = 'evidence-memory/1' as const;
 export const EVIDENCE_LOCATOR_SCHEME = 'line-range-1' as const;
 
@@ -634,6 +638,89 @@ export const EvidenceObserveArtifactOutputSchema = z
   })
   .strict();
 
+export const EvidenceRelateObservationsInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION),
+    observations: z.array(EvidenceObservationSchema).min(1),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.observations.map(({ observationId }) => observationId);
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['observations'],
+        message: 'Relate input observations must have unique observation ids.',
+      });
+    }
+  });
+
+export const EvidencePropositionCandidateSchema = z
+  .object({
+    observationIds: sortedUniqueStrings(1),
+    normalizedProposition: EvidenceNonBlankStringSchema,
+  })
+  .strict();
+
+export const EvidenceEventCandidateSchema = z
+  .object({
+    supportingObservationIds: sortedUniqueStrings(1),
+    actorReferenceKeys: sortedUniqueStrings(),
+    temporalObservationId: EvidenceNonBlankStringSchema,
+    description: EvidenceNonBlankStringSchema,
+  })
+  .strict();
+
+export const EvidenceRelationComparableScopeCandidateSchema = z
+  .object({
+    subject: EvidenceNonBlankStringSchema,
+    aspect: EvidenceNonBlankStringSchema,
+    actorReferenceKeys: sortedUniqueStrings(),
+    temporalObservationIds: sortedUniqueStrings(),
+  })
+  .strict();
+
+export const EvidenceRelationCandidateSchema = z
+  .object({
+    relationKind: EvidenceRelationKindSchema,
+    endpoints: z.array(EvidenceRelationEndpointSchema).min(2),
+    comparableScope: EvidenceRelationComparableScopeCandidateSchema,
+    rationaleCode: EvidenceNonBlankStringSchema,
+    rationale: EvidenceNonBlankStringSchema,
+  })
+  .strict();
+
+export const EvidenceOpenQuestionCandidateSchema = z
+  .object({
+    questionCode: EvidenceNonBlankStringSchema,
+    questionText: EvidenceNonBlankStringSchema,
+    triggeringObservationIds: sortedUniqueStrings(),
+    triggeringRelationRationaleCodes: sortedUniqueStrings(),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      value.triggeringObservationIds.length +
+        value.triggeringRelationRationaleCodes.length >
+      0,
+    {
+      message:
+        'An open question must cite at least one observation or relation.',
+    },
+  );
+
+export const EvidenceRelateObservationsOutputSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION,
+    ),
+    propositions: z.array(EvidencePropositionCandidateSchema),
+    events: z.array(EvidenceEventCandidateSchema),
+    relations: z.array(EvidenceRelationCandidateSchema),
+    openQuestions: z.array(EvidenceOpenQuestionCandidateSchema),
+  })
+  .strict();
+
 export const EvidenceMemoryValueSchema = z.discriminatedUnion('kind', [
   EvidenceStatementOccurrenceSchema,
   EvidenceExhibitAssertionSchema,
@@ -685,5 +772,11 @@ export type EvidenceObserveArtifactInput = z.infer<
 >;
 export type EvidenceObserveArtifactOutput = z.infer<
   typeof EvidenceObserveArtifactOutputSchema
+>;
+export type EvidenceRelateObservationsInput = z.infer<
+  typeof EvidenceRelateObservationsInputSchema
+>;
+export type EvidenceRelateObservationsOutput = z.infer<
+  typeof EvidenceRelateObservationsOutputSchema
 >;
 export type EvidenceMemoryValue = z.infer<typeof EvidenceMemoryValueSchema>;

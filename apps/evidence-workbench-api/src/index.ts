@@ -16,6 +16,7 @@ import {
 import {
   buildEvidencePrimaryAccountComparisonView,
   buildEvidencePrimaryObservationLedgerView,
+  buildEvidencePrimaryRelationReviewView,
   buildEvidencePrimarySourceReviewView,
   buildEvidencePrimaryWorkQueueView,
 } from '@acme/evidence-views';
@@ -127,6 +128,22 @@ export function createEvidenceWorkbenchApi(options: {
               url.searchParams.get('correction') ?? 'EVAL-T01',
             changedAccountLogicalArtifactIds:
               changed.length === 0 ? ['EVAL-T02'] : changed,
+            snapshot: await options.repository.snapshot(),
+            evidenceState: options.evidenceProjection(),
+          }),
+        );
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/relations') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Relation projection is unavailable.');
+        send(
+          response,
+          200,
+          buildEvidencePrimaryRelationReviewView({
+            workspaceId,
             snapshot: await options.repository.snapshot(),
             evidenceState: options.evidenceProjection(),
           }),

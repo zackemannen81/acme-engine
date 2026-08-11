@@ -1,5 +1,38 @@
 # Journal
 
+## 2026-08-11 — ACME-0080 Evidence relations and uncertainty
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0080
+- Branch: `grok/poc_3-8`
+- Summary: Completed Evidence Integrity Workbench slice 3. Implemented
+  `evidence.relate-observations@1.0.0` with input/output schemas, prompt
+  contract, interpretation, contest projection and module registration.
+  Evaluation fixtures derive eight golden relations and three open questions
+  from the sealed golden builder; the offline scenario commits those exact
+  identities, leaves the ambiguous actor unresolved, contests three changed-
+  account observations and keeps two correction predecessors superseded.
+- Product boundary: product snapshot stores relations and open questions;
+  pure primary relation-review view and work-queue relation items; API
+  `/api/relations` and browser Relations navigation; evaluation seed runs
+  observe then relate with the deterministic mock. Technical audit remains
+  disabled.
+- Contest rule: only `contradicts` contests current statement endpoints;
+  exhibit assertions and correction successors that conflict with a later
+  different logical artifact stay current; scope-mismatch/qualifies do not
+  contest.
+- Verification: offline install, `typecheck`, `lint`, `format:check`,
+  `boundaries`, `docs:check`, `build`, aggregate `test` and `git diff --check`
+  passed after Prettier fix. Unit suite 641/641 in 92 files, conformance
+  69/69 in 11, integration 57/57 in 11, scenario 26/26 in 7. No check skipped.
+- Safety: no live provider call, network-backed corpus, credential, deployment
+  or non-synthetic data path was used.
+- Handoff: activate slice 4 as a separate charter for timeline and open-
+  question primary views (`evidence.build-timeline@1.0.0`). Assessment,
+  technical audit, PostgreSQL and hosted shell remain later slices.
+- Signature: Grok
+
 ## 2026-08-11 — ACME-0079 Compare evidence accounts
 
 - Date: 2026-08-11

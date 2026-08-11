@@ -5,6 +5,8 @@ import {
   EvidenceIsoTimestampSchema,
   EvidenceNonBlankStringSchema,
   EvidenceObservationSchema,
+  EvidenceOpenQuestionSchema,
+  EvidenceRelationSchema,
   SourceArtifactVersionSchema,
 } from '@acme/module-evidence';
 
@@ -142,6 +144,8 @@ export const EvidenceProductSnapshotSchema = z
     workspaces: z.array(EvidenceWorkspaceSchema),
     sources: z.array(SourceArtifactVersionSchema),
     observations: z.array(EvidenceObservationSchema),
+    relations: z.array(EvidenceRelationSchema),
+    openQuestions: z.array(EvidenceOpenQuestionSchema),
     jobs: z.array(EvidenceProductJobSchema),
     reviewDecisions: z.array(EvidenceReviewDecisionSchema),
   })

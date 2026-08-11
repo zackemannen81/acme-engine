@@ -54,12 +54,20 @@ describe('local Evidence workbench', () => {
         }[];
       };
       expect(queue.nextItems).toHaveLength(2);
-      expect(queue.nextItems.map(({ citation }) => citation.display)).toEqual([
-        '[DEV-T01@v1:L4-L4]',
-        '[DEV-T01@v1:L6-L6]',
-      ]);
+      const observationItems = queue.nextItems.filter(
+        (
+          item,
+        ): item is (typeof queue.nextItems)[number] & {
+          kind?: string;
+          citation: { artifactVersionId: string; display: string };
+          observationVersionId: string;
+        } => 'citation' in item && item.citation !== undefined,
+      );
+      expect(
+        observationItems.map(({ citation }) => citation.display).sort(),
+      ).toEqual(['[DEV-T01@v1:L4-L4]', '[DEV-T01@v1:L6-L6]']);
 
-      const first = requiredValue(queue.nextItems[0], 'first review item');
+      const first = requiredValue(observationItems[0], 'first review item');
       const sourceResponse = await fetch(
         `${address.url}api/sources/${encodeURIComponent(first.citation.artifactVersionId)}?workspaceId=${local.workspaceId}`,
       );
@@ -136,19 +144,49 @@ describe('local Evidence workbench', () => {
     });
     const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
     try {
-      expect(local.gateway.invocations()).toHaveLength(5);
+      expect(local.gateway.invocations()).toHaveLength(6);
       const pageText = await (await fetch(address.url)).text();
       expect(pageText).toContain('Compare accounts');
+      expect(pageText).toContain('Relations');
 
       const ledgerResponse = await fetch(
         `${address.url}api/observations?workspaceId=${local.workspaceId}`,
       );
       expect(ledgerResponse.status).toBe(200);
       const ledger = (await ledgerResponse.json()) as {
-        summary: { total: number; current: number; superseded: number };
+        summary: {
+          total: number;
+          current: number;
+          contested: number;
+          superseded: number;
+        };
       };
       expect(ledger.summary).toEqual(
-        expect.objectContaining({ total: 10, current: 8, superseded: 2 }),
+        expect.objectContaining({
+          total: 10,
+          current: 5,
+          contested: 3,
+          superseded: 2,
+        }),
+      );
+
+      const relationsResponse = await fetch(
+        `${address.url}api/relations?workspaceId=${local.workspaceId}`,
+      );
+      expect(relationsResponse.status).toBe(200);
+      const relations = (await relationsResponse.json()) as {
+        metrics: {
+          relationTotal: number;
+          openQuestionTotal: number;
+          unresolvedActorRelations: number;
+        };
+      };
+      expect(relations.metrics).toEqual(
+        expect.objectContaining({
+          relationTotal: 8,
+          openQuestionTotal: 3,
+          unresolvedActorRelations: 1,
+        }),
       );
 
       const comparisonResponse = await fetch(
@@ -188,7 +226,7 @@ describe('local Evidence workbench', () => {
         actorRoster: fixture.input.actorRoster,
       });
       expect(duplicate.phase).toBe('completed');
-      expect(local.gateway.invocations()).toHaveLength(5);
+      expect(local.gateway.invocations()).toHaveLength(6);
       expect(
         (await fetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);

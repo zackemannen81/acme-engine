@@ -16,9 +16,11 @@ import {
   reduceEvidenceState,
 } from './state.js';
 import { evidenceObserveArtifactTask } from './tasks/observe-artifact.js';
+import { evidenceRelateObservationsTask } from './tasks/relate-observations.js';
 
 export const evidenceTasks = Object.freeze({
   'observe-artifact': evidenceObserveArtifactTask,
+  'relate-observations': evidenceRelateObservationsTask,
 });
 
 export const evidenceModule = defineModule<

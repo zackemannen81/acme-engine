@@ -28,13 +28,14 @@ normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
 Implementation status: ACME-0077 delivered slice 0, ACME-0078 delivered slice
-1 and ACME-0079 delivered slice 2. The canonical corpus and validation
-boundary, source-observation task, correction standing projection, local
-product repository, work-queue/source-review/observation-ledger/account-
-comparison views and offline loopback reviewer path are implemented. Slices
-3–9 remain separately activatable and unimplemented. ADR-0032 fixes the
-conservative V1 correction-occurrence pairing used by both projection and
-views.
+1, ACME-0079 delivered slice 2 and ACME-0080 delivered slice 3. The canonical
+corpus and validation boundary, source-observation and relate-observations
+tasks, correction and contest standing projection, local product repository
+(including relations and open questions), work-queue/source-review/
+observation-ledger/account-comparison/relation-review views and offline
+loopback reviewer path are implemented. Slices 4–9 remain separately
+activatable and unimplemented. ADR-0032 fixes the conservative V1 correction-
+occurrence pairing used by both projection and views.
 
 ## 2. Outcome, Non-goals and Product Separation
 
@@ -1038,7 +1039,7 @@ navigation.
 
 Documentation: correction workflow and evidence-revision semantics.
 
-### Slice 3 — Relations and uncertainty
+### Slice 3 — Relations and uncertainty (delivered by ACME-0080)
 
 Reviewer capability: inspect proposed support/conflict/qualification/scope
 relations with exact endpoints and accept, reject or leave each unresolved.

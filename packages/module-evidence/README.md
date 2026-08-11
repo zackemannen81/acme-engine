@@ -7,7 +7,10 @@ binding validation, compact state/delta contracts, reducer and invariants,
 memory policy, and the task catalogue. Slice 1 implements and registers
 `evidence.observe-artifact@1.0.0`; slice 2 adds the ADR-0032 pure V1 correction
 occurrence-pairing rule and projects correction standings through that same
-task without changing its closed model contract.
+task without changing its closed model contract. Slice 3 implements
+`evidence.relate-observations@1.0.0`, which proposes scoped relations and open
+questions over accepted observations and contests only the endpoints that
+scoped `contradicts` relations require.
 
 The observation task accepts one immutable source artifact version and an
 explicit actor roster. Its prompt contract requires strict structured output;

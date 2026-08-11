@@ -6,6 +6,7 @@ import {
 } from '@acme/evidence-product-contracts';
 import type {
   EvidenceObservation,
+  EvidenceRelation,
   EvidenceState,
   EvidenceTemporalBound,
   SourceArtifactVersion,
@@ -18,14 +19,17 @@ import {
 import {
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
+  EvidencePrimaryRelationReviewViewSchema,
   EvidencePrimarySourceReviewViewSchema,
   EvidencePrimaryWorkQueueViewSchema,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryObservationLedgerView,
+  type EvidencePrimaryRelationReviewView,
   type EvidencePrimarySourceReviewView,
   type EvidencePrimaryWorkQueueView,
 } from './schemas.js';
@@ -138,6 +142,13 @@ function standingMap(stateValue: EvidenceState) {
   );
 }
 
+function objectStandingMap(stateValue: EvidenceState) {
+  const state = EvidenceStateSchema.parse(stateValue);
+  return new Map(
+    state.standings.map(({ objectId, standing: value }) => [objectId, value]),
+  );
+}
+
 function requireObservationStanding(
   standings: ReadonlyMap<
     string,
@@ -162,6 +173,19 @@ function requireProjectionRevision(
   }
 }
 
+function endpointDisplay(
+  endpoint: EvidenceRelation['endpoints'][number],
+  observations: ReadonlyMap<string, EvidenceObservation>,
+): string {
+  if (endpoint.kind === 'observation') {
+    const observation = observations.get(endpoint.id);
+    if (observation !== undefined) {
+      return `${observation.kind}:${observation.locator.startLine}-${observation.locator.endLine}`;
+    }
+  }
+  return `${endpoint.kind}:${endpoint.id.slice(0, 18)}`;
+}
+
 export function buildEvidencePrimaryWorkQueueView(input: {
   readonly workspaceId: string;
   readonly snapshot: EvidenceProductSnapshot;
@@ -171,42 +195,75 @@ export function buildEvidencePrimaryWorkQueueView(input: {
   const sources = new Map(
     snapshot.sources.map((source) => [source.artifactVersionId, source]),
   );
-  const nextItems = snapshot.observations
-    .flatMap((observation) => {
-      const decision = effectiveReviewDecision(
-        snapshot.reviewDecisions,
-        observation.observationId,
-      );
-      if (
-        decision !== null &&
-        !['leave-unresolved', 'request-revision'].includes(decision.action)
-      )
-        return [];
-      const source = sources.get(observation.artifactVersionId);
-      if (source === undefined)
-        throw new RangeError(
-          `Missing source for ${observation.observationId}.`,
-        );
-      return [
-        {
-          itemId: `review:${observation.observationId}`,
-          kind: 'source-observation' as const,
-          observationVersionId: observation.observationId,
-          sourceTitle: source.title,
-          reason:
-            decision?.action === 'request-revision'
-              ? ('decision-requested' as const)
-              : ('new-source-observation' as const),
-          citation: citation(source, observation),
-          targetPath: `/sources/${source.artifactVersionId}?observation=${observation.observationId}`,
-        },
-      ];
-    })
-    .sort(
-      (left, right) =>
-        left.citation.display.localeCompare(right.citation.display) ||
-        left.itemId.localeCompare(right.itemId),
+  const observationItems = snapshot.observations.flatMap((observation) => {
+    const decision = effectiveReviewDecision(
+      snapshot.reviewDecisions,
+      observation.observationId,
     );
+    if (
+      decision !== null &&
+      !['leave-unresolved', 'request-revision'].includes(decision.action)
+    )
+      return [];
+    const source = sources.get(observation.artifactVersionId);
+    if (source === undefined)
+      throw new RangeError(`Missing source for ${observation.observationId}.`);
+    return [
+      {
+        itemId: `review:${observation.observationId}`,
+        kind: 'source-observation' as const,
+        observationVersionId: observation.observationId,
+        sourceTitle: source.title,
+        reason:
+          decision?.action === 'request-revision'
+            ? ('decision-requested' as const)
+            : ('new-source-observation' as const),
+        citation: citation(source, observation),
+        targetPath: `/sources/${source.artifactVersionId}?observation=${observation.observationId}`,
+      },
+    ];
+  });
+  const relationItems = (snapshot.relations ?? []).flatMap((relation) => {
+    const decision = effectiveReviewDecision(
+      snapshot.reviewDecisions,
+      relation.relationId,
+    );
+    if (
+      decision !== null &&
+      !['leave-unresolved', 'request-revision'].includes(decision.action)
+    )
+      return [];
+    return [
+      {
+        itemId: `relation:${relation.relationId}`,
+        kind: 'relation-review' as const,
+        relationVersionId: relation.relationId,
+        relationKind: relation.relationKind,
+        reason:
+          decision?.action === 'request-revision'
+            ? ('decision-requested' as const)
+            : ('new-relation' as const),
+        summary: `${relation.relationKind}: ${relation.comparableScope.subject} / ${relation.comparableScope.aspect}`,
+        targetPath: `/relations#${relation.relationId}`,
+      },
+    ];
+  });
+  const nextItems = [...observationItems, ...relationItems].sort(
+    (left, right) => {
+      if (
+        left.kind === 'source-observation' &&
+        right.kind === 'source-observation'
+      ) {
+        return (
+          left.citation.display.localeCompare(right.citation.display) ||
+          left.itemId.localeCompare(right.itemId)
+        );
+      }
+      if (left.kind === 'source-observation') return -1;
+      if (right.kind === 'source-observation') return 1;
+      return left.itemId.localeCompare(right.itemId);
+    },
+  );
   const recent = orderedReviewDecisions(snapshot.reviewDecisions).at(-1);
   return detached(
     EvidencePrimaryWorkQueueViewSchema.parse({
@@ -492,6 +549,106 @@ export function buildEvidencePrimaryAccountComparisonView(input: {
         label: `${source.title} — version ${String(source.versionOrdinal)}`,
         sourcePath: `/sources/${source.artifactVersionId}`,
       })),
+    }),
+  );
+}
+
+export function buildEvidencePrimaryRelationReviewView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+}): EvidencePrimaryRelationReviewView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const observations = new Map(
+    snapshot.observations.map((observation) => [
+      observation.observationId,
+      observation,
+    ]),
+  );
+  const standings = objectStandingMap(state);
+  const byKind = {
+    supports: 0,
+    contradicts: 0,
+    qualifies: 0,
+    'scope-mismatch': 0,
+    duplicate: 0,
+    correction: 0,
+    unresolved: 0,
+  };
+  let unresolvedActorRelations = 0;
+  let awaitingReview = 0;
+  const relations = [...(snapshot.relations ?? [])]
+    .sort((left, right) => left.relationId.localeCompare(right.relationId))
+    .map((relation) => {
+      byKind[relation.relationKind] += 1;
+      if (relation.relationKind === 'unresolved') unresolvedActorRelations += 1;
+      const review = effectiveReviewDecision(
+        snapshot.reviewDecisions,
+        relation.relationId,
+      );
+      const reviewStanding = standing(review);
+      if (
+        review === null ||
+        ['leave-unresolved', 'request-revision'].includes(review.action)
+      ) {
+        awaitingReview += 1;
+      }
+      return {
+        relationVersionId: relation.relationId,
+        relationKind: relation.relationKind,
+        endpoints: relation.endpoints.map((endpoint) => ({
+          kind: endpoint.kind,
+          id: endpoint.id,
+          display: endpointDisplay(endpoint, observations),
+        })),
+        scopeSubject: relation.comparableScope.subject,
+        scopeAspect: relation.comparableScope.aspect,
+        rationaleCode: relation.rationaleCode,
+        rationale: relation.rationale,
+        standing: standings.get(relation.relationId) ?? ('current' as const),
+        reviewStanding,
+        reviewChoices: [
+          'accept',
+          'reject',
+          'leave-unresolved',
+          'request-revision',
+        ] as const,
+      };
+    });
+  const openQuestions = [...(snapshot.openQuestions ?? [])]
+    .sort((left, right) =>
+      left.openQuestionId.localeCompare(right.openQuestionId),
+    )
+    .map((question) => ({
+      openQuestionId: question.openQuestionId,
+      questionCode: question.questionCode,
+      questionText: question.questionText,
+      triggeringEvidenceIds: [...question.triggeringEvidenceIds],
+      standing: standings.get(question.openQuestionId) ?? ('current' as const),
+    }));
+  return detached(
+    EvidencePrimaryRelationReviewViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        label: workspace.label,
+        evidenceRevision: workspace.evidenceRevision,
+      },
+      heading: 'Relation review',
+      explanation:
+        'Relations connect exact endpoints with a scoped comparison. Accept, reject or leave each one unresolved without overwriting the linked observations.',
+      metrics: {
+        relationTotal: relations.length,
+        byKind,
+        unresolvedActorRelations,
+        openQuestionTotal: openQuestions.length,
+        awaitingReview,
+      },
+      relations,
+      openQuestions,
     }),
   );
 }
