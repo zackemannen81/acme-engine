@@ -50,7 +50,7 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
         earliestSlice: 3,
         role: 'analyzer',
         modelBacked: true,
-        implemented: false,
+        implemented: true,
       },
       {
         id: EVIDENCE_BUILD_TIMELINE_TASK,
@@ -58,7 +58,7 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
         earliestSlice: 4,
         role: 'transformer',
         modelBacked: false,
-        implemented: false,
+        implemented: true,
       },
       {
         id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
@@ -66,12 +66,27 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
         earliestSlice: 5,
         role: 'producer',
         modelBacked: true,
-        implemented: false,
+        implemented: true,
       },
     ]),
 );
 
 export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF = immutableEvidence({
   id: EVIDENCE_OBSERVE_ARTIFACT_TASK,
+  version: EVIDENCE_TASK_VERSION,
+});
+
+export const EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_RELATE_OBSERVATIONS_TASK,
+  version: EVIDENCE_TASK_VERSION,
+});
+
+export const EVIDENCE_BUILD_TIMELINE_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_BUILD_TIMELINE_TASK,
+  version: EVIDENCE_TASK_VERSION,
+});
+
+export const EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
   version: EVIDENCE_TASK_VERSION,
 });

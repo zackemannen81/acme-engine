@@ -19,6 +19,31 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     classification: 'primary-domain',
     defaultPath: '/accounts/compare',
   },
+  {
+    schemaVersion: 'evidence-primary-relation-review-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/relations',
+  },
+  {
+    schemaVersion: 'evidence-primary-timeline-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/timeline',
+  },
+  {
+    schemaVersion: 'evidence-primary-open-questions-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/open-questions',
+  },
+  {
+    schemaVersion: 'evidence-technical-provenance-view/1',
+    classification: 'technical-audit',
+    defaultPath: '/technical/provenance',
+  },
+  {
+    schemaVersion: 'evidence-technical-replay-view/1',
+    classification: 'technical-audit',
+    defaultPath: '/technical/replay',
+  },
 ] as const);
 
 export const EVIDENCE_PRIMARY_FORBIDDEN_TOKENS = Object.freeze([

@@ -1,5 +1,8 @@
 import type {
+  EvidenceAssessment,
   EvidenceObservation,
+  EvidenceOpenQuestion,
+  EvidenceRelation,
   SourceArtifactVersion,
 } from '@acme/module-evidence';
 
@@ -26,6 +29,15 @@ export interface EvidenceProductRepository {
   putObservations(
     observations: readonly EvidenceObservation[],
   ): Promise<readonly EvidenceObservation[]>;
+  putRelations(
+    relations: readonly EvidenceRelation[],
+  ): Promise<readonly EvidenceRelation[]>;
+  putOpenQuestions(
+    openQuestions: readonly EvidenceOpenQuestion[],
+  ): Promise<readonly EvidenceOpenQuestion[]>;
+  putAssessments(
+    assessments: readonly EvidenceAssessment[],
+  ): Promise<readonly EvidenceAssessment[]>;
   putJob(job: EvidenceProductJob): Promise<EvidenceProductJob>;
   appendReviewDecision(
     decision: EvidenceReviewDecision,

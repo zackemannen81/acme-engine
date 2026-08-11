@@ -1059,8 +1059,8 @@ is UTF-8, LF and NFC; locators are one-based inclusive line ranges and accepted
 quotes must match exactly once within their addressed range.
 
 ACME-0077 delivered the Evidence contract/corpus foundation, ACME-0078
-delivered the first executable reviewer slice and ACME-0079 delivered account
-comparison. `@acme/module-evidence`,
+delivered the first executable reviewer slice, ACME-0079 delivered account
+comparison and ACME-0080 delivered relation analysis. `@acme/module-evidence`,
 namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
@@ -1069,7 +1069,10 @@ invariants and a domain memory policy. Its registered
 explicit actor roster, uses strict structured output and refuses invalid quote,
 kind, actor, temporal and prohibited-authority candidates before commit.
 Applied observation identities and their source document advance Evidence
-revision once; exact duplicates advance nothing.
+revision once; exact duplicates advance nothing. The registered
+`evidence.relate-observations@1.0.0` task accepts current observations, proposes
+scoped relations and open questions, and contests only statement endpoints that
+scoped `contradicts` relations require.
 
 For an explicit adjacent `transcription-correction`, the observation task now
 pairs complete predecessor/successor occurrence sets through the ADR-0032 V1

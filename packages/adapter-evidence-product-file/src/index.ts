@@ -14,7 +14,10 @@ import {
   type EvidenceReviewDecision,
 } from '@acme/evidence-product-contracts';
 import {
+  EvidenceAssessmentSchema,
   EvidenceObservationSchema,
+  EvidenceOpenQuestionSchema,
+  EvidenceRelationSchema,
   SourceArtifactVersionSchema,
 } from '@acme/module-evidence';
 
@@ -24,6 +27,9 @@ function emptySnapshot(): EvidenceProductSnapshot {
     workspaces: [],
     sources: [],
     observations: [],
+    relations: [],
+    openQuestions: [],
+    assessments: [],
     jobs: [],
     reviewDecisions: [],
   });
@@ -58,9 +64,16 @@ export function createFileEvidenceProductRepository(options: {
 
   async function read(): Promise<EvidenceProductSnapshot> {
     try {
-      return EvidenceProductSnapshotSchema.parse(
-        JSON.parse(await readFile(filePath, 'utf8')),
-      );
+      const raw = JSON.parse(await readFile(filePath, 'utf8')) as Record<
+        string,
+        unknown
+      >;
+      return EvidenceProductSnapshotSchema.parse({
+        relations: [],
+        openQuestions: [],
+        assessments: [],
+        ...raw,
+      });
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT')
         return emptySnapshot();
@@ -166,6 +179,91 @@ export function createFileEvidenceProductRepository(options: {
             ...snapshot,
             observations: [...byId.values()].sort((a, b) =>
               a.observationId.localeCompare(b.observationId),
+            ),
+          },
+        };
+      });
+    },
+    async putRelations(relations) {
+      const values = relations.map((value) =>
+        EvidenceRelationSchema.parse(value),
+      );
+      return mutate((snapshot) => {
+        const byId = new Map(
+          (snapshot.relations ?? []).map((value) => [value.relationId, value]),
+        );
+        for (const value of values) {
+          const existing = byId.get(value.relationId);
+          if (existing !== undefined && !same(existing, value))
+            throw new EvidenceProductCommandCollisionError(value.relationId);
+          byId.set(value.relationId, existing ?? value);
+        }
+        return {
+          value: values,
+          snapshot: {
+            ...snapshot,
+            relations: [...byId.values()].sort((a, b) =>
+              a.relationId.localeCompare(b.relationId),
+            ),
+          },
+        };
+      });
+    },
+    async putOpenQuestions(openQuestions) {
+      const values = openQuestions.map((value) =>
+        EvidenceOpenQuestionSchema.parse(value),
+      );
+      return mutate((snapshot) => {
+        const byId = new Map(
+          (snapshot.openQuestions ?? []).map((value) => [
+            value.openQuestionId,
+            value,
+          ]),
+        );
+        for (const value of values) {
+          const existing = byId.get(value.openQuestionId);
+          if (existing !== undefined && !same(existing, value))
+            throw new EvidenceProductCommandCollisionError(
+              value.openQuestionId,
+            );
+          byId.set(value.openQuestionId, existing ?? value);
+        }
+        return {
+          value: values,
+          snapshot: {
+            ...snapshot,
+            openQuestions: [...byId.values()].sort((a, b) =>
+              a.openQuestionId.localeCompare(b.openQuestionId),
+            ),
+          },
+        };
+      });
+    },
+    async putAssessments(assessments) {
+      const values = assessments.map((value) =>
+        EvidenceAssessmentSchema.parse(value),
+      );
+      return mutate((snapshot) => {
+        const byId = new Map(
+          (snapshot.assessments ?? []).map((value) => [
+            value.assessmentVersionId,
+            value,
+          ]),
+        );
+        for (const value of values) {
+          const existing = byId.get(value.assessmentVersionId);
+          if (existing !== undefined && !same(existing, value))
+            throw new EvidenceProductCommandCollisionError(
+              value.assessmentVersionId,
+            );
+          byId.set(value.assessmentVersionId, existing ?? value);
+        }
+        return {
+          value: values,
+          snapshot: {
+            ...snapshot,
+            assessments: [...byId.values()].sort((a, b) =>
+              a.assessmentVersionId.localeCompare(b.assessmentVersionId),
             ),
           },
         };

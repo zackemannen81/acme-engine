@@ -15,7 +15,12 @@ describe('Evidence module foundation conformance', () => {
     expect(
       evidenceModule.stateSchema.safeParse(initialEvidenceState()).success,
     ).toBe(true);
-    expect(Object.keys(evidenceModule.tasks)).toEqual(['observe-artifact']);
+    expect(Object.keys(evidenceModule.tasks)).toEqual([
+      'observe-artifact',
+      'relate-observations',
+      'build-timeline',
+      'propose-assessment',
+    ]);
     expect(EVIDENCE_TASK_CATALOGUE).toHaveLength(4);
   });
 

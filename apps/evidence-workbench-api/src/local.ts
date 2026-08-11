@@ -32,15 +32,22 @@ import {
   developmentObserveArtifactOutput,
 } from '@acme/evidence-testing';
 import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
+import { evaluationRelateCase } from '@acme/evidence-testing/evaluation-relate';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
+  EvidenceMemoryValueSchema,
   EvidenceObservationSchema,
+  EvidenceOpenQuestionSchema,
+  EvidenceRelationSchema,
   EvidenceStateSchema,
   evidenceModule,
   evidenceObserveArtifactContract,
+  evidenceRelateObservationsContract,
   initialEvidenceState,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
+  type EvidenceRelateObservationsInput,
+  type EvidenceRelateObservationsOutput,
 } from '@acme/module-evidence';
 import { createEvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
 
@@ -51,10 +58,16 @@ import {
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const DEVELOPMENT_COMMAND_KEY = 'development-observe-dev-t01-v1';
-const SELECTION: ModelSelection = {
+const RELATE_COMMAND_KEY = 'evaluation-relate-observations-1';
+const OBSERVE_SELECTION: ModelSelection = {
   profile: 'evidence-offline-fixture',
   providerHint: 'deterministic-fixture',
   modelHint: 'evidence-observe-1',
+};
+const RELATE_SELECTION: ModelSelection = {
+  profile: 'evidence-offline-fixture',
+  providerHint: 'deterministic-fixture',
+  modelHint: 'evidence-relate-1',
 };
 
 type SeedMode = 'development' | 'evaluation' | 'none';
@@ -66,7 +79,14 @@ interface ObserveFixture {
   readonly output: EvidenceObserveArtifactOutput;
 }
 
-function fixtures(mode: SeedMode): readonly ObserveFixture[] {
+interface RelateFixture {
+  readonly commandKey: string;
+  readonly requestHash: string;
+  readonly input: EvidenceRelateObservationsInput;
+  readonly output: EvidenceRelateObservationsOutput;
+}
+
+function observeFixtures(mode: SeedMode): readonly ObserveFixture[] {
   if (mode === 'none') return [];
   if (mode === 'development') {
     return [
@@ -86,6 +106,17 @@ function fixtures(mode: SeedMode): readonly ObserveFixture[] {
   }));
 }
 
+function relateFixture(mode: SeedMode): RelateFixture | null {
+  if (mode !== 'evaluation') return null;
+  const item = evaluationRelateCase();
+  return {
+    commandKey: item.caseId,
+    requestHash: item.requestHash,
+    input: item.input,
+    output: item.output,
+  };
+}
+
 function systemClock(): Clock & EvidenceProductClock {
   return { now: () => new Date().toISOString() };
 }
@@ -100,12 +131,66 @@ function productIds(): EvidenceProductIds {
 
 function fixtureGateway(
   seedFixtures: readonly ObserveFixture[],
+  relate: RelateFixture | null,
   clock: EvidenceProductClock,
 ): ScriptedModelGateway {
+  const observeCalls = seedFixtures.map((fixture) => {
+    const requestKey = `import:${fixture.commandKey}`;
+    return {
+      executionId: deriveExecutionId('evidence', requestKey),
+      callKey: 'model:0',
+      selection: OBSERVE_SELECTION,
+      expectedRequestHash: fixture.requestHash,
+      outcome: {
+        kind: 'response' as const,
+        response: {
+          provider: 'deterministic-fixture',
+          model: 'evidence-observe-1',
+          providerResponseId: fixture.commandKey,
+          receivedAt: clock.now(),
+          finishReason: 'stop' as const,
+          text: canonicalJson(fixture.output as never),
+          usage: { inputTokens: 480, outputTokens: 190, totalTokens: 670 },
+          metadata: { fixture: fixture.commandKey },
+        },
+      },
+    };
+  });
+  const relateCalls =
+    relate === null
+      ? []
+      : [
+          {
+            executionId: deriveExecutionId(
+              'evidence',
+              `relate:${relate.commandKey}`,
+            ),
+            callKey: 'model:0',
+            selection: RELATE_SELECTION,
+            expectedRequestHash: relate.requestHash,
+            outcome: {
+              kind: 'response' as const,
+              response: {
+                provider: 'deterministic-fixture',
+                model: 'evidence-relate-1',
+                providerResponseId: relate.commandKey,
+                receivedAt: clock.now(),
+                finishReason: 'stop' as const,
+                text: canonicalJson(relate.output as never),
+                usage: {
+                  inputTokens: 900,
+                  outputTokens: 700,
+                  totalTokens: 1600,
+                },
+                metadata: { fixture: relate.commandKey },
+              },
+            },
+          },
+        ];
   return createScriptedModelGateway({
     profiles: [
       {
-        selection: SELECTION,
+        selection: OBSERVE_SELECTION,
         capabilities: {
           structuredOutput: true,
           tools: false,
@@ -114,29 +199,18 @@ function fixtureGateway(
           maxOutputTokens: 4_096,
         },
       },
-    ],
-    calls: seedFixtures.map((fixture) => {
-      const requestKey = `import:${fixture.commandKey}`;
-      return {
-        executionId: deriveExecutionId('evidence', requestKey),
-        callKey: 'model:0',
-        selection: SELECTION,
-        expectedRequestHash: fixture.requestHash,
-        outcome: {
-          kind: 'response',
-          response: {
-            provider: 'deterministic-fixture',
-            model: 'evidence-observe-1',
-            providerResponseId: fixture.commandKey,
-            receivedAt: clock.now(),
-            finishReason: 'stop',
-            text: canonicalJson(fixture.output as never),
-            usage: { inputTokens: 480, outputTokens: 190, totalTokens: 670 },
-            metadata: { fixture: fixture.commandKey },
-          },
+      {
+        selection: RELATE_SELECTION,
+        capabilities: {
+          structuredOutput: true,
+          tools: false,
+          vision: false,
+          maxInputTokens: 32_000,
+          maxOutputTokens: 8_192,
         },
-      };
-    }),
+      },
+    ],
+    calls: [...observeCalls, ...relateCalls],
   });
 }
 
@@ -156,7 +230,8 @@ export async function createLocalEvidenceWorkbench(
   const seedMode =
     options.seedMode ??
     (options.seedDevelopmentSource === false ? 'none' : 'development');
-  const seedFixtures = fixtures(seedMode);
+  const seedFixtures = observeFixtures(seedMode);
+  const relate = relateFixture(seedMode);
   const dataFile = path.resolve(
     options.dataFile ??
       (seedMode === 'evaluation'
@@ -190,12 +265,15 @@ export async function createLocalEvidenceWorkbench(
       keyId: 'ephemeral-local-session',
     }),
   });
-  const gateway = fixtureGateway(seedFixtures, clock);
+  const gateway = fixtureGateway(seedFixtures, relate, clock);
   const engine = createExecutionEngine({
     clock,
     ids,
     modules: createModuleRegistry([evidenceModule]),
-    contracts: createContractRegistry([evidenceObserveArtifactContract]),
+    contracts: createContractRegistry([
+      evidenceObserveArtifactContract,
+      evidenceRelateObservationsContract,
+    ]),
     pipeline: createResponsePipeline(),
     gateway,
     memory: createMemoryEngine({ ids }),
@@ -219,7 +297,7 @@ export async function createLocalEvidenceWorkbench(
               artifactVersion: value.artifactVersion,
               actorRoster: value.actorRoster,
             },
-            model: SELECTION,
+            model: OBSERVE_SELECTION,
             policy: { retention: 'encrypted-payload' },
           },
           { signal: value.signal },
@@ -245,6 +323,7 @@ export async function createLocalEvidenceWorkbench(
     },
   });
 
+  let seededThisProcess = false;
   if (productSnapshot.sources.length === 0) {
     for (const fixture of seedFixtures) {
       const job = await worker.start({
@@ -257,6 +336,50 @@ export async function createLocalEvidenceWorkbench(
       const completed = await worker.wait(job.jobId);
       if (completed.phase !== 'completed') throw new Error(completed.message);
     }
+    seededThisProcess = true;
+    productSnapshot = await productRepository.snapshot();
+  }
+
+  if (
+    relate !== null &&
+    seededThisProcess &&
+    (productSnapshot.relations?.length ?? 0) === 0
+  ) {
+    const workspace = productSnapshot.workspaces.find(
+      ({ workspaceId }) => workspaceId === WORKSPACE_ID,
+    );
+    if (workspace === undefined)
+      throw new Error('Workspace missing before relation seed.');
+    const result = await engine.execute({
+      requestKey: `relate:${RELATE_COMMAND_KEY}`,
+      namespace: 'evidence',
+      task: 'relate-observations',
+      entityId: WORKSPACE_ID,
+      expectedRevision: workspace.evidenceRevision,
+      input: relate.input,
+      model: RELATE_SELECTION,
+      policy: { retention: 'encrypted-payload' },
+    });
+    if (result.status !== 'committed') throw new Error(result.error.message);
+    const memories = ledger.snapshot().memoryRecords.flatMap((record) => {
+      const parsed = EvidenceMemoryValueSchema.safeParse(record.value);
+      return parsed.success ? [parsed.data] : [];
+    });
+    const relations = memories.flatMap((value) => {
+      const parsed = EvidenceRelationSchema.safeParse(value);
+      return parsed.success ? [parsed.data] : [];
+    });
+    const openQuestions = memories.flatMap((value) => {
+      const parsed = EvidenceOpenQuestionSchema.safeParse(value);
+      return parsed.success ? [parsed.data] : [];
+    });
+    await productRepository.putRelations(relations);
+    await productRepository.putOpenQuestions(openQuestions);
+    await productRepository.advanceEvidenceRevision(
+      WORKSPACE_ID,
+      workspace.evidenceRevision,
+      result.revision,
+    );
   }
 
   const server = createEvidenceWorkbenchApi({

@@ -81,6 +81,11 @@ describe('Evidence memory and module scaffold', () => {
   it('publishes the executable slice-1 observation task', () => {
     expect(evidenceModule.namespace).toBe('evidence');
     expect(evidenceModule.tasks).toBe(evidenceTasks);
-    expect(Object.keys(evidenceModule.tasks)).toEqual(['observe-artifact']);
+    expect(Object.keys(evidenceModule.tasks)).toEqual([
+      'observe-artifact',
+      'relate-observations',
+      'build-timeline',
+      'propose-assessment',
+    ]);
   });
 });

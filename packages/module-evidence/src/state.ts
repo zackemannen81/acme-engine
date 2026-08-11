@@ -143,10 +143,21 @@ export function evidenceDeltaInvariants(
   artifactVersions: readonly SourceArtifactVersion[] = [],
 ): readonly DomainIssue[] {
   const issues: DomainIssue[] = [];
+  const assessmentOnlyStanding =
+    delta.addSourceDocumentIds.length === 0 &&
+    delta.addMemoryIds.length === 0 &&
+    delta.standingChanges.every(
+      (change) =>
+        change.objectKind === 'assessment-version' &&
+        change.transition === 'create',
+    );
+  // Assessment documents and their create standings do not advance L0-L3
+  // evidence revision (technical specification §6.5).
   const changesCanonicalEvidence =
-    delta.addSourceDocumentIds.length > 0 ||
-    delta.addMemoryIds.length > 0 ||
-    delta.standingChanges.length > 0;
+    !assessmentOnlyStanding &&
+    (delta.addSourceDocumentIds.length > 0 ||
+      delta.addMemoryIds.length > 0 ||
+      delta.standingChanges.length > 0);
   const expectedRevision =
     state.evidenceRevision + (changesCanonicalEvidence ? 1 : 0);
   if (delta.nextEvidenceRevision !== expectedRevision) {

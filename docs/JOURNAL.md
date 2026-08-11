@@ -1,5 +1,86 @@
 # Journal
 
+## 2026-08-11 — ACME-0083 Secondary technical audit
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0083
+- Branch: `grok/poc_3-8`
+- Summary: Added technical provenance and replay view contracts/builders and
+  API routes under `/api/technical/*` that return 404 when
+  `technicalAudit.enabled` is false (default). Primary journey unchanged.
+- Handoff: slice 7 PostgreSQL adapter next (ADR-0029 platform).
+- Signature: Grok
+
+## 2026-08-11 — ACME-0082 Assessment and re-review core
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0082
+- Branch: `grok/poc_3-8`
+- Summary: Delivered Evidence Integrity slice 5 domain core. Registered
+  `evidence.propose-assessment@1.0.0` with citation validation and
+  non-incrementing assessment document commits; attention-tier A/B and
+  change-set helpers; deterministic synthetic-only assessment export;
+  product assessment storage; sealed E-A01/E-A02 evaluation fixtures pinned
+  to golden identities.
+- Verification: typecheck, lint, format:check and full test suite passed
+  (647 unit / 69 conformance / 57 integration / 26 scenario).
+- Handoff: slice 6 technical audit next; complete browser assessment
+  re-review black-box and hosted export UX can deepen later if needed.
+- Signature: Grok
+
+## 2026-08-11 — ACME-0081 Timeline and open questions
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0081
+- Branch: `grok/poc_3-8`
+- Summary: Completed Evidence Integrity Workbench slice 4. Added pure
+  `evidence-temporal-overlap-1` and `buildEvidenceTimelineEntries`, registered
+  deterministic `evidence.build-timeline@1.0.0`, and pure primary timeline and
+  open-question views with API/web navigation. Timeline ordering is
+  permutation-stable; unknown never overlaps; overlapping non-exact bounds
+  form ambiguity bands without inventing precision.
+- Verification: typecheck, lint, format:check, full test (644 unit / 69
+  conformance / 57 integration / 26 scenario), docs:check and build passed.
+- Safety: no live provider or non-synthetic path.
+- Handoff: activate slice 5 assessment and re-review next.
+- Signature: Grok
+
+## 2026-08-11 — ACME-0080 Evidence relations and uncertainty
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0080
+- Branch: `grok/poc_3-8`
+- Summary: Completed Evidence Integrity Workbench slice 3. Implemented
+  `evidence.relate-observations@1.0.0` with input/output schemas, prompt
+  contract, interpretation, contest projection and module registration.
+  Evaluation fixtures derive eight golden relations and three open questions
+  from the sealed golden builder; the offline scenario commits those exact
+  identities, leaves the ambiguous actor unresolved, contests three changed-
+  account observations and keeps two correction predecessors superseded.
+- Product boundary: product snapshot stores relations and open questions;
+  pure primary relation-review view and work-queue relation items; API
+  `/api/relations` and browser Relations navigation; evaluation seed runs
+  observe then relate with the deterministic mock. Technical audit remains
+  disabled.
+- Contest rule: only `contradicts` contests current statement endpoints;
+  exhibit assertions and correction successors that conflict with a later
+  different logical artifact stay current; scope-mismatch/qualifies do not
+  contest.
+- Verification: offline install, `typecheck`, `lint`, `format:check`,
+  `boundaries`, `docs:check`, `build`, aggregate `test` and `git diff --check`
+  passed after Prettier fix. Unit suite 641/641 in 92 files, conformance
+  69/69 in 11, integration 57/57 in 11, scenario 26/26 in 7. No check skipped.
+- Safety: no live provider call, network-backed corpus, credential, deployment
+  or non-synthetic data path was used.
+- Handoff: activate slice 4 as a separate charter for timeline and open-
+  question primary views (`evidence.build-timeline@1.0.0`). Assessment,
+  technical audit, PostgreSQL and hosted shell remain later slices.
+- Signature: Grok
+
 ## 2026-08-11 — ACME-0079 Compare evidence accounts
 
 - Date: 2026-08-11

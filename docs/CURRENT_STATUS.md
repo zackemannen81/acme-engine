@@ -189,25 +189,27 @@ There is currently:
 - `@acme/module-narrative` with strict v1 schemas, deterministic
   `narrative.observe-document@1.0.0`, pure state/reducer/invariants and a
   domain-owned memory policy
-- `@acme/module-evidence` slices 0–2 foundation and observation path with
-  strict source, locator,
-  embedded actor/time, observation, proposition, event, relation, question,
-  assessment, state, delta and observe-contract schemas; named ADR-0030
-  content-derived identities; source-binding validation; compact pure state;
-  reducer/invariants; domain memory policy; deterministic
-  `evidence.observe-artifact@1.0.0`; and ADR-0032 correction-occurrence pairing
-  that supersedes only complete adjacent transcription-correction lineages
+- `@acme/module-evidence` slices 0–3 foundation, observation and relation path
+  with strict source, locator, embedded actor/time, observation, proposition,
+  event, relation, question, assessment, state, delta, observe-contract and
+  relate-contract schemas; named ADR-0030 content-derived identities;
+  source-binding validation; compact pure state; reducer/invariants; domain
+  memory policy; deterministic `evidence.observe-artifact@1.0.0` and
+  `evidence.relate-observations@1.0.0`; ADR-0032 correction-occurrence pairing;
+  and contest projection for scoped `contradicts` relations
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
   `rillford-annex-review-1` synthetic corpus, manifest, scratch/development
   truth, sealed evaluation truth, deterministic golden outputs, identity
-  vectors and fixed evaluation candidates. Sealed truth is available only
-  from `./evaluation`; candidate fixtures import no truth, and both a prompt
-  dependency guard and a negative dependency-boundary fixture enforce that
-  separation
-- pure primary work-queue, source-review, observation-ledger and
-  account-comparison views, plus a loopback Evidence Workbench API/web/worker
-  composition with development and evaluation seed modes. The evaluation seed
-  contains ten immutable observations: eight current and two superseded
+  vectors, fixed evaluation observe candidates and evaluation relate
+  candidates. Sealed truth is available only from `./evaluation`; candidate
+  fixtures import no truth, and both a prompt dependency guard and a negative
+  dependency-boundary fixture enforce that separation
+- pure primary work-queue, source-review, observation-ledger,
+  account-comparison and relation-review views, plus a loopback Evidence
+  Workbench API/web/worker composition with development and evaluation seed
+  modes. The evaluation seed contains ten immutable observations (five current,
+  three contested, two superseded after relate), eight relations and three open
+  questions
 - ADR-0011-compliant `narrative-window-1` and source-backed
   `previous-document-tail-1`, including golden request, entity and context
   fixtures
@@ -318,9 +320,9 @@ There is currently:
   module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
   boundary fixtures (both "the app imports no package internal" and "nothing
   imports the app")
-- 639 passing unit-suite tests across packages (90 files) exercised by
+- 644 passing unit-suite tests across packages (93 files) exercised by
   `pnpm test:unit`, with separate conformance (69 tests, 11 files), integration
-  (57 tests, 11 files) and scenario (25 tests, 6 files) gates. Counts observed
+  (57 tests, 11 files) and scenario (26 tests, 7 files) gates. Counts observed
   2026-08-11
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
@@ -345,11 +347,12 @@ Primary Product Rule; ADR-0032 fixes the conservative correction-occurrence
 pairing used by state projection and account comparison. The normative
 technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
-The direction, platform and implementation plan are accepted. Slices 0–2
-exist: the corpus/contracts foundation, one offline reviewer path for
-`DEV-T01`, and offline account comparison over the evaluation corpus. No
-general Evidence relation task or later slice, PostgreSQL adapter, hosted
-shell, deployment or non-synthetic path exists.
+The direction, platform and implementation plan are accepted. Slices 0–5
+exist for domain and product foundations: observe/relate/timeline/assessment
+tasks, attention/export helpers, primary views through open questions, product
+assessment storage and gated technical-audit views (disabled by default).
+PostgreSQL adapter, hosted shell, deployment and non-synthetic paths remain
+unimplemented.
 
 ## Active Work
 
@@ -384,13 +387,39 @@ audit disabled. ACME-0079 then delivered slice 2: five deterministic evaluation
 executions yield the exact ten sealed observations, conservative correction
 pairing marks only the two `EVAL-T01` v1 predecessors superseded, and primary
 ledger/account-comparison views keep the later changed account and every source
-version navigable. The recommended next product task is slice 3, relate
-observations.
+version navigable. ACME-0080 then delivered slice 3: `evidence.relate-
+observations@1.0.0`, eight golden L3 relations, three open questions, contest
+projection for scoped contradictions, primary relation review and evaluation
+seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
+overlap helper, and primary timeline/open-question views. The recommended next
+product task is slice 7, self-hosted Supabase PostgreSQL adapter.
 Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0083:** Delivered Evidence Integrity slice 6: technical provenance and
+  replay view contracts/builders and API routes gated by
+  `technicalAudit.enabled` (default off). Primary black-box remains unchanged
+  when audit is disabled.
+
+- **ACME-0082:** Delivered Evidence Integrity slice 5 domain core:
+  `evidence.propose-assessment@1.0.0`, attention-tier and change-set helpers,
+  deterministic synthetic-only assessment export, product assessment storage
+  and sealed E-A01/E-A02 fixtures. Full late-import UI black-box remains
+  light; technical audit still disabled.
+
+- **ACME-0081:** Delivered Evidence Integrity slice 4: pure
+  `evidence.build-timeline@1.0.0` / temporal-overlap helper, primary timeline
+  and open-question views, API/web navigation. No assessment or live path.
+
+- **ACME-0080:** Delivered Evidence Integrity slice 3: model-backed
+  `evidence.relate-observations@1.0.0`, sealed eight-relation and three open-
+  question golden gate, contest standings for changed accounts, product
+  relation/open-question storage, primary relation-review view and evaluation
+  seed with technical audit still disabled. No timeline, assessment or live
+  provider path was added.
 
 - **ACME-0079:** Delivered Evidence Integrity slice 2: an offline sealed
   evaluation harness, exact correction supersession with eight current and two

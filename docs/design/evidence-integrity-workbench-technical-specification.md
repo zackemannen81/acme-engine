@@ -27,14 +27,13 @@ The keywords **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD** and **MAY** are
 normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
-Implementation status: ACME-0077 delivered slice 0, ACME-0078 delivered slice
-1 and ACME-0079 delivered slice 2. The canonical corpus and validation
-boundary, source-observation task, correction standing projection, local
-product repository, work-queue/source-review/observation-ledger/account-
-comparison views and offline loopback reviewer path are implemented. Slices
-3–9 remain separately activatable and unimplemented. ADR-0032 fixes the
-conservative V1 correction-occurrence pairing used by both projection and
-views.
+Implementation status: ACME-0077–0083 delivered slices 0–6 domain and local
+product foundations (observe, relate, timeline, propose-assessment,
+attention/export, gated technical-audit views). Primary views cover
+work-queue through open questions; technical audit is disabled by default.
+Slices 7–9 (PostgreSQL, hosted shell, readiness) remain separately
+activatable. ADR-0032 fixes the conservative V1 correction-occurrence pairing
+used by both projection and views.
 
 ## 2. Outcome, Non-goals and Product Separation
 
@@ -1038,7 +1037,7 @@ navigation.
 
 Documentation: correction workflow and evidence-revision semantics.
 
-### Slice 3 — Relations and uncertainty
+### Slice 3 — Relations and uncertainty (delivered by ACME-0080)
 
 Reviewer capability: inspect proposed support/conflict/qualification/scope
 relations with exact endpoints and accept, reject or leave each unresolved.
@@ -1055,7 +1054,7 @@ semantic thresholds.
 
 Documentation: relation policy and abstention behavior.
 
-### Slice 4 — Timeline and open questions
+### Slice 4 — Timeline and open questions (delivered by ACME-0081)
 
 Reviewer capability: see deterministic exact/range/approximate/unknown time,
 ambiguity bands and the three source-linked open questions.
@@ -1070,7 +1069,7 @@ invented precision, unknown non-overlap behavior and source navigation.
 
 Documentation: timeline sorting and attention-tier temporal rules.
 
-### Slice 5 — Assessment and re-review
+### Slice 5 — Assessment and re-review (domain core delivered by ACME-0082)
 
 Reviewer capability: create and accept `E-A01`, import `EVAL-E01`, see one
 new-evidence notice, reaffirm or create `E-A02`, retain history and export a
@@ -1089,7 +1088,7 @@ byte determinism and full domain black-box journey.
 Documentation: reviewer outcome semantics, export format and synthetic-only
 refusal.
 
-### Slice 6 — Secondary technical audit
+### Slice 6 — Secondary technical audit (delivered by ACME-0083)
 
 Reviewer capability: optionally follow a domain object to technical provenance
 and verify replay without cluttering or depending on the primary workflow.

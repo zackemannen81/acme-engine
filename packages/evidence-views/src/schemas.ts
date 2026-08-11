@@ -14,6 +14,16 @@ export const EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION =
   'evidence-primary-observation-ledger-view/1' as const;
 export const EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION =
   'evidence-primary-account-comparison-view/1' as const;
+export const EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION =
+  'evidence-primary-relation-review-view/1' as const;
+export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
+  'evidence-primary-timeline-view/1' as const;
+export const EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION =
+  'evidence-primary-open-questions-view/1' as const;
+export const EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION =
+  'evidence-technical-provenance-view/1' as const;
+export const EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION =
+  'evidence-technical-replay-view/1' as const;
 
 const CitationSchema = z
   .object({
@@ -64,17 +74,30 @@ export const EvidencePrimaryWorkQueueViewSchema = z
       .strict(),
     heading: z.literal('Review queue'),
     nextItems: z.array(
-      z
-        .object({
-          itemId: EvidenceNonBlankStringSchema,
-          kind: z.literal('source-observation'),
-          observationVersionId: EvidenceNonBlankStringSchema,
-          sourceTitle: EvidenceNonBlankStringSchema,
-          reason: z.enum(['new-source-observation', 'decision-requested']),
-          citation: CitationSchema,
-          targetPath: EvidenceNonBlankStringSchema,
-        })
-        .strict(),
+      z.discriminatedUnion('kind', [
+        z
+          .object({
+            itemId: EvidenceNonBlankStringSchema,
+            kind: z.literal('source-observation'),
+            observationVersionId: EvidenceNonBlankStringSchema,
+            sourceTitle: EvidenceNonBlankStringSchema,
+            reason: z.enum(['new-source-observation', 'decision-requested']),
+            citation: CitationSchema,
+            targetPath: EvidenceNonBlankStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            itemId: EvidenceNonBlankStringSchema,
+            kind: z.literal('relation-review'),
+            relationVersionId: EvidenceNonBlankStringSchema,
+            relationKind: EvidenceNonBlankStringSchema,
+            reason: z.enum(['new-relation', 'decision-requested']),
+            summary: EvidenceNonBlankStringSchema,
+            targetPath: EvidenceNonBlankStringSchema,
+          })
+          .strict(),
+      ]),
     ),
     mostRecentAction: z
       .object({
@@ -275,4 +298,216 @@ export type EvidencePrimaryObservationLedgerView = z.infer<
 >;
 export type EvidencePrimaryAccountComparisonView = z.infer<
   typeof EvidencePrimaryAccountComparisonViewSchema
+>;
+
+export const EvidencePrimaryRelationReviewViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION,
+    ),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Relation review'),
+    explanation: z.literal(
+      'Relations connect exact endpoints with a scoped comparison. Accept, reject or leave each one unresolved without overwriting the linked observations.',
+    ),
+    metrics: z
+      .object({
+        relationTotal: z.number().int().nonnegative(),
+        byKind: z
+          .object({
+            supports: z.number().int().nonnegative(),
+            contradicts: z.number().int().nonnegative(),
+            qualifies: z.number().int().nonnegative(),
+            'scope-mismatch': z.number().int().nonnegative(),
+            duplicate: z.number().int().nonnegative(),
+            correction: z.number().int().nonnegative(),
+            unresolved: z.number().int().nonnegative(),
+          })
+          .strict(),
+        unresolvedActorRelations: z.number().int().nonnegative(),
+        openQuestionTotal: z.number().int().nonnegative(),
+        awaitingReview: z.number().int().nonnegative(),
+      })
+      .strict(),
+    relations: z.array(
+      z
+        .object({
+          relationVersionId: EvidenceNonBlankStringSchema,
+          relationKind: z.enum([
+            'supports',
+            'contradicts',
+            'qualifies',
+            'scope-mismatch',
+            'duplicate',
+            'correction',
+            'unresolved',
+          ]),
+          endpoints: z.array(
+            z
+              .object({
+                kind: EvidenceNonBlankStringSchema,
+                id: EvidenceNonBlankStringSchema,
+                display: EvidenceNonBlankStringSchema,
+              })
+              .strict(),
+          ),
+          scopeSubject: EvidenceNonBlankStringSchema,
+          scopeAspect: EvidenceNonBlankStringSchema,
+          rationaleCode: EvidenceNonBlankStringSchema,
+          rationale: EvidenceNonBlankStringSchema,
+          standing: EvidenceStandingSchema,
+          reviewStanding: ReviewStandingSchema,
+          reviewChoices: z.array(
+            z.enum([
+              'accept',
+              'reject',
+              'leave-unresolved',
+              'request-revision',
+            ]),
+          ),
+        })
+        .strict(),
+    ),
+    openQuestions: z.array(
+      z
+        .object({
+          openQuestionId: EvidenceNonBlankStringSchema,
+          questionCode: EvidenceNonBlankStringSchema,
+          questionText: EvidenceNonBlankStringSchema,
+          triggeringEvidenceIds: z.array(EvidenceNonBlankStringSchema),
+          standing: EvidenceStandingSchema,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidencePrimaryRelationReviewView = z.infer<
+  typeof EvidencePrimaryRelationReviewViewSchema
+>;
+
+export const EvidencePrimaryTimelineViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Timeline'),
+    explanation: z.literal(
+      'Entries keep exact, range, approximate and unknown labels. Overlapping non-exact bounds form ambiguity bands. Precision is never invented.',
+    ),
+    entries: z.array(
+      z
+        .object({
+          entryId: EvidenceNonBlankStringSchema,
+          bandKind: z.enum([
+            'exact',
+            'range',
+            'approximate',
+            'unknown',
+            'ambiguity',
+          ]),
+          display: EvidenceNonBlankStringSchema,
+          observationVersionIds: z.array(EvidenceNonBlankStringSchema),
+          sourceLinks: z.array(
+            z
+              .object({
+                observationVersionId: EvidenceNonBlankStringSchema,
+                citation: CitationSchema,
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const EvidencePrimaryOpenQuestionsViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION,
+    ),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Open questions'),
+    explanation: z.literal(
+      'Open questions mark gaps exposed by the evidence. Absence of an answer is not treated as falsity.',
+    ),
+    questions: z.array(
+      z
+        .object({
+          openQuestionId: EvidenceNonBlankStringSchema,
+          questionCode: EvidenceNonBlankStringSchema,
+          questionText: EvidenceNonBlankStringSchema,
+          standing: EvidenceStandingSchema,
+          triggeringEvidenceIds: z.array(EvidenceNonBlankStringSchema),
+          sourceLinks: z.array(
+            z
+              .object({
+                observationVersionId: EvidenceNonBlankStringSchema,
+                citation: CitationSchema,
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidencePrimaryTimelineView = z.infer<
+  typeof EvidencePrimaryTimelineViewSchema
+>;
+export type EvidencePrimaryOpenQuestionsView = z.infer<
+  typeof EvidencePrimaryOpenQuestionsViewSchema
+>;
+
+export const EvidenceTechnicalProvenanceViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION),
+    classification: z.literal('technical-audit'),
+    domainObjectId: EvidenceNonBlankStringSchema,
+    executionId: EvidenceNonBlankStringSchema,
+    contractId: EvidenceNonBlankStringSchema,
+    contractVersion: EvidenceNonBlankStringSchema,
+    contractFingerprint: EvidenceNonBlankStringSchema,
+    operationDigest: EvidenceNonBlankStringSchema.nullable(),
+    retainedCallAvailable: z.boolean(),
+  })
+  .strict();
+
+export const EvidenceTechnicalReplayViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION),
+    classification: z.literal('technical-audit'),
+    executionId: EvidenceNonBlankStringSchema,
+    replayVerdict: z.enum(['match', 'different', 'unavailable']),
+    recordedDigest: EvidenceNonBlankStringSchema.nullable(),
+    currentDigest: EvidenceNonBlankStringSchema.nullable(),
+    reason: EvidenceNonBlankStringSchema,
+    providerCallCount: z.literal(0),
+  })
+  .strict();
+
+export type EvidenceTechnicalProvenanceView = z.infer<
+  typeof EvidenceTechnicalProvenanceViewSchema
+>;
+export type EvidenceTechnicalReplayView = z.infer<
+  typeof EvidenceTechnicalReplayViewSchema
 >;
