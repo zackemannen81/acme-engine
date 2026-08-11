@@ -27,16 +27,13 @@ The keywords **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD** and **MAY** are
 normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
-Implementation status: ACME-0077 delivered slice 0, ACME-0078 delivered slice
-1, ACME-0079 delivered slice 2, ACME-0080 delivered slice 3 and ACME-0081
-delivered slice 4. The canonical corpus and validation boundary, source-
-observation, relate-observations and build-timeline tasks, correction and
-contest standing projection, local product repository (including relations and
-open questions), work-queue/source-review/observation-ledger/account-
-comparison/relation-review/timeline/open-question views and offline loopback
-reviewer path are implemented. Slices 5–9 remain separately activatable and
-unimplemented. ADR-0032 fixes the conservative V1 correction-occurrence
-pairing used by both projection and views.
+Implementation status: ACME-0077–0082 delivered slices 0–5 domain foundations
+(observe, relate, timeline, propose-assessment, attention/export helpers and
+product assessment storage). Primary views cover work-queue through open
+questions; relation and timeline surfaces are wired. Slices 6–9
+(technical audit, PostgreSQL, hosted shell, readiness) remain separately
+activatable. ADR-0032 fixes the conservative V1 correction-occurrence pairing
+used by both projection and views.
 
 ## 2. Outcome, Non-goals and Product Separation
 
@@ -1072,7 +1069,7 @@ invented precision, unknown non-overlap behavior and source navigation.
 
 Documentation: timeline sorting and attention-tier temporal rules.
 
-### Slice 5 — Assessment and re-review
+### Slice 5 — Assessment and re-review (domain core delivered by ACME-0082)
 
 Reviewer capability: create and accept `E-A01`, import `EVAL-E01`, see one
 new-evidence notice, reaffirm or create `E-A02`, retain history and export a

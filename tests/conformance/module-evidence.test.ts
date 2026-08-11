@@ -19,6 +19,7 @@ describe('Evidence module foundation conformance', () => {
       'observe-artifact',
       'relate-observations',
       'build-timeline',
+      'propose-assessment',
     ]);
     expect(EVIDENCE_TASK_CATALOGUE).toHaveLength(4);
   });

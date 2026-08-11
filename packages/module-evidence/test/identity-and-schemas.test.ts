@@ -63,7 +63,7 @@ describe('Evidence schemas and identities', () => {
       { id: 'evidence.observe-artifact', implemented: true },
       { id: 'evidence.relate-observations', implemented: true },
       { id: 'evidence.build-timeline', implemented: true },
-      { id: 'evidence.propose-assessment', implemented: false },
+      { id: 'evidence.propose-assessment', implemented: true },
     ]);
   });
 });

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   EvidenceActorRosterEntrySchema,
+  EvidenceAssessmentSchema,
   EvidenceIsoTimestampSchema,
   EvidenceNonBlankStringSchema,
   EvidenceObservationSchema,
@@ -146,6 +147,7 @@ export const EvidenceProductSnapshotSchema = z
     observations: z.array(EvidenceObservationSchema),
     relations: z.array(EvidenceRelationSchema),
     openQuestions: z.array(EvidenceOpenQuestionSchema),
+    assessments: z.array(EvidenceAssessmentSchema),
     jobs: z.array(EvidenceProductJobSchema),
     reviewDecisions: z.array(EvidenceReviewDecisionSchema),
   })

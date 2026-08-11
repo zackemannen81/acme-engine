@@ -85,6 +85,7 @@ describe('Evidence memory and module scaffold', () => {
       'observe-artifact',
       'relate-observations',
       'build-timeline',
+      'propose-assessment',
     ]);
   });
 });

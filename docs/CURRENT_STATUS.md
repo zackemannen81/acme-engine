@@ -347,13 +347,11 @@ Primary Product Rule; ADR-0032 fixes the conservative correction-occurrence
 pairing used by state projection and account comparison. The normative
 technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
-The direction, platform and implementation plan are accepted. Slices 0–4
-exist: the corpus/contracts foundation, one offline reviewer path for
-`DEV-T01`, offline account comparison, relation analysis with eight golden
-relations and three open questions, and deterministic timeline/open-question
-primary views with `evidence-temporal-overlap-1`. No assessment,
-technical-audit, PostgreSQL adapter, hosted shell, deployment or non-synthetic
-path exists.
+The direction, platform and implementation plan are accepted. Slices 0–5
+exist for domain and product foundations: observe/relate/timeline/assessment
+tasks, attention/export helpers, primary views through open questions, and
+product assessment storage. Technical-audit UI, PostgreSQL adapter, hosted
+shell, deployment and non-synthetic paths remain unimplemented.
 
 ## Active Work
 
@@ -393,12 +391,18 @@ observations@1.0.0`, eight golden L3 relations, three open questions, contest
 projection for scoped contradictions, primary relation review and evaluation
 seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
 overlap helper, and primary timeline/open-question views. The recommended next
-product task is slice 5, assessment and re-review.
+product task is slice 6, secondary technical audit.
 Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0082:** Delivered Evidence Integrity slice 5 domain core:
+  `evidence.propose-assessment@1.0.0`, attention-tier and change-set helpers,
+  deterministic synthetic-only assessment export, product assessment storage
+  and sealed E-A01/E-A02 fixtures. Full late-import UI black-box remains
+  light; technical audit still disabled.
 
 - **ACME-0081:** Delivered Evidence Integrity slice 4: pure
   `evidence.build-timeline@1.0.0` / temporal-overlap helper, primary timeline

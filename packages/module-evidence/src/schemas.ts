@@ -37,6 +37,10 @@ export const EVIDENCE_BUILD_TIMELINE_INPUT_SCHEMA_VERSION =
   'evidence-build-timeline-input/1' as const;
 export const EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION =
   'evidence-build-timeline-output/1' as const;
+export const EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION =
+  'evidence-propose-assessment-input/1' as const;
+export const EVIDENCE_PROPOSE_ASSESSMENT_OUTPUT_SCHEMA_VERSION =
+  'evidence-propose-assessment-output/1' as const;
 export const EVIDENCE_MEMORY_SCHEMA_VERSION = 'evidence-memory/1' as const;
 export const EVIDENCE_LOCATOR_SCHEME = 'line-range-1' as const;
 
@@ -748,6 +752,28 @@ export const EvidenceBuildTimelineOutputSchema = z
   })
   .strict();
 
+export const EvidenceProposeAssessmentInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION),
+    workspaceId: EvidenceNonBlankStringSchema,
+    sequence: z.number().int().positive(),
+    basisEvidenceRevision: z.number().int().nonnegative(),
+    acceptedObservationIds: sortedUniqueStrings(1),
+    acceptedRelationIds: sortedUniqueStrings(),
+    acceptedOpenQuestionIds: sortedUniqueStrings(),
+    predecessorAssessmentVersionId: EvidenceDerivedIdSchema.nullable(),
+  })
+  .strict();
+
+export const EvidenceProposeAssessmentOutputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PROPOSE_ASSESSMENT_OUTPUT_SCHEMA_VERSION),
+    claims: z.array(EvidenceAssessmentClaimSchema).min(1),
+    openQuestionIds: sortedUniqueStrings(),
+    citations: z.array(EvidenceAssessmentCitationSchema),
+  })
+  .strict();
+
 export const EvidenceMemoryValueSchema = z.discriminatedUnion('kind', [
   EvidenceStatementOccurrenceSchema,
   EvidenceExhibitAssertionSchema,
@@ -811,5 +837,11 @@ export type EvidenceBuildTimelineInput = z.infer<
 >;
 export type EvidenceBuildTimelineOutput = z.infer<
   typeof EvidenceBuildTimelineOutputSchema
+>;
+export type EvidenceProposeAssessmentInput = z.infer<
+  typeof EvidenceProposeAssessmentInputSchema
+>;
+export type EvidenceProposeAssessmentOutput = z.infer<
+  typeof EvidenceProposeAssessmentOutputSchema
 >;
 export type EvidenceMemoryValue = z.infer<typeof EvidenceMemoryValueSchema>;

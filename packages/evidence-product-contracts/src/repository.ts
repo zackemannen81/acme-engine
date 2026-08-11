@@ -1,4 +1,5 @@
 import type {
+  EvidenceAssessment,
   EvidenceObservation,
   EvidenceOpenQuestion,
   EvidenceRelation,
@@ -34,6 +35,9 @@ export interface EvidenceProductRepository {
   putOpenQuestions(
     openQuestions: readonly EvidenceOpenQuestion[],
   ): Promise<readonly EvidenceOpenQuestion[]>;
+  putAssessments(
+    assessments: readonly EvidenceAssessment[],
+  ): Promise<readonly EvidenceAssessment[]>;
   putJob(job: EvidenceProductJob): Promise<EvidenceProductJob>;
   appendReviewDecision(
     decision: EvidenceReviewDecision,

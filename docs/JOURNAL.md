@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-11 — ACME-0082 Assessment and re-review core
+
+- Date: 2026-08-11
+- Author: Grok
+- Task: ACME-0082
+- Branch: `grok/poc_3-8`
+- Summary: Delivered Evidence Integrity slice 5 domain core. Registered
+  `evidence.propose-assessment@1.0.0` with citation validation and
+  non-incrementing assessment document commits; attention-tier A/B and
+  change-set helpers; deterministic synthetic-only assessment export;
+  product assessment storage; sealed E-A01/E-A02 evaluation fixtures pinned
+  to golden identities.
+- Verification: typecheck, lint, format:check and full test suite passed
+  (647 unit / 69 conformance / 57 integration / 26 scenario).
+- Handoff: slice 6 technical audit next; complete browser assessment
+  re-review black-box and hosted export UX can deepen later if needed.
+- Signature: Grok
+
 ## 2026-08-11 — ACME-0081 Timeline and open questions
 
 - Date: 2026-08-11
