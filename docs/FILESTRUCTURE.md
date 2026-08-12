@@ -535,6 +535,7 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
 │   │   ├── domain-test-ui-specification.md
+│   │   ├── evidence-integrity-workbench-product-completion-plan.md
 │   │   ├── evidence-integrity-workbench-product-definition.md
 │   │   ├── evidence-integrity-workbench-technical-specification.md
 │   │   ├── first-poc-application-discovery.md
@@ -621,6 +622,16 @@ acme-engine/
 │   │   ├── ACME-0077_evidence-corpus-contracts-foundation.md
 │   │   ├── ACME-0078_evidence-review-one-source.md
 │   │   ├── ACME-0079_compare-evidence-accounts.md
+│   │   ├── ACME-0080_evidence-relations-uncertainty.md
+│   │   ├── ACME-0081_timeline-open-questions.md
+│   │   ├── ACME-0082_assessment-re-review.md
+│   │   ├── ACME-0083_secondary-technical-audit.md
+│   │   ├── ACME-0084_postgresql-persistence-architecture.md
+│   │   ├── ACME-0085_postgresql-slice-7.md
+│   │   ├── ACME-0086_hosted-shell.md
+│   │   ├── ACME-0087_complete-slice-5-assessment-journey.md
+│   │   ├── ACME-0088_reseal-pre-late-e-a01.md
+│   │   ├── ACME-0089_reseal-e-a01-without-late-questions.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -706,18 +717,23 @@ content remains intentionally omitted here.
 - `@acme/module-research`: strict Research v1 schemas, ADR-0009 proposition,
   source and independence identity, deterministic observe-evidence
   contract/task, corroboration and contradiction policy, and a pure reducer.
-- `@acme/module-evidence`: Evidence Integrity domain foundation plus the
-  slices 1–2 `evidence.observe-artifact@1.0.0` task and correction projection.
-  It owns strict V1 schemas, named content-derived identities, source-bound
-  candidate validation, conservative correction pairing, compact state/delta,
-  pure reducer/invariants and memory policy.
+- `@acme/module-evidence`: Evidence Integrity domain foundation and the
+  observe-artifact, relate-observations, build-timeline and propose-assessment
+  tasks. It owns strict V1 schemas, named content-derived identities, source-
+  bound candidate validation, conservative correction pairing, typed temporal
+  behavior, attention/export helpers, compact state/delta, pure reducer/
+  invariants and memory policy.
 - `@acme/evidence-product-contracts`: local workspace, source-import, job and
-  append-only exact-version review contracts plus the product repository port.
+  append-only exact-version review, durable change-set and assessment-command
+  contracts plus the product repository port and deterministic reviewed-
+  assessment ZIP renderer.
 - `@acme/adapter-evidence-product-file`: atomic local JSON-file implementation
   of the product repository, separate from the ACME ledger.
 - `@acme/evidence-views`: pure registered primary work-queue, source-review,
-  observation-ledger and account-comparison view contracts/builders with
-  stable citations and the vocabulary guard.
+  observation-ledger, account-comparison, relation-review, timeline and open-
+  question view contracts/builders plus gated technical provenance/replay
+  views, assessment/review-history primary views, stable citations and the
+  vocabulary guard.
 - `@acme/evidence-testing`: exact synthetic corpus plus manifest/open/sealed
   truth loaders, deterministic golden builder, identity vectors, the `DEV-T01`
   mock fixture, truth-free deterministic evaluation candidates and product/view
@@ -747,11 +763,14 @@ content remains intentionally omitted here.
   synchronous `launchPlan` stays available. Default entry performs no I/O;
   discovery on `./node-source`. Leaf package.
 - `@acme/evidence-workbench-api`, `@acme/evidence-workbench-worker` and
-  `@acme/evidence-workbench-web`: the slices 1–2 loopback reviewer composition.
+  `@acme/evidence-workbench-web`: the Evidence loopback and hosted reviewer
+  composition through primary open-question views.
   The API owns commands/queries and local composition, the bounded in-process
   worker owns job progress/cancellation, and the dependency-free HTML shell
-  consumes only product endpoints. It serves source review, the observation
-  ledger and account comparison; technical audit defaults to disabled.
+  consumes only product endpoints. It serves source review, observation
+  ledger, account comparison, relation review, timeline, open questions,
+  assessment/re-review, immutable history and reviewed ZIP export; technical
+  audit defaults to disabled.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -786,13 +805,12 @@ single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
 
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
-normative POC #1 implementation plan. Slices 0–4 delivered the corpus, Evidence
-observe/relate/timeline tasks, product contracts/repository (including
-relations and open questions), primary source-review, observation-ledger,
-account-comparison, relation-review, timeline and open-question views and the
-local web/API/worker boundary. ADR-0030 through ADR-0032 fix their
-identity/placement, reviewer/view and correction-pairing boundaries. Assessment
-and re-review begin in planned slice 5 and require a separately activated task.
+normative POC #1 implementation plan. Slices 0–8 are delivered; ACME-0087 and
+corrective child ACME-0089 completed Slice 5's source-bound assessment journey.
+The approved later sequence is
+recorded in
+`docs/design/evidence-integrity-workbench-product-completion-plan.md`; it does
+not authorize any non-synthetic data path.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

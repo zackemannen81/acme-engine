@@ -58,6 +58,7 @@ function createRepository(): EvidenceProductRepository {
       (await repo()).putOpenQuestions(openQuestions),
     putAssessments: async (assessments) =>
       (await repo()).putAssessments(assessments),
+    putChangeSet: async (changeSet) => (await repo()).putChangeSet(changeSet),
     putJob: async (job) => (await repo()).putJob(job),
     appendReviewDecision: async (decision) =>
       (await repo()).appendReviewDecision(decision),

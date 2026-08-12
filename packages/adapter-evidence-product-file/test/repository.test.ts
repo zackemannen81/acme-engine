@@ -111,4 +111,44 @@ describe('file Evidence product repository', () => {
     expect(snapshot.observations).toHaveLength(2);
     expect(snapshot.reviewDecisions).toEqual([first]);
   });
+
+  it('serializes snapshots with concurrent worker-style writes', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'evidence-product-concurrent-'),
+    );
+    temporaryDirectories.push(directory);
+    const repository = createFileEvidenceProductRepository({
+      filePath: path.join(directory, 'product.json'),
+    });
+    await repository.putWorkspace({
+      schemaVersion: 'evidence-workspace/1',
+      workspaceId: 'workspace-concurrent',
+      label: 'Concurrent synthetic review',
+      dataPolicy: 'synthetic-only',
+      evidenceRevision: 0,
+      createdAt: '2026-08-11T10:00:00.000Z',
+    });
+
+    await Promise.all(
+      Array.from({ length: 20 }, (_, index) => [
+        repository.snapshot(),
+        repository.putJob({
+          schemaVersion: 'evidence-product-job/1',
+          jobId: `job-${String(index).padStart(2, '0')}`,
+          workspaceId: 'workspace-concurrent',
+          commandKey: `command-${String(index).padStart(2, '0')}`,
+          artifactVersionId: `artifact-${String(index).padStart(2, '0')}`,
+          phase: 'queued',
+          completedUnits: 0,
+          totalUnits: 2,
+          message: 'Queued for bounded processing.',
+          cancelRequested: false,
+          createdAt: '2026-08-11T10:00:00.000Z',
+          updatedAt: '2026-08-11T10:00:00.000Z',
+        }),
+      ]).flat(),
+    );
+
+    expect((await repository.snapshot()).jobs).toHaveLength(20);
+  });
 });

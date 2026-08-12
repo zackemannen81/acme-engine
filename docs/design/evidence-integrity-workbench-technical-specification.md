@@ -27,13 +27,13 @@ The keywords **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD** and **MAY** are
 normative. A later task may refine implementation detail only when it preserves
 the authority above and every named identifier in this document.
 
-Implementation status: ACME-0077–0083 delivered slices 0–6 domain and local
-product foundations (observe, relate, timeline, propose-assessment,
-attention/export, gated technical-audit views). Primary views cover
-work-queue through open questions; technical audit is disabled by default.
-Slices 7–9 (PostgreSQL, hosted shell, readiness) remain separately
-activatable. ADR-0032 fixes the conservative V1 correction-occurrence pairing
-used by both projection and views.
+Implementation status: ACME-0077–0087 plus corrective child ACME-0089
+delivered slices 0–8. Slice 5 includes the remaining primary views, durable
+attention, deterministic ZIP and full product path. Pre-late E-A01 has no
+open-question references; post-import E-A02 retains all three sealed questions.
+Slice 9 readiness remains separately activatable.
+ADR-0032 fixes the conservative V1 correction-occurrence pairing used by both
+projection and views.
 
 ## 2. Outcome, Non-goals and Product Separation
 
@@ -1073,7 +1073,12 @@ invented precision, unknown non-overlap behavior and source navigation.
 
 Documentation: timeline sorting and attention-tier temporal rules.
 
-### Slice 5 — Assessment and re-review (domain core delivered by ACME-0082)
+### Slice 5 — Assessment and re-review (ACME-0082/0087)
+
+**Completion status: delivered.** ACME-0082 delivered the domain core;
+ACME-0087 delivered the primary views, durable attention record, browser/API/
+worker journey and deterministic ZIP. ACME-0089 corrected and re-pinned the
+pre-late E-A01/post-late E-A02 fixture identities.
 
 Reviewer capability: create and accept `E-A01`, import `EVAL-E01`, see one
 new-evidence notice, reaffirm or create `E-A02`, retain history and export a
@@ -1175,7 +1180,7 @@ Documentation: all new authority and residual risks before ingestion.
 | Decision | Status / trigger |
 | --- | --- |
 | PostgreSQL schema, transaction boundary, migrations and conformance | **Decided by [ADR-0033](../adr/0033-postgresql-persistence-architecture.md).** Platform remains self-hosted Supabase; adapter remains plain PostgreSQL wire. |
-| Identity provider, authentication and authorization | New ADR before hosted review commands in slice 8. |
+| Identity provider, authentication and authorization | ADR-0034 keeps Slice 8 single-user with `unauthenticated-local`; multi-user identity and authorization require a new ADR before any non-synthetic path. |
 | Object-storage vendor and database/object consistency | New ADR before any artifact bytes move outside the text document repository. |
 | Supabase Auth, Storage, Realtime or Studio | Undecided and unused unless a later ADR adopts a component. |
 | Hosting platform, topology and region | Deferred to slice 8 charter. |

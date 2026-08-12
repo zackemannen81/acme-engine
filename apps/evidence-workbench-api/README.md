@@ -1,15 +1,22 @@
 # Local Evidence Integrity Workbench
 
-This is the slice-1/2 offline reviewer surface. It starts a loopback-only product
-API, a bounded in-process worker and a minimal browser shell. On a new local
-workspace it imports the open synthetic `DEV-T01` fixture through the
-deterministic model mock, then shows two source-bound observations ready for
-review.
+This is the offline Evidence reviewer surface through Slice 5. It starts a
+loopback-only product API, a bounded in-process worker and a dependency-free
+browser shell. On a new local workspace it imports the open synthetic
+`DEV-T01` fixture through the deterministic model mock, then shows two source-
+bound observations ready for review.
 
 Slice 2 also provides an observation ledger and account comparison over the
 five fixed evaluation source versions. It shows the two corrected `EVAL-T01`
 occurrences beside the later `EVAL-T02` account, retains every prior source and
 observation, and exposes no sealed truth or technical-audit route.
+
+With `EVIDENCE_WORKBENCH_SEED=evaluation`, the product also exposes relation,
+timeline, open-question, assessment and immutable review-history views. After
+the reviewer accepts the bounded observations and relations, the browser can
+create and review E-A01, import the bounded EVAL-E01 late source, show one
+source-linked attention notice, reaffirm E-A01 or create E-A02, and download a
+deterministic synthetic-only `evidence-reviewed-assessment-export/1` ZIP.
 
 From the repository root:
 
@@ -43,6 +50,7 @@ client. The accepted React/Vite/Fastify hosted baseline remains work for the
 later hosted-shell slice.
 
 Known limitations: one configured unauthenticated local reviewer, synthetic
-text only, one in-process worker, no cross-process recovery, no authentication,
-no live provider, no general relation/timeline/assessment views and no
-deployment.
+text only, no authentication/authorization, no arbitrary ingestion, no live
+provider and no non-synthetic authority. The local file composition uses one
+in-process worker; the separately documented hosted composition supplies the
+PostgreSQL multi-process shell.

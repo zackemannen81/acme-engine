@@ -4,15 +4,26 @@ import { describe, expect, it } from 'vitest';
 
 import { listenEvidenceWorkbenchApi } from '../../apps/evidence-workbench-api/src/index.js';
 import { createLocalEvidenceWorkbench } from '../../apps/evidence-workbench-api/src/local.js';
+import {
+  EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+  EVIDENCE_WORKSPACE_SCHEMA_VERSION,
+} from '../../packages/evidence-product-contracts/src/index.js';
 import { developmentObserveArtifactInput } from '../../packages/evidence-testing/src/development-observe.js';
+import {
+  buildGoldenMaterial,
+  loadSealedEvaluationTruth,
+} from '../../packages/evidence-testing/src/evaluation.js';
 import {
   EVIDENCE_ACTOR_REFERENCE_SCHEMA_VERSION,
   EVIDENCE_LOCATOR_SCHEMA_VERSION,
   EVIDENCE_STATEMENT_OCCURRENCE_SCHEMA_VERSION,
   EVIDENCE_TEMPORAL_BOUND_SCHEMA_VERSION,
   deriveEvidenceActorReferenceKey,
+  deriveEvidenceAssessmentContentHash,
+  deriveEvidenceAssessmentId,
   deriveEvidenceLocatorId,
   deriveEvidenceObservationId,
+  createEvidenceChangeSet,
 } from '../../packages/module-evidence/src/index.js';
 
 function countingIds(prefix: string) {
@@ -120,6 +131,33 @@ describe('Evidence workbench PostgreSQL restart', () => {
 
     const commandKey = `restart-proof-review-${randomUUID()}`;
     const { source, observation } = developmentObservation();
+    const durableWorkspaceId = `restart-workspace-${randomUUID()}`;
+    const changeSetCommandKey = `restart-change-set-${randomUUID()}`;
+    const baseAssessment = buildGoldenMaterial(
+      loadSealedEvaluationTruth(),
+    ).assessments.get('E-A01');
+    if (baseAssessment === undefined) throw new Error('Missing E-A01 fixture.');
+    const assessmentContent = {
+      claims: baseAssessment.claims,
+      openQuestionIds: baseAssessment.openQuestionIds,
+      citations: baseAssessment.citations,
+      predecessorAssessmentVersionId:
+        baseAssessment.predecessorAssessmentVersionId,
+    };
+    const assessmentContentHash = deriveEvidenceAssessmentContentHash(
+      assessmentContent as never,
+    );
+    const durableAssessment = {
+      ...baseAssessment,
+      workspaceId: durableWorkspaceId,
+      contentHash: assessmentContentHash,
+      assessmentVersionId: deriveEvidenceAssessmentId({
+        workspaceId: durableWorkspaceId,
+        sequence: baseAssessment.sequence,
+        basisEvidenceRevision: baseAssessment.basisEvidenceRevision,
+        contentHash: assessmentContentHash,
+      }),
+    };
 
     const first = await createLocalEvidenceWorkbench({
       persistence: 'postgres',
@@ -140,6 +178,33 @@ describe('Evidence workbench PostgreSQL restart', () => {
 
       await first.productRepository.putSource(source);
       await first.productRepository.putObservations([observation]);
+      await first.productRepository.putWorkspace({
+        schemaVersion: EVIDENCE_WORKSPACE_SCHEMA_VERSION,
+        workspaceId: durableWorkspaceId,
+        label: 'Restart assessment workspace',
+        dataPolicy: 'synthetic-only',
+        evidenceRevision: 1,
+        createdAt: '2026-08-12T12:00:00.000Z',
+      });
+      await first.productRepository.putAssessments([durableAssessment]);
+      await first.productRepository.putChangeSet({
+        schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+        workspaceId: durableWorkspaceId,
+        commandKey: changeSetCommandKey,
+        recordedAt: '2026-08-12T12:00:00.000Z',
+        changeSet: createEvidenceChangeSet({
+          fromEvidenceRevision: 0,
+          toEvidenceRevision: 1,
+          addedArtifactVersionIds: [source.artifactVersionId],
+          addedObservationIds: [observation.observationId],
+          addedRelationIds: [],
+          addedOpenQuestionIds: [],
+          standingChanges: [],
+          actorReferenceKeys: [],
+          relationEndpointIds: [],
+          temporalBounds: [],
+        }),
+      });
 
       const review = await fetch(`${address.url}api/reviews`, {
         method: 'POST',
@@ -165,6 +230,17 @@ describe('Evidence workbench PostgreSQL restart', () => {
           (decision) => decision.commandKey === commandKey,
         ),
       ).toBe(true);
+      expect(
+        afterReview.assessments.some(
+          ({ assessmentVersionId }) =>
+            assessmentVersionId === durableAssessment.assessmentVersionId,
+        ),
+      ).toBe(true);
+      expect(
+        afterReview.changeSets.some(
+          (changeSet) => changeSet.commandKey === changeSetCommandKey,
+        ),
+      ).toBe(true);
     } finally {
       await stopWorkbench(first);
     }
@@ -182,6 +258,17 @@ describe('Evidence workbench PostgreSQL restart', () => {
       expect(
         snapshotAfter.reviewDecisions.some(
           (decision) => decision.commandKey === commandKey,
+        ),
+      ).toBe(true);
+      expect(
+        snapshotAfter.assessments.some(
+          ({ assessmentVersionId }) =>
+            assessmentVersionId === durableAssessment.assessmentVersionId,
+        ),
+      ).toBe(true);
+      expect(
+        snapshotAfter.changeSets.some(
+          (changeSet) => changeSet.commandKey === changeSetCommandKey,
         ),
       ).toBe(true);
       expect(snapshotAfter.workspaces[0]?.dataPolicy).toBe('synthetic-only');

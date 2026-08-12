@@ -81,6 +81,7 @@ describe('Evidence slice-2 primary views', () => {
       relations: [],
       openQuestions: [],
       assessments: [],
+      changeSets: [],
       jobs: [],
       reviewDecisions: [],
     });

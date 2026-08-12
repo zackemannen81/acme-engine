@@ -16,6 +16,7 @@ import {
 } from '@acme/adapter-postgres';
 import {
   canonicalJson,
+  computeModelRequestHash,
   createAes256GcmPayloadEncryptor,
   createContractRegistry,
   createExecutionEngine,
@@ -32,6 +33,8 @@ import {
 } from '@acme/core';
 import { Pool } from 'pg';
 import {
+  EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+  effectiveReviewDecision,
   EVIDENCE_WORKSPACE_SCHEMA_VERSION,
   type EvidenceProductClock,
   type EvidenceProductIds,
@@ -40,11 +43,14 @@ import {
   EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
   developmentObserveArtifactInput,
   developmentObserveArtifactOutput,
+  evaluationAssessmentCases,
 } from '@acme/evidence-testing';
 import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 import { evaluationRelateCase } from '@acme/evidence-testing/evaluation-relate';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
+  createEvidenceChangeSet,
+  EvidenceAssessmentSchema,
   EvidenceMemoryValueSchema,
   EvidenceObservationSchema,
   EvidenceOpenQuestionSchema,
@@ -52,6 +58,7 @@ import {
   EvidenceStateSchema,
   evidenceModule,
   evidenceObserveArtifactContract,
+  evidenceProposeAssessmentContract,
   evidenceRelateObservationsContract,
   initialEvidenceState,
   type EvidenceObserveArtifactInput,
@@ -68,7 +75,7 @@ import {
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const DEVELOPMENT_COMMAND_KEY = 'development-observe-dev-t01-v1';
-const RELATE_COMMAND_KEY = 'evaluation-relate-observations-1';
+const PRE_LATE_RELATE_COMMAND_KEY = 'evaluation-relate-pre-log-1';
 const OBSERVE_SELECTION: ModelSelection = {
   profile: 'evidence-offline-fixture',
   providerHint: 'deterministic-fixture',
@@ -78,6 +85,11 @@ const RELATE_SELECTION: ModelSelection = {
   profile: 'evidence-offline-fixture',
   providerHint: 'deterministic-fixture',
   modelHint: 'evidence-relate-1',
+};
+const ASSESSMENT_SELECTION: ModelSelection = {
+  profile: 'evidence-offline-fixture',
+  providerHint: 'deterministic-fixture',
+  modelHint: 'evidence-assessment-1',
 };
 
 type SeedMode = 'development' | 'evaluation' | 'none';
@@ -108,12 +120,30 @@ function observeFixtures(mode: SeedMode): readonly ObserveFixture[] {
       },
     ];
   }
-  return evaluationObserveCases().map((item) => ({
+  return evaluationObserveCases()
+    .filter(
+      ({ input }) => input.artifactVersion.logicalArtifactId !== 'EVAL-E01',
+    )
+    .map((item) => ({
+      commandKey: item.caseId,
+      requestHash: item.requestHash,
+      input: item.input,
+      output: item.output,
+    }));
+}
+
+function lateObserveFixture(mode: SeedMode): ObserveFixture | null {
+  if (mode !== 'evaluation') return null;
+  const item = evaluationObserveCases().find(
+    ({ input }) => input.artifactVersion.logicalArtifactId === 'EVAL-E01',
+  );
+  if (item === undefined) throw new Error('Missing EVAL-E01 fixture.');
+  return {
     commandKey: item.caseId,
     requestHash: item.requestHash,
     input: item.input,
     output: item.output,
-  }));
+  };
 }
 
 function relateFixture(mode: SeedMode): RelateFixture | null {
@@ -124,6 +154,43 @@ function relateFixture(mode: SeedMode): RelateFixture | null {
     requestHash: item.requestHash,
     input: item.input,
     output: item.output,
+  };
+}
+
+function preLateRelateFixture(mode: SeedMode): RelateFixture | null {
+  if (mode !== 'evaluation') return null;
+  const full = evaluationRelateCase();
+  const lateArtifactId =
+    lateObserveFixture(mode)?.input.artifactVersion.artifactVersionId;
+  const observations = full.input.observations.filter(
+    ({ artifactVersionId }) => artifactVersionId !== lateArtifactId,
+  );
+  const ids = new Set(observations.map(({ observationId }) => observationId));
+  const relations = full.output.relations.filter(({ endpoints }) =>
+    endpoints.every(({ kind, id }) => kind !== 'observation' || ids.has(id)),
+  );
+  const rationaleCodes = new Set(
+    relations.map(({ rationaleCode }) => rationaleCode),
+  );
+  const openQuestions = full.output.openQuestions.filter(
+    (question) =>
+      question.triggeringObservationIds.every((id) => ids.has(id)) &&
+      question.triggeringRelationRationaleCodes.every((code) =>
+        rationaleCodes.has(code),
+      ),
+  );
+  const input = { ...full.input, observations };
+  const output = { ...full.output, relations, openQuestions };
+  return {
+    commandKey: PRE_LATE_RELATE_COMMAND_KEY,
+    requestHash: computeModelRequestHash(
+      evidenceRelateObservationsContract.buildRequest(input, {
+        executionId: 'hash-only',
+        now: '2026-08-11T00:00:00.000Z',
+      }),
+    ),
+    input,
+    output,
   };
 }
 
@@ -141,10 +208,15 @@ function productIds(): EvidenceProductIds {
 
 function fixtureGateway(
   seedFixtures: readonly ObserveFixture[],
-  relate: RelateFixture | null,
+  lateFixture: ObserveFixture | null,
+  relateFixtures: readonly RelateFixture[],
+  assessmentFixtures: ReturnType<typeof evaluationAssessmentCases>,
   clock: EvidenceProductClock,
 ): ScriptedModelGateway {
-  const observeCalls = seedFixtures.map((fixture) => {
+  const observeCalls = [
+    ...seedFixtures,
+    ...(lateFixture === null ? [] : [lateFixture]),
+  ].map((fixture) => {
     const requestKey = `import:${fixture.commandKey}`;
     return {
       executionId: deriveExecutionId('evidence', requestKey),
@@ -166,37 +238,48 @@ function fixtureGateway(
       },
     };
   });
-  const relateCalls =
-    relate === null
-      ? []
-      : [
-          {
-            executionId: deriveExecutionId(
-              'evidence',
-              `relate:${relate.commandKey}`,
-            ),
-            callKey: 'model:0',
-            selection: RELATE_SELECTION,
-            expectedRequestHash: relate.requestHash,
-            outcome: {
-              kind: 'response' as const,
-              response: {
-                provider: 'deterministic-fixture',
-                model: 'evidence-relate-1',
-                providerResponseId: relate.commandKey,
-                receivedAt: clock.now(),
-                finishReason: 'stop' as const,
-                text: canonicalJson(relate.output as never),
-                usage: {
-                  inputTokens: 900,
-                  outputTokens: 700,
-                  totalTokens: 1600,
-                },
-                metadata: { fixture: relate.commandKey },
-              },
-            },
-          },
-        ];
+  const relateCalls = relateFixtures.map((relate) => ({
+    executionId: deriveExecutionId('evidence', `relate:${relate.commandKey}`),
+    callKey: 'model:0',
+    selection: RELATE_SELECTION,
+    expectedRequestHash: relate.requestHash,
+    outcome: {
+      kind: 'response' as const,
+      response: {
+        provider: 'deterministic-fixture',
+        model: 'evidence-relate-1',
+        providerResponseId: relate.commandKey,
+        receivedAt: clock.now(),
+        finishReason: 'stop' as const,
+        text: canonicalJson(relate.output as never),
+        usage: {
+          inputTokens: 900,
+          outputTokens: 700,
+          totalTokens: 1600,
+        },
+        metadata: { fixture: relate.commandKey },
+      },
+    },
+  }));
+  const assessmentCalls = assessmentFixtures.map((fixture) => ({
+    executionId: deriveExecutionId('evidence', `assessment:${fixture.caseId}`),
+    callKey: 'model:0',
+    selection: ASSESSMENT_SELECTION,
+    expectedRequestHash: fixture.requestHash,
+    outcome: {
+      kind: 'response' as const,
+      response: {
+        provider: 'deterministic-fixture',
+        model: 'evidence-assessment-1',
+        providerResponseId: fixture.caseId,
+        receivedAt: clock.now(),
+        finishReason: 'stop' as const,
+        text: canonicalJson(fixture.output as never),
+        usage: { inputTokens: 800, outputTokens: 500, totalTokens: 1300 },
+        metadata: { fixture: fixture.caseId },
+      },
+    },
+  }));
   return createScriptedModelGateway({
     profiles: [
       {
@@ -219,8 +302,18 @@ function fixtureGateway(
           maxOutputTokens: 8_192,
         },
       },
+      {
+        selection: ASSESSMENT_SELECTION,
+        capabilities: {
+          structuredOutput: true,
+          tools: false,
+          vision: false,
+          maxInputTokens: 32_000,
+          maxOutputTokens: 8_192,
+        },
+      },
     ],
-    calls: [...observeCalls, ...relateCalls],
+    calls: [...observeCalls, ...relateCalls, ...assessmentCalls],
   });
 }
 
@@ -278,7 +371,12 @@ export async function createLocalEvidenceWorkbench(
     options.seedMode ??
     (options.seedDevelopmentSource === false ? 'none' : 'development');
   const seedFixtures = observeFixtures(seedMode);
-  const relate = relateFixture(seedMode);
+  const lateFixture = lateObserveFixture(seedMode);
+  const preLateRelate = preLateRelateFixture(seedMode);
+  const fullRelate = relateFixture(seedMode);
+  const assessmentFixtures =
+    seedMode === 'evaluation' ? evaluationAssessmentCases() : [];
+  const workspaceId = assessmentFixtures[0]?.input.workspaceId ?? WORKSPACE_ID;
   const postgres = usePostgresPersistence(options);
 
   let closePersistence: () => Promise<void> = async () => {};
@@ -329,12 +427,12 @@ export async function createLocalEvidenceWorkbench(
   let productSnapshot = await productRepository.snapshot();
   if (
     !productSnapshot.workspaces.some(
-      ({ workspaceId }) => workspaceId === WORKSPACE_ID,
+      (workspace) => workspace.workspaceId === workspaceId,
     )
   ) {
     await productRepository.putWorkspace({
       schemaVersion: EVIDENCE_WORKSPACE_SCHEMA_VERSION,
-      workspaceId: WORKSPACE_ID,
+      workspaceId,
       label: 'Rillford Annex — local review',
       dataPolicy: 'synthetic-only',
       evidenceRevision: 0,
@@ -342,7 +440,15 @@ export async function createLocalEvidenceWorkbench(
     });
     productSnapshot = await productRepository.snapshot();
   }
-  const gateway = fixtureGateway(seedFixtures, relate, clock);
+  const gateway = fixtureGateway(
+    seedFixtures,
+    lateFixture,
+    [preLateRelate, fullRelate].filter(
+      (fixture): fixture is RelateFixture => fixture !== null,
+    ),
+    assessmentFixtures,
+    clock,
+  );
   const engine = createExecutionEngine({
     clock,
     ids,
@@ -350,6 +456,7 @@ export async function createLocalEvidenceWorkbench(
     contracts: createContractRegistry([
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContract,
+      evidenceProposeAssessmentContract,
     ]),
     pipeline: createResponsePipeline(),
     gateway,
@@ -362,13 +469,16 @@ export async function createLocalEvidenceWorkbench(
     clock,
     executor: {
       async observe(value) {
+        const before = await ledger.snapshot();
+        const expectedStateRevision =
+          before.state.snapshots.at(-1)?.revision ?? 0;
         const result = await engine.execute(
           {
             requestKey: value.requestKey,
             namespace: 'evidence',
             task: 'observe-artifact',
             entityId: value.workspaceId,
-            expectedRevision: value.expectedRevision,
+            expectedRevision: expectedStateRevision,
             input: {
               schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
               artifactVersion: value.artifactVersion,
@@ -382,6 +492,9 @@ export async function createLocalEvidenceWorkbench(
         if (result.status !== 'committed')
           throw new Error(result.error.message);
         const evidence = await ledger.snapshot();
+        const latestState = evidence.state.snapshots.at(-1);
+        if (latestState === undefined)
+          throw new Error('Evidence state missing after observation.');
         const observations = evidence.memoryRecords.flatMap((record) => {
           const parsed = EvidenceObservationSchema.safeParse(record.value);
           return parsed.success &&
@@ -391,9 +504,136 @@ export async function createLocalEvidenceWorkbench(
             : [];
         });
         return {
-          revision: result.revision,
+          revision: EvidenceStateSchema.parse(latestState.value)
+            .evidenceRevision,
+          stateRevision: latestState.revision,
           observations,
           replayed: result.replayed,
+        };
+      },
+    },
+    assessmentExecutor: {
+      async propose({ command }) {
+        const fixture = assessmentFixtures.find(
+          ({ input }) => input.sequence === command.sequence,
+        );
+        if (fixture === undefined)
+          throw new RangeError(
+            `No assessment fixture for sequence ${String(command.sequence)}.`,
+          );
+        if (
+          fixture.input.workspaceId !== command.workspaceId ||
+          fixture.input.predecessorAssessmentVersionId !==
+            command.predecessorAssessmentVersionId
+        )
+          throw new RangeError(
+            'Assessment command does not match its fixed fixture.',
+          );
+        const snapshot = await productRepository.snapshot();
+        const workspace = snapshot.workspaces.find(
+          (value) => value.workspaceId === command.workspaceId,
+        );
+        if (workspace === undefined)
+          throw new RangeError('Unknown assessment workspace.');
+        const requiredReviewedIds = [
+          ...fixture.input.acceptedObservationIds,
+          ...fixture.input.acceptedRelationIds,
+        ];
+        const unaccepted = requiredReviewedIds.filter((targetVersionId) => {
+          const decision = effectiveReviewDecision(
+            snapshot.reviewDecisions,
+            targetVersionId,
+          );
+          return decision?.action !== 'accept';
+        });
+        if (unaccepted.length > 0)
+          throw new RangeError(
+            `Assessment requires accepted source evidence: ${unaccepted.join(', ')}.`,
+          );
+        const beforeAssessment = await ledger.snapshot();
+        const expectedStateRevision =
+          beforeAssessment.state.snapshots.at(-1)?.revision ?? 0;
+        const result = await engine.execute({
+          requestKey: `assessment:${fixture.caseId}`,
+          namespace: 'evidence',
+          task: 'propose-assessment',
+          entityId: command.workspaceId,
+          expectedRevision: expectedStateRevision,
+          input: fixture.input,
+          model: ASSESSMENT_SELECTION,
+          policy: { retention: 'encrypted-payload' },
+        });
+        if (result.status !== 'committed')
+          throw new Error(result.error.message);
+        const evidence = await ledger.snapshot();
+        const assessment = evidence.documents
+          .map(({ value }) => EvidenceAssessmentSchema.safeParse(value))
+          .flatMap((parsed) => (parsed.success ? [parsed.data] : []))
+          .find(
+            ({ assessmentVersionId }) =>
+              assessmentVersionId === fixture.expectedAssessmentVersionId,
+          );
+        if (assessment === undefined)
+          throw new Error('Assessment document missing after commit.');
+        return { assessment, replayed: result.replayed };
+      },
+    },
+    postImportExecutor: {
+      async afterImport({ command, expectedStateRevision, signal }) {
+        if (
+          fullRelate === null ||
+          command.artifactVersion.logicalArtifactId !== 'EVAL-E01'
+        )
+          return null;
+        const result = await engine.execute(
+          {
+            requestKey: `relate:${fullRelate.commandKey}`,
+            namespace: 'evidence',
+            task: 'relate-observations',
+            entityId: command.workspaceId,
+            expectedRevision: expectedStateRevision,
+            input: fullRelate.input,
+            model: RELATE_SELECTION,
+            policy: { retention: 'encrypted-payload' },
+          },
+          { signal },
+        );
+        if (result.status !== 'committed')
+          throw new Error(result.error.message);
+        const [evidence, product] = await Promise.all([
+          ledger.snapshot(),
+          productRepository.snapshot(),
+        ]);
+        const memories = evidence.memoryRecords.flatMap((record) => {
+          const parsed = EvidenceMemoryValueSchema.safeParse(record.value);
+          return parsed.success ? [parsed.data] : [];
+        });
+        const existingRelations = new Set(
+          product.relations.map(({ relationId }) => relationId),
+        );
+        const existingQuestions = new Set(
+          product.openQuestions.map(({ openQuestionId }) => openQuestionId),
+        );
+        const latestState = evidence.state.snapshots.at(-1);
+        if (latestState === undefined)
+          throw new Error('Evidence state missing after relation analysis.');
+        return {
+          revision: EvidenceStateSchema.parse(latestState.value)
+            .evidenceRevision,
+          relations: memories.flatMap((value) => {
+            const parsed = EvidenceRelationSchema.safeParse(value);
+            return parsed.success &&
+              !existingRelations.has(parsed.data.relationId)
+              ? [parsed.data]
+              : [];
+          }),
+          openQuestions: memories.flatMap((value) => {
+            const parsed = EvidenceOpenQuestionSchema.safeParse(value);
+            return parsed.success &&
+              !existingQuestions.has(parsed.data.openQuestionId)
+              ? [parsed.data]
+              : [];
+          }),
         };
       },
     },
@@ -410,7 +650,7 @@ export async function createLocalEvidenceWorkbench(
     for (const fixture of seedFixtures) {
       const job = await worker.start({
         schemaVersion: 'evidence-import-command/1',
-        workspaceId: WORKSPACE_ID,
+        workspaceId,
         commandKey: fixture.commandKey,
         artifactVersion: fixture.input.artifactVersion,
         actorRoster: fixture.input.actorRoster,
@@ -423,22 +663,22 @@ export async function createLocalEvidenceWorkbench(
   }
 
   if (
-    relate !== null &&
+    preLateRelate !== null &&
     seededThisProcess &&
     (productSnapshot.relations?.length ?? 0) === 0
   ) {
     const workspace = productSnapshot.workspaces.find(
-      ({ workspaceId }) => workspaceId === WORKSPACE_ID,
+      (workspace) => workspace.workspaceId === workspaceId,
     );
     if (workspace === undefined)
       throw new Error('Workspace missing before relation seed.');
     const result = await engine.execute({
-      requestKey: `relate:${RELATE_COMMAND_KEY}`,
+      requestKey: `relate:${preLateRelate.commandKey}`,
       namespace: 'evidence',
       task: 'relate-observations',
-      entityId: WORKSPACE_ID,
+      entityId: workspaceId,
       expectedRevision: workspace.evidenceRevision,
-      input: relate.input,
+      input: preLateRelate.input,
       model: RELATE_SELECTION,
       policy: { retention: 'encrypted-payload' },
     });
@@ -459,10 +699,34 @@ export async function createLocalEvidenceWorkbench(
     await productRepository.putRelations(relations);
     await productRepository.putOpenQuestions(openQuestions);
     await productRepository.advanceEvidenceRevision(
-      WORKSPACE_ID,
+      workspaceId,
       workspace.evidenceRevision,
       result.revision,
     );
+    await productRepository.putChangeSet({
+      schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+      workspaceId,
+      commandKey: preLateRelate.commandKey,
+      recordedAt: clock.now(),
+      changeSet: createEvidenceChangeSet({
+        fromEvidenceRevision: workspace.evidenceRevision,
+        toEvidenceRevision: result.revision,
+        addedArtifactVersionIds: [],
+        addedObservationIds: [],
+        addedRelationIds: relations.map(({ relationId }) => relationId),
+        addedOpenQuestionIds: openQuestions.map(
+          ({ openQuestionId }) => openQuestionId,
+        ),
+        standingChanges: [],
+        actorReferenceKeys: [],
+        relationEndpointIds: relations.flatMap(({ endpoints }) =>
+          endpoints.map(({ id }) => id),
+        ),
+        temporalBounds: relations.flatMap(
+          ({ comparableScope }) => comparableScope.temporalBounds,
+        ),
+      }),
+    });
   }
 
   const server = createEvidenceWorkbenchApi({
@@ -470,7 +734,18 @@ export async function createLocalEvidenceWorkbench(
     worker,
     clock,
     ids: reviewIds,
-    workspaceId: WORKSPACE_ID,
+    workspaceId,
+    ...(lateFixture === null
+      ? {}
+      : {
+          lateEvidenceCommand: {
+            schemaVersion: 'evidence-import-command/1' as const,
+            workspaceId,
+            commandKey: lateFixture.commandKey,
+            artifactVersion: lateFixture.input.artifactVersion,
+            actorRoster: lateFixture.input.actorRoster,
+          },
+        }),
     technicalAudit: { enabled: false },
     async evidenceProjection() {
       const evidence = await ledger.snapshot();
@@ -487,7 +762,7 @@ export async function createLocalEvidenceWorkbench(
     ledger,
     gateway,
     engine,
-    workspaceId: WORKSPACE_ID,
+    workspaceId,
     dataFile: postgres
       ? undefined
       : path.resolve(

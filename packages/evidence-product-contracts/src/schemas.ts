@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   EvidenceActorRosterEntrySchema,
   EvidenceAssessmentSchema,
+  EvidenceChangeSetSchema,
   EvidenceIsoTimestampSchema,
   EvidenceNonBlankStringSchema,
   EvidenceObservationSchema,
@@ -23,6 +24,10 @@ export const EVIDENCE_REVIEW_COMMAND_SCHEMA_VERSION =
   'evidence-review-command/1' as const;
 export const EVIDENCE_PRODUCT_SNAPSHOT_SCHEMA_VERSION =
   'evidence-product-snapshot/1' as const;
+export const EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION =
+  'evidence-product-change-set/1' as const;
+export const EVIDENCE_ASSESSMENT_COMMAND_SCHEMA_VERSION =
+  'evidence-assessment-command/1' as const;
 
 export const EvidenceWorkspaceSchema = z
   .object({
@@ -73,6 +78,26 @@ export const EvidenceProductJobSchema = z
     path: ['completedUnits'],
     message: 'Completed units cannot exceed total units.',
   });
+
+export const EvidenceProductChangeSetSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION),
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    recordedAt: EvidenceIsoTimestampSchema,
+    changeSet: EvidenceChangeSetSchema,
+  })
+  .strict();
+
+export const EvidenceAssessmentCommandSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_ASSESSMENT_COMMAND_SCHEMA_VERSION),
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    sequence: z.number().int().positive(),
+    predecessorAssessmentVersionId: EvidenceNonBlankStringSchema.nullable(),
+  })
+  .strict();
 
 export const EvidenceReviewTargetKindSchema = z.enum([
   'observation',
@@ -148,6 +173,7 @@ export const EvidenceProductSnapshotSchema = z
     relations: z.array(EvidenceRelationSchema),
     openQuestions: z.array(EvidenceOpenQuestionSchema),
     assessments: z.array(EvidenceAssessmentSchema),
+    changeSets: z.array(EvidenceProductChangeSetSchema).default([]),
     jobs: z.array(EvidenceProductJobSchema),
     reviewDecisions: z.array(EvidenceReviewDecisionSchema),
   })
@@ -156,6 +182,12 @@ export const EvidenceProductSnapshotSchema = z
 export type EvidenceWorkspace = z.infer<typeof EvidenceWorkspaceSchema>;
 export type EvidenceImportCommand = z.infer<typeof EvidenceImportCommandSchema>;
 export type EvidenceProductJob = z.infer<typeof EvidenceProductJobSchema>;
+export type EvidenceProductChangeSet = z.infer<
+  typeof EvidenceProductChangeSetSchema
+>;
+export type EvidenceAssessmentCommand = z.infer<
+  typeof EvidenceAssessmentCommandSchema
+>;
 export type EvidenceReviewCommand = z.infer<typeof EvidenceReviewCommandSchema>;
 export type EvidenceReviewDecision = z.infer<
   typeof EvidenceReviewDecisionSchema

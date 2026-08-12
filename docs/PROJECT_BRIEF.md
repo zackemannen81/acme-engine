@@ -204,25 +204,14 @@ call is recoverable without calling the provider again, an interrupted
 transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
-No implementation deliverable is currently active against this brief.
-ACME-0077 through ACME-0079 delivered Evidence Integrity slices 0–2: the fixed
-seven-artifact/eight-version synthetic corpus; Evidence contracts, identity,
-state and deterministic source-observation task; the append-only reviewer
-overlay; source review; an immutable observation ledger; and corrected-versus-
-changed account comparison. The offline evaluation path retains all ten
-observations, marks exactly two corrected predecessors superseded and keeps the
-later changed account separate. The recommended next product task is slice 3,
-relate observations. The Domain Test UI
-decision gates and the evaluation/quality-scoring foundation are delivered,
-and the operational surfaces this brief never claimed — durable quality-result
-storage, a real event transport, redrive for dead-lettered events,
-driver-error classification, stranded-execution operator commands and async
-workbench launch — landed as ACME-0057 through ACME-0069. Their inventory,
-dependencies and recommended activation order are recorded in
-`docs/design/gap-resolution-plan.md` (ACME-0056). Open choices are now
-trust-stage evidence granularity, the remaining Domain Test UI residuals
-(plan `measurements`, adapter discovery, browser CI) and the deliberately
-deferred provider-reconciliation and key-lifecycle work. The next
-implementation deliverable must still be explicitly approved before
-activation. Platform-only work may still activate trust-stage evidence (E1)
-independently.
+ACME-0077 through ACME-0087, with corrective child ACME-0089, delivered
+Evidence Integrity slices 0–8: the fixed synthetic corpus, observation,
+relation, timeline and assessment tasks, the complete primary reviewer journey,
+optional technical audit, PostgreSQL persistence and a hosted multi-process
+shell. ACME-0089 re-sealed pre-late E-A01 without forward question references;
+post-import E-A02 retains all three sealed questions. The hosted product
+remains single-user and synthetic-only. The approved later sequencing plan is
+[`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
+Authentication, case management, secure ingestion, Case Integrity Report and
+Slice 9 non-synthetic readiness remain separate later decisions and tasks. No
+non-synthetic data path is authorized.

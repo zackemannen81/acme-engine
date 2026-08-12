@@ -58,6 +58,7 @@ implementation baseline:
 - ADR-0031: Evidence reviewer overlay and versioned views
 - ADR-0032: Evidence V1 correction-occurrence pairing
 - ADR-0033: PostgreSQL persistence architecture
+- ADR-0034: POC #1 hosted shell identity and topology
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -350,21 +351,29 @@ technical plan is
 [`evidence-integrity-workbench-technical-specification.md`](design/evidence-integrity-workbench-technical-specification.md).
 The direction, platform and implementation plan are accepted. Slices 0–5
 exist for domain and product foundations: observe/relate/timeline/assessment
-tasks, attention/export helpers, primary views through open questions, product
-assessment storage and gated technical-audit views (disabled by default).
+tasks, durable change-set attention evidence, primary views through assessment
+and review history, product assessment storage and gated technical-audit views
+(disabled by default). ACME-0087 completed the synthetic Slice 5 assessment/
+re-review browser journey and deterministic reviewed-assessment ZIP, including
+file/PostgreSQL restart proof and manual browser execution. ACME-0089 corrected
+the sealed pre-late E-A01 fixture to carry no forward question references;
+post-import E-A02 retains all three sealed questions.
 ADR-0033 decides the PostgreSQL persistence architecture. ACME-0085 delivered
 slice 7 adapters. ACME-0086 / ADR-0034 delivered the hosted shell: multi-process
 composition on PostgreSQL with single-user identity, `/health`, deploy compose
 and restart durability proof. SQLite and the file product store remain hermetic
-defaults. Non-synthetic paths remain unimplemented (slice 9 governance).
+defaults. The approved completion and later-product sequence is recorded in
+[`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
+Non-synthetic paths remain unimplemented (slice 9 governance).
 
 ## Active Work
 
-No product task is active in `docs/CURRENT_TASK.md` after ACME-0086. The next
-Evidence step is slice 9 readiness only when governance explicitly authorizes
-it. Independent alternatives remain E1 trust-stage evidence (G12) or the WP-T
-residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
-browser CI smoke).
+No implementation task is active. ACME-0087 and its corrective child ACME-0089
+are complete and archived; ACME-0088 was superseded before implementation when
+its proposed retained-question assumption was disproven. Slice 5 is complete
+for the fixed synthetic journey. The next product stage requires its own frozen
+task and any non-synthetic path still requires the later security/readiness
+sequence.
 
 ### Recent completed work (summary)
 
@@ -402,11 +411,18 @@ browser CI smoke).
   `technicalAudit.enabled` (default off). Primary black-box remains unchanged
   when audit is disabled.
 
+- **ACME-0087/0089:** Completed Evidence Integrity slice 5's product journey:
+  assessment/review-history views, durable late-evidence attention, bounded
+  API/worker/browser assessment and re-review, exact locator navigation,
+  deterministic reviewed ZIP, file/PostgreSQL durability and the corrected
+  source-bound E-A01/E-A02 fixture sequence.
+
 - **ACME-0082:** Delivered Evidence Integrity slice 5 domain core:
   `evidence.propose-assessment@1.0.0`, attention-tier and change-set helpers,
   deterministic synthetic-only assessment export, product assessment storage
-  and sealed E-A01/E-A02 fixtures. Full late-import UI black-box remains
-  light; technical audit still disabled.
+  and sealed E-A01/E-A02 fixtures. ACME-0087/0089 subsequently completed and
+  corrected the full late-import product journey; technical audit stays
+  disabled by default.
 
 - **ACME-0081:** Delivered Evidence Integrity slice 4: pure
   `evidence.build-timeline@1.0.0` / temporal-overlap helper, primary timeline

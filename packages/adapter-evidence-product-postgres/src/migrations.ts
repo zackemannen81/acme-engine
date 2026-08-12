@@ -93,6 +93,21 @@ export function createEvidenceProductMigrations(
       name: 'initial-evidence-product-pg',
       statements: buildV1(name),
     }),
+    Object.freeze({
+      version: 2,
+      name: 'evidence-product-change-sets',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.change_sets (
+          workspace_id text NOT NULL,
+          command_key text NOT NULL,
+          to_evidence_revision integer NOT NULL,
+          record_json text NOT NULL,
+          PRIMARY KEY (workspace_id, command_key)
+        )`,
+        `CREATE INDEX change_sets_revision_order
+          ON ${qIdent(name)}.change_sets (workspace_id, to_evidence_revision, command_key)`,
+      ]),
+    }),
   ]);
 }
 

@@ -1,6 +1,8 @@
 import {
   AcmeError,
+  canonicalJson,
   defineTask,
+  sha256,
   type ExecutionReadContext,
   type JsonValue,
   type ModuleResult,
@@ -120,7 +122,7 @@ function interpretOutput(
         kind: 'evidence.assessment-version',
         schemaVersion: assessment.schemaVersion,
         value: assessment as unknown as JsonValue,
-        contentHash: assessment.contentHash,
+        contentHash: sha256(canonicalJson(assessment as unknown as JsonValue)),
       },
     ],
     memories: [],

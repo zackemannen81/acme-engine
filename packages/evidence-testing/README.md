@@ -31,3 +31,11 @@ rule. All corpus people, places and events are synthetic and non-criminal.
 Repository and primary-view conformance registrars are isolated on
 `@acme/evidence-testing/product-conformance`, so ordinary fixture consumers do
 not load a test runner.
+
+ACME-0089 re-sealed the pre-late E-A01 fixture with no open-question
+references. Every sealed question has at least one trigger that depends on
+EVAL-E01, which is imported only afterward. Post-import E-A02 retains E-Q01,
+E-Q02 and E-Q03. Identity vectors and golden standings pin the resulting
+E-A01 identity plus E-A02's predecessor-derived identity, and a regression
+gate rejects any future E-A01 question whose observation or relation trigger
+is unavailable before EVAL-E01.

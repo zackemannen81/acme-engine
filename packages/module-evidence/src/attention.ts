@@ -1,29 +1,63 @@
+import { z } from 'zod';
+
 import { immutableEvidence } from './immutable.js';
 import { evidenceTemporalOverlap } from './temporal.js';
-import type { EvidenceTemporalBound } from './schemas.js';
+import {
+  EvidenceNonBlankStringSchema,
+  EvidenceTemporalBoundSchema,
+  type EvidenceTemporalBound,
+} from './schemas.js';
 
 export const EVIDENCE_CHANGE_SET_SCHEMA_VERSION =
   'evidence-change-set/1' as const;
 export const EVIDENCE_ATTENTION_TIER_ALGORITHM =
   'evidence-attention-tier-1' as const;
 
-export interface EvidenceChangeSet {
-  readonly schemaVersion: typeof EVIDENCE_CHANGE_SET_SCHEMA_VERSION;
-  readonly fromEvidenceRevision: number;
-  readonly toEvidenceRevision: number;
-  readonly addedArtifactVersionIds: readonly string[];
-  readonly addedObservationIds: readonly string[];
-  readonly addedRelationIds: readonly string[];
-  readonly addedOpenQuestionIds: readonly string[];
-  readonly standingChanges: readonly {
-    readonly objectId: string;
-    readonly from: string | null;
-    readonly to: string;
-  }[];
-  readonly actorReferenceKeys: readonly string[];
-  readonly relationEndpointIds: readonly string[];
-  readonly temporalBounds: readonly EvidenceTemporalBound[];
-}
+const sortedUniqueStrings = z
+  .array(EvidenceNonBlankStringSchema)
+  .superRefine((values, context) => {
+    if (new Set(values).size !== values.length) {
+      context.addIssue({ code: 'custom', message: 'Values must be unique.' });
+    }
+    if (
+      values.some((value, index) => {
+        const previous = values[index - 1];
+        return index > 0 && previous !== undefined && previous > value;
+      })
+    ) {
+      context.addIssue({ code: 'custom', message: 'Values must be sorted.' });
+    }
+  });
+
+export const EvidenceChangeSetSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_CHANGE_SET_SCHEMA_VERSION),
+    fromEvidenceRevision: z.number().int().nonnegative(),
+    toEvidenceRevision: z.number().int().positive(),
+    addedArtifactVersionIds: sortedUniqueStrings,
+    addedObservationIds: sortedUniqueStrings,
+    addedRelationIds: sortedUniqueStrings,
+    addedOpenQuestionIds: sortedUniqueStrings,
+    standingChanges: z.array(
+      z
+        .object({
+          objectId: EvidenceNonBlankStringSchema,
+          from: EvidenceNonBlankStringSchema.nullable(),
+          to: EvidenceNonBlankStringSchema,
+        })
+        .strict(),
+    ),
+    actorReferenceKeys: sortedUniqueStrings,
+    relationEndpointIds: sortedUniqueStrings,
+    temporalBounds: z.array(EvidenceTemporalBoundSchema),
+  })
+  .strict()
+  .refine((value) => value.toEvidenceRevision > value.fromEvidenceRevision, {
+    path: ['toEvidenceRevision'],
+    message: 'A change set must advance the evidence revision.',
+  });
+
+export type EvidenceChangeSet = z.infer<typeof EvidenceChangeSetSchema>;
 
 export type EvidenceAttentionTier = 'A' | 'B' | 'none';
 
@@ -78,14 +112,18 @@ export function evidenceAttentionTier(
 export function createEvidenceChangeSet(
   value: Omit<EvidenceChangeSet, 'schemaVersion'>,
 ): EvidenceChangeSet {
-  return immutableEvidence({
-    schemaVersion: EVIDENCE_CHANGE_SET_SCHEMA_VERSION,
-    ...value,
-    addedArtifactVersionIds: [...value.addedArtifactVersionIds].sort(),
-    addedObservationIds: [...value.addedObservationIds].sort(),
-    addedRelationIds: [...value.addedRelationIds].sort(),
-    addedOpenQuestionIds: [...value.addedOpenQuestionIds].sort(),
-    actorReferenceKeys: [...value.actorReferenceKeys].sort(),
-    relationEndpointIds: [...value.relationEndpointIds].sort(),
-  });
+  return immutableEvidence(
+    EvidenceChangeSetSchema.parse({
+      schemaVersion: EVIDENCE_CHANGE_SET_SCHEMA_VERSION,
+      ...value,
+      addedArtifactVersionIds: [
+        ...new Set(value.addedArtifactVersionIds),
+      ].sort(),
+      addedObservationIds: [...new Set(value.addedObservationIds)].sort(),
+      addedRelationIds: [...new Set(value.addedRelationIds)].sort(),
+      addedOpenQuestionIds: [...new Set(value.addedOpenQuestionIds)].sort(),
+      actorReferenceKeys: [...new Set(value.actorReferenceKeys)].sort(),
+      relationEndpointIds: [...new Set(value.relationEndpointIds)].sort(),
+    }),
+  );
 }

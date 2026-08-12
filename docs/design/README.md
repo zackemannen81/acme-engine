@@ -13,13 +13,20 @@ Team implementation guides:
 
 Application surfaces:
 
+- [`evidence-integrity-workbench-product-completion-plan.md`](evidence-integrity-workbench-product-completion-plan.md)
+  — approved sequencing from the completed synthetic Slice 5 product through
+  later authentication, case isolation, secure ingestion, Case Integrity
+  Report and Slice 9 readiness. ACME-0087/0089 completed the Slice 5
+  prerequisite; the plan does not authorize real data or later stages.
+
 - [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
   — normative implementation plan for POC #1. It freezes the seven-artifact,
   eight-version synthetic corpus contract, Evidence identities and placement,
   primary versus technical-audit views, review overlay, deterministic export,
   proof matrix and separately activatable slices 0–9 under ADR-0030 and
-  ADR-0031. ACME-0077 delivered slice 0's corpus/contracts foundation; later
-  slices and every non-synthetic data path still require separate authority.
+  ADR-0031. ACME-0077–0087 plus corrective child ACME-0089 delivered slices
+  0–8, including the full source-bound assessment/re-review product journey;
+  every non-synthetic path still requires separate authority.
 
 - [`evidence-integrity-workbench-product-definition.md`](evidence-integrity-workbench-product-definition.md)
   — accepted normative product definition for ACME's first real POC under

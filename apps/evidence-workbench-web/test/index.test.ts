@@ -11,6 +11,11 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain('Observation ledger');
     expect(html).toContain('Compare accounts');
     expect(html).toContain("initialView==='compare'");
+    expect(html).toContain('data-start-line');
+    expect(html).toContain(
+      'await loadQueue();await loadAssessment(view.assessment.assessmentVersionId)',
+    );
+    expect(html).not.toContain('Promise.all([loadQueue(),loadAssessment(');
     expect(html).not.toContain('prompt(');
   });
 });

@@ -79,7 +79,7 @@
     "contentHashAlgorithm": "evidence-assessment-content-hash-1",
     "idAlgorithm": "evidence-assessment-id-1",
     "truthId": "E-A01",
-    "expectedContentHash": "1d0f5e509fe86d6df7218e66939f93cee8e3cb7f55897a0168901fc74a67a48a",
-    "expectedId": "evidence_assessment_fa93461c648a4dc372ec19773c036bd5888e52e0a59f894ca26f38875917dedf"
+    "expectedContentHash": "976d87be755d0d5cce677078f26959fe36d29dcfe8573a00d4b582f386bed25b",
+    "expectedId": "evidence_assessment_1e71cb81d7bc51f4f1bfc321fddeeb2fdb11bb3ffc6ee556a5dc4a6188f610d3"
   }
 }

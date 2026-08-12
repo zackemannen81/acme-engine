@@ -1,5 +1,139 @@
 # Journal
 
+## 2026-08-12 — ACME-0087 Slice 5 product journey complete
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0087
+- Branch: `dev/legal-evidence`
+- Summary: Completed and accepted the synthetic Evidence Integrity Workbench
+  Slice 5 product journey. The product now supports assessment and immutable
+  review history views, durable late-evidence attention, bounded assessment/
+  re-review commands through worker and API, browser review and exact source-
+  locator navigation, and deterministic reviewed-assessment ZIP export.
+- Acceptance: The automated black-box proves E-A01 review, EVAL-E01 late
+  import, exactly one attention notice, reaffirm and E-A02 branches, immutable
+  prior assessment bytes, byte-deterministic/offline-resolvable export and
+  synthetic-only refusal with technical audit disabled. The manual browser
+  journey exercised the same reviewer path. File close/reopen and PostgreSQL
+  conformance/restart persistence passed; PostgreSQL completed 27/27 tests.
+- Fixture correction: ACME-0088 was superseded before implementation when its
+  retained-question assumption failed. ACME-0089 then re-sealed pre-late E-A01
+  with no question references and preserved all three post-import questions on
+  E-A02, under the existing ADR-0030/0031 boundaries.
+- Verification: `corepack pnpm typecheck`, `lint`, `format:check`, `boundaries`,
+  `build` and `docs:check` passed. Direct canonical suites passed 657 unit, 70
+  conformance, 57 integration and 26 scenario tests; focused correction tests
+  passed 10/10; `git diff --check` passed. Root `corepack pnpm test` could not
+  enter nested scripts because global pnpm 10.33.4 did not satisfy the repo's
+  10.34.5 requirement; all four wrapped suites passed directly via Corepack.
+- Handoff: Slice 5 is complete and no task is active. Authentication/case
+  isolation/security stages and Slice 9 remain separately activatable; no
+  non-synthetic path is authorized.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0089 source-bound E-A01 fixture correction
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0089 (child of ACME-0087)
+- Summary: Added a regression that resolves every E-A01 question trigger to
+  its observation or relation endpoints and requires them to exist before
+  EVAL-E01. The test first proved E-Q02 and E-Q03 depended on late evidence;
+  together with the already identified E-Q01 dependency, no sealed question
+  was valid for pre-late E-A01.
+- Change: Set E-A01 `openQuestionTruthIds` to `[]`. Its new content hash is
+  `976d87be755d0d5cce677078f26959fe36d29dcfe8573a00d4b582f386bed25b`
+  and version ID is
+  `evidence_assessment_1e71cb81d7bc51f4f1bfc321fddeeb2fdb11bb3ffc6ee556a5dc4a6188f610d3`.
+  E-A02 keeps its semantic content and E-Q01/E-Q02/E-Q03; only the derived
+  predecessor reference changed, yielding content hash
+  `8c0a4750d401b89ae921eb81e860eaefa9199d34f8ff2fd89f44015049c643a1`
+  and version ID
+  `evidence_assessment_dd20c80adcbf410b591003b553d10ac338b28317ef9f810c108b5cba2e8f8606`.
+- Verification: Focused corpus/identity/assessment/view/API tests passed 10/10;
+  the full static, build, docs and direct canonical-suite results are recorded
+  in ACME-0089 and the parent completion entry above.
+- Handoff: Child archived; parent resume condition satisfied.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0087 implementation checkpoint and fixture blocker
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0087 (`In Progress`; acceptance withheld)
+- Branch: `dev/legal-evidence`
+- Summary: Implemented the two missing Slice 5 primary views, assessment work-
+  queue/attention behavior, durable product change sets in file/PostgreSQL,
+  bounded assessment execution and re-review API/worker commands, browser
+  assessment/history/source-locator controls and the normative deterministic
+  reviewed-assessment ZIP. The product black-box covers E-A01, EVAL-E01,
+  reaffirm, E-A02, immutable prior assessment bytes, offline citations,
+  synthetic-only refusal and file close/reopen.
+- Browser findings: A manual in-app-browser journey accepted eight observations
+  and five relations, created/accepted E-A01, navigated EVAL-T03 v1 exactly to
+  line 6, downloaded the ZIP, imported EVAL-E01, observed exactly one notice,
+  reaffirmed and inspected append-only history. It exposed and led to fixes for
+  a Windows file-repository read/write rename race and a competing-render race
+  that could hide Review history after re-review; both now have regression
+  coverage.
+- PostgreSQL: the gated suite initially exposed an omitted method in its lazy
+  conformance wrapper. After correction, `ACME_POSTGRES_URL=postgresql://acme:acme@127.0.0.1:55432/acme corepack pnpm test:postgres`
+  passed 27/27, including
+  assessment/change-set/review restart retention. The pre-existing local test
+  container was used and left unchanged.
+- Verification checkpoint: root typecheck, lint, format check, boundaries and
+  build passed. Direct Corepack runs passed 655 unit/hermetic, 70 conformance,
+  57 integration and 26 scenario tests. The `pnpm test` wrapper itself stopped
+  before tests because its nested command resolved global pnpm 10.33.4 while
+  the repository requires 10.34.5; the same four canonical suites passed when
+  invoked directly through Corepack. Focused tests pass after the browser fixes
+  and normative newer-evidence manifest correction.
+- Acceptance blocker: final source-binding audit found that sealed E-A01
+  requires `BOUNDED_EXACT_TIME_DIFFERENCE`
+  (`evidence_question_7cea928bd8c09d26a584f8563488aaed86e32c312c311d260ddcf855bc6dd3a1`),
+  whose trigger set includes an EVAL-E01 observation. The frozen journey creates
+  and accepts E-A01 before EVAL-E01 import. Keeping it creates a forward/dangling
+  product reference; removing it changes E-A01 content hash and version ID;
+  moving import order changes the frozen goal. No option is authorized inside
+  ACME-0087.
+- Handoff: Do not archive ACME-0087 or call Slice 5 complete. Recommended next
+  authority is a bounded child task that corrects and re-seals E-A01 using only
+  pre-EVAL-E01 open questions, then restores and completes this parent. The
+  alternative is to supersede the journey/order explicitly. No real-data or
+  Slice 9 work is authorized.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0087 Draft and product completion sequence
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0087 (Draft activation; no implementation)
+- Branch: `dev/legal-evidence`
+- Summary: Recorded the approved Evidence Integrity Workbench product-
+  completion sequence in
+  `docs/design/evidence-integrity-workbench-product-completion-plan.md` and
+  activated ACME-0087 as a complete Draft charter. Repository inspection
+  confirmed that ACME-0082 delivered assessment domain core, attention helpers,
+  product assessment storage and a deterministic canonical-JSON helper, while
+  the normative assessment/review-history views, full API/worker/browser re-
+  review journey and `evidence-reviewed-assessment-export/1` ZIP remain absent.
+- Scope: ACME-0087 closes only the existing synthetic Slice 5 capability:
+  E-A01 review, EVAL-E01 late-evidence attention, reaffirm/E-A02, exact source
+  navigation, review history and deterministic reviewed-assessment export.
+  Authentication, case management, secure ingestion, Case Integrity Report,
+  Slice 9 and every non-synthetic path remain outside the Draft charter.
+- Documentation: Synchronized PROJECT_BRIEF, CURRENT_STATUS, SYSTEMDOC,
+  FILESTRUCTURE, the design index and the normative technical specification
+  with the active Draft and actual Slice 5 completion state.
+- Verification: `corepack pnpm docs:check` passed over 179 Markdown files;
+  `git diff --check` passed. Code gates were not run because this change creates
+  planning/task documentation and changes no runtime behavior.
+- Handoff: Review the ACME-0087 charter. If accepted without semantic changes,
+  set status to `Ready`, record the freeze timestamp and begin its ordered
+  checklist. No blocker or open charter question is recorded.
+- Signature: Codex
+
 ## 2026-08-12 — ACME-0086 Hosted shell
 
 - Date: 2026-08-12

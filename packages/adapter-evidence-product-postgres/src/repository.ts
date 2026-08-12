@@ -3,6 +3,7 @@ import {
   EVIDENCE_PRODUCT_SNAPSHOT_SCHEMA_VERSION,
   EvidenceProductCommandCollisionError,
   EvidenceProductSnapshotSchema,
+  EvidenceProductChangeSetSchema,
   EvidenceReviewDecisionSchema,
   EvidenceWorkspaceSchema,
   type EvidenceProductJob,
@@ -93,6 +94,7 @@ export function createPostgresEvidenceProductRepository(options: {
       relations,
       openQuestions,
       assessments,
+      changeSets,
       jobs,
       reviewDecisions,
     ] = await Promise.all([
@@ -115,6 +117,10 @@ export function createPostgresEvidenceProductRepository(options: {
         `SELECT record_json FROM ${s}.assessments ORDER BY assessment_version_id`,
       ),
       client.query<{ record_json: string }>(
+        `SELECT record_json FROM ${s}.change_sets
+          ORDER BY workspace_id, to_evidence_revision, command_key`,
+      ),
+      client.query<{ record_json: string }>(
         `SELECT record_json FROM ${s}.jobs ORDER BY job_id`,
       ),
       client.query<{ record_json: string }>(
@@ -133,6 +139,7 @@ export function createPostgresEvidenceProductRepository(options: {
         JSON.parse(row.record_json),
       ),
       assessments: assessments.rows.map((row) => JSON.parse(row.record_json)),
+      changeSets: changeSets.rows.map((row) => JSON.parse(row.record_json)),
       jobs: jobs.rows.map((row) => JSON.parse(row.record_json)),
       reviewDecisions: reviewDecisions.rows.map((row) =>
         JSON.parse(row.record_json),
@@ -322,6 +329,38 @@ export function createPostgresEvidenceProductRepository(options: {
           );
         }
         return clone(values);
+      });
+    },
+
+    async putChangeSet(changeSet) {
+      const value = EvidenceProductChangeSetSchema.parse(changeSet);
+      return withWrite(pool, async (client) => {
+        const existing = await client.query<{ record_json: string }>(
+          `SELECT record_json FROM ${s}.change_sets
+            WHERE workspace_id = $1 AND command_key = $2`,
+          [value.workspaceId, value.commandKey],
+        );
+        const row = existing.rows[0];
+        if (row !== undefined) {
+          const stored = EvidenceProductChangeSetSchema.parse(
+            JSON.parse(row.record_json),
+          );
+          if (!same(stored, value))
+            throw new EvidenceProductCommandCollisionError(value.commandKey);
+          return clone(stored);
+        }
+        await client.query(
+          `INSERT INTO ${s}.change_sets (
+             workspace_id, command_key, to_evidence_revision, record_json
+           ) VALUES ($1, $2, $3, $4)`,
+          [
+            value.workspaceId,
+            value.commandKey,
+            value.changeSet.toEvidenceRevision,
+            canonicalJson(value as never),
+          ],
+        );
+        return clone(value);
       });
     },
 

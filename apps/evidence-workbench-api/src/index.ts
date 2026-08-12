@@ -7,17 +7,22 @@ import {
 
 import {
   EvidenceImportCommandSchema,
+  EvidenceAssessmentCommandSchema,
   EvidenceReviewCommandSchema,
+  buildEvidenceReviewedAssessmentExport,
   recordReviewDecision,
   type EvidenceProductClock,
   type EvidenceProductIds,
   type EvidenceProductRepository,
+  type EvidenceImportCommand,
 } from '@acme/evidence-product-contracts';
 import {
+  buildEvidencePrimaryAssessmentView,
   buildEvidencePrimaryAccountComparisonView,
   buildEvidencePrimaryObservationLedgerView,
   buildEvidencePrimaryOpenQuestionsView,
   buildEvidencePrimaryRelationReviewView,
+  buildEvidencePrimaryReviewHistoryView,
   buildEvidencePrimarySourceReviewView,
   buildEvidencePrimaryTimelineView,
   buildEvidencePrimaryWorkQueueView,
@@ -41,6 +46,20 @@ function send(response: ServerResponse, status: number, value: unknown): void {
   response.end(body);
 }
 
+function sendBytes(
+  response: ServerResponse,
+  status: number,
+  bytes: Uint8Array,
+  headers: Readonly<Record<string, string>>,
+): void {
+  response.writeHead(status, {
+    'content-length': bytes.byteLength,
+    'cache-control': 'no-store',
+    ...headers,
+  });
+  response.end(Buffer.from(bytes));
+}
+
 async function body(request: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
   for await (const chunk of request)
@@ -55,6 +74,7 @@ export function createEvidenceWorkbenchApi(options: {
   readonly clock: EvidenceProductClock;
   readonly ids: EvidenceProductIds;
   readonly workspaceId: string;
+  readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
   readonly technicalAuditSource?: () => {
@@ -243,6 +263,100 @@ export function createEvidenceWorkbenchApi(options: {
         );
         return;
       }
+      const assessmentMatch = /^\/api\/assessments\/([^/]+)$/u.exec(
+        url.pathname,
+      );
+      if (request.method === 'GET' && assessmentMatch?.[1] !== undefined) {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        const requested = decodeURIComponent(assessmentMatch[1]);
+        const snapshot = await options.repository.snapshot();
+        const assessmentVersionId =
+          requested === 'latest'
+            ? snapshot.assessments
+                .filter((assessment) => assessment.workspaceId === workspaceId)
+                .sort(
+                  (left, right) =>
+                    right.sequence - left.sequence ||
+                    right.assessmentVersionId.localeCompare(
+                      left.assessmentVersionId,
+                    ),
+                )[0]?.assessmentVersionId
+            : requested;
+        if (assessmentVersionId === undefined)
+          throw new RangeError('No assessment has been created.');
+        send(
+          response,
+          200,
+          buildEvidencePrimaryAssessmentView({
+            workspaceId,
+            assessmentVersionId,
+            snapshot,
+          }),
+        );
+        return;
+      }
+      const historyMatch =
+        /^\/api\/reviews\/(observation|relation|assessment)\/([^/]+)$/u.exec(
+          url.pathname,
+        );
+      if (
+        request.method === 'GET' &&
+        historyMatch?.[1] !== undefined &&
+        historyMatch[2] !== undefined
+      ) {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        send(
+          response,
+          200,
+          buildEvidencePrimaryReviewHistoryView({
+            workspaceId,
+            targetKind: historyMatch[1] as
+              'observation' | 'relation' | 'assessment',
+            targetVersionId: decodeURIComponent(historyMatch[2]),
+            snapshot: await options.repository.snapshot(),
+          }),
+        );
+        return;
+      }
+      const exportMatch = /^\/api\/assessments\/([^/]+)\/export$/u.exec(
+        url.pathname,
+      );
+      if (request.method === 'GET' && exportMatch?.[1] !== undefined) {
+        const snapshot = await options.repository.snapshot();
+        const workspace = snapshot.workspaces.find(
+          ({ workspaceId }) => workspaceId === options.workspaceId,
+        );
+        const assessment = snapshot.assessments.find(
+          ({ assessmentVersionId }) =>
+            assessmentVersionId ===
+            decodeURIComponent(exportMatch[1] as string),
+        );
+        if (workspace === undefined || assessment === undefined)
+          throw new RangeError('Unknown export assessment.');
+        const view = buildEvidencePrimaryAssessmentView({
+          workspaceId: workspace.workspaceId,
+          assessmentVersionId: assessment.assessmentVersionId,
+          snapshot,
+        });
+        const exported = buildEvidenceReviewedAssessmentExport({
+          dataPolicy: workspace.dataPolicy,
+          assessment,
+          sources: snapshot.sources,
+          observations: snapshot.observations,
+          reviewDecisions: snapshot.reviewDecisions,
+          effectiveBasisEvidenceRevision:
+            view.assessment.effectiveBasisEvidenceRevision,
+          newerEvidenceNotice: view.newEvidenceNotices.at(-1) ?? null,
+        });
+        sendBytes(response, 200, exported.bytes, {
+          'content-type': 'application/zip',
+          'content-disposition': `attachment; filename="assessment-${assessment.sequence}.zip"`,
+          'x-evidence-export-sha256': exported.exportSha256,
+        });
+        return;
+      }
       const sourceMatch = /^\/api\/sources\/([^/]+)$/u.exec(url.pathname);
       if (request.method === 'GET' && sourceMatch?.[1] !== undefined) {
         const workspaceId =
@@ -264,6 +378,31 @@ export function createEvidenceWorkbenchApi(options: {
           202,
           await options.worker.start(
             EvidenceImportCommandSchema.parse(await body(request)),
+          ),
+        );
+        return;
+      }
+      if (
+        request.method === 'POST' &&
+        url.pathname === '/api/imports/late-evidence'
+      ) {
+        if (options.lateEvidenceCommand === undefined)
+          throw new RangeError(
+            'No bounded late-evidence fixture is configured.',
+          );
+        send(
+          response,
+          202,
+          await options.worker.start(options.lateEvidenceCommand),
+        );
+        return;
+      }
+      if (request.method === 'POST' && url.pathname === '/api/assessments') {
+        send(
+          response,
+          201,
+          await options.worker.proposeAssessment(
+            EvidenceAssessmentCommandSchema.parse(await body(request)),
           ),
         );
         return;

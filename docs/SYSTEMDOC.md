@@ -1130,17 +1130,30 @@ disabled completely. Human decisions bind exact immutable versions and live in
 a separate product repository; approval never mutates Evidence records or an
 operation digest.
 
-Implementation is divided into separately activatable slices 0–9. Slices 0–7
-are delivered: corpus and contracts; one-source review; account comparison;
-general relations; timeline/open questions; assessment/re-review; optional
-technical audit; and the self-hosted Supabase PostgreSQL adapters
-(`@acme/adapter-postgres` for the ACME ledger and quality store over schema
-`acme`, `@acme/adapter-evidence-product-postgres` for the product store over
-schema `evidence`, ADR-0033). Remaining slices are hosted shell and a separate
-readiness gate before any non-synthetic data. SQLite and the file product store
-remain the local/hermetic CI defaults; PostgreSQL is opt-in via composition
-(`--adapter postgres` / `ACME_PERSISTENCE=postgres`) and
-`pnpm test:postgres`.
+Implementation is divided into separately activatable slices 0–9. Slices 0–8
+are delivered. ACME-0087 completed Slice 5's assessment/review-history views,
+immutable product change sets, one
+batched late-evidence attention notice, bounded assessment execution, exact
+source-locator browser navigation and deterministic synthetic-only reviewed
+ZIP. ACME-0089 re-sealed E-A01 with no open-question references because every
+sealed question has at least one EVAL-E01-dependent trigger; E-A02 retains all
+three questions after that late import. The fixed journey is therefore
+source-bound without changing its import order.
+The later product/security sequence is recorded
+in
+[`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
+Slice 9 remains a separate readiness gate before any non-synthetic data.
+SQLite and the file product store remain the local/hermetic CI defaults;
+PostgreSQL is opt-in via composition (`--adapter postgres` /
+`ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
+
+The reviewed ZIP is deterministic over the assessment, effective review
+decisions, current newer-evidence notice and cited source bytes. It stores
+canonical JSON, NFC/LF Markdown, immutable review history and only cited text
+source versions in lexicographic uncompressed ZIP order with fixed metadata
+and a bundle SHA-256. Repeated exports from identical inputs are byte-identical;
+an attention delta or later review decision is intentionally reflected in a
+new export while the assessment artifact itself remains immutable.
 
 ## Remaining Implementation Baseline
 

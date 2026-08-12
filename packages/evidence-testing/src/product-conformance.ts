@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
   effectiveReviewDecision,
   recordReviewDecision,
   type EvidenceProductRepository,
@@ -12,6 +13,7 @@ import {
 } from '@acme/evidence-views';
 import {
   evidenceObserveArtifactTask,
+  createEvidenceChangeSet,
   type EvidenceObservation,
 } from '@acme/module-evidence';
 
@@ -132,6 +134,47 @@ export function evidenceProductRepositoryConformance(options: {
           command.targetVersionId,
         ),
       ).toEqual(second);
+    });
+
+    it('persists immutable change sets idempotently and rejects divergent command reuse', async () => {
+      const repository = options.createRepository();
+      const { input, observations } = await seed(repository);
+      const record = {
+        schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+        workspaceId: 'workspace-conformance',
+        commandKey: 'change-set-command-1',
+        recordedAt: timestamp,
+        changeSet: createEvidenceChangeSet({
+          fromEvidenceRevision: 0,
+          toEvidenceRevision: 1,
+          addedArtifactVersionIds: [input.artifactVersion.artifactVersionId],
+          addedObservationIds: observations.map(
+            ({ observationId }) => observationId,
+          ),
+          addedRelationIds: [],
+          addedOpenQuestionIds: [],
+          standingChanges: observations.map(({ observationId }) => ({
+            objectId: observationId,
+            from: null,
+            to: 'current',
+          })),
+          actorReferenceKeys: [],
+          relationEndpointIds: [],
+          temporalBounds: [],
+        }),
+      } as const;
+      expect(await repository.putChangeSet(record)).toEqual(record);
+      expect(await repository.putChangeSet(record)).toEqual(record);
+      await expect(
+        repository.putChangeSet({
+          ...record,
+          changeSet: createEvidenceChangeSet({
+            ...record.changeSet,
+            addedObservationIds: [],
+          }),
+        }),
+      ).rejects.toMatchObject({ code: 'EVIDENCE_PRODUCT_COMMAND_COLLISION' });
+      expect((await repository.snapshot()).changeSets).toEqual([record]);
     });
   });
 }

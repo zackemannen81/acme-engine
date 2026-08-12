@@ -6,6 +6,7 @@ import {
   EVIDENCE_PRODUCT_SNAPSHOT_SCHEMA_VERSION,
   EvidenceProductCommandCollisionError,
   EvidenceProductSnapshotSchema,
+  EvidenceProductChangeSetSchema,
   EvidenceReviewDecisionSchema,
   EvidenceWorkspaceSchema,
   type EvidenceProductJob,
@@ -30,6 +31,7 @@ function emptySnapshot(): EvidenceProductSnapshot {
     relations: [],
     openQuestions: [],
     assessments: [],
+    changeSets: [],
     jobs: [],
     reviewDecisions: [],
   });
@@ -62,6 +64,15 @@ export function createFileEvidenceProductRepository(options: {
   const filePath = path.resolve(options.filePath);
   let pending: Promise<void> = Promise.resolve();
 
+  function serialize<T>(operation: () => Promise<T>): Promise<T> {
+    const current = pending.then(operation);
+    pending = current.then(
+      () => undefined,
+      () => undefined,
+    );
+    return current;
+  }
+
   async function read(): Promise<EvidenceProductSnapshot> {
     try {
       const raw = JSON.parse(await readFile(filePath, 'utf8')) as Record<
@@ -72,6 +83,7 @@ export function createFileEvidenceProductRepository(options: {
         relations: [],
         openQuestions: [],
         assessments: [],
+        changeSets: [],
         ...raw,
       });
     } catch (error) {
@@ -94,23 +106,17 @@ export function createFileEvidenceProductRepository(options: {
       snapshot: EvidenceProductSnapshot;
     },
   ): Promise<T> {
-    let output!: T;
-    const current = pending.then(async () => {
+    const output = await serialize(async () => {
       const result = operation(await read());
-      output = result.value;
       await write(EvidenceProductSnapshotSchema.parse(result.snapshot));
+      return result.value;
     });
-    pending = current.then(
-      () => undefined,
-      () => undefined,
-    );
-    await current;
     return clone(output);
   }
 
   return {
     async snapshot() {
-      return clone(await read());
+      return clone(await serialize(read));
     },
     async putWorkspace(workspace) {
       const value = EvidenceWorkspaceSchema.parse(workspace);
@@ -264,6 +270,33 @@ export function createFileEvidenceProductRepository(options: {
             ...snapshot,
             assessments: [...byId.values()].sort((a, b) =>
               a.assessmentVersionId.localeCompare(b.assessmentVersionId),
+            ),
+          },
+        };
+      });
+    },
+    async putChangeSet(changeSet) {
+      const value = EvidenceProductChangeSetSchema.parse(changeSet);
+      return mutate((snapshot) => {
+        const existing = snapshot.changeSets.find(
+          ({ workspaceId, commandKey }) =>
+            workspaceId === value.workspaceId &&
+            commandKey === value.commandKey,
+        );
+        if (existing !== undefined) {
+          if (!same(existing, value))
+            throw new EvidenceProductCommandCollisionError(value.commandKey);
+          return { value: existing, snapshot };
+        }
+        return {
+          value,
+          snapshot: {
+            ...snapshot,
+            changeSets: [...snapshot.changeSets, value].sort(
+              (a, b) =>
+                a.changeSet.toEvidenceRevision -
+                  b.changeSet.toEvidenceRevision ||
+                a.commandKey.localeCompare(b.commandKey),
             ),
           },
         };

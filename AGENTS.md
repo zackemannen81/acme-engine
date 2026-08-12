@@ -49,12 +49,12 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   synthetic text corpus, treats the model as a candidate generator, preserves
   source-bound observations and changed accounts, requires human review and
   excludes credibility, guilt, legal-sufficiency and real-case-data authority.
-  Research Synthesis is the intended POC #2. Evidence slices 0–2 now provide
-  the synthetic corpus/contracts foundation, deterministic observation
-  extraction, append-only local review decisions, conservative correction
-  supersession, and pure work-queue/source-review/observation-ledger/account-
-  comparison views. General relations and later slices, hosted persistence
-  and every non-synthetic data path remain unimplemented.
+  Research Synthesis is the intended POC #2. Evidence slices 0–8 now provide
+  the fixed synthetic corpus, observation/relation/timeline/assessment tasks,
+  append-only review overlay, complete primary reviewer views and Slice 5
+  assessment/re-review journey, optional technical audit, file/PostgreSQL
+  persistence, deterministic reviewed ZIP and hosted multi-process shell.
+  Every non-synthetic data path remains unimplemented and gated by Slice 9.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

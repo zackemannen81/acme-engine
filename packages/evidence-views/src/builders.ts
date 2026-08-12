@@ -5,6 +5,7 @@ import {
   type EvidenceReviewDecision,
 } from '@acme/evidence-product-contracts';
 import type {
+  EvidenceAssessment,
   EvidenceObservation,
   EvidenceRelation,
   EvidenceState,
@@ -13,33 +14,40 @@ import type {
 } from '@acme/module-evidence';
 import {
   buildEvidenceTimelineEntries,
+  evidenceAttentionTier,
   EvidenceStateSchema,
   pairEvidenceCorrectionObservations,
 } from '@acme/module-evidence';
 
 import {
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION,
+  EVIDENCE_PRIMARY_REVIEW_HISTORY_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_SOURCE_REVIEW_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
   EvidencePrimaryAccountComparisonViewSchema,
+  EvidencePrimaryAssessmentViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
   EvidencePrimaryOpenQuestionsViewSchema,
   EvidencePrimaryRelationReviewViewSchema,
+  EvidencePrimaryReviewHistoryViewSchema,
   EvidencePrimarySourceReviewViewSchema,
   EvidencePrimaryTimelineViewSchema,
   EvidencePrimaryWorkQueueViewSchema,
   EvidenceTechnicalProvenanceViewSchema,
   EvidenceTechnicalReplayViewSchema,
   type EvidencePrimaryAccountComparisonView,
+  type EvidencePrimaryAssessmentView,
   type EvidencePrimaryObservationLedgerView,
   type EvidencePrimaryOpenQuestionsView,
   type EvidencePrimaryRelationReviewView,
+  type EvidencePrimaryReviewHistoryView,
   type EvidencePrimarySourceReviewView,
   type EvidencePrimaryTimelineView,
   type EvidencePrimaryWorkQueueView,
@@ -199,6 +207,137 @@ function endpointDisplay(
   return `${endpoint.kind}:${endpoint.id.slice(0, 18)}`;
 }
 
+function assessmentDecisions(
+  snapshot: EvidenceProductSnapshot,
+  assessmentVersionId: string,
+): readonly EvidenceReviewDecision[] {
+  return orderedReviewDecisions(snapshot.reviewDecisions).filter(
+    (decision) =>
+      decision.workspaceId ===
+        snapshot.assessments.find(
+          (assessment) =>
+            assessment.assessmentVersionId === assessmentVersionId,
+        )?.workspaceId && decision.targetVersionId === assessmentVersionId,
+  );
+}
+
+function effectiveAssessmentBasis(
+  assessment: EvidenceAssessment,
+  decisions: readonly EvidenceReviewDecision[],
+): number {
+  return decisions.reduce(
+    (basis, decision) =>
+      decision.action === 'reaffirm' && decision.basisEvidenceRevision !== null
+        ? Math.max(basis, decision.basisEvidenceRevision)
+        : basis,
+    assessment.basisEvidenceRevision,
+  );
+}
+
+function assessmentAnchors(
+  snapshot: EvidenceProductSnapshot,
+  assessment: EvidenceAssessment,
+) {
+  const citedIds = new Set(
+    assessment.citations.map(({ evidenceId }) => evidenceId),
+  );
+  const observations = snapshot.observations.filter(({ observationId }) =>
+    citedIds.has(observationId),
+  );
+  const relations = snapshot.relations.filter(({ relationId }) =>
+    citedIds.has(relationId),
+  );
+  return {
+    citedArtifactVersionIds: [
+      ...new Set(
+        assessment.citations.map(({ artifactVersionId }) => artifactVersionId),
+      ),
+    ].sort(),
+    citedActorReferenceKeys: [
+      ...new Set(
+        observations.flatMap((observation) => {
+          const actor = sourceActor(observation);
+          return actor === null ? [] : [actor.actorReferenceKey];
+        }),
+      ),
+    ].sort(),
+    citedRelationEndpointIds: [
+      ...new Set(
+        relations.flatMap(({ endpoints }) => endpoints.map(({ id }) => id)),
+      ),
+    ].sort(),
+    citedTemporalBounds: observations.flatMap(({ temporalBound }) =>
+      temporalBound === null ? [] : [temporalBound],
+    ),
+  };
+}
+
+function newEvidenceNotices(
+  snapshot: EvidenceProductSnapshot,
+  workspaceEvidenceRevision: number,
+  assessment: EvidenceAssessment,
+  effectiveBasisEvidenceRevision: number,
+) {
+  const anchors = assessmentAnchors(snapshot, assessment);
+  return snapshot.changeSets
+    .filter(
+      (record) =>
+        record.workspaceId === assessment.workspaceId &&
+        record.changeSet.toEvidenceRevision > effectiveBasisEvidenceRevision,
+    )
+    .map((record) => {
+      const attentionTier = evidenceAttentionTier(
+        {
+          assessmentVersionId: assessment.assessmentVersionId,
+          basisEvidenceRevision: assessment.basisEvidenceRevision,
+          effectiveBasisEvidenceRevision,
+          workspaceEvidenceRevision,
+          ...anchors,
+        },
+        record.changeSet,
+      );
+      if (attentionTier === 'none') return null;
+      return {
+        noticeId: `attention:${assessment.assessmentVersionId}:${record.commandKey}`,
+        assessmentVersionId: assessment.assessmentVersionId,
+        fromEvidenceRevision: record.changeSet.fromEvidenceRevision,
+        toEvidenceRevision: record.changeSet.toEvidenceRevision,
+        attentionTier,
+        message:
+          'New evidence was added after this assessment was reviewed.' as const,
+        addedArtifactVersionIds: record.changeSet.addedArtifactVersionIds,
+        addedObservationIds: record.changeSet.addedObservationIds,
+        addedRelationIds: record.changeSet.addedRelationIds,
+        addedOpenQuestionIds: record.changeSet.addedOpenQuestionIds,
+      };
+    })
+    .filter((notice): notice is NonNullable<typeof notice> => notice !== null)
+    .sort(
+      (left, right) =>
+        left.toEvidenceRevision - right.toEvidenceRevision ||
+        left.noticeId.localeCompare(right.noticeId),
+    );
+}
+
+function citationForEvidence(
+  snapshot: EvidenceProductSnapshot,
+  assessment: EvidenceAssessment,
+  evidenceId: string,
+) {
+  const reference = assessment.citations.find(
+    (value) => value.evidenceId === evidenceId,
+  );
+  if (reference === undefined)
+    throw new RangeError(`Assessment citation missing for ${evidenceId}.`);
+  const source = requireSource(snapshot, reference.artifactVersionId);
+  const observation = snapshot.observations.find(
+    (value) => value.locator.locatorId === reference.locatorId,
+  );
+  if (observation === undefined)
+    throw new RangeError(`Assessment locator missing for ${evidenceId}.`);
+  return citation(source, observation);
+}
+
 export function buildEvidencePrimaryWorkQueueView(input: {
   readonly workspaceId: string;
   readonly snapshot: EvidenceProductSnapshot;
@@ -256,27 +395,90 @@ export function buildEvidencePrimaryWorkQueueView(input: {
           decision?.action === 'request-revision'
             ? ('decision-requested' as const)
             : ('new-relation' as const),
-        summary: `${relation.relationKind}: ${relation.comparableScope.subject} / ${relation.comparableScope.aspect}`,
+        summary: `${relation.relationKind.replaceAll('-', ' ')} between evidence records`,
         targetPath: `/relations#${relation.relationId}`,
       },
     ];
   });
-  const nextItems = [...observationItems, ...relationItems].sort(
-    (left, right) => {
-      if (
-        left.kind === 'source-observation' &&
-        right.kind === 'source-observation'
-      ) {
-        return (
-          left.citation.display.localeCompare(right.citation.display) ||
-          left.itemId.localeCompare(right.itemId)
-        );
-      }
-      if (left.kind === 'source-observation') return -1;
-      if (right.kind === 'source-observation') return 1;
-      return left.itemId.localeCompare(right.itemId);
-    },
-  );
+  const notices = snapshot.assessments.flatMap((assessment) => {
+    const decisions = assessmentDecisions(
+      snapshot,
+      assessment.assessmentVersionId,
+    );
+    const effectiveBasis = effectiveAssessmentBasis(assessment, decisions);
+    return newEvidenceNotices(
+      snapshot,
+      workspace.evidenceRevision,
+      assessment,
+      effectiveBasis,
+    );
+  });
+  const assessmentItems: Array<
+    EvidencePrimaryWorkQueueView['nextItems'][number]
+  > = [];
+  for (const assessment of snapshot.assessments) {
+    if (assessment.workspaceId !== workspace.workspaceId) continue;
+    const decision = effectiveReviewDecision(
+      snapshot.reviewDecisions,
+      assessment.assessmentVersionId,
+    );
+    const assessmentNotices = notices.filter(
+      (notice) => notice.assessmentVersionId === assessment.assessmentVersionId,
+    );
+    if (assessmentNotices.length > 0) {
+      assessmentItems.push({
+        itemId: `assessment-attention:${assessment.assessmentVersionId}`,
+        kind: 'assessment-attention' as const,
+        assessmentVersionId: assessment.assessmentVersionId,
+        sequence: assessment.sequence,
+        reason: 'new-evidence' as const,
+        summary: 'New evidence was added after this assessment was reviewed.',
+        targetPath: `/assessments/${assessment.assessmentVersionId}`,
+      });
+      continue;
+    }
+    if (
+      decision !== null &&
+      !['leave-unresolved', 'request-revision'].includes(decision.action)
+    )
+      continue;
+    assessmentItems.push({
+      itemId: `assessment-review:${assessment.assessmentVersionId}`,
+      kind: 'assessment-review' as const,
+      assessmentVersionId: assessment.assessmentVersionId,
+      sequence: assessment.sequence,
+      reason:
+        decision?.action === 'request-revision'
+          ? ('decision-requested' as const)
+          : ('new-assessment' as const),
+      summary: `Assessment version ${String(assessment.sequence)} requires review.`,
+      targetPath: `/assessments/${assessment.assessmentVersionId}`,
+    });
+  }
+  const nextItems = [
+    ...observationItems,
+    ...relationItems,
+    ...assessmentItems,
+  ].sort((left, right) => {
+    const priority = {
+      'assessment-attention': 0,
+      'source-observation': 1,
+      'relation-review': 2,
+      'assessment-review': 3,
+    } as const;
+    if (priority[left.kind] !== priority[right.kind])
+      return priority[left.kind] - priority[right.kind];
+    if (
+      left.kind === 'source-observation' &&
+      right.kind === 'source-observation'
+    ) {
+      return (
+        left.citation.display.localeCompare(right.citation.display) ||
+        left.itemId.localeCompare(right.itemId)
+      );
+    }
+    return left.itemId.localeCompare(right.itemId);
+  });
   const recent = orderedReviewDecisions(snapshot.reviewDecisions).at(-1);
   return detached(
     EvidencePrimaryWorkQueueViewSchema.parse({
@@ -288,6 +490,7 @@ export function buildEvidencePrimaryWorkQueueView(input: {
       },
       heading: 'Review queue',
       nextItems,
+      newEvidenceNotices: notices,
       mostRecentAction:
         recent === undefined
           ? null
@@ -298,6 +501,157 @@ export function buildEvidencePrimaryWorkQueueView(input: {
               rationale: recent.rationale,
               decidedAt: recent.decidedAt,
             },
+    }),
+  );
+}
+
+export function buildEvidencePrimaryAssessmentView(input: {
+  readonly workspaceId: string;
+  readonly assessmentVersionId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+}): EvidencePrimaryAssessmentView {
+  const snapshot = structuredClone(input.snapshot);
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  const assessment = snapshot.assessments.find(
+    (value) => value.assessmentVersionId === input.assessmentVersionId,
+  );
+  if (
+    assessment === undefined ||
+    assessment.workspaceId !== workspace.workspaceId
+  )
+    throw new RangeError(`Unknown assessment ${input.assessmentVersionId}.`);
+  const decisions = assessmentDecisions(
+    snapshot,
+    assessment.assessmentVersionId,
+  );
+  const effective = effectiveReviewDecision(
+    snapshot.reviewDecisions,
+    assessment.assessmentVersionId,
+  );
+  const effectiveBasis = effectiveAssessmentBasis(assessment, decisions);
+  const notices = newEvidenceNotices(
+    snapshot,
+    workspace.evidenceRevision,
+    assessment,
+    effectiveBasis,
+  );
+  const openQuestions = assessment.openQuestionIds.map((openQuestionId) => {
+    const question = snapshot.openQuestions.find(
+      (value) => value.openQuestionId === openQuestionId,
+    );
+    if (question === undefined) {
+      return {
+        openQuestionId,
+        questionCode: 'QUESTION_PENDING_SOURCE_IMPORT',
+        questionText:
+          'This assessment preserves an open-question reference whose source context is not yet available at this evidence revision.',
+        sourceCitations: [],
+      };
+    }
+    return {
+      openQuestionId,
+      questionCode: question.questionCode,
+      questionText: question.questionText,
+      sourceCitations: question.triggeringEvidenceIds
+        .filter((id) =>
+          assessment.citations.some(({ evidenceId }) => evidenceId === id),
+        )
+        .map((id) => citationForEvidence(snapshot, assessment, id)),
+    };
+  });
+  const reviewStanding = standing(effective);
+  const shareable = ['accept', 'reaffirm'].includes(effective?.action ?? '');
+  return detached(
+    EvidencePrimaryAssessmentViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION,
+      workspace: {
+        workspaceId: workspace.workspaceId,
+        label: workspace.label,
+        evidenceRevision: workspace.evidenceRevision,
+      },
+      heading: 'Reviewed evidence assessment',
+      assessment: {
+        assessmentVersionId: assessment.assessmentVersionId,
+        sequence: assessment.sequence,
+        basisEvidenceRevision: assessment.basisEvidenceRevision,
+        effectiveBasisEvidenceRevision: effectiveBasis,
+        contentHash: assessment.contentHash,
+        predecessorAssessmentVersionId:
+          assessment.predecessorAssessmentVersionId,
+      },
+      claims: assessment.claims.map((claim) => ({
+        claimKey: claim.claimKey,
+        text: claim.text,
+        supportUnresolved: claim.supportUnresolved,
+        uncertainty: claim.uncertainty,
+        uncertaintyRationale: claim.uncertaintyRationale,
+        supportCitations: claim.supportObservationIds.map((id) =>
+          citationForEvidence(snapshot, assessment, id),
+        ),
+        conflictCitations: claim.conflictRelationIds.map((id) =>
+          citationForEvidence(snapshot, assessment, id),
+        ),
+        qualificationCitations: claim.qualificationRelationIds.map((id) =>
+          citationForEvidence(snapshot, assessment, id),
+        ),
+      })),
+      openQuestions,
+      reviewStanding,
+      shareable,
+      dueForAttention: notices.length > 0,
+      newEvidenceNotices: notices,
+      reviewChoices:
+        notices.length > 0 && shareable
+          ? ['reaffirm', 'request-revision']
+          : ['accept', 'reject', 'request-revision'],
+      reviewHistoryPath: `/reviews/assessment/${assessment.assessmentVersionId}`,
+      exportPath: shareable
+        ? `/api/assessments/${assessment.assessmentVersionId}/export`
+        : null,
+    }),
+  );
+}
+
+export function buildEvidencePrimaryReviewHistoryView(input: {
+  readonly workspaceId: string;
+  readonly targetKind: 'observation' | 'relation' | 'assessment';
+  readonly targetVersionId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+}): EvidencePrimaryReviewHistoryView {
+  const snapshot = structuredClone(input.snapshot);
+  requireWorkspace(snapshot, input.workspaceId);
+  const paths = {
+    observation: `/observations/${input.targetVersionId}`,
+    relation: `/relations/${input.targetVersionId}`,
+    assessment: `/assessments/${input.targetVersionId}`,
+  };
+  const decisions = orderedReviewDecisions(snapshot.reviewDecisions)
+    .filter(
+      (decision) =>
+        decision.workspaceId === input.workspaceId &&
+        decision.targetKind === input.targetKind &&
+        decision.targetVersionId === input.targetVersionId,
+    )
+    .map((decision) => ({
+      reviewDecisionId: decision.reviewDecisionId,
+      reviewerRef: decision.reviewerRef,
+      principalAssurance: decision.principalAssurance,
+      action: decision.action,
+      rationale: decision.rationale,
+      decidedAt: decision.decidedAt,
+      basisEvidenceRevision: decision.basisEvidenceRevision,
+    }));
+  return detached(
+    EvidencePrimaryReviewHistoryViewSchema.parse({
+      schemaVersion: EVIDENCE_PRIMARY_REVIEW_HISTORY_VIEW_SCHEMA_VERSION,
+      workspaceId: input.workspaceId,
+      heading: 'Review history',
+      target: {
+        targetKind: input.targetKind,
+        targetVersionId: input.targetVersionId,
+        immutableObjectPath: paths[input.targetKind],
+      },
+      decisions,
     }),
   );
 }

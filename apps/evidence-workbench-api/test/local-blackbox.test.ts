@@ -4,7 +4,12 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { developmentObserveArtifactInput } from '@acme/evidence-testing';
+import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
+import { buildEvidenceReviewedAssessmentExport } from '@acme/evidence-product-contracts';
+import {
+  developmentObserveArtifactInput,
+  evaluationAssessmentCases,
+} from '@acme/evidence-testing';
 import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 
 import { listenEvidenceWorkbenchApi } from '../src/index.js';
@@ -14,6 +19,27 @@ const directories: string[] = [];
 function requiredValue<T>(value: T | undefined, label: string): T {
   if (value === undefined) throw new Error(`Missing ${label}.`);
   return value;
+}
+
+function storedZipFiles(bytes: Uint8Array): ReadonlyMap<string, Uint8Array> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const decoder = new TextDecoder();
+  const files = new Map<string, Uint8Array>();
+  let offset = 0;
+  while (
+    offset + 30 <= bytes.length &&
+    view.getUint32(offset, true) === 0x04034b50
+  ) {
+    const size = view.getUint32(offset + 18, true);
+    const nameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const nameStart = offset + 30;
+    const contentStart = nameStart + nameLength + extraLength;
+    const name = decoder.decode(bytes.slice(nameStart, nameStart + nameLength));
+    files.set(name, bytes.slice(contentStart, contentStart + size));
+    offset = contentStart + size;
+  }
+  return files;
 }
 afterEach(async () => {
   for (const directory of directories.splice(0))
@@ -26,10 +52,11 @@ describe('local Evidence workbench', () => {
       path.join(os.tmpdir(), 'evidence-blackbox-'),
     );
     directories.push(directory);
+    const dataFile = path.join(directory, 'product.json');
     let coreId = 0;
     let reviewId = 0;
     const local = await createLocalEvidenceWorkbench({
-      dataFile: path.join(directory, 'product.json'),
+      dataFile,
       clock: { now: () => '2026-08-11T10:00:00.000Z' },
       ids: { next: (kind) => `${kind}-${String(++coreId).padStart(4, '0')}` },
       reviewIds: {
@@ -144,7 +171,7 @@ describe('local Evidence workbench', () => {
     });
     const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
     try {
-      expect(local.gateway.invocations()).toHaveLength(6);
+      expect(local.gateway.invocations()).toHaveLength(5);
       const pageText = await (await fetch(address.url)).text();
       expect(pageText).toContain('Compare accounts');
       expect(pageText).toContain('Relations');
@@ -163,9 +190,9 @@ describe('local Evidence workbench', () => {
       };
       expect(ledger.summary).toEqual(
         expect.objectContaining({
-          total: 10,
+          total: 8,
           current: 5,
-          contested: 3,
+          contested: 1,
           superseded: 2,
         }),
       );
@@ -183,9 +210,9 @@ describe('local Evidence workbench', () => {
       };
       expect(relations.metrics).toEqual(
         expect.objectContaining({
-          relationTotal: 8,
-          openQuestionTotal: 3,
-          unresolvedActorRelations: 1,
+          relationTotal: 5,
+          openQuestionTotal: 0,
+          unresolvedActorRelations: 0,
         }),
       );
 
@@ -226,7 +253,7 @@ describe('local Evidence workbench', () => {
         actorRoster: fixture.input.actorRoster,
       });
       expect(duplicate.phase).toBe('completed');
-      expect(local.gateway.invocations()).toHaveLength(6);
+      expect(local.gateway.invocations()).toHaveLength(5);
       expect(
         (await fetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);
@@ -235,5 +262,326 @@ describe('local Evidence workbench', () => {
         local.server.close((error) => (error ? reject(error) : resolve())),
       );
     }
+  });
+
+  it('completes assessment review, late-evidence attention, re-review and deterministic export', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'evidence-assessment-blackbox-'),
+    );
+    directories.push(directory);
+    const dataFile = path.join(directory, 'product.json');
+    let coreId = 0;
+    let reviewId = 0;
+    const local = await createLocalEvidenceWorkbench({
+      dataFile,
+      seedMode: 'evaluation',
+      clock: { now: () => '2026-08-11T13:00:00.000Z' },
+      ids: { next: (kind) => `${kind}-${String(++coreId).padStart(4, '0')}` },
+      reviewIds: {
+        next: () => `assessment-review-${String(++reviewId).padStart(4, '0')}`,
+      },
+    });
+    const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    let command = 0;
+    const review = async (
+      targetKind: 'observation' | 'relation' | 'assessment',
+      targetVersionId: string,
+      action: 'accept' | 'reaffirm',
+      basisEvidenceRevision: number | null = null,
+    ) => {
+      const response = await fetch(`${address.url}api/reviews`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 'evidence-review-command/1',
+          workspaceId: local.workspaceId,
+          commandKey: `assessment-blackbox-review-${String(++command)}`,
+          targetKind,
+          targetVersionId,
+          action,
+          reviewerRef: 'local-reviewer',
+          rationale: 'Reviewed against the exact immutable source context.',
+          basisEvidenceRevision,
+        }),
+      });
+      expect(response.status).toBe(201);
+    };
+    const propose = async (sequence: number, predecessor: string | null) => {
+      const response = await fetch(`${address.url}api/assessments`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 'evidence-assessment-command/1',
+          workspaceId: local.workspaceId,
+          commandKey: `assessment-sequence-${String(sequence)}`,
+          sequence,
+          predecessorAssessmentVersionId: predecessor,
+        }),
+      });
+      const responseText = await response.text();
+      expect(response.status, responseText).toBe(201);
+      return JSON.parse(responseText) as {
+        assessmentVersionId: string;
+        sequence: number;
+      };
+    };
+    try {
+      expect(local.gateway.invocations()).toHaveLength(5);
+      const [firstCase, secondCase] = evaluationAssessmentCases();
+      if (firstCase === undefined || secondCase === undefined)
+        throw new Error('Missing assessment fixtures.');
+      const initial = await local.productRepository.snapshot();
+      const relationIds = new Set(
+        initial.relations.map(({ relationId }) => relationId),
+      );
+      for (const id of [
+        ...firstCase.input.acceptedObservationIds,
+        ...firstCase.input.acceptedRelationIds,
+      ]) {
+        await review(
+          relationIds.has(id) ? 'relation' : 'observation',
+          id,
+          'accept',
+        );
+      }
+      const first = await propose(1, null);
+      expect(first.assessmentVersionId).toBe(
+        firstCase.expectedAssessmentVersionId,
+      );
+      expect(local.gateway.invocations()).toHaveLength(6);
+      const unreviewedSnapshot = await local.productRepository.snapshot();
+      const unreviewedAssessment = requiredValue(
+        unreviewedSnapshot.assessments.find(
+          ({ assessmentVersionId }) =>
+            assessmentVersionId === first.assessmentVersionId,
+        ),
+        'unreviewed assessment',
+      );
+      expect(() =>
+        buildEvidenceReviewedAssessmentExport({
+          dataPolicy: 'synthetic-only',
+          assessment: unreviewedAssessment,
+          sources: unreviewedSnapshot.sources,
+          observations: unreviewedSnapshot.observations,
+          reviewDecisions: unreviewedSnapshot.reviewDecisions,
+          effectiveBasisEvidenceRevision:
+            unreviewedAssessment.basisEvidenceRevision,
+          newerEvidenceNotice: null,
+        }),
+      ).toThrow(/reviewed shareable/u);
+      await review('assessment', first.assessmentVersionId, 'accept');
+
+      const reviewedSnapshot = await local.productRepository.snapshot();
+      expect(() =>
+        buildEvidenceReviewedAssessmentExport({
+          dataPolicy: 'non-synthetic',
+          assessment: unreviewedAssessment,
+          sources: reviewedSnapshot.sources,
+          observations: reviewedSnapshot.observations,
+          reviewDecisions: reviewedSnapshot.reviewDecisions,
+          effectiveBasisEvidenceRevision:
+            unreviewedAssessment.basisEvidenceRevision,
+          newerEvidenceNotice: null,
+        }),
+      ).toThrow(/refuses non-synthetic/u);
+
+      const firstViewBefore = (await (
+        await fetch(
+          `${address.url}api/assessments/${first.assessmentVersionId}`,
+        )
+      ).json()) as {
+        shareable: boolean;
+        dueForAttention: boolean;
+        exportPath: string;
+      };
+      expect(firstViewBefore).toMatchObject({
+        shareable: true,
+        dueForAttention: false,
+      });
+      const exportOne = await fetch(
+        `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
+      );
+      const exportTwo = await fetch(
+        `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
+      );
+      const bytesOne = new Uint8Array(await exportOne.arrayBuffer());
+      const bytesTwo = new Uint8Array(await exportTwo.arrayBuffer());
+      expect(exportOne.status).toBe(200);
+      expect(bytesTwo).toEqual(bytesOne);
+      expect(exportOne.headers.get('x-evidence-export-sha256')).toMatch(
+        /^[a-f0-9]{64}$/u,
+      );
+      const files = storedZipFiles(bytesOne);
+      expect([...files.keys()]).toEqual([...files.keys()].sort());
+      expect([...files.keys()]).toEqual(
+        expect.arrayContaining([
+          'assessment.json',
+          'assessment.md',
+          'manifest.json',
+          'review-history.json',
+        ]),
+      );
+      const markdown = new TextDecoder().decode(files.get('assessment.md'));
+      const manifest = JSON.parse(
+        new TextDecoder().decode(
+          requiredValue(files.get('manifest.json'), 'manifest'),
+        ),
+      ) as {
+        citations: { artifactVersionId: string; locatorId: string }[];
+      };
+      for (const citation of manifest.citations) {
+        const sourcePath = `sources/${citation.artifactVersionId}.txt`;
+        expect(files.has(sourcePath)).toBe(true);
+        expect(markdown).toContain(`${sourcePath}#L`);
+        const sourceView = (await (
+          await fetch(
+            `${address.url}api/sources/${citation.artifactVersionId}?workspaceId=${local.workspaceId}`,
+          )
+        ).json()) as {
+          observations: { citation: { locatorId: string } }[];
+        };
+        expect(
+          sourceView.observations.some(
+            ({ citation: value }) => value.locatorId === citation.locatorId,
+          ),
+        ).toBe(true);
+      }
+
+      const beforeLate = JSON.stringify(
+        (await local.productRepository.snapshot()).assessments.find(
+          ({ assessmentVersionId }) =>
+            assessmentVersionId === first.assessmentVersionId,
+        ),
+      );
+      const lateResponse = await fetch(
+        `${address.url}api/imports/late-evidence`,
+        {
+          method: 'POST',
+        },
+      );
+      expect(lateResponse.status).toBe(202);
+      const lateJob = (await lateResponse.json()) as { jobId: string };
+      const completedLateJob = await local.worker.wait(lateJob.jobId);
+      expect(completedLateJob.phase, completedLateJob.message).toBe(
+        'completed',
+      );
+      expect(local.gateway.invocations()).toHaveLength(8);
+
+      const dueView = (await (
+        await fetch(
+          `${address.url}api/assessments/${first.assessmentVersionId}`,
+        )
+      ).json()) as {
+        dueForAttention: boolean;
+        newEvidenceNotices: unknown[];
+        workspace: { evidenceRevision: number };
+      };
+      expect(dueView.dueForAttention).toBe(true);
+      expect(dueView.newEvidenceNotices).toHaveLength(1);
+      const queue = (await (
+        await fetch(
+          `${address.url}api/work-queue?workspaceId=${local.workspaceId}`,
+        )
+      ).json()) as {
+        newEvidenceNotices: unknown[];
+        nextItems: { kind: string }[];
+      };
+      expect(queue.newEvidenceNotices).toHaveLength(1);
+      expect(
+        queue.nextItems.filter(({ kind }) => kind === 'assessment-attention'),
+      ).toHaveLength(1);
+      const exportAfterLate = new Uint8Array(
+        await (
+          await fetch(
+            `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
+          )
+        ).arrayBuffer(),
+      );
+      expect(exportAfterLate).not.toEqual(bytesOne);
+      const filesAfterLate = storedZipFiles(exportAfterLate);
+      expect(filesAfterLate.get('assessment.json')).toEqual(
+        files.get('assessment.json'),
+      );
+      const manifestAfterLate = JSON.parse(
+        new TextDecoder().decode(
+          requiredValue(filesAfterLate.get('manifest.json'), 'late manifest'),
+        ),
+      ) as { newerEvidenceNotice: unknown | null };
+      expect(manifestAfterLate.newerEvidenceNotice).not.toBeNull();
+      expect(
+        JSON.stringify(
+          (await local.productRepository.snapshot()).assessments.find(
+            ({ assessmentVersionId }) =>
+              assessmentVersionId === first.assessmentVersionId,
+          ),
+        ),
+      ).toBe(beforeLate);
+
+      await review(
+        'assessment',
+        first.assessmentVersionId,
+        'reaffirm',
+        dueView.workspace.evidenceRevision,
+      );
+      const reaffirmed = (await (
+        await fetch(
+          `${address.url}api/assessments/${first.assessmentVersionId}`,
+        )
+      ).json()) as { dueForAttention: boolean };
+      expect(reaffirmed.dueForAttention).toBe(false);
+      const history = (await (
+        await fetch(
+          `${address.url}api/reviews/assessment/${first.assessmentVersionId}`,
+        )
+      ).json()) as { decisions: { action: string }[] };
+      expect(history.decisions.map(({ action }) => action)).toEqual([
+        'accept',
+        'reaffirm',
+      ]);
+
+      const afterLate = await local.productRepository.snapshot();
+      const afterRelationIds = new Set(
+        afterLate.relations.map(({ relationId }) => relationId),
+      );
+      for (const id of [
+        ...secondCase.input.acceptedObservationIds,
+        ...secondCase.input.acceptedRelationIds,
+      ]) {
+        await review(
+          afterRelationIds.has(id) ? 'relation' : 'observation',
+          id,
+          'accept',
+        );
+      }
+      const second = await propose(2, first.assessmentVersionId);
+      expect(second.assessmentVersionId).toBe(
+        secondCase.expectedAssessmentVersionId,
+      );
+      expect(local.gateway.invocations()).toHaveLength(9);
+      await review('assessment', second.assessmentVersionId, 'accept');
+      expect(
+        (await fetch(`${address.url}api/technical/provenance`)).status,
+      ).toBe(404);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        local.server.close((error) => (error ? reject(error) : resolve())),
+      );
+      await local.close();
+    }
+    const reopened = createFileEvidenceProductRepository({
+      filePath: dataFile,
+    });
+    const persisted = await reopened.snapshot();
+    expect(
+      persisted.assessments
+        .map(({ sequence }) => sequence)
+        .sort((left, right) => left - right),
+    ).toEqual([1, 2]);
+    expect(
+      persisted.reviewDecisions.filter(
+        ({ targetKind }) => targetKind === 'assessment',
+      ),
+    ).toHaveLength(3);
+    expect(persisted.changeSets).not.toHaveLength(0);
   });
 });

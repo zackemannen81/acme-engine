@@ -540,7 +540,7 @@
           "uncertaintyRationale": "The available accounts differ and no controller log has yet been imported."
         }
       ],
-      "openQuestionTruthIds": ["E-Q02", "E-Q03"],
+      "openQuestionTruthIds": [],
       "citationTruthIds": ["E-O03", "E-O04", "E-O08", "E-R03", "E-R04"],
       "predecessorAssessmentTruthId": null,
       "reviewExpectation": "accepted"

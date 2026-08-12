@@ -20,6 +20,10 @@ export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
   'evidence-primary-timeline-view/1' as const;
 export const EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION =
   'evidence-primary-open-questions-view/1' as const;
+export const EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION =
+  'evidence-primary-assessment-view/1' as const;
+export const EVIDENCE_PRIMARY_REVIEW_HISTORY_VIEW_SCHEMA_VERSION =
+  'evidence-primary-review-history-view/1' as const;
 export const EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION =
   'evidence-technical-provenance-view/1' as const;
 export const EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION =
@@ -62,6 +66,23 @@ const SourceSummarySchema = z
   })
   .strict();
 
+const NewEvidenceNoticeSchema = z
+  .object({
+    noticeId: EvidenceNonBlankStringSchema,
+    assessmentVersionId: EvidenceNonBlankStringSchema,
+    fromEvidenceRevision: z.number().int().nonnegative(),
+    toEvidenceRevision: z.number().int().positive(),
+    attentionTier: z.enum(['A', 'B']),
+    message: z.literal(
+      'New evidence was added after this assessment was reviewed.',
+    ),
+    addedArtifactVersionIds: z.array(EvidenceNonBlankStringSchema),
+    addedObservationIds: z.array(EvidenceNonBlankStringSchema),
+    addedRelationIds: z.array(EvidenceNonBlankStringSchema),
+    addedOpenQuestionIds: z.array(EvidenceNonBlankStringSchema),
+  })
+  .strict();
+
 export const EvidencePrimaryWorkQueueViewSchema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION),
@@ -97,8 +118,31 @@ export const EvidencePrimaryWorkQueueViewSchema = z
             targetPath: EvidenceNonBlankStringSchema,
           })
           .strict(),
+        z
+          .object({
+            itemId: EvidenceNonBlankStringSchema,
+            kind: z.literal('assessment-review'),
+            assessmentVersionId: EvidenceNonBlankStringSchema,
+            sequence: z.number().int().positive(),
+            reason: z.enum(['new-assessment', 'decision-requested']),
+            summary: EvidenceNonBlankStringSchema,
+            targetPath: EvidenceNonBlankStringSchema,
+          })
+          .strict(),
+        z
+          .object({
+            itemId: EvidenceNonBlankStringSchema,
+            kind: z.literal('assessment-attention'),
+            assessmentVersionId: EvidenceNonBlankStringSchema,
+            sequence: z.number().int().positive(),
+            reason: z.literal('new-evidence'),
+            summary: EvidenceNonBlankStringSchema,
+            targetPath: EvidenceNonBlankStringSchema,
+          })
+          .strict(),
       ]),
     ),
+    newEvidenceNotices: z.array(NewEvidenceNoticeSchema),
     mostRecentAction: z
       .object({
         targetVersionId: EvidenceNonBlankStringSchema,
@@ -476,6 +520,100 @@ export type EvidencePrimaryTimelineView = z.infer<
 >;
 export type EvidencePrimaryOpenQuestionsView = z.infer<
   typeof EvidencePrimaryOpenQuestionsViewSchema
+>;
+
+export const EvidencePrimaryAssessmentViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION),
+    workspace: z
+      .object({
+        workspaceId: EvidenceNonBlankStringSchema,
+        label: EvidenceNonBlankStringSchema,
+        evidenceRevision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    heading: z.literal('Reviewed evidence assessment'),
+    assessment: z
+      .object({
+        assessmentVersionId: EvidenceNonBlankStringSchema,
+        sequence: z.number().int().positive(),
+        basisEvidenceRevision: z.number().int().nonnegative(),
+        effectiveBasisEvidenceRevision: z.number().int().nonnegative(),
+        contentHash: EvidenceSha256Schema,
+        predecessorAssessmentVersionId: EvidenceNonBlankStringSchema.nullable(),
+      })
+      .strict(),
+    claims: z.array(
+      z
+        .object({
+          claimKey: EvidenceNonBlankStringSchema,
+          text: EvidenceNonBlankStringSchema,
+          supportUnresolved: z.boolean(),
+          uncertainty: z.enum(['low', 'medium', 'high']),
+          uncertaintyRationale: EvidenceNonBlankStringSchema,
+          supportCitations: z.array(CitationSchema),
+          conflictCitations: z.array(CitationSchema),
+          qualificationCitations: z.array(CitationSchema),
+        })
+        .strict(),
+    ),
+    openQuestions: z.array(
+      z
+        .object({
+          openQuestionId: EvidenceNonBlankStringSchema,
+          questionCode: EvidenceNonBlankStringSchema,
+          questionText: EvidenceNonBlankStringSchema,
+          sourceCitations: z.array(CitationSchema),
+        })
+        .strict(),
+    ),
+    reviewStanding: ReviewStandingSchema,
+    shareable: z.boolean(),
+    dueForAttention: z.boolean(),
+    newEvidenceNotices: z.array(NewEvidenceNoticeSchema),
+    reviewChoices: z.array(
+      z.enum(['accept', 'reject', 'request-revision', 'reaffirm']),
+    ),
+    reviewHistoryPath: EvidenceNonBlankStringSchema,
+    exportPath: EvidenceNonBlankStringSchema.nullable(),
+  })
+  .strict();
+
+export const EvidencePrimaryReviewHistoryViewSchema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PRIMARY_REVIEW_HISTORY_VIEW_SCHEMA_VERSION,
+    ),
+    workspaceId: EvidenceNonBlankStringSchema,
+    heading: z.literal('Review history'),
+    target: z
+      .object({
+        targetKind: z.enum(['observation', 'relation', 'assessment']),
+        targetVersionId: EvidenceNonBlankStringSchema,
+        immutableObjectPath: EvidenceNonBlankStringSchema,
+      })
+      .strict(),
+    decisions: z.array(
+      z
+        .object({
+          reviewDecisionId: EvidenceNonBlankStringSchema,
+          reviewerRef: EvidenceNonBlankStringSchema,
+          principalAssurance: z.literal('unauthenticated-local'),
+          action: EvidenceReviewActionSchema,
+          rationale: EvidenceNonBlankStringSchema,
+          decidedAt: EvidenceNonBlankStringSchema,
+          basisEvidenceRevision: z.number().int().nonnegative().nullable(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidencePrimaryAssessmentView = z.infer<
+  typeof EvidencePrimaryAssessmentViewSchema
+>;
+export type EvidencePrimaryReviewHistoryView = z.infer<
+  typeof EvidencePrimaryReviewHistoryViewSchema
 >;
 
 export const EvidenceTechnicalProvenanceViewSchema = z

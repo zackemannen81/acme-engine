@@ -35,6 +35,16 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     defaultPath: '/open-questions',
   },
   {
+    schemaVersion: 'evidence-primary-assessment-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/assessments/:assessmentVersionId',
+  },
+  {
+    schemaVersion: 'evidence-primary-review-history-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/reviews/:targetKind/:targetVersionId',
+  },
+  {
     schemaVersion: 'evidence-technical-provenance-view/1',
     classification: 'technical-audit',
     defaultPath: '/technical/provenance',

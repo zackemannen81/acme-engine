@@ -8,6 +8,7 @@ import type {
 
 import type {
   EvidenceProductJob,
+  EvidenceProductChangeSet,
   EvidenceProductSnapshot,
   EvidenceReviewCommand,
   EvidenceReviewDecision,
@@ -38,6 +39,9 @@ export interface EvidenceProductRepository {
   putAssessments(
     assessments: readonly EvidenceAssessment[],
   ): Promise<readonly EvidenceAssessment[]>;
+  putChangeSet(
+    changeSet: EvidenceProductChangeSet,
+  ): Promise<EvidenceProductChangeSet>;
   putJob(job: EvidenceProductJob): Promise<EvidenceProductJob>;
   appendReviewDecision(
     decision: EvidenceReviewDecision,

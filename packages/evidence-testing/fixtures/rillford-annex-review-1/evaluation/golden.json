@@ -38,18 +38,18 @@
     "evidence_question_7cea928bd8c09d26a584f8563488aaed86e32c312c311d260ddcf855bc6dd3a1"
   ],
   "expectedAssessmentVersionIds": [
-    "evidence_assessment_3cce43e11bc7082a8f512861b9ad7650588b155870c5de2f80cca2aaa5fb2230",
-    "evidence_assessment_fa93461c648a4dc372ec19773c036bd5888e52e0a59f894ca26f38875917dedf"
+    "evidence_assessment_1e71cb81d7bc51f4f1bfc321fddeeb2fdb11bb3ffc6ee556a5dc4a6188f610d3",
+    "evidence_assessment_dd20c80adcbf410b591003b553d10ac338b28317ef9f810c108b5cba2e8f8606"
   ],
   "expectedStandings": [
     {
       "objectKind": "assessment-version",
-      "objectId": "evidence_assessment_3cce43e11bc7082a8f512861b9ad7650588b155870c5de2f80cca2aaa5fb2230",
+      "objectId": "evidence_assessment_1e71cb81d7bc51f4f1bfc321fddeeb2fdb11bb3ffc6ee556a5dc4a6188f610d3",
       "standing": "current"
     },
     {
       "objectKind": "assessment-version",
-      "objectId": "evidence_assessment_fa93461c648a4dc372ec19773c036bd5888e52e0a59f894ca26f38875917dedf",
+      "objectId": "evidence_assessment_dd20c80adcbf410b591003b553d10ac338b28317ef9f810c108b5cba2e8f8606",
       "standing": "current"
     },
     {

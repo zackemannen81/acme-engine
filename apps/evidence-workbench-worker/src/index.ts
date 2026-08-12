@@ -1,15 +1,25 @@
 import { sha256 } from '@acme/core';
 import {
   EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION,
+  EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+  EvidenceAssessmentCommandSchema,
   EvidenceImportCommandSchema,
   EvidenceProductCommandCollisionError,
   EvidenceProductJobSchema,
+  EvidenceProductChangeSetSchema,
+  type EvidenceAssessmentCommand,
   type EvidenceImportCommand,
   type EvidenceProductClock,
   type EvidenceProductJob,
   type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
-import type { EvidenceObservation } from '@acme/module-evidence';
+import {
+  createEvidenceChangeSet,
+  type EvidenceAssessment,
+  type EvidenceObservation,
+  type EvidenceOpenQuestion,
+  type EvidenceRelation,
+} from '@acme/module-evidence';
 
 export interface EvidenceObservationExecutor {
   observe(input: {
@@ -21,15 +31,40 @@ export interface EvidenceObservationExecutor {
     readonly signal: AbortSignal;
   }): Promise<{
     readonly revision: number;
+    readonly stateRevision: number;
     readonly observations: readonly EvidenceObservation[];
     readonly replayed: boolean;
   }>;
+}
+
+export interface EvidenceAssessmentExecutor {
+  propose(input: { readonly command: EvidenceAssessmentCommand }): Promise<{
+    readonly assessment: EvidenceAssessment;
+    readonly replayed: boolean;
+  }>;
+}
+
+export interface EvidencePostImportExecutor {
+  afterImport(input: {
+    readonly command: EvidenceImportCommand;
+    readonly observedRevision: number;
+    readonly expectedStateRevision: number;
+    readonly observations: readonly EvidenceObservation[];
+    readonly signal: AbortSignal;
+  }): Promise<{
+    readonly revision: number;
+    readonly relations: readonly EvidenceRelation[];
+    readonly openQuestions: readonly EvidenceOpenQuestion[];
+  } | null>;
 }
 
 export interface EvidenceWorkbenchWorker {
   start(command: EvidenceImportCommand): Promise<EvidenceProductJob>;
   wait(jobId: string): Promise<EvidenceProductJob>;
   cancel(jobId: string): Promise<EvidenceProductJob>;
+  proposeAssessment(
+    command: EvidenceAssessmentCommand,
+  ): Promise<EvidenceAssessment>;
 }
 
 function jobIdFor(command: EvidenceImportCommand): string {
@@ -39,6 +74,8 @@ function jobIdFor(command: EvidenceImportCommand): string {
 export function createEvidenceWorkbenchWorker(options: {
   readonly repository: EvidenceProductRepository;
   readonly executor: EvidenceObservationExecutor;
+  readonly assessmentExecutor?: EvidenceAssessmentExecutor;
+  readonly postImportExecutor?: EvidencePostImportExecutor;
   readonly clock: EvidenceProductClock;
 }): EvidenceWorkbenchWorker {
   const running = new Map<string, Promise<EvidenceProductJob>>();
@@ -99,6 +136,71 @@ export function createEvidenceWorkbenchWorker(options: {
         command.workspaceId,
         workspace.evidenceRevision,
         observed.revision,
+      );
+      const postImport = await options.postImportExecutor?.afterImport({
+        command,
+        observedRevision: observed.revision,
+        expectedStateRevision: observed.stateRevision,
+        observations: observed.observations,
+        signal: controller.signal,
+      });
+      if (postImport !== undefined && postImport !== null) {
+        await options.repository.putRelations(postImport.relations);
+        await options.repository.putOpenQuestions(postImport.openQuestions);
+        await options.repository.advanceEvidenceRevision(
+          command.workspaceId,
+          observed.revision,
+          postImport.revision,
+        );
+      }
+      const finalRevision = postImport?.revision ?? observed.revision;
+      await options.repository.putChangeSet(
+        EvidenceProductChangeSetSchema.parse({
+          schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+          workspaceId: command.workspaceId,
+          commandKey: command.commandKey,
+          recordedAt: queued.createdAt,
+          changeSet: createEvidenceChangeSet({
+            fromEvidenceRevision: workspace.evidenceRevision,
+            toEvidenceRevision: finalRevision,
+            addedArtifactVersionIds: [
+              command.artifactVersion.artifactVersionId,
+            ],
+            addedObservationIds: observed.observations.map(
+              ({ observationId }) => observationId,
+            ),
+            addedRelationIds:
+              postImport?.relations.map(({ relationId }) => relationId) ?? [],
+            addedOpenQuestionIds:
+              postImport?.openQuestions.map(
+                ({ openQuestionId }) => openQuestionId,
+              ) ?? [],
+            standingChanges: observed.observations.map(({ observationId }) => ({
+              objectId: observationId,
+              from: null,
+              to: 'current',
+            })),
+            actorReferenceKeys: [
+              ...new Set(
+                observed.observations.flatMap((observation) => {
+                  const actor =
+                    observation.kind === 'statement-occurrence'
+                      ? observation.actorReference
+                      : observation.sourceActorReference;
+                  return actor === null ? [] : [actor.actorReferenceKey];
+                }),
+              ),
+            ],
+            relationEndpointIds:
+              postImport?.relations.flatMap(({ endpoints }) =>
+                endpoints.map(({ id }) => id),
+              ) ?? [],
+            temporalBounds: observed.observations.flatMap(
+              ({ temporalBound }) =>
+                temporalBound === null ? [] : [temporalBound],
+            ),
+          }),
+        }),
       );
       return update(job, {
         phase: 'completed',
@@ -185,6 +287,23 @@ export function createEvidenceWorkbenchWorker(options: {
         cancelRequested: true,
         message: 'Cancellation requested.',
       });
+    },
+    async proposeAssessment(commandValue) {
+      const command = EvidenceAssessmentCommandSchema.parse(commandValue);
+      if (options.assessmentExecutor === undefined)
+        throw new RangeError('Assessment execution is unavailable.');
+      const existing = (await options.repository.snapshot()).assessments.find(
+        (assessment) =>
+          assessment.workspaceId === command.workspaceId &&
+          assessment.sequence === command.sequence,
+      );
+      if (existing !== undefined) return existing;
+      const result = await options.assessmentExecutor.propose({ command });
+      const [stored] = await options.repository.putAssessments([
+        result.assessment,
+      ]);
+      if (stored === undefined) throw new Error('Assessment was not stored.');
+      return stored;
     },
   };
 }
