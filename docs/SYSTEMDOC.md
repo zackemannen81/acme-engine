@@ -7,6 +7,13 @@ its exact target has a decision. Bulk review accepts at most 50 unique targets
 and validates the entire case-scoped batch before an atomic repository write.
 `evidence-case-search-query/1` provides stable exact filtering and offset
 pagination over a case snapshot; it performs no model inference.
+`evidence-case-overview/1` and `evidence-case-integrity-report/1` are pure
+projections of one authorized case snapshot: every integrity row names the
+exact source-bound observations behind it, and classification reads typed
+canonical evidence rather than model-authored rationale text.
+`evidence-assessment-output/1` renders one reviewed assessment as deterministic
+JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
+release or refusal appends an `evidence-export-audit-record/1`.
 
 Last updated: 2026-08-09
 Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
@@ -1226,6 +1233,82 @@ observations, reviews and assessments remain bound to the predecessor. The
 browser exposes case-first import, source navigation, draft and admin apply;
 security audit never stores input or removed text. This gives no
 non-synthetic authority.
+
+Stage 7 adds two pure read models over one authorized case snapshot.
+`evidence-case-overview/1` reports entry counts — sources, observations and
+relations without an effective review decision, open questions and assessments
+needing re-review — plus at most twenty most-recent product activity records.
+`evidence-case-integrity-report/1` reports traceable rows for changed accounts,
+corrections, contradictions, temporal conflicts, qualifications, unresolved
+questions and assessments due for attention. Every row carries at least one
+citation naming the observation, artifact version, locator and exact quote
+behind it; a row whose evidence cannot be resolved inside the case snapshot is
+omitted rather than shown uncited.
+
+Row classification uses typed canonical evidence only. A `correction` relation
+stays a correction because ADR-0032 pairing already binds it to one logical
+artifact lineage. A relation is a changed account when its endpoint
+observations share a *resolved* actor key across *different* logical artifacts,
+which keeps a later account separate from a correction and never merges an
+unresolved actor. A `contradicts` relation is temporal when its comparable
+scope's typed bounds cannot both stand — two known bounds do not overlap under
+`evidence-temporal-overlap-1`, or a recorded `document-time` is set against a
+`claimed-event-time`. Model-authored rationale text classifies nothing, so a
+candidate generator cannot steer the report's categories. Relation kinds
+outside that set (`supports`, `duplicate`, `scope-mismatch`, `unresolved`)
+produce no row.
+
+Both read models share one order-insensitive `snapshotDigest` over the case
+evidence and review overlay, so the same case content yields the same basis
+regardless of repository ordering, and volatile job, staging and audit material
+never changes it. `reportId` derives from the renderer version, that basis and
+the ordered rows. Rows sort by kind then row id, and each row id derives from
+its kind and its relation, question or assessment identity. `/api/overview` and
+`/api/integrity-report` require `workspace.read` on the requested case; a
+same-organization foreign case is refused as `404 Not found.` These projections
+never mutate canonical evidence or the review overlay, add no persistence and
+give no non-synthetic authority.
+
+Stage 8 turns a reviewed assessment into distributable output.
+`evidence-assessment-output/1` is one resolved document: every claim's support,
+conflict and qualification reference is resolved through the assessment's own
+citation list to exactly one observation at that artifact version and locator,
+carrying its exact quote. A reference that cannot be resolved that way refuses
+the whole document rather than rendering an uncited claim, and an unreviewed or
+non-`synthetic-only` assessment is refused outright.
+
+Four renderers read that one document, so the formats cannot drift apart: JSON
+(canonical), Markdown, DOCX and PDF. DOCX is OOXML inside the same
+deterministic stored-entry ZIP writer that backs the reviewed bundle, with no
+document-properties part so no creation timestamp reaches the bytes. PDF is a
+minimal PDF 1.4 writer using the base-14 Courier faces — nothing is embedded,
+line breaking is exact integer arithmetic, and there is no `/Info`,
+`/CreationDate` or `/ModDate`. Repeating an export therefore produces
+byte-identical output in every format, and each format has its own digest.
+
+Export is governed by `evidence-export-policy/1`, a case-owned record with an
+`enabled` flag, a format allowlist and an optimistic revision. A case without a
+stored policy resolves to `EVIDENCE_DEFAULT_EXPORT_POLICY`, an explicit named
+constant rather than an implicit allow, and a case admin may narrow or disable
+it. The check is deny-oriented: bytes are released only when the effective
+policy both enables export and names the exact requested format.
+
+Every release and every refusal appends one `evidence-export-audit-record/1`
+naming format, outcome, reason code, output digest and byte length, the
+server-derived principal and the time. Identity is generated per event, not
+derived from content: two downloads of identical bytes are two release events
+and both appear in the trail. A refusal releases no bytes and still records
+why. `/api/cases/:caseId/assessments/:id/output/:format`,
+`/api/cases/:caseId/export-policy` and `/api/cases/:caseId/export-audit` are
+case-first; a same-organization foreign case stays `404 Not found.`
+
+`evidence-product-backup-manifest/1` mirrors the artifact-level backup pair from
+ADR-0037 at the product layer. It lists a content digest per durable record and
+no source text, quote or rationale. Restore verification fails closed: a missing
+record, an altered record, a record the manifest never listed, or a manifest
+whose own digest does not match all refuse. File and PostgreSQL adapters persist
+both new record kinds under migration v7 with shared conformance. This adds no
+data authority; every output remains synthetic-only.
 
 ## Remaining Implementation Baseline
 

@@ -4,7 +4,7 @@ Status: Approved delivery direction
 
 Date: 2026-08-12
 
-Current task: ACME-0097 implements Stage 5 under ADR-0038
+Current task: none active. Stages 1–8 are delivered; Stage 9 remains gated.
 
 ## Purpose and Authority
 
@@ -50,9 +50,9 @@ Slice 5 is accepted and archived.
 | 3. Case/workspace management and isolation | Create, list, archive and search cases; manage participants/status; prove that no API, job, citation, search result, export or stored object crosses a case boundary. | Complete (ACME-0093 / ADR-0036); synthetic-only. |
 | 4. Secure artifact foundation | Immutable originals, canonical artifact versions, encryption/key lifecycle, retention/deletion, incident controls and product audit exist before sensitive ingestion. | Complete (ACME-0095 / ADR-0037) for the fixed synthetic corpus; no arbitrary ingestion. |
 | 5. Bounded ingestion and redaction | Text import becomes a real product workflow; redacted derivatives retain exact transformation history without mutating originals. PDF/DOCX/OCR remain later formats. | Complete (ACME-0097 / ADR-0038); synthetic-only. |
-| 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Product tasks after case isolation. |
-| 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | New versioned view/export contracts. |
-| 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Export policy and audit gates required. |
+| 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
+| 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
+| 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
 | 9. Non-synthetic readiness | A qualified review may authorize one bounded new data class after every prerequisite is proven. | Slice 9 ADR; never automatic activation. |
 
 Stages are ordered security boundaries, not one large implementation task.
@@ -139,6 +139,28 @@ Case Integrity Report
 Report content identity should derive from case id, evidence revision, review
 overlay digest and renderer version. Export/access events remain separate audit
 records so timestamps and actors do not break deterministic report bytes.
+
+### Delivered by ACME-0099, and what it deliberately does not claim
+
+`evidence-case-overview/1` and `evidence-case-integrity-report/1` implement the
+anchor above for the fixed synthetic corpus. Identity follows the rule: one
+order-insensitive `snapshotDigest` over the case workspace/evidence-revision,
+evidence and review overlay, and a `reportId` over renderer version, that basis
+and the ordered rows. No timestamp or actor enters either identity.
+
+Three parts of this section are intentionally absent rather than approximated,
+because the frozen ACME-0099 charter did not list them:
+
+- **Counts by review standing.** The report counts total source-bound
+  observations and rows by kind. Splitting proposed, accepted, rejected and
+  unresolved material per row kind is a Stage 8 or later charter.
+- **Scope mismatches.** `scope-mismatch` relations produce no row. The frozen
+  In Scope list names changed accounts, contradictions, qualifications,
+  corrections, temporal conflicts and unresolved questions; adding a row kind
+  would change the frozen contract enum.
+- **Changes since a prior report basis.** Nothing diffs two report bases yet.
+  The stable `snapshotDigest`/`reportId` pair is what a later diff would be
+  built on.
 
 ## Slice 9 Data-class Direction
 

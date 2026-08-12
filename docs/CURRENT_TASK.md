@@ -1,84 +1,115 @@
 # Current Task
 
-Task ID: ACME-0099
+Task ID:
 Parent Task: None
-Status: Ready
-Owner: Codex
-Created: 2026-08-12
+Status: No active task
+Owner:
+Created:
 Last updated: 2026-08-12
-Charter frozen at: 2026-08-12
+Charter frozen at:
+
+> No task is active. Stages 1–8 of the Evidence Integrity Workbench product
+> completion plan are delivered; ACME-0100 was the last, archived under
+> `docs/finished/`. Stage 9 non-synthetic readiness is the only remaining stage
+> and is **gated**: it requires its own ADR and qualified review and cannot be
+> activated by implication. Create the next explicitly approved task below
+> before changing the repository.
+
+## Read First
+
+- `AGENTS.md`
+- `docs/TASK_WORKFLOW.md`
+- `docs/PROJECT_BRIEF.md`
+- `docs/CONTRIBUTING.md`
+- `docs/CURRENT_STATUS.md`
+- `docs/SYSTEMDOC.md`
+- `docs/JOURNAL.md`
+- `docs/FILESTRUCTURE.md`
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Complete Stage 7 with a product-facing case overview and deterministic Case
-Integrity Report whose rows navigate to source-bound evidence.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
+
 ### Goal
 
-Make a case understandable at entry and turn reviewed relations, questions,
-changed accounts and assessment attention into a traceable integrity report.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-Versioned pure overview/report contracts, builders, case-first APIs, browser
-views and executable citation/count/isolation proofs.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Counts for sources, pending observations/relations, open questions,
-  assessments needing re-review and recent product activity.
-- Integrity rows for changed accounts, contradictions, qualifications,
-  corrections, temporal conflicts and unresolved questions.
-- Exact observation/source/locator references and deterministic identities.
-- Case-first API/browser navigation and regression/isolation tests.
-- Synchronized architecture/product/operations documentation and archive.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- PDF/DOCX/structured download formats (Stage 8).
-- New model calls, canonical evidence mutation or non-synthetic authority.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- Overview and report derive only from one authorized case snapshot.
-- Every report row names the exact source-bound observations behind it.
-- Counts/ordering/identities are deterministic and browser-visible.
-- Canonical verification passes and documentation is synchronized.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] Contract/builder identity and count tests.
-- [ ] Case-first API/UI and cross-case isolation tests.
-- [ ] Existing reviewer/assessment journeys regress green.
-- [ ] Canonical typecheck/lint/boundaries/tests/build/format/docs/diff gates.
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
+
+## References
+
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [ ] Add overview and integrity-report contracts/builders.
-- [ ] Add authorized API and browser surfaces.
-- [ ] Add deterministic/citation/isolation tests.
-- [ ] Run canonical verification.
-- [ ] Synchronize docs, journal and archive.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
-- The charter is frozen and synthetic-only.
-- This is a pure projection; it never changes canonical evidence or review.
+## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
+
+-none
 
 ## Verification
 
-- [ ] Record exact commands and counts.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
+
+## Documentation Updates
+
+- [ ] `docs/CURRENT_STATUS.md`
+- [ ] `docs/SYSTEMDOC.md`
+- [ ] `docs/JOURNAL.md`
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: Stage 6 complete and archived; Stage 7 ready.
-- Next recommended step: Stage 8 deterministic export/audit/operations.
-- Blockers: none known.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
 - Archive this file under `docs/finished/`.
-- Populate `docs/CURRENT_TASK.md` with Stage 8.
+- Restore this template or populate the next approved task.
 - Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

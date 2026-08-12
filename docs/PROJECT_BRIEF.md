@@ -219,9 +219,15 @@ product remains synthetic-only. The approved later sequencing plan is
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
 navigation, durable object ownership and same-organization cross-case
 non-disclosure. ADR-0037 and ACME-0095 add the secure artifact foundation for
-the fixed synthetic corpus. Ingestion/redaction, Case Integrity Report and
-Slice 9 non-synthetic readiness remain separate later tasks. No non-synthetic
-data path is authorized.
+the fixed synthetic corpus. ACME-0098 adds Stage 6 reviewer operations and
+bounded case search, and ACME-0099 adds Stage 7: a case overview and the
+deterministic Case Integrity Report, both pure projections of one authorized
+case snapshot in which every reported row names its exact source-bound
+observations. ACME-0100 adds Stage 8: deterministic JSON/Markdown/DOCX/PDF
+assessment output from one citation-complete document, a per-case export policy,
+append-only export audit and product backup/restore verification. Stages 1–8 are
+delivered. Slice 9 non-synthetic readiness remains a separate later task and no
+non-synthetic data path is authorized.
 
 ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
 and ACME-0097 implements it end to end.

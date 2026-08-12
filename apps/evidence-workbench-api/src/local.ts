@@ -241,7 +241,7 @@ function systemIds(): IdGenerator {
 }
 
 function productIds(): EvidenceProductIds {
-  return { next: () => `review-decision-${randomUUID()}` };
+  return { next: (kind) => `${kind}-${randomUUID()}` };
 }
 
 async function localArtifactKey(file: string): Promise<Uint8Array> {

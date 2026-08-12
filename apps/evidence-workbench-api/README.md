@@ -27,6 +27,26 @@ create and review E-A01, import the bounded EVAL-E01 late source, show one
 source-linked attention notice, reaffirm E-A01 or create E-A02, and download a
 deterministic synthetic-only `evidence-reviewed-assessment-export/1` ZIP.
 
+The browser opens on Case overview: entry counts for sources, observations and
+relations still awaiting a decision, open questions and assessments needing
+re-review, plus recent product activity. The Integrity report view renders the
+deterministic Case Integrity Report — changed accounts, corrections,
+contradictions, temporal conflicts, qualifications, unresolved questions and
+assessments due for attention — and every listed citation opens its exact
+source lines. Both read `/api/cases/:caseId/overview` and
+`/api/cases/:caseId/integrity-report`, change nothing and add no persistence.
+My review work and Search cover assignments, comments, activity history and
+bounded case-scoped search.
+
+A reviewed assessment can be downloaded as PDF, DOCX, Markdown or JSON from
+`/api/cases/:caseId/assessments/:id/output/:format`, beside the existing
+reviewed-bundle ZIP. Repeating a download returns byte-identical bytes: no
+creation timestamp, embedded font or host locale reaches the output. Release is
+governed per case by `/api/cases/:caseId/export-policy` — a case admin can
+disable export or narrow the format allowlist, and a format outside it is
+refused with `403`. Every release and every refusal appends a record readable at
+`/api/cases/:caseId/export-audit`.
+
 From the repository root:
 
 ```powershell

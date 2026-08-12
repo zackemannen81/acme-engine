@@ -305,15 +305,18 @@ acme-engine/
 │   ├── evidence-product-contracts/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   └── src/{artifact-service.ts,case.ts,index.ts,ingestion.ts,ingestion-service.ts,repository.ts,review.ts,schemas.ts,scope.ts}
+│   │   └── src/{artifact-service.ts,assessment-output.ts,case.ts,case-insights.ts,export.ts,export-operation-schemas.ts,export-operations.ts,index.ts,ingestion.ts,ingestion-service.ts,operations.ts,repository.ts,review.ts,review-operation-schemas.ts,schemas.ts,scope.ts,zip.ts}
 │   ├── evidence-testing/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
+│   │   │   ├── artifact-object-store-conformance.ts
 │   │   │   ├── corpus.ts
 │   │   │   ├── development-observe.ts
+│   │   │   ├── evaluation-assessment.ts
 │   │   │   ├── evaluation-candidates.ts
+│   │   │   ├── evaluation-relate.ts
 │   │   │   ├── evaluation.ts
 │   │   │   ├── golden.ts
 │   │   │   ├── index.ts
@@ -328,9 +331,15 @@ acme-engine/
 │   │   │   └── evaluation/{sources,truth.json,golden.json}
 │   │   └── test/
 │   │       ├── account-views.test.ts
+│   │       ├── assessment-output.test.ts
+│   │       ├── assessment-views.test.ts
+│   │       ├── case-insights.test.ts
 │   │       ├── corpus.test.ts
 │   │       ├── development-observe.test.ts
+│   │       ├── evaluation-assessment.test.ts
 │   │       ├── evaluation-candidates.test.ts
+│   │       ├── evaluation-relate.test.ts
+│   │       ├── export-operations.test.ts
 │   │       ├── identity-vectors.test.ts
 │   │       ├── ingestion-redaction.test.ts
 │   │       └── prompt-guard.test.ts
@@ -787,8 +796,12 @@ content remains intentionally omitted here.
   immutable case-object scope, secure artifact and bounded ingestion/redaction
   services, local workspace, source-import, job and
   append-only exact-version review, durable change-set and assessment-command
-  contracts plus the product repository port and deterministic reviewed-
-  assessment ZIP renderer.
+  contracts plus the product repository port, reviewer-operation and case
+  search contracts, the pure case overview and Case Integrity Report builders,
+  the `evidence-assessment-output/1` document with its deterministic
+  JSON/Markdown/DOCX/PDF renderers, the per-case export policy, export-audit
+  and product backup/restore contracts, and the deterministic
+  reviewed-assessment ZIP renderer over a shared stored-entry ZIP writer.
 - `@acme/evidence-auth`: provider-neutral principals, organizations,
   organization/case memberships, case/workspace bindings, protected BFF
   sessions and pure deny-by-default ADR-0035/0036 policies.

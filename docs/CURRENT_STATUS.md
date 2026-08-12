@@ -1,11 +1,30 @@
 # Current Status
 
+Stage 8 assessment output and export operations are implemented: a reviewed
+assessment renders as deterministic JSON, Markdown, DOCX and PDF from one
+citation-complete document, every reference resolving to an exact artifact
+version, locator and quote. A per-case export policy governs release
+deny-by-default, every release and refusal appends an export-audit record, and a
+product backup manifest verifies restores fail-closed. No new dependency was
+added: DOCX reuses the deterministic ZIP writer and PDF is a minimal base-14
+writer with no embedded font and no timestamp. Non-synthetic data remains
+denied.
+
+Stage 7 case overview and the Case Integrity Report are implemented: one
+authorized case snapshot produces `evidence-case-overview/1` entry counts and
+recent product activity, plus a deterministic `evidence-case-integrity-report/1`
+whose rows name the exact source-bound observations behind every changed
+account, correction, contradiction, temporal conflict, qualification,
+unresolved question and assessment needing re-review. Both are pure
+projections behind case-first authorized routes; they write nothing and add no
+persistence. Non-synthetic data remains denied.
+
 Stage 6 reviewer operations are implemented: case administrators can assign
 and reassign bounded work, reviewers can comment and make single or bounded
 bulk decisions, effective completed state is derived from append-only review
 history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
-browser exposes My review work and Search. Non-synthetic data remains denied.
+browser exposes My review work and Search.
 
 Last updated: 2026-08-12
 
@@ -385,6 +404,33 @@ Non-synthetic paths remain unimplemented (slice 9 governance).
 
 ## Active Work
 
+Stage 8 is complete (ACME-0100). Nothing is in progress. Stages 1–8 of the
+product completion plan are delivered. Stage 9 non-synthetic readiness stays
+closed and needs its own ADR and qualified review before any task may activate
+it.
+
+ACME-0100 implements Stage 8. `buildEvidenceAssessmentOutputDocument` resolves
+one reviewed assessment into a citation-complete document and refuses anything
+it cannot bind to an exact source-bound observation. Four renderers read that
+single document, so JSON, Markdown, DOCX and PDF cannot drift apart, and each
+repeats byte-identically. `evidence-export-policy/1` governs release per case
+with an enable flag and format allowlist; `evidence-export-audit-record/1`
+records every release and refusal with a generated per-event identity;
+`evidence-product-backup-manifest/1` plus its restore verification mirror the
+artifact-level pair from ADR-0037. File and PostgreSQL adapters persist both
+record kinds under migration v7.
+
+ACME-0099 implements Stage 7 as pure read models over one authorized case
+snapshot. `buildEvidenceCaseOverview` counts sources, pending observations and
+relations, open questions and assessments needing re-review, and lists at most
+twenty most-recent product activity records. `buildEvidenceCaseIntegrityReport`
+classifies reviewed relations from typed canonical evidence — never from
+model-authored rationale text — and every row carries at least one citation
+naming the observation, artifact version, locator and exact quote behind it.
+`/api/overview` and `/api/integrity-report` are case-first and deny-by-default;
+the browser opens on the overview and each report citation opens its exact
+source lines.
+
 ACME-0097 implements ADR-0038 after ACME-0096 accepted it. An authenticated
 case reviewer can import one strictly bounded, attested synthetic UTF-8
 `text/plain` document through the case-first browser/API. The exact received
@@ -405,6 +451,25 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0100:** Implemented Stage 8. Added the `evidence-assessment-output/1`
+  document and four deterministic renderers (JSON, Markdown, DOCX, PDF) with no
+  new dependency, a per-case export policy with a format allowlist,
+  append-only export-audit records for every release and refusal, a product
+  backup manifest with fail-closed restore verification, file/PostgreSQL
+  persistence with migration v7 and shared conformance, case-first API routes
+  and browser download surfaces. It adds no data authority.
+- **ACME-0099:** Implemented Stage 7. Added `evidence-case-overview/1` and
+  `evidence-case-integrity-report/1` contracts and pure builders, case-first
+  `/api/overview` and `/api/integrity-report` routes, browser overview and
+  integrity views whose citations open exact source lines, and builder tests
+  pinning classification, counts, citation resolution, input-order-independent
+  identities and basis sensitivity. It writes nothing, adds no persistence and
+  changes no data authority.
+- **ACME-0098:** Implemented Stage 6 reviewer operations and case search:
+  durable assignment/reassignment, comments, append-only activity, atomic
+  single and bounded bulk decisions, effective work status, deterministic
+  bounded search, file/PostgreSQL persistence with migration v6 and the
+  My review work/Search browser views.
 - **ACME-0097:** Implemented bounded synthetic text ingestion and immutable
   redaction. Added strict validators and pinned transforms, additive imported
   logical-artifact identity, two independently encrypted representations,

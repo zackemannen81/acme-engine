@@ -48,6 +48,14 @@ import {
   searchEvidenceCase,
   buildEvidenceCaseOverview,
   buildEvidenceCaseIntegrityReport,
+  EVIDENCE_ASSESSMENT_OUTPUT_FORMATS,
+  EvidenceAssessmentOutputFormatSchema,
+  EvidenceExportPolicyCommandSchema,
+  EvidenceExportRefusedError,
+  authorizeEvidenceAssessmentExport,
+  buildEvidenceAssessmentOutputDocument,
+  renderEvidenceAssessmentOutput,
+  resolveEvidenceExportPolicy,
 } from '@acme/evidence-product-contracts';
 import {
   EvidenceAuthenticationError,
@@ -689,6 +697,8 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/imports',
           '/api/jobs',
           '/api/technical',
+          '/api/export-policy',
+          '/api/export-audit',
         ].some(
           (prefix) =>
             url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
@@ -899,12 +909,25 @@ export function createEvidenceWorkbenchApi(options: {
       }
       if (request.method === 'GET' && url.pathname === '/api/overview') {
         await requireAuthorized('workspace.read', options.workspaceId);
-        send(response, 200, buildEvidenceCaseOverview(await scopedSnapshot(options.workspaceId)));
+        send(
+          response,
+          200,
+          buildEvidenceCaseOverview(await scopedSnapshot(options.workspaceId)),
+        );
         return;
       }
-      if (request.method === 'GET' && url.pathname === '/api/integrity-report') {
+      if (
+        request.method === 'GET' &&
+        url.pathname === '/api/integrity-report'
+      ) {
         await requireAuthorized('workspace.read', options.workspaceId);
-        send(response, 200, buildEvidenceCaseIntegrityReport(await scopedSnapshot(options.workspaceId)));
+        send(
+          response,
+          200,
+          buildEvidenceCaseIntegrityReport(
+            await scopedSnapshot(options.workspaceId),
+          ),
+        );
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/reviewer-work') {
@@ -1553,6 +1576,188 @@ export function createEvidenceWorkbenchApi(options: {
           'content-type': 'application/zip',
           'content-disposition': `attachment; filename="assessment-${assessment.sequence}.zip"`,
           'x-evidence-export-sha256': exported.exportSha256,
+        });
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/export-policy') {
+        await requireAuthorized('workspace.read', options.workspaceId);
+        if (requestCaseId === null)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const policy = resolveEvidenceExportPolicy(
+          await scopedSnapshot(options.workspaceId),
+          requestCaseId,
+        );
+        send(response, 200, {
+          schemaVersion: 'evidence-export-policy-view/1',
+          caseId: requestCaseId,
+          enabled: policy.enabled,
+          allowedFormats: policy.allowedFormats,
+          revision: policy.revision,
+          availableFormats: EVIDENCE_ASSESSMENT_OUTPUT_FORMATS,
+        });
+        return;
+      }
+      if (request.method === 'PUT' && url.pathname === '/api/export-policy') {
+        const authorization = await requireAuthorized(
+          'case.metadata.manage',
+          options.workspaceId,
+          true,
+        );
+        if (requestCaseId === null || !('caseId' in authorization))
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const command = EvidenceExportPolicyCommandSchema.parse(
+          await body(request),
+        );
+        const current = resolveEvidenceExportPolicy(
+          await scopedSnapshot(options.workspaceId),
+          requestCaseId,
+        );
+        if (command.expectedRevision !== current.revision)
+          throw new SyntaxError('Export policy revision conflict.');
+        const stored = await options.repository.putExportPolicy(
+          {
+            schemaVersion: 'evidence-export-policy/1',
+            organizationId: authorization.organizationId,
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            enabled: command.enabled,
+            allowedFormats: command.allowedFormats,
+            revision: current.revision + 1,
+            updatedByPrincipalRef: authorization.principalRef,
+            updatedAt: options.clock.now(),
+          },
+          {
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            boundAt: options.clock.now(),
+          },
+        );
+        send(response, 200, stored);
+        return;
+      }
+      const outputMatch =
+        /^\/api\/assessments\/([^/]+)\/output\/([^/]+)$/u.exec(url.pathname);
+      if (
+        request.method === 'GET' &&
+        outputMatch?.[1] !== undefined &&
+        outputMatch[2] !== undefined
+      ) {
+        const workspaceId = options.workspaceId;
+        const authorization = await requireAuthorized(
+          'export.download',
+          workspaceId,
+        );
+        if (requestCaseId === null || !('caseId' in authorization))
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const format = EvidenceAssessmentOutputFormatSchema.parse(
+          decodeURIComponent(outputMatch[2]),
+        );
+        const snapshot = await scopedSnapshot(workspaceId);
+        const assessmentVersionId = decodeURIComponent(outputMatch[1]);
+        const assessment = snapshot.assessments.find(
+          (item) => item.assessmentVersionId === assessmentVersionId,
+        );
+        if (assessment === undefined) {
+          send(response, 404, 'Not found.');
+          return;
+        }
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId,
+          boundAt: options.clock.now(),
+        };
+        const audit = async (
+          outcome: 'released' | 'refused',
+          reasonCode: string,
+          output: { sha256: string; byteLength: number } | null,
+        ) => {
+          const occurredAt = options.clock.now();
+          await options.repository.appendExportAuditRecord(
+            {
+              schemaVersion: 'evidence-export-audit-record/1',
+              // Each release or refusal is its own event, so the identity is
+              // generated rather than derived: two downloads of the same bytes
+              // must both appear in the audit trail.
+              exportAuditId: options.ids.next('export-audit'),
+              organizationId: authorization.organizationId,
+              caseId: requestCaseId,
+              workspaceId,
+              assessmentVersionId,
+              format,
+              outcome,
+              reasonCode,
+              outputSha256: output?.sha256 ?? null,
+              outputByteLength: output?.byteLength ?? null,
+              principalRef: authorization.principalRef,
+              occurredAt,
+            },
+            scope,
+          );
+        };
+        try {
+          authorizeEvidenceAssessmentExport({
+            snapshot,
+            caseId: requestCaseId,
+            format,
+          });
+        } catch (error) {
+          if (!(error instanceof EvidenceExportRefusedError)) throw error;
+          await audit('refused', error.reasonCode, null);
+          send(response, 403, error.message);
+          return;
+        }
+        const workspace = snapshot.workspaces.find(
+          (item) => item.workspaceId === workspaceId,
+        );
+        if (workspace === undefined) {
+          send(response, 404, 'Not found.');
+          return;
+        }
+        const view = buildEvidencePrimaryAssessmentView({
+          workspaceId,
+          assessmentVersionId,
+          snapshot,
+        });
+        let output;
+        try {
+          output = renderEvidenceAssessmentOutput(
+            buildEvidenceAssessmentOutputDocument({
+              dataPolicy: workspace.dataPolicy,
+              assessment,
+              sources: snapshot.sources,
+              observations: snapshot.observations,
+              reviewDecisions: snapshot.reviewDecisions,
+              effectiveBasisEvidenceRevision:
+                view.assessment.effectiveBasisEvidenceRevision,
+              newerEvidenceNotice:
+                view.newEvidenceNotices.at(-1)?.message ?? null,
+            }),
+            format,
+          );
+        } catch (error) {
+          await audit('refused', 'export.not-shareable', null);
+          send(response, 409, (error as Error).message);
+          return;
+        }
+        await audit('released', 'export.released', {
+          sha256: output.outputSha256,
+          byteLength: output.bytes.length,
+        });
+        sendBytes(response, 200, output.bytes, {
+          'content-type': output.mediaType,
+          'content-disposition': `attachment; filename="${output.fileName}"`,
+          'x-evidence-export-sha256': output.outputSha256,
+        });
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/export-audit') {
+        await requireAuthorized('technical-audit.read', options.workspaceId);
+        if (requestCaseId === null)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const snapshot = await scopedSnapshot(options.workspaceId);
+        send(response, 200, {
+          schemaVersion: 'evidence-export-audit-view/1',
+          records: snapshot.exportAuditRecords,
         });
         return;
       }

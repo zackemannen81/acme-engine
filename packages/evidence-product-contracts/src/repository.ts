@@ -35,13 +35,17 @@ import type {
   EvidenceReviewAssignment,
   EvidenceReviewComment,
 } from './operations.js';
+import type {
+  EvidenceExportAuditRecord,
+  EvidenceExportPolicy,
+} from './export-operation-schemas.js';
 
 export interface EvidenceProductClock {
   now(): string;
 }
 
 export interface EvidenceProductIds {
-  next(kind: 'review-decision'): string;
+  next(kind: 'review-decision' | 'export-audit'): string;
 }
 
 export interface EvidenceArtifactReadAuditContext {
@@ -88,6 +92,14 @@ export interface EvidenceProductRepository {
     activity: EvidenceReviewActivity,
     scope: EvidenceCaseObjectScope,
   ): Promise<EvidenceReviewActivity>;
+  putExportPolicy(
+    policy: EvidenceExportPolicy,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceExportPolicy>;
+  appendExportAuditRecord(
+    record: EvidenceExportAuditRecord,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceExportAuditRecord>;
   appendReviewDecisions(
     decisions: readonly EvidenceReviewDecision[],
     activities: readonly EvidenceReviewActivity[],

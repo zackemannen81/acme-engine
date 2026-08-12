@@ -23,6 +23,8 @@ import {
   EvidenceReviewActivitySchema,
   EvidenceReviewAssignmentSchema,
   EvidenceReviewCommentSchema,
+  EvidenceExportAuditRecordSchema,
+  EvidenceExportPolicySchema,
 } from '@acme/evidence-product-contracts';
 import {
   EvidenceAssessmentSchema,
@@ -210,6 +212,8 @@ export function createPostgresEvidenceProductRepository(options: {
       reviewAssignments,
       reviewComments,
       reviewActivity,
+      exportPolicies,
+      exportAuditRecords,
     ] = await Promise.all([
       client.query<{ record_json: string }>(
         `SELECT record_json FROM ${s}.workspaces ORDER BY workspace_id`,
@@ -279,6 +283,12 @@ export function createPostgresEvidenceProductRepository(options: {
       client.query<{ record_json: string }>(
         `SELECT record_json FROM ${s}.review_activity ORDER BY occurred_at, activity_id`,
       ),
+      client.query<{ record_json: string }>(
+        `SELECT record_json FROM ${s}.export_policies ORDER BY case_id`,
+      ),
+      client.query<{ record_json: string }>(
+        `SELECT record_json FROM ${s}.export_audit_records ORDER BY occurred_at, export_audit_id`,
+      ),
     ]);
 
     return EvidenceProductSnapshotSchema.parse({
@@ -328,6 +338,12 @@ export function createPostgresEvidenceProductRepository(options: {
         JSON.parse(row.record_json),
       ),
       reviewActivity: reviewActivity.rows.map((row) =>
+        JSON.parse(row.record_json),
+      ),
+      exportPolicies: exportPolicies.rows.map((row) =>
+        JSON.parse(row.record_json),
+      ),
+      exportAuditRecords: exportAuditRecords.rows.map((row) =>
         JSON.parse(row.record_json),
       ),
     });
@@ -656,6 +672,80 @@ export function createPostgresEvidenceProductRepository(options: {
           client,
           s,
           bindingsFor(scope, 'review-activity', [
+            value as unknown as Record<string, unknown>,
+          ]),
+        );
+        await validateCaseScope(client, scope);
+        return clone(value);
+      });
+    },
+
+    async putExportPolicy(policy, scope) {
+      const value = EvidenceExportPolicySchema.parse(policy);
+      return withWrite(pool, async (client) => {
+        const result = await client.query<{ record_json: string }>(
+          `SELECT record_json FROM ${s}.export_policies WHERE case_id=$1 FOR UPDATE`,
+          [value.caseId],
+        );
+        const current =
+          result.rows[0] === undefined
+            ? undefined
+            : EvidenceExportPolicySchema.parse(
+                JSON.parse(result.rows[0].record_json),
+              );
+        if (
+          current === undefined
+            ? value.revision !== 1
+            : current.workspaceId !== value.workspaceId ||
+              value.revision !== current.revision + 1
+        )
+          throw new EvidenceProductCommandCollisionError(
+            `export-policy:${value.caseId}`,
+          );
+        await client.query(
+          `INSERT INTO ${s}.export_policies (case_id,workspace_id,revision,record_json)
+           VALUES ($1,$2,$3,$4)
+           ON CONFLICT (case_id) DO UPDATE SET revision=EXCLUDED.revision,record_json=EXCLUDED.record_json`,
+          [
+            value.caseId,
+            value.workspaceId,
+            value.revision,
+            canonicalJson(value as never),
+          ],
+        );
+        await insertCaseObjectBindings(
+          client,
+          s,
+          bindingsFor(scope, 'export-policy', [
+            value as unknown as Record<string, unknown>,
+          ]),
+        );
+        await validateCaseScope(client, scope);
+        return clone(value);
+      });
+    },
+
+    async appendExportAuditRecord(record, scope) {
+      const value = EvidenceExportAuditRecordSchema.parse(record);
+      return withWrite(pool, async (client) => {
+        await insertImmutableRecord({
+          client,
+          schema: s,
+          table: 'export_audit_records',
+          keyColumn: 'export_audit_id',
+          key: value.exportAuditId,
+          value,
+          extraColumns: [
+            ['case_id', value.caseId],
+            ['workspace_id', value.workspaceId],
+            ['assessment_version_id', value.assessmentVersionId],
+            ['occurred_at', value.occurredAt],
+          ],
+        });
+        await insertCaseObjectBindings(
+          client,
+          s,
+          bindingsFor(scope, 'export-audit-record', [
             value as unknown as Record<string, unknown>,
           ]),
         );

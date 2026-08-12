@@ -18,8 +18,9 @@ Application surfaces:
   later authentication, case isolation, secure ingestion, Case Integrity
   Report and Slice 9 readiness. ACME-0087/0089 completed the Slice 5
   prerequisite, ACME-0090/ADR-0035 decided the Stage 2 identity and
-  authorization architecture, and ACME-0091 implements it. The plan does not
-  authorize real data or later stages.
+  authorization architecture, and ACME-0091 implements it. Stages 3–8 are
+  delivered through ACME-0093/0095/0097/0098/0099/0100; only Stage 9 remains,
+  and it is gated. The plan does not authorize real data or later stages.
 
 - [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
   — normative implementation plan for POC #1. It freezes the seven-artifact,

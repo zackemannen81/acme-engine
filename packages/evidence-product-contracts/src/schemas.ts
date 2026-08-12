@@ -28,6 +28,10 @@ import {
   EvidenceTextImportRecordSchema,
 } from './ingestion.js';
 import {
+  EvidenceExportAuditRecordSchema,
+  EvidenceExportPolicySchema,
+} from './export-operation-schemas.js';
+import {
   EvidenceReviewActivitySchema,
   EvidenceReviewAssignmentSchema,
   EvidenceReviewCommentSchema,
@@ -84,6 +88,8 @@ export const EvidenceCaseObjectKindSchema = z.enum([
   'review-assignment',
   'review-comment',
   'review-activity',
+  'export-policy',
+  'export-audit-record',
 ]);
 
 export const EvidenceCaseObjectBindingSchema = z
@@ -364,6 +370,8 @@ export const EvidenceProductSnapshotSchema = z
     reviewAssignments: z.array(EvidenceReviewAssignmentSchema).default([]),
     reviewComments: z.array(EvidenceReviewCommentSchema).default([]),
     reviewActivity: z.array(EvidenceReviewActivitySchema).default([]),
+    exportPolicies: z.array(EvidenceExportPolicySchema).default([]),
+    exportAuditRecords: z.array(EvidenceExportAuditRecordSchema).default([]),
   })
   .strict();
 

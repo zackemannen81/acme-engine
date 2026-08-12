@@ -68,6 +68,10 @@ function createRepository(): EvidenceProductRepository {
       (await repo()).appendReviewComment(comment, activity, scope),
     appendReviewActivity: async (activity, scope) =>
       (await repo()).appendReviewActivity(activity, scope),
+    putExportPolicy: async (policy, scope) =>
+      (await repo()).putExportPolicy(policy, scope),
+    appendExportAuditRecord: async (record, scope) =>
+      (await repo()).appendExportAuditRecord(record, scope),
     appendReviewDecisions: async (decisions, activities, scope) =>
       (await repo()).appendReviewDecisions(decisions, activities, scope),
     stageArtifact: async (staging, audit, scope) =>

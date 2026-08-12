@@ -216,6 +216,20 @@ describe('local Evidence workbench', () => {
       expect(search).toMatchObject({ total: 2 });
       expect(search.items).toHaveLength(1);
       expect(search.nextCursor).toBe('offset:1');
+      const overview = (await (
+        await authFetch(`${address.url}api/overview`)
+      ).json()) as { counts: { sources: number; pendingObservations: number } };
+      expect(overview.counts).toMatchObject({
+        sources: 1,
+        pendingObservations: 0,
+      });
+      const report = (await (
+        await authFetch(`${address.url}api/integrity-report`)
+      ).json()) as { reportId: string; rows: { citations: unknown[] }[] };
+      expect(report.rows.every((row) => row.citations.length > 0)).toBe(true);
+      expect(
+        await (await authFetch(`${address.url}api/integrity-report`)).json(),
+      ).toEqual(report);
     } finally {
       await new Promise<void>((resolve, reject) =>
         local.server.close((error) => (error ? reject(error) : resolve())),
@@ -888,6 +902,163 @@ describe('local Evidence workbench', () => {
       );
       expect(local.gateway.invocations()).toHaveLength(9);
       await review('assessment', second.assessmentVersionId, 'accept');
+
+      const overview = (await (
+        await authFetch(`${address.url}api/overview`)
+      ).json()) as {
+        snapshotDigest: string;
+        counts: { sources: number; openQuestions: number };
+      };
+      const report = (await (
+        await authFetch(`${address.url}api/integrity-report`)
+      ).json()) as {
+        reportId: string;
+        snapshotDigest: string;
+        counts: Record<string, number>;
+        rows: {
+          kind: string;
+          citations: { artifactVersionId: string; locatorId: string }[];
+        }[];
+      };
+      expect(overview.counts.sources).toBe(5);
+      expect(report.snapshotDigest).toBe(overview.snapshotDigest);
+      expect(report.counts).toMatchObject({
+        changedAccountPairs: 1,
+        corrections: 2,
+        temporalConflicts: 2,
+        qualifications: 1,
+      });
+      expect(report.counts.unresolvedQuestions).toBe(
+        overview.counts.openQuestions,
+      );
+      for (const row of report.rows) {
+        expect(row.citations.length).toBeGreaterThan(0);
+        for (const citation of row.citations) {
+          const sourceView = (await (
+            await authFetch(
+              `${address.url}api/sources/${citation.artifactVersionId}?workspaceId=${local.workspaceId}`,
+            )
+          ).json()) as {
+            observations: { citation: { locatorId: string } }[];
+          };
+          expect(
+            sourceView.observations.some(
+              ({ citation: value }) => value.locatorId === citation.locatorId,
+            ),
+          ).toBe(true);
+        }
+      }
+      expect(
+        await (await authFetch(`${address.url}api/integrity-report`)).json(),
+      ).toEqual(report);
+
+      const outputPath = (format: string) =>
+        `${address.url}api/assessments/${encodeURIComponent(first.assessmentVersionId)}/output/${format}`;
+      const digests = new Map<string, string>();
+      for (const format of ['pdf', 'docx', 'markdown', 'json'] as const) {
+        const released = await authFetch(outputPath(format));
+        expect(released.status, format).toBe(200);
+        const bytes = new Uint8Array(await released.arrayBuffer());
+        const digest = released.headers.get('x-evidence-export-sha256');
+        expect(digest).toMatch(/^[a-f0-9]{64}$/u);
+        expect(released.headers.get('content-disposition')).toContain(
+          `assessment-1.${format === 'markdown' ? 'md' : format}`,
+        );
+        const repeated = await authFetch(outputPath(format));
+        expect(new Uint8Array(await repeated.arrayBuffer())).toEqual(bytes);
+        digests.set(format, digest as string);
+      }
+      expect(new Set(digests.values()).size).toBe(4);
+
+      // Every released output must leave exactly one audit record behind.
+      const auditView = (await (
+        await authFetch(`${address.url}api/export-audit`)
+      ).json()) as {
+        records: {
+          format: string;
+          outcome: string;
+          outputSha256: string | null;
+          reasonCode: string;
+          principalRef: string;
+        }[];
+      };
+      const released = auditView.records.filter(
+        (item) => item.outcome === 'released',
+      );
+      expect(released).toHaveLength(8);
+      expect(new Set(released.map((item) => item.format))).toEqual(
+        new Set(['pdf', 'docx', 'markdown', 'json']),
+      );
+      for (const record of released) {
+        expect(record.outputSha256).toBe(digests.get(record.format));
+        expect(record.reasonCode).toBe('export.released');
+        expect(record.principalRef).not.toBe('');
+      }
+
+      // Narrowing the policy must refuse the other formats and record why.
+      const policyBefore = (await (
+        await authFetch(`${address.url}api/export-policy`)
+      ).json()) as { revision: number; allowedFormats: string[] };
+      expect(policyBefore.allowedFormats).toHaveLength(4);
+      const narrowed = await authFetch(`${address.url}api/export-policy`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 'evidence-export-policy-command/1',
+          commandKey: 'export-policy-blackbox-1',
+          expectedRevision: policyBefore.revision,
+          enabled: true,
+          allowedFormats: ['json'],
+        }),
+      });
+      expect(narrowed.status, await narrowed.clone().text()).toBe(200);
+      const refused = await authFetch(outputPath('pdf'));
+      expect(refused.status).toBe(403);
+      expect((await authFetch(outputPath('json'))).status).toBe(200);
+
+      const disabled = await authFetch(`${address.url}api/export-policy`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 'evidence-export-policy-command/1',
+          commandKey: 'export-policy-blackbox-2',
+          expectedRevision: 1,
+          enabled: false,
+          allowedFormats: ['json'],
+        }),
+      });
+      expect(disabled.status, await disabled.clone().text()).toBe(200);
+      expect((await authFetch(outputPath('json'))).status).toBe(403);
+      // A stale expected revision must not overwrite the stored policy.
+      expect(
+        (
+          await authFetch(`${address.url}api/export-policy`, {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              schemaVersion: 'evidence-export-policy-command/1',
+              commandKey: 'export-policy-blackbox-3',
+              expectedRevision: 1,
+              enabled: true,
+              allowedFormats: ['pdf'],
+            }),
+          })
+        ).status,
+      ).toBe(400);
+
+      const afterRefusals = (await (
+        await authFetch(`${address.url}api/export-audit`)
+      ).json()) as {
+        records: { outcome: string; reasonCode: string }[];
+      };
+      const refusals = afterRefusals.records.filter(
+        (item) => item.outcome === 'refused',
+      );
+      expect(refusals.map((item) => item.reasonCode).sort()).toEqual([
+        'export.disabled',
+        'export.format-not-allowed',
+      ]);
+
       expect(
         (await authFetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);
@@ -912,5 +1083,7 @@ describe('local Evidence workbench', () => {
       ),
     ).toHaveLength(3);
     expect(persisted.changeSets).not.toHaveLength(0);
-  });
+    // The longest journey: nine mock executions, a late import, a reviewed ZIP
+    // and eight rendered outputs against the file-backed product store.
+  }, 30_000);
 });

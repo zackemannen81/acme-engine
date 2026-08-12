@@ -25,6 +25,8 @@ import {
   EvidenceReviewActivitySchema,
   EvidenceReviewAssignmentSchema,
   EvidenceReviewCommentSchema,
+  EvidenceExportAuditRecordSchema,
+  EvidenceExportPolicySchema,
 } from '@acme/evidence-product-contracts';
 import {
   EvidenceAssessmentSchema,
@@ -60,6 +62,8 @@ function emptySnapshot(): EvidenceProductSnapshot {
     reviewAssignments: [],
     reviewComments: [],
     reviewActivity: [],
+    exportPolicies: [],
+    exportAuditRecords: [],
   });
 }
 
@@ -466,6 +470,63 @@ export function createFileEvidenceProductRepository(options: {
           },
           scope,
           'review-activity',
+          [value as unknown as Record<string, unknown>],
+        ),
+      }));
+    },
+    async putExportPolicy(policy, scope) {
+      const value = EvidenceExportPolicySchema.parse(policy);
+      return mutate((snapshot) => {
+        const current = snapshot.exportPolicies.find(
+          (item) => item.caseId === value.caseId,
+        );
+        if (
+          current !== undefined &&
+          (current.workspaceId !== value.workspaceId ||
+            value.revision !== current.revision + 1)
+        )
+          throw new EvidenceProductCommandCollisionError(
+            `export-policy:${value.caseId}`,
+          );
+        if (current === undefined && value.revision !== 1)
+          throw new EvidenceProductCommandCollisionError(
+            `export-policy:${value.caseId}`,
+          );
+        const policies = snapshot.exportPolicies.filter(
+          (item) => item.caseId !== value.caseId,
+        );
+        policies.push(value);
+        return {
+          value,
+          snapshot: attachBindings(
+            {
+              ...snapshot,
+              exportPolicies: policies.sort((a, b) =>
+                a.caseId.localeCompare(b.caseId),
+              ),
+            },
+            scope,
+            'export-policy',
+            [value as unknown as Record<string, unknown>],
+          ),
+        };
+      });
+    },
+    async appendExportAuditRecord(record, scope) {
+      const value = EvidenceExportAuditRecordSchema.parse(record);
+      return mutate((snapshot) => ({
+        value,
+        snapshot: attachBindings(
+          {
+            ...snapshot,
+            exportAuditRecords: appendUnique(
+              snapshot.exportAuditRecords,
+              value,
+              (item) => item.exportAuditId,
+            ),
+          },
+          scope,
+          'export-audit-record',
           [value as unknown as Record<string, unknown>],
         ),
       }));

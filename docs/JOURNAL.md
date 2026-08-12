@@ -1,5 +1,172 @@
 # Journal
 
+## 2026-08-12 — ACME-0100 assessment output and export operations complete
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: ACME-0100
+- Summary: Delivered Stage 8, the last stage before the gated Stage 9. A
+  reviewed assessment now leaves the product as deterministic JSON, Markdown,
+  DOCX or PDF under an explicit per-case export policy, every release and
+  refusal is audited, and the product store has a backup manifest whose restore
+  verification fails closed.
+- Charter note: the owner froze ACME-0100 with Goal and In Scope filled in but
+  Primary Deliverable, Definition of Done and Minimum Verification Gates still
+  template text. Those three were completed from the frozen Goal, the frozen
+  In Scope sentence (kept verbatim) and the owner's recorded scope decision,
+  and both the freeze metadata fix and the field completion are recorded in the
+  Charter Amendment Log. Nothing was widened.
+- One document, four renderers. `evidence-assessment-output/1` resolves every
+  claim's support, conflict and qualification reference through the
+  assessment's own citation list to exactly one observation at that artifact
+  version and locator, carrying its exact quote. All four formats render from
+  that single document, so they cannot drift apart, and a reference that cannot
+  be resolved refuses the whole document instead of producing an uncited claim.
+  The golden corpus confirmed the approach is sound: all five E-A01 citations,
+  including the two relation citations, resolve to exactly one observation.
+- No new dependency, deliberately. The repository already hand-rolls a
+  deterministic stored-entry ZIP writer precisely so exports are
+  content-addressed; a PDF or DOCX library would have reintroduced the creation
+  timestamps and ordering that writer exists to avoid. The ZIP writer was
+  extracted so DOCX (OOXML, no docProps part) reuses it, and PDF is a minimal
+  PDF 1.4 writer over the base-14 Courier faces: nothing embedded, line
+  breaking as exact integer arithmetic, no `/Info`, `/CreationDate` or
+  `/ModDate`.
+- Load-bearing evidence rather than a shape assertion: the PDF test walks the
+  cross-reference table the way a reader does, checking every offset lands on
+  its object and that `/Size` matches, and it does so for a forced multi-page
+  document as well as the single-page golden one. Asserting `%PDF-1.4` alone
+  would have let a broken xref pass.
+- Corrected mid-implementation: the export-audit identity was first derived
+  from its content, which made two downloads at the same clock instant collapse
+  into one record. That is the wrong model for an audit trail — two downloads
+  are two release events and both must appear — and the blackbox test caught it
+  as 4 records where 8 were expected. Identity is now generated per event via
+  `ids.next('export-audit')`, matching how every other audit event in this
+  repository is identified. `deriveEvidenceExportAuditId` was removed.
+- Export is deny-oriented: bytes are released only when the effective policy
+  both enables export for the case and names the exact requested format. A case
+  with no stored policy resolves to `EVIDENCE_DEFAULT_EXPORT_POLICY`, an
+  explicit named constant rather than an implicit allow, which is also what
+  keeps the existing Stage 5 reviewed-ZIP journey green.
+- The product backup manifest mirrors ADR-0037's artifact-level pair: content
+  digests only, no source text, quote or rationale. Restore verification
+  refuses a missing record, an altered record, a record the manifest never
+  listed, and a manifest whose own digest does not match — each proven
+  separately.
+- Persistence: file and PostgreSQL adapters carry `evidence-export-policy/1`
+  and `evidence-export-audit-record/1` under migration v7, with shared
+  conformance covering policy revisioning, stale-revision refusal and
+  append-only idempotent audit records. Both new record kinds joined the
+  case-object binding vocabulary and both case-scoping paths, and the two new
+  routes joined the same-organization foreign-case isolation list.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 727 unit (115 files, up from 713/113), 78
+  conformance (up from 77), 62 integration, 26 scenario; `pnpm build`;
+  `pnpm docs:check`; `git diff --check` clean. No network call, no wall-clock
+  read in any output byte and no live provider call in any gate. The longest
+  blackbox journey needed an explicit 30s timeout: it now runs nine mock
+  executions, a late import, a reviewed ZIP and eight rendered outputs against
+  the file-backed store, and takes about 5.8s.
+- Not run: `pnpm test:postgres`. `ACME_POSTGRES_URL` is not configured here and
+  the tooling refuses rather than skipping, so no PostgreSQL result is claimed.
+  Migration v7 and the two PostgreSQL write paths are therefore typechecked and
+  conformance-covered but not executed against a server; that is the one gap in
+  this task's evidence and the next PostgreSQL-capable session should run it.
+- Docs: `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`, `PROJECT_BRIEF`,
+  `AGENTS.md`, the completion plan, the design README and the workbench API
+  README synchronized; ACME-0100 archived.
+- Spend: none.
+- Follow-ups: Stage 9 non-synthetic readiness is the only remaining stage and
+  stays closed — it needs its own ADR and qualified review and cannot activate
+  by implication. Stage 7's three recorded absences (per-standing count splits,
+  a `scope-mismatch` row kind, a diff between two report bases) remain open and
+  were not in this charter either.
+- Signature: Claude
+
+## 2026-08-12 — ACME-0099 case overview and Case Integrity Report complete
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: ACME-0099
+- Summary: Finished Stage 7, resuming the partial implementation Codex left in
+  the working tree when its session limit stopped work. A case now opens on an
+  overview, and reviewed relations, questions and assessment attention become a
+  deterministic Case Integrity Report whose every row names the exact
+  source-bound observations behind it.
+- Resumed state: the contracts, both builders, the two API routes and the
+  browser views existed but were unformatted and untested, `digest()` had been
+  left mid-refactor with the report using a separate content digest under a
+  field named `snapshotDigest`, and no builder test existed.
+- Load-bearing correction: `changedAccountPairs` could never be anything but
+  zero. Classification tested `/changed-account/iu` against `rationaleCode`, a
+  free-text field no generator emits — and one written by the model. Two
+  problems in one: a category the frozen charter requires produced no rows, and
+  report categories were steerable by prompt output, which the guardrails
+  forbid. Classification now reads typed canonical evidence only.
+- The three typed rules, all grounded in the specification rather than
+  invented: a `correction` relation stays a correction because ADR-0032 pairing
+  binds it to one logical-artifact lineage; a relation is a **changed account**
+  when its endpoint observations share a *resolved* actor key across
+  *different* logical artifacts, which is exactly the spec's "later changed
+  account from the same actor" and honors both "zero changed-account pairs are
+  classified as corrections" and the prohibition on merging unresolved actors;
+  and a `contradicts` relation is a **temporal conflict** when its comparable
+  scope's typed bounds cannot both stand — two known bounds do not overlap
+  under the existing `evidence-temporal-overlap-1` helper, or a recorded
+  `document-time` is set against a `claimed-event-time`. `supports`,
+  `duplicate`, `scope-mismatch` and `unresolved` produce no row.
+- On the sealed corpus this yields E-R01/E-R02 corrections, E-R03 the changed
+  account, E-R04 a qualification, E-R05/E-R06 temporal conflicts and no row for
+  E-R07/E-R08 — and therefore zero plain contradictions. Zero is the truthful
+  count for this corpus, not a broken branch: every `contradicts` relation in it
+  is either the same actor's later account or a clash with the access log.
+- Identity was made coherent with its own field name. One order-insensitive
+  `snapshotDigest` over the case workspace/evidence revision, evidence and
+  review overlay now serves both read models, so the overview and the report
+  state the same basis and repository ordering cannot change it. `reportId`
+  derives from renderer version, that basis and the ordered rows. Volatile
+  job, staging and audit material is excluded; no timestamp or actor enters
+  either identity.
+- Tests added: `packages/evidence-testing/test/case-insights.test.ts` pins the
+  classification of all eight golden relations by name, the full count vector,
+  citation resolution to real observations and sources, equality under a
+  reversed snapshot, uniqueness and sort order of row ids, and that a later
+  evidence revision or one added review decision changes the basis while the
+  rows stay put. The local blackbox now asserts the same counts through the
+  real API after the full journey and walks every citation back through
+  `api/sources/...` to prove the row-to-source path end to end. The web shell
+  test pins the citation buttons and the `loadSource` wiring behind them.
+- Isolation: `api/overview` and `api/integrity-report` joined the
+  same-organization foreign-case route list, which expects `404 Not found.`
+  Codex had also moved `api/reviewer-work` and `api/search` into that loop;
+  they were previously passed as surplus arguments to a two-argument helper and
+  so were never actually exercised.
+- Recorded absences rather than approximations, all outside the frozen In Scope
+  list: no per-review-standing count split, no `scope-mismatch` row kind and no
+  diff against a prior report basis. The stable digest pair is what a later
+  diff would be built on. They are written into the completion plan.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 713 unit (113 files, up from 708/112), 77
+  conformance, 62 integration, 26 scenario; `pnpm build`; `pnpm docs:check`
+  201 Markdown files; `git diff --check` clean. No network call, no wall-clock
+  read and no live provider call in any gate.
+- Not run: `pnpm test:postgres`. `ACME_POSTGRES_URL` is not configured here and
+  the tooling refuses rather than skipping, so no PostgreSQL result is claimed.
+  Stage 7 adds no persistence, schema or migration, so no PostgreSQL surface
+  changed.
+- Docs: `CURRENT_STATUS`, `SYSTEMDOC`, `FILESTRUCTURE`, `PROJECT_BRIEF`,
+  `AGENTS.md`, the completion plan, the design README and the workbench API
+  README synchronized; ACME-0099 archived. `FILESTRUCTURE` also picked up
+  package files that had drifted out of date before this task.
+- Spend: none.
+- Follow-ups: Stage 8 (deterministic assessment output, export audit and
+  operational controls) is drafted in `docs/CURRENT_TASK.md` as ACME-0100 and
+  is **not** frozen — its charter needs explicit approval before
+  implementation. Stage 9 non-synthetic readiness remains closed and cannot
+  activate by implication.
+- Signature: Claude
+
 ## 2026-08-12 — ACME-0098 reviewer operations and case search complete
 
 - Date: 2026-08-12

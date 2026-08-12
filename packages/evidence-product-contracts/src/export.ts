@@ -8,6 +8,11 @@ import type {
 
 import { effectiveReviewDecision, orderedReviewDecisions } from './review.js';
 import type { EvidenceReviewDecision } from './schemas.js';
+import {
+  evidenceTextBytes as textBytes,
+  evidenceZipStore as zipStore,
+  type EvidenceZipEntry,
+} from './zip.js';
 
 export const EVIDENCE_REVIEWED_ASSESSMENT_EXPORT_SCHEMA_VERSION =
   'evidence-reviewed-assessment-export/1' as const;
@@ -20,116 +25,7 @@ export interface EvidenceReviewedAssessmentExport {
   readonly paths: readonly string[];
 }
 
-interface ExportFile {
-  readonly path: string;
-  readonly bytes: Uint8Array;
-}
-
-const encoder = new TextEncoder();
-
-function textBytes(value: string): Uint8Array {
-  return encoder.encode(value.replaceAll('\r\n', '\n').normalize('NFC'));
-}
-
-function u16(value: number): Uint8Array {
-  const bytes = new Uint8Array(2);
-  new DataView(bytes.buffer).setUint16(0, value, true);
-  return bytes;
-}
-
-function u32(value: number): Uint8Array {
-  const bytes = new Uint8Array(4);
-  new DataView(bytes.buffer).setUint32(0, value >>> 0, true);
-  return bytes;
-}
-
-function join(parts: readonly Uint8Array[]): Uint8Array {
-  const result = new Uint8Array(
-    parts.reduce((sum, part) => sum + part.length, 0),
-  );
-  let offset = 0;
-  for (const part of parts) {
-    result.set(part, offset);
-    offset += part.length;
-  }
-  return result;
-}
-
-function crc32(bytes: Uint8Array): number {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) {
-      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
-    }
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function zipStore(filesValue: readonly ExportFile[]): Uint8Array {
-  const files = [...filesValue].sort((left, right) =>
-    left.path.localeCompare(right.path),
-  );
-  const localParts: Uint8Array[] = [];
-  const centralParts: Uint8Array[] = [];
-  let offset = 0;
-  for (const file of files) {
-    const name = textBytes(file.path);
-    const crc = crc32(file.bytes);
-    const local = join([
-      u32(0x04034b50),
-      u16(20),
-      u16(0x0800),
-      u16(0),
-      u16(0),
-      u16(0x0021),
-      u32(crc),
-      u32(file.bytes.length),
-      u32(file.bytes.length),
-      u16(name.length),
-      u16(0),
-      name,
-      file.bytes,
-    ]);
-    localParts.push(local);
-    centralParts.push(
-      join([
-        u32(0x02014b50),
-        u16(0x0314),
-        u16(20),
-        u16(0x0800),
-        u16(0),
-        u16(0),
-        u16(0x0021),
-        u32(crc),
-        u32(file.bytes.length),
-        u32(file.bytes.length),
-        u16(name.length),
-        u16(0),
-        u16(0),
-        u16(0),
-        u16(0),
-        u32(0x81a40000),
-        u32(offset),
-        name,
-      ]),
-    );
-    offset += local.length;
-  }
-  const central = join(centralParts);
-  return join([
-    ...localParts,
-    central,
-    u32(0x06054b50),
-    u16(0),
-    u16(0),
-    u16(files.length),
-    u16(files.length),
-    u32(central.length),
-    u32(offset),
-    u16(0),
-  ]);
-}
+type ExportFile = EvidenceZipEntry;
 
 function sourceLineReference(
   assessment: EvidenceAssessment,

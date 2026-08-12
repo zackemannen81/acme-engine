@@ -495,4 +495,86 @@ export function evidenceReviewerOperationsRepositoryConformance(options: {
       ).toEqual([decision]);
     });
   });
+
+  describe('evidence export operations repository conformance', () => {
+    it('revisions an export policy and keeps audit records append-only', async () => {
+      const repository = options.createRepository();
+      const seeded = await seed(repository);
+      const scope = {
+        caseId: 'case-export-operations',
+        workspaceId: 'workspace-conformance',
+        boundAt: timestamp,
+      } as const;
+      await repository.bindCaseObjects([
+        {
+          schemaVersion: 'evidence-case-object-binding/1',
+          ...scope,
+          objectKind: 'source',
+          objectId: seeded.input.artifactVersion.artifactVersionId,
+        },
+      ]);
+      const policy = {
+        schemaVersion: 'evidence-export-policy/1' as const,
+        organizationId: 'organization-export',
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        enabled: true,
+        allowedFormats: ['pdf' as const, 'json' as const],
+        revision: 1,
+        updatedByPrincipalRef: 'principal-admin',
+        updatedAt: timestamp,
+      };
+      await repository.putExportPolicy(policy, scope);
+      const narrowed = {
+        ...policy,
+        allowedFormats: ['pdf' as const],
+        revision: 2,
+      };
+      await repository.putExportPolicy(narrowed, scope);
+      // A stale expected revision must not silently overwrite the policy.
+      await expect(
+        repository.putExportPolicy({ ...policy, enabled: false }, scope),
+      ).rejects.toThrow();
+
+      const record = {
+        schemaVersion: 'evidence-export-audit-record/1' as const,
+        exportAuditId: 'export-audit-conformance',
+        organizationId: policy.organizationId,
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        assessmentVersionId: 'assessment-version-conformance',
+        format: 'pdf' as const,
+        outcome: 'released' as const,
+        reasonCode: 'export.released',
+        outputSha256: 'a'.repeat(64),
+        outputByteLength: 2048,
+        principalRef: 'principal-reviewer',
+        occurredAt: timestamp,
+      };
+      await repository.appendExportAuditRecord(record, scope);
+      await repository.appendExportAuditRecord(record, scope);
+      await repository.appendExportAuditRecord(
+        {
+          ...record,
+          exportAuditId: 'export-audit-refusal',
+          outcome: 'refused',
+          reasonCode: 'export.format-not-allowed',
+          outputSha256: null,
+          outputByteLength: null,
+        },
+        scope,
+      );
+
+      const snapshot = await repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      expect(snapshot.exportPolicies).toEqual([narrowed]);
+      expect(snapshot.exportAuditRecords).toHaveLength(2);
+      expect(snapshot.exportAuditRecords).toContainEqual(record);
+      expect(
+        snapshot.exportAuditRecords.map(({ outcome }) => outcome).sort(),
+      ).toEqual(['refused', 'released']);
+    });
+  });
 }

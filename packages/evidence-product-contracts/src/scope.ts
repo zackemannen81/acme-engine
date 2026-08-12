@@ -97,6 +97,12 @@ export function scopeEvidenceProductSnapshot(
     reviewActivity: snapshot.reviewActivity.filter(
       (item) => item.workspaceId === workspaceId,
     ),
+    exportPolicies: snapshot.exportPolicies.filter(
+      (item) => item.workspaceId === workspaceId,
+    ),
+    exportAuditRecords: snapshot.exportAuditRecords.filter(
+      (item) => item.workspaceId === workspaceId,
+    ),
   });
 }
 
@@ -171,6 +177,10 @@ export function evidenceProductObjectId(
       return String(value.commentId);
     case 'review-activity':
       return String(value.activityId);
+    case 'export-policy':
+      return String(value.caseId);
+    case 'export-audit-record':
+      return String(value.exportAuditId);
   }
 }
 
@@ -230,6 +240,8 @@ export function scopeEvidenceProductSnapshotByCase(
   const assignmentIds = forKind('review-assignment');
   const commentIds = forKind('review-comment');
   const activityIds = forKind('review-activity');
+  const exportPolicyIds = forKind('export-policy');
+  const exportAuditIds = forKind('export-audit-record');
   return EvidenceProductSnapshotSchema.parse({
     schemaVersion: snapshot.schemaVersion,
     workspaces: snapshot.workspaces.filter((item) =>
@@ -292,6 +304,12 @@ export function scopeEvidenceProductSnapshotByCase(
     ),
     reviewActivity: snapshot.reviewActivity.filter((item) =>
       activityIds.has(item.activityId),
+    ),
+    exportPolicies: snapshot.exportPolicies.filter((item) =>
+      exportPolicyIds.has(item.caseId),
+    ),
+    exportAuditRecords: snapshot.exportAuditRecords.filter((item) =>
+      exportAuditIds.has(item.exportAuditId),
     ),
   });
 }

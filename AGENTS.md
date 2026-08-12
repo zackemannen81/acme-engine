@@ -76,6 +76,18 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
   same-organization adversarial route tests prove cross-case non-disclosure.
+  Stage 6 reviewer operations (ACME-0098) and Stage 7 case overview plus the
+  deterministic Case Integrity Report (ACME-0099) are delivered. The report is
+  a pure projection of one authorized case snapshot: it classifies relations
+  from typed canonical evidence rather than model-authored rationale text, and
+  every row names the exact source-bound observations behind it. Stage 8
+  (ACME-0100) delivers assessment output and export operations: one
+  citation-complete `evidence-assessment-output/1` document rendered as
+  byte-deterministic JSON, Markdown, DOCX and PDF with no new dependency, a
+  per-case export policy, append-only export-audit records for every release
+  and refusal, and a product backup manifest with fail-closed restore
+  verification. Stages 1–8 are complete. Stage 9 non-synthetic readiness
+  remains closed and cannot activate by implication.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

@@ -238,6 +238,28 @@ export function createEvidenceProductMigrations(
           (case_id, occurred_at, activity_id)`,
       ]),
     }),
+    Object.freeze({
+      version: 7,
+      name: 'evidence-export-operations',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.export_policies (
+          case_id text PRIMARY KEY,
+          workspace_id text NOT NULL,
+          revision integer NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE TABLE ${qIdent(name)}.export_audit_records (
+          export_audit_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          assessment_version_id text NOT NULL,
+          occurred_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX export_audit_case_order ON ${qIdent(name)}.export_audit_records
+          (case_id, occurred_at, export_audit_id)`,
+      ]),
+    }),
   ]);
 }
 
