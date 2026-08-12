@@ -778,10 +778,20 @@ normalization remains future work.
 - Model responses are durably recorded before interpretation and canonical
   commit.
 - Domain events and outbox rows commit together.
-- SQLite remains the only implemented durable adapter. ADR-0028 selects
-  managed PostgreSQL as the hosted Evidence Integrity POC target through a new
-  conformant adapter, but makes no production-provider, adapter-design or
-  deployment decision.
+- SQLite remains the only implemented durable adapter. ADR-0029 selects
+  self-hosted Supabase as the POC #1 platform with the adapter on plain
+  PostgreSQL wire, and
+  [ADR-0033](adr/0033-postgresql-persistence-architecture.md) decides that
+  adapter's architecture: `pg` with an injected pool the adapter never owns;
+  separate `acme` and `evidence` schemas under separate roles with no
+  cross-schema foreign key or transaction; one `READ COMMITTED` transaction per
+  Unit of Work with compare-and-swap by conditional update and row count;
+  outbox leasing by `FOR UPDATE SKIP LOCKED` under the unchanged ADR-0018
+  semantics; canonical JSON, timestamps and hashes stored as `text` because
+  content-derived identity requires byte fidelity; the ADR-0003/0013 migration
+  format with per-schema ledgers and a transaction-scoped advisory lock; and
+  SQLSTATE-keyed error classification into the existing taxonomy. No adapter is
+  implemented yet, and no deployment decision is made.
 
 ## Domain Proof
 

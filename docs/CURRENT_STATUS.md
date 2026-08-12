@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 ## Repository
 
@@ -57,6 +57,7 @@ implementation baseline:
 - ADR-0030: Evidence V1 identity and canonical placement
 - ADR-0031: Evidence reviewer overlay and versioned views
 - ADR-0032: Evidence V1 correction-occurrence pairing
+- ADR-0033: PostgreSQL persistence architecture
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -350,13 +351,23 @@ technical plan is
 The direction, platform and implementation plan are accepted. Slices 0–5
 exist for domain and product foundations: observe/relate/timeline/assessment
 tasks, attention/export helpers, primary views through open questions, product
-assessment storage and gated technical-audit views (disabled by default).
-PostgreSQL adapter, hosted shell, deployment and non-synthetic paths remain
-unimplemented.
+assessment storage and gated technical-audit views (disabled by default). ADR-0033 now decides the
+PostgreSQL persistence architecture slice 7 must implement — driver and pool
+ownership, `acme`/`evidence` schema separation, transaction boundary and
+compare-and-swap, outbox leasing, canonical-value representation, migrations,
+error classification, connection lifecycle, verification environment and the
+one-instance-per-data-classification isolation policy — and closes ADR-0029's
+two open items. PostgreSQL adapter, hosted shell, deployment and non-synthetic
+paths remain unimplemented.
 
 ## Active Work
 
-No implementation task is active. ACME-0066–0068 closed WP-Q Q2–Q4 (CLI
+ACME-0085, Evidence Integrity Workbench slice 7, is active as a `Draft`: the
+self-hosted Supabase PostgreSQL adapter implemented against ADR-0033. Its
+charter is not frozen and carries six open questions, including whether slice 7
+stays one task or splits into engine and product-store tasks. No code exists.
+ACME-0084 delivered and archived ADR-0033, which was slice 7's remaining
+prerequisite after ACME-0083 closed slice 6. ACME-0066–0068 closed WP-Q Q2–Q4 (CLI
 quality surfaces, pure S11 view, live-model judge) and ACME-0069 closed WP-T
 T1 / G08 (async launch, progress and cancellation under ADR-0027); both
 landed on `grok/gapfixes2` and are merged to `main`. ACME-0070 then
@@ -391,13 +402,27 @@ version navigable. ACME-0080 then delivered slice 3: `evidence.relate-
 observations@1.0.0`, eight golden L3 relations, three open questions, contest
 projection for scoped contradictions, primary relation review and evaluation
 seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
-overlap helper, and primary timeline/open-question views. The recommended next
-product task is slice 7, self-hosted Supabase PostgreSQL adapter.
-Independent alternatives remain E1
+overlap helper, and primary timeline/open-question views. ACME-0083 then
+delivered slice 6, and ACME-0084 delivered ADR-0033, which was slice 7's
+remaining prerequisite. The recommended next product task is therefore slice 7
+itself, the self-hosted Supabase PostgreSQL adapter, implemented against
+ADR-0033. Independent alternatives remain E1
 trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0084:** Delivered ADR-0033, the PostgreSQL persistence architecture,
+  closing ADR-0029's two open items and slice 7's remaining prerequisite. It
+  decides driver and pool ownership, `acme`/`evidence` schema separation with no
+  cross-schema foreign key or transaction, `READ COMMITTED` with
+  conditional-update compare-and-swap, `FOR UPDATE SKIP LOCKED` outbox leasing,
+  canonical values as `text` for byte fidelity, per-schema migration ledgers
+  with an advisory lock, SQLSTATE error classification, connection lifecycle,
+  an ephemeral plain-PostgreSQL verification environment with schema-per-test
+  isolation, and one instance per data classification rather than per POC. It
+  adds three gates to slice 7 and refuses `jsonb`, `timestamptz` and
+  `SERIALIZABLE` with recorded reasons. No code was added.
 
 - **ACME-0083:** Delivered Evidence Integrity slice 6: technical provenance and
   replay view contracts/builders and API routes gated by

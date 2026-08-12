@@ -1,5 +1,66 @@
 # Journal
 
+## 2026-08-12 — ACME-0084 PostgreSQL persistence architecture
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: ACME-0084
+- Branch: `dev/legal-evidence`
+- Summary: Froze the ACME-0084 charter and delivered ADR-0033, the PostgreSQL
+  persistence architecture, which was slice 7's remaining prerequisite after
+  ACME-0083 closed slice 6. The ADR decides eleven areas with mechanisms rather
+  than intents: `pg` with an injected pool the adapter never owns and a direct
+  connection port; separate `acme` and `evidence` schemas under separate roles
+  with no cross-schema foreign key or transaction and separate migration
+  ledgers; browser isolation as an executable anonymous-role denial gate; one
+  `READ COMMITTED` transaction per Unit of Work with compare-and-swap by
+  conditional update and affected row count; outbox leasing by
+  `FOR UPDATE SKIP LOCKED` under unchanged ADR-0018 semantics; canonical JSON,
+  timestamps and hashes as `text` because content-derived identity requires
+  byte fidelity; the ADR-0003/0013 migration format with a transaction-scoped
+  advisory lock and an authoritative explicit migrate command; SQLSTATE-keyed
+  error classification; transaction-scoped client checkout with repeatable-read
+  multi-statement read sets; an ephemeral plain-PostgreSQL CI environment with
+  schema-per-test isolation; and one instance per data classification rather
+  than per POC. ADR-0029's two open items are closed.
+- Decisions worth naming: `jsonb` and `timestamptz` are refused because they
+  re-canonicalize and would silently break the content-derived identities, the
+  operation digest and replay equality. `SERIALIZABLE` is refused because the
+  losing writer would fail with a serialization error instead of the
+  `CONFLICT_STATE_REVISION` the existing proofs assert. Idempotency moves from
+  select-then-insert to `ON CONFLICT DO NOTHING` plus row count, because the
+  SQLite form is safe only under `BEGIN IMMEDIATE` and races under
+  `READ COMMITTED`.
+- Confirmed against the repository rather than assumed: the
+  `ExecutionRepository` port is already `Promise`-based, so an asynchronous
+  driver needs no core change; `test:conformance` runs against the default
+  vitest configuration, so PostgreSQL gates must be excluded from it to keep
+  the default suite hermetic; and the ADR-0018 claim order is `occurred_at`
+  then `event_id`.
+- Verification: documentation-only baseline per `AGENTS.md`.
+  `corepack pnpm docs:check` passed over 169 files; `git diff --check` passed.
+  Code gates were not run because the task adds no code, dependency, schema,
+  migration or runtime behavior. No PostgreSQL server or container was used;
+  this task decides the verification environment, slice 7 builds it. Mermaid
+  validation was not applicable: the ADR contains no diagram.
+- Documentation: ADR-0033 created; `docs/adr/README.md`,
+  `docs/design/evidence-integrity-workbench-technical-specification.md`
+  (deferred-decision row, slice 7 prerequisites and gates, section 11),
+  `docs/CURRENT_STATUS.md` and `docs/SYSTEMDOC.md` synchronized.
+  `docs/FILESTRUCTURE.md` is correctly unchanged: the ADR adds one file to an
+  already-mapped directory and creates no package, application or directory.
+- Safety: no code, no provider call, no external effect, no data path. A
+  persistence decision cannot widen product authority, and the ADR-0028 and
+  product definition V1 restrictions are untouched.
+- Handoff: maintainer review completed the same day. ACME-0084 is archived as
+  `docs/finished/ACME-0084_postgresql-persistence-architecture.md`, and slice 7
+  is activated as ACME-0085 in `docs/CURRENT_TASK.md`, deliberately left as a
+  `Draft` with six open questions rather than frozen. Two environment facts are
+  deferred to that charter to observe rather than assume: the direct PostgreSQL
+  port and the PostgreSQL major version of the deployed self-hosted release,
+  neither of which can be answered from the repository.
+- Signature: Claude
+
 ## 2026-08-11 — ACME-0083 Secondary technical audit
 
 - Date: 2026-08-11

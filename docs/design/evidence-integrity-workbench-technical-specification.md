@@ -770,9 +770,13 @@ The local and hosted product use the same command/query semantics:
 
 SQLite is the deterministic local and CI default through slices 0-6. Slice 7
 adds a plain PostgreSQL-wire adapter targeting self-hosted Supabase as required
-by ADR-0029. The browser never uses PostgREST or a Supabase client against ACME
-schemas. Supabase Auth, Storage, Realtime and Studio remain undecided and are
-not implied by the persistence decision.
+by ADR-0029 and specified by
+[ADR-0033](../adr/0033-postgresql-persistence-architecture.md): separate `acme`
+and `evidence` schemas under separate roles with no cross-schema foreign key or
+transaction, and separate migration ledgers. The browser never uses PostgREST or
+a Supabase client against ACME schemas, and ADR-0033 makes that an executable
+anonymous-role denial gate. Supabase Auth, Storage, Realtime and Studio remain
+undecided and are not implied by the persistence decision.
 
 ## 12. Proof Matrix
 
@@ -1109,14 +1113,17 @@ Documentation: separation map and operator audit instructions.
 Reviewer capability: restart API/worker processes and continue the same
 reviewed workspace durably on the accepted PostgreSQL platform.
 
-Prerequisites: slice 6 and a new PostgreSQL schema/transaction/migration ADR.
+Prerequisites: slice 6 and
+[ADR-0033](../adr/0033-postgresql-persistence-architecture.md), both satisfied.
 
 Deliverables: plain PostgreSQL-wire ACME and product-store adapters, migration
 runner and shared conformance kits. Supabase-specific APIs are not used.
 
 Required gates: parity with SQLite/in-memory conformance, aggregate transaction
 rollback, contended expected-revision write, resume/replay, append-only review
-ordering, migration/reopen and browser isolation from ACME schemas.
+ordering, migration/reopen and browser isolation from ACME schemas. ADR-0033
+adds three: disjoint concurrent outbox leases, anonymous-role denial against
+both schemas, and exactly one applied migration set under concurrent startup.
 
 Documentation: operations, backups, connection limits and migration policy.
 
@@ -1160,7 +1167,7 @@ Documentation: all new authority and residual risks before ingestion.
 
 | Decision | Status / trigger |
 | --- | --- |
-| PostgreSQL schema, transaction boundary, migrations and conformance | New ADR before slice 7. Platform remains self-hosted Supabase; adapter remains plain PostgreSQL wire. |
+| PostgreSQL schema, transaction boundary, migrations and conformance | **Decided by [ADR-0033](../adr/0033-postgresql-persistence-architecture.md).** Platform remains self-hosted Supabase; adapter remains plain PostgreSQL wire. |
 | Identity provider, authentication and authorization | New ADR before hosted review commands in slice 8. |
 | Object-storage vendor and database/object consistency | New ADR before any artifact bytes move outside the text document repository. |
 | Supabase Auth, Storage, Realtime or Studio | Undecided and unused unless a later ADR adopts a component. |
