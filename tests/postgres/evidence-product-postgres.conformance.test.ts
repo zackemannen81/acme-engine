@@ -10,6 +10,7 @@ import {
   evidencePrimaryViewConformance,
   evidenceProductRepositoryConformance,
   evidenceIngestionRepositoryConformance,
+  evidenceReviewerOperationsRepositoryConformance,
 } from '../../packages/evidence-testing/src/product-conformance.js';
 import { developmentObserveArtifactInput } from '../../packages/evidence-testing/src/index.js';
 import { createSharedPool, randomSchema } from './harness.js';
@@ -124,6 +125,7 @@ function createRepository(): EvidenceProductRepository {
 evidenceProductRepositoryConformance({ createRepository });
 evidencePrimaryViewConformance({ createRepository });
 evidenceIngestionRepositoryConformance({ createRepository });
+evidenceReviewerOperationsRepositoryConformance({ createRepository });
 
 it('persists case-object scope and allows identical content ids only by explicit binding', async () => {
   const repository = createRepository();

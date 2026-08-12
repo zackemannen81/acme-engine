@@ -1,147 +1,84 @@
 # Current Task
 
-Task ID: ACME-0098
+Task ID: ACME-0099
 Parent Task: None
-Status: In Progress
+Status: Ready
 Owner: Codex
 Created: 2026-08-12
 Last updated: 2026-08-12
 Charter frozen at: 2026-08-12
 
-## Read First
-
-- `AGENTS.md`
-- `docs/TASK_WORKFLOW.md`
-- `docs/PROJECT_BRIEF.md`
-- `docs/CURRENT_STATUS.md`
-- `docs/SYSTEMDOC.md`
-- `docs/adr/0035-evidence-authenticated-principal-and-authorization.md`
-- `docs/adr/0036-evidence-case-management-and-isolation.md`
-- `docs/design/evidence-integrity-workbench-product-completion-plan.md`
-
 ## Task Summary
 
-Complete Stage 6 with durable reviewer assignment/activity records and
-case-isolated search/filter/navigation that remains useful at corpus scale.
+Complete Stage 7 with a product-facing case overview and deterministic Case
+Integrity Report whose rows navigate to source-bound evidence.
 
 ## Task Charter
 
 ### Goal
 
-Turn the current decision screens into an operational review workspace where
-work can be assigned, found, filtered and traced without weakening source or
-case boundaries.
+Make a case understandable at entry and turn reviewed relations, questions,
+changed accounts and assessment attention into a traceable integrity report.
 
 ### Primary Deliverable
 
-Versioned reviewer-operation/search contracts, persistence, case-first APIs,
-browser navigation and executable role/isolation proofs.
+Versioned pure overview/report contracts, builders, case-first APIs, browser
+views and executable citation/count/isolation proofs.
 
 ### In Scope
 
-- Assignment/reassignment, waiting/reviewed state and append-only activity.
-- Reviewer comments/rationales and timestamps without mutable review history.
-- Safe bounded bulk decisions using the existing decision semantics.
-- Case-scoped search across source metadata, actors, relation kind, review
-  standing, locators, questions and assessments.
-- Deterministic pagination/filter contracts and browser navigation.
-- File/PostgreSQL persistence, migration and shared conformance.
-- Same-organization cross-case, role, archived-case and regression proofs.
-- Governing/architecture/product documentation and task archive.
+- Counts for sources, pending observations/relations, open questions,
+  assessments needing re-review and recent product activity.
+- Integrity rows for changed accounts, contradictions, qualifications,
+  corrections, temporal conflicts and unresolved questions.
+- Exact observation/source/locator references and deterministic identities.
+- Case-first API/browser navigation and regression/isolation tests.
+- Synchronized architecture/product/operations documentation and archive.
 
 ### Out of Scope
 
-- Case overview or Case Integrity Report (Stage 7).
-- New ingestion formats/data classes or non-synthetic authority.
-- Changing Evidence canonical facts, review decision history or ACME core.
-- Automatic semantic/vector search or model-based ranking.
+- PDF/DOCX/structured download formats (Stage 8).
+- New model calls, canonical evidence mutation or non-synthetic authority.
 
 ### Definition of Done
 
-- An authorized case admin can assign/reassign review work and a reviewer can
-  find their waiting items, comment and decide them with durable activity.
-- Search/filter/navigation stays case-first, deterministic and bounded; known
-  foreign ids and query terms disclose nothing.
-- Bulk decisions validate every target and commit no partial unsafe batch.
-- File restart and PostgreSQL migration/conformance retain operational state.
-- Existing assessment/re-review/import/redaction journeys regress green.
-- Canonical verification, synchronized docs, journal and archive are complete.
+- Overview and report derive only from one authorized case snapshot.
+- Every report row names the exact source-bound observations behind it.
+- Counts/ordering/identities are deterministic and browser-visible.
+- Canonical verification passes and documentation is synchronized.
 
 ### Minimum Verification Gates
 
-- [ ] Contract/identity/query-vector tests.
-- [ ] File/PostgreSQL repository conformance and restart.
-- [ ] Assignment/comment/bulk role and concurrency tests.
-- [ ] Same-organization cross-case black boxes.
-- [ ] Browser-visible reviewer operations and search acceptance.
-- [ ] Existing product journey regressions.
+- [ ] Contract/builder identity and count tests.
+- [ ] Case-first API/UI and cross-case isolation tests.
+- [ ] Existing reviewer/assessment journeys regress green.
 - [ ] Canonical typecheck/lint/boundaries/tests/build/format/docs/diff gates.
-
-## References
-
-- `packages/evidence-product-contracts/`
-- `packages/evidence-views/`
-- `apps/evidence-workbench-api/`
-- `apps/evidence-workbench-web/`
 
 ## Checklist
 
-- [ ] Add versioned reviewer operation and search contracts.
-- [ ] Extend file/PostgreSQL persistence and migration.
-- [ ] Implement pure effective-work/search projections.
-- [ ] Add case-first API and browser workflows.
-- [ ] Add adversarial, conformance, restart and UI proofs.
-- [ ] Run focused and canonical verification.
+- [ ] Add overview and integrity-report contracts/builders.
+- [ ] Add authorized API and browser surfaces.
+- [ ] Add deterministic/citation/isolation tests.
+- [ ] Run canonical verification.
 - [ ] Synchronize docs, journal and archive.
 
 ## Decisions and Notes
 
 - The charter is frozen and synthetic-only.
-- Search is exact deterministic product projection, not model inference.
-- Existing append-only review decisions remain canonical for review standing.
-
-## Charter Amendment Log
-
-- none
+- This is a pure projection; it never changes canonical evidence or review.
 
 ## Verification
 
-- [ ] Record exact commands, counts and environment refusals.
-
-## Documentation Updates
-
-- [ ] `AGENTS.md`, project/status/system/file-structure docs
-- [ ] product definition, technical specification and completion plan
-- [ ] API/deployment/operations docs
-- [ ] `docs/JOURNAL.md`
+- [ ] Record exact commands and counts.
 
 ## Handoff and Follow-ups
 
-- Current state: Stage 5 (`ACME-0097`) is complete and archived. Stage 6 is
-  frozen and partially implemented, but it has not passed verification and
-  must not be described as complete.
-- Implemented so far: versioned reviewer assignment/comment/activity, bulk
-  review and case-search contracts; snapshot/repository extensions; file and
-  PostgreSQL persistence including migration v6; and initial case-first API
-  routes for search, reviewer work, assignment, comments and bulk decisions.
-- Exact resume point: fix the four current TypeScript errors in
-  `packages/evidence-product-contracts/src/operations.ts`. The effective
-  decision helper takes `(decisions, targetVersionId)`; the review action is
-  `request-revision`; and observation actor/locator fields differ between the
-  observation variants. Then run typecheck before adding Stage 6 tests or UI.
-- Remaining Stage 6 work: effective work projection details, single-decision
-  activity integration, assignment completion semantics, browser workflow,
-  adversarial/conformance/restart tests, canonical verification and docs.
-- Next recommended step after ACME-0098: Stage 7 overview/integrity report.
-- Blockers: no product blocker is known; the pause is only the requested
-  weekly token-limit stop.
-- Child tasks: none.
-- Resume condition: not applicable.
-- Open questions: none within the frozen charter. No verification result has
-  been recorded for the partial Stage 6 implementation.
+- Current state: Stage 6 complete and archived; Stage 7 ready.
+- Next recommended step: Stage 8 deterministic export/audit/operations.
+- Blockers: none known.
 
 ## Finalize When Complete
 
 - Archive this file under `docs/finished/`.
-- Populate `docs/CURRENT_TASK.md` with Stage 7.
+- Populate `docs/CURRENT_TASK.md` with Stage 8.
 - Add a signed `docs/JOURNAL.md` entry.

@@ -534,23 +534,56 @@ export function createPostgresEvidenceProductRepository(options: {
           `SELECT record_json FROM ${s}.review_assignments WHERE assignment_id=$1 FOR UPDATE`,
           [value.assignmentId],
         );
-        const current = result.rows[0] === undefined
-          ? undefined
-          : EvidenceReviewAssignmentSchema.parse(JSON.parse(result.rows[0].record_json));
-        if (current !== undefined &&
-          (current.caseId !== value.caseId || current.targetKind !== value.targetKind || current.targetVersionId !== value.targetVersionId || value.revision !== current.revision + 1))
+        const current =
+          result.rows[0] === undefined
+            ? undefined
+            : EvidenceReviewAssignmentSchema.parse(
+                JSON.parse(result.rows[0].record_json),
+              );
+        if (
+          current !== undefined &&
+          (current.caseId !== value.caseId ||
+            current.targetKind !== value.targetKind ||
+            current.targetVersionId !== value.targetVersionId ||
+            value.revision !== current.revision + 1)
+        )
           throw new EvidenceProductCommandCollisionError(value.commandKey);
         await client.query(
           `INSERT INTO ${s}.review_assignments
            (assignment_id,case_id,workspace_id,target_kind,target_version_id,revision,record_json)
            VALUES ($1,$2,$3,$4,$5,$6,$7)
            ON CONFLICT (assignment_id) DO UPDATE SET revision=EXCLUDED.revision,record_json=EXCLUDED.record_json`,
-          [value.assignmentId, value.caseId, value.workspaceId, value.targetKind, value.targetVersionId, value.revision, canonicalJson(value as never)],
+          [
+            value.assignmentId,
+            value.caseId,
+            value.workspaceId,
+            value.targetKind,
+            value.targetVersionId,
+            value.revision,
+            canonicalJson(value as never),
+          ],
         );
-        await insertImmutableRecord({ client, schema: s, table: 'review_activity', keyColumn: 'activity_id', key: activityValue.activityId, value: activityValue, extraColumns: [['case_id', activityValue.caseId], ['workspace_id', activityValue.workspaceId], ['target_version_id', activityValue.targetVersionId], ['occurred_at', activityValue.occurredAt]] });
+        await insertImmutableRecord({
+          client,
+          schema: s,
+          table: 'review_activity',
+          keyColumn: 'activity_id',
+          key: activityValue.activityId,
+          value: activityValue,
+          extraColumns: [
+            ['case_id', activityValue.caseId],
+            ['workspace_id', activityValue.workspaceId],
+            ['target_version_id', activityValue.targetVersionId],
+            ['occurred_at', activityValue.occurredAt],
+          ],
+        });
         await insertCaseObjectBindings(client, s, [
-          ...bindingsFor(scope, 'review-assignment', [value as unknown as Record<string, unknown>]),
-          ...bindingsFor(scope, 'review-activity', [activityValue as unknown as Record<string, unknown>]),
+          ...bindingsFor(scope, 'review-assignment', [
+            value as unknown as Record<string, unknown>,
+          ]),
+          ...bindingsFor(scope, 'review-activity', [
+            activityValue as unknown as Record<string, unknown>,
+          ]),
         ]);
         await validateCaseScope(client, scope);
         return clone(value);
@@ -561,11 +594,41 @@ export function createPostgresEvidenceProductRepository(options: {
       const value = EvidenceReviewCommentSchema.parse(comment);
       const activityValue = EvidenceReviewActivitySchema.parse(activity);
       return withWrite(pool, async (client) => {
-        await insertImmutableRecord({ client, schema: s, table: 'review_comments', keyColumn: 'comment_id', key: value.commentId, value, extraColumns: [['case_id', value.caseId], ['workspace_id', value.workspaceId], ['target_version_id', value.targetVersionId], ['created_at', value.createdAt]] });
-        await insertImmutableRecord({ client, schema: s, table: 'review_activity', keyColumn: 'activity_id', key: activityValue.activityId, value: activityValue, extraColumns: [['case_id', activityValue.caseId], ['workspace_id', activityValue.workspaceId], ['target_version_id', activityValue.targetVersionId], ['occurred_at', activityValue.occurredAt]] });
+        await insertImmutableRecord({
+          client,
+          schema: s,
+          table: 'review_comments',
+          keyColumn: 'comment_id',
+          key: value.commentId,
+          value,
+          extraColumns: [
+            ['case_id', value.caseId],
+            ['workspace_id', value.workspaceId],
+            ['target_version_id', value.targetVersionId],
+            ['created_at', value.createdAt],
+          ],
+        });
+        await insertImmutableRecord({
+          client,
+          schema: s,
+          table: 'review_activity',
+          keyColumn: 'activity_id',
+          key: activityValue.activityId,
+          value: activityValue,
+          extraColumns: [
+            ['case_id', activityValue.caseId],
+            ['workspace_id', activityValue.workspaceId],
+            ['target_version_id', activityValue.targetVersionId],
+            ['occurred_at', activityValue.occurredAt],
+          ],
+        });
         await insertCaseObjectBindings(client, s, [
-          ...bindingsFor(scope, 'review-comment', [value as unknown as Record<string, unknown>]),
-          ...bindingsFor(scope, 'review-activity', [activityValue as unknown as Record<string, unknown>]),
+          ...bindingsFor(scope, 'review-comment', [
+            value as unknown as Record<string, unknown>,
+          ]),
+          ...bindingsFor(scope, 'review-activity', [
+            activityValue as unknown as Record<string, unknown>,
+          ]),
         ]);
         await validateCaseScope(client, scope);
         return clone(value);
@@ -575,17 +638,41 @@ export function createPostgresEvidenceProductRepository(options: {
     async appendReviewActivity(activity, scope) {
       const value = EvidenceReviewActivitySchema.parse(activity);
       return withWrite(pool, async (client) => {
-        await insertImmutableRecord({ client, schema: s, table: 'review_activity', keyColumn: 'activity_id', key: value.activityId, value, extraColumns: [['case_id', value.caseId], ['workspace_id', value.workspaceId], ['target_version_id', value.targetVersionId], ['occurred_at', value.occurredAt]] });
-        await insertCaseObjectBindings(client, s, bindingsFor(scope, 'review-activity', [value as unknown as Record<string, unknown>]));
+        await insertImmutableRecord({
+          client,
+          schema: s,
+          table: 'review_activity',
+          keyColumn: 'activity_id',
+          key: value.activityId,
+          value,
+          extraColumns: [
+            ['case_id', value.caseId],
+            ['workspace_id', value.workspaceId],
+            ['target_version_id', value.targetVersionId],
+            ['occurred_at', value.occurredAt],
+          ],
+        });
+        await insertCaseObjectBindings(
+          client,
+          s,
+          bindingsFor(scope, 'review-activity', [
+            value as unknown as Record<string, unknown>,
+          ]),
+        );
         await validateCaseScope(client, scope);
         return clone(value);
       });
     },
 
     async appendReviewDecisions(decisions, activities, scope) {
-      const values = decisions.map((item) => EvidenceReviewDecisionRecordSchema.parse(item));
-      const activityValues = activities.map((item) => EvidenceReviewActivitySchema.parse(item));
-      if (values.length !== activityValues.length) throw new Error('Bulk decisions and activities must align.');
+      const values = decisions.map((item) =>
+        EvidenceReviewDecisionRecordSchema.parse(item),
+      );
+      const activityValues = activities.map((item) =>
+        EvidenceReviewActivitySchema.parse(item),
+      );
+      if (values.length !== activityValues.length)
+        throw new Error('Bulk decisions and activities must align.');
       return withWrite(pool, async (client) => {
         for (let index = 0; index < values.length; index += 1) {
           const value = values[index] as EvidenceReviewDecision;
@@ -595,20 +682,52 @@ export function createPostgresEvidenceProductRepository(options: {
           );
           const row = existing.rows[0];
           if (row !== undefined) {
-            const stored = EvidenceReviewDecisionRecordSchema.parse(JSON.parse(row.record_json));
-            if (!same(decisionCommand(stored), decisionCommand(value))) throw new EvidenceProductCommandCollisionError(value.commandKey);
+            const stored = EvidenceReviewDecisionRecordSchema.parse(
+              JSON.parse(row.record_json),
+            );
+            if (!same(decisionCommand(stored), decisionCommand(value)))
+              throw new EvidenceProductCommandCollisionError(value.commandKey);
           } else {
             await client.query(
               `INSERT INTO ${s}.review_decisions (review_decision_id,workspace_id,command_key,decided_at,record_json) VALUES ($1,$2,$3,$4,$5)`,
-              [value.reviewDecisionId, value.workspaceId, value.commandKey, value.decidedAt, canonicalJson(value as never)],
+              [
+                value.reviewDecisionId,
+                value.workspaceId,
+                value.commandKey,
+                value.decidedAt,
+                canonicalJson(value as never),
+              ],
             );
           }
-          const activity = activityValues[index] as (typeof activityValues)[number];
-          await insertImmutableRecord({ client, schema: s, table: 'review_activity', keyColumn: 'activity_id', key: activity.activityId, value: activity, extraColumns: [['case_id', activity.caseId], ['workspace_id', activity.workspaceId], ['target_version_id', activity.targetVersionId], ['occurred_at', activity.occurredAt]] });
+          const activity = activityValues[
+            index
+          ] as (typeof activityValues)[number];
+          await insertImmutableRecord({
+            client,
+            schema: s,
+            table: 'review_activity',
+            keyColumn: 'activity_id',
+            key: activity.activityId,
+            value: activity,
+            extraColumns: [
+              ['case_id', activity.caseId],
+              ['workspace_id', activity.workspaceId],
+              ['target_version_id', activity.targetVersionId],
+              ['occurred_at', activity.occurredAt],
+            ],
+          });
         }
         await insertCaseObjectBindings(client, s, [
-          ...bindingsFor(scope, 'review-decision', values as unknown as Record<string, unknown>[]),
-          ...bindingsFor(scope, 'review-activity', activityValues as unknown as Record<string, unknown>[]),
+          ...bindingsFor(
+            scope,
+            'review-decision',
+            values as unknown as Record<string, unknown>[],
+          ),
+          ...bindingsFor(
+            scope,
+            'review-activity',
+            activityValues as unknown as Record<string, unknown>[],
+          ),
         ]);
         await validateCaseScope(client, scope);
         return clone(values);

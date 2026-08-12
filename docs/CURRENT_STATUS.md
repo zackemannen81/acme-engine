@@ -1,5 +1,12 @@
 # Current Status
 
+Stage 6 reviewer operations are implemented: case administrators can assign
+and reassign bounded work, reviewers can comment and make single or bounded
+bulk decisions, effective completed state is derived from append-only review
+history, and deterministic bounded search covers case-scoped evidence and
+review metadata. File and PostgreSQL adapters persist the new records; the
+browser exposes My review work and Search. Non-synthetic data remains denied.
+
 Last updated: 2026-08-12
 
 ## Repository

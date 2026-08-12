@@ -1,5 +1,25 @@
 # Journal
 
+## 2026-08-12 — ACME-0098 reviewer operations and case search complete
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0098
+- Summary: Added durable assignment/reassignment, comments, append-only
+  activity, atomically recorded single/bulk decisions, effective work status,
+  deterministic bounded case search and browser My review work/Search views.
+- Security: every route is case-first and deny-by-default; same-organization
+  foreign-case reads are 404, bulk targets are unique and capped at 50, and
+  no non-synthetic authority was added.
+- Persistence: file and PostgreSQL adapters include the records and migration
+  v6; shared conformance covers search, assignment, comments and atomic batch
+  collision behavior.
+- Verification: typecheck, lint, boundaries, build, format, docs and full
+  offline tests passed: 708 unit, 77 conformance, 62 integration, 26 scenario.
+  `pnpm test:postgres` refused because no PostgreSQL test environment was
+  configured; no PostgreSQL result is claimed.
+- Signature: Codex
+
 ## 2026-08-12 — ACME-0098 token-limit handoff
 
 - Date: 2026-08-12

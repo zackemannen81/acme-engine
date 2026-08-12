@@ -249,6 +249,8 @@ describe('Evidence Workbench authorization boundary', () => {
       const unknownWorkspace = await getForCase(
         'case-from-another-organization',
         'api/work-queue',
+        'api/reviewer-work?assignee=me',
+        'api/search?q=foreign',
       );
       expect(unknownWorkspace.status).toBe(404);
       expect(await unknownWorkspace.text()).toBe('Not found.');

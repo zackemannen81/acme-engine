@@ -4,6 +4,7 @@ import {
   EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
   effectiveReviewDecision,
   recordReviewDecision,
+  searchEvidenceCase,
   type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
 import {
@@ -326,6 +327,172 @@ export function evidenceIngestionRepositoryConformance(options: {
           scope,
         ),
       ).rejects.toThrow();
+    });
+  });
+}
+
+export function evidenceReviewerOperationsRepositoryConformance(options: {
+  readonly createRepository: () => EvidenceProductRepository;
+}): void {
+  describe('evidence reviewer operations repository conformance', () => {
+    it('searches source-bound evidence deterministically with bounded pagination', async () => {
+      const repository = options.createRepository();
+      const { observations } = await seed(repository);
+      const target = observations[0];
+      if (target === undefined)
+        throw new Error('Missing development observation.');
+      const query = {
+        schemaVersion: 'evidence-case-search-query/1' as const,
+        text: target.exactQuote,
+        kinds: ['observation' as const],
+        pageSize: 1,
+      };
+      const snapshot = await repository.snapshot();
+      const first = searchEvidenceCase(snapshot, query);
+      const replay = searchEvidenceCase(snapshot, query);
+      expect(replay).toEqual(first);
+      expect(first.total).toBeGreaterThan(0);
+      expect(first.items[0]).toMatchObject({
+        kind: 'observation',
+        id: target.observationId,
+        artifactVersionId: target.artifactVersionId,
+        locatorId: target.locator.locatorId,
+      });
+      expect(() =>
+        searchEvidenceCase(snapshot, {
+          ...query,
+          pageSize: 101,
+        }),
+      ).toThrow();
+    });
+    it('persists assignment, comment, activity and an all-or-nothing decision batch', async () => {
+      const repository = options.createRepository();
+      const seeded = await seed(repository);
+      const target = seeded.observations[0];
+      if (target === undefined)
+        throw new Error('Missing development observation.');
+      const scope = {
+        caseId: 'case-review-operations',
+        workspaceId: 'workspace-conformance',
+        boundAt: timestamp,
+      } as const;
+      await repository.bindCaseObjects([
+        {
+          schemaVersion: 'evidence-case-object-binding/1',
+          ...scope,
+          objectKind: 'source',
+          objectId: seeded.input.artifactVersion.artifactVersionId,
+        },
+        ...seeded.observations.map((item) => ({
+          schemaVersion: 'evidence-case-object-binding/1' as const,
+          ...scope,
+          objectKind: 'observation' as const,
+          objectId: item.observationId,
+        })),
+      ]);
+      const base = {
+        organizationId: 'organization-review-operations',
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        targetKind: 'observation' as const,
+        targetVersionId: target.observationId,
+      };
+      const activity = (
+        suffix: string,
+        action: 'assigned' | 'commented' | 'bulk-decided',
+      ) => ({
+        schemaVersion: 'evidence-review-activity/1' as const,
+        activityId: `activity-${suffix}`,
+        ...base,
+        action,
+        principalRef: 'principal-reviewer',
+        subjectPrincipalRef:
+          action === 'assigned' ? 'principal-reviewer' : null,
+        commandKey: `command-${suffix}`,
+        occurredAt: timestamp,
+      });
+      await repository.putReviewAssignment(
+        {
+          schemaVersion: 'evidence-review-assignment/1',
+          assignmentId: 'assignment-review-operations',
+          ...base,
+          assigneePrincipalRef: 'principal-reviewer',
+          status: 'waiting',
+          assignedByPrincipalRef: 'principal-admin',
+          commandKey: 'command-assigned',
+          revision: 0,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+        activity('assigned', 'assigned'),
+        scope,
+      );
+      await repository.appendReviewComment(
+        {
+          schemaVersion: 'evidence-review-comment/1',
+          commentId: 'comment-review-operations',
+          ...base,
+          principalRef: 'principal-reviewer',
+          body: 'The locator and source wording were checked.',
+          commandKey: 'command-commented',
+          createdAt: timestamp,
+        },
+        activity('commented', 'commented'),
+        scope,
+      );
+      const decision = {
+        schemaVersion: 'evidence-review-decision/3' as const,
+        reviewDecisionId: 'decision-review-operations',
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        targetKind: base.targetKind,
+        targetVersionId: base.targetVersionId,
+        action: 'accept' as const,
+        principalRef: 'principal-reviewer',
+        principalAssurance: 'authenticated-case-session' as const,
+        authorization: {
+          schemaVersion: 'evidence-case-authorization-context/1' as const,
+          principalRef: 'principal-reviewer',
+          organizationId: base.organizationId,
+          organizationMembershipId: 'membership-reviewer',
+          effectiveOrganizationRole: 'reviewer' as const,
+          caseId: scope.caseId,
+          workspaceId: scope.workspaceId,
+          caseMembershipId: 'case-membership-reviewer',
+          effectiveCaseRole: 'case-reviewer' as const,
+          action: 'review.decide' as const,
+          policyVersion: 'evidence-case-auth-policy/1' as const,
+          decidedAt: timestamp,
+        },
+        rationale: 'Reviewed against the immutable source.',
+        decidedAt: timestamp,
+        commandKey: 'command-decision',
+        basisEvidenceRevision: null,
+      };
+      await repository.appendReviewDecisions(
+        [decision],
+        [activity('decision', 'bulk-decided')],
+        scope,
+      );
+      const snapshot = await repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      expect(snapshot.reviewAssignments).toHaveLength(1);
+      expect(snapshot.reviewComments).toHaveLength(1);
+      expect(snapshot.reviewDecisions).toContainEqual(decision);
+      expect(snapshot.reviewActivity).toHaveLength(3);
+      await expect(
+        repository.appendReviewDecisions(
+          [{ ...decision, action: 'reject' }],
+          [activity('decision', 'bulk-decided')],
+          scope,
+        ),
+      ).rejects.toThrow();
+      expect(
+        (await repository.caseSnapshot(scope.caseId, scope.workspaceId))
+          .reviewDecisions,
+      ).toEqual([decision]);
     });
   });
 }

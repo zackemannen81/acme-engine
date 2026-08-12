@@ -46,6 +46,8 @@ import {
   EvidenceReviewCommentSchema,
   deriveEvidenceReviewOperationId,
   searchEvidenceCase,
+  buildEvidenceCaseOverview,
+  buildEvidenceCaseIntegrityReport,
 } from '@acme/evidence-product-contracts';
 import {
   EvidenceAuthenticationError,
@@ -888,85 +890,297 @@ export function createEvidenceWorkbenchApi(options: {
           pageSize: Number(url.searchParams.get('pageSize') ?? '50'),
           cursor: url.searchParams.get('cursor'),
         });
-        send(response, 200, searchEvidenceCase(await scopedSnapshot(workspaceId), query));
+        send(
+          response,
+          200,
+          searchEvidenceCase(await scopedSnapshot(workspaceId), query),
+        );
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/overview') {
+        await requireAuthorized('workspace.read', options.workspaceId);
+        send(response, 200, buildEvidenceCaseOverview(await scopedSnapshot(options.workspaceId)));
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/integrity-report') {
+        await requireAuthorized('workspace.read', options.workspaceId);
+        send(response, 200, buildEvidenceCaseIntegrityReport(await scopedSnapshot(options.workspaceId)));
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/reviewer-work') {
-        const authorization = await requireAuthorized('workspace.read', options.workspaceId);
-        if (!('caseId' in authorization)) throw new EvidenceAuthorizationError(404, 'Not found.');
+        const authorization = await requireAuthorized(
+          'workspace.read',
+          options.workspaceId,
+        );
+        if (!('caseId' in authorization))
+          throw new EvidenceAuthorizationError(404, 'Not found.');
         const snapshot = await scopedSnapshot(options.workspaceId);
-        const assignee = url.searchParams.get('assignee') === 'me'
-          ? authorization.principalRef
-          : url.searchParams.get('assignee');
+        const assignee =
+          url.searchParams.get('assignee') === 'me'
+            ? authorization.principalRef
+            : url.searchParams.get('assignee');
+        const decidedTargets = new Set(
+          snapshot.reviewDecisions.map(
+            (item) => `${item.targetKind}:${item.targetVersionId}`,
+          ),
+        );
         send(response, 200, {
           schemaVersion: 'evidence-reviewer-work/1',
-          assignments: snapshot.reviewAssignments.filter((item) => assignee === null || item.assigneePrincipalRef === assignee),
+          assignments: snapshot.reviewAssignments
+            .filter(
+              (item) =>
+                assignee === null || item.assigneePrincipalRef === assignee,
+            )
+            .map((item) =>
+              decidedTargets.has(`${item.targetKind}:${item.targetVersionId}`)
+                ? { ...item, status: 'completed' }
+                : item,
+            ),
           comments: snapshot.reviewComments,
           activity: snapshot.reviewActivity,
         });
         return;
       }
-      if (request.method === 'PUT' && url.pathname === '/api/reviewer-work/assignment') {
-        const command = EvidenceReviewAssignmentCommandSchema.parse(await body(request));
-        const authorization = await requireAuthorized('case-membership.manage', options.workspaceId, true);
-        if (!('caseId' in authorization) || requestCaseId === null) throw new EvidenceAuthorizationError(404, 'Not found.');
+      if (
+        request.method === 'PUT' &&
+        url.pathname === '/api/reviewer-work/assignment'
+      ) {
+        const command = EvidenceReviewAssignmentCommandSchema.parse(
+          await body(request),
+        );
+        const authorization = await requireAuthorized(
+          'case-membership.manage',
+          options.workspaceId,
+          true,
+        );
+        if (!('caseId' in authorization) || requestCaseId === null)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
         const identity = await options.auth.repository.snapshot();
-        if (!identity.caseMemberships.some((item) => item.caseId === requestCaseId && item.principalRef === command.assigneePrincipalRef && item.status === 'active'))
+        if (
+          !identity.caseMemberships.some(
+            (item) =>
+              item.caseId === requestCaseId &&
+              item.principalRef === command.assigneePrincipalRef &&
+              item.status === 'active',
+          )
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const snapshot = await scopedSnapshot(options.workspaceId);
-        if (!evidenceReviewTargetExistsInCase({ snapshot: await options.repository.snapshot(), caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: command.targetKind, targetVersionId: command.targetVersionId }))
+        if (
+          !evidenceReviewTargetExistsInCase({
+            snapshot: await options.repository.snapshot(),
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            targetKind: command.targetKind,
+            targetVersionId: command.targetVersionId,
+          })
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
-        const assignmentId = deriveEvidenceReviewOperationId('assignment', { caseId: requestCaseId, targetKind: command.targetKind, targetVersionId: command.targetVersionId });
-        const current = snapshot.reviewAssignments.find((item) => item.assignmentId === assignmentId);
-        if ((current?.revision ?? -1) !== command.expectedRevision) throw new Error('ASSIGNMENT_REVISION_CONFLICT');
+        const assignmentId = deriveEvidenceReviewOperationId('assignment', {
+          caseId: requestCaseId,
+          targetKind: command.targetKind,
+          targetVersionId: command.targetVersionId,
+        });
+        const current = snapshot.reviewAssignments.find(
+          (item) => item.assignmentId === assignmentId,
+        );
+        if ((current?.revision ?? -1) !== command.expectedRevision)
+          throw new Error('ASSIGNMENT_REVISION_CONFLICT');
         const now = options.clock.now();
         const assignment = EvidenceReviewAssignmentSchema.parse({
-          schemaVersion: 'evidence-review-assignment/1', assignmentId,
-          organizationId: authorization.organizationId, caseId: requestCaseId,
-          workspaceId: options.workspaceId, targetKind: command.targetKind,
+          schemaVersion: 'evidence-review-assignment/1',
+          assignmentId,
+          organizationId: authorization.organizationId,
+          caseId: requestCaseId,
+          workspaceId: options.workspaceId,
+          targetKind: command.targetKind,
           targetVersionId: command.targetVersionId,
-          assigneePrincipalRef: command.assigneePrincipalRef, status: command.status,
-          assignedByPrincipalRef: authorization.principalRef, commandKey: command.commandKey,
-          revision: command.expectedRevision + 1, createdAt: current?.createdAt ?? now, updatedAt: now,
+          assigneePrincipalRef: command.assigneePrincipalRef,
+          status: command.status,
+          assignedByPrincipalRef: authorization.principalRef,
+          commandKey: command.commandKey,
+          revision: command.expectedRevision + 1,
+          createdAt: current?.createdAt ?? now,
+          updatedAt: now,
         });
         const activity = EvidenceReviewActivitySchema.parse({
           schemaVersion: 'evidence-review-activity/1',
-          activityId: deriveEvidenceReviewOperationId('activity', { caseId: requestCaseId, commandKey: command.commandKey }),
-          organizationId: authorization.organizationId, caseId: requestCaseId,
-          workspaceId: options.workspaceId, targetKind: command.targetKind,
+          activityId: deriveEvidenceReviewOperationId('activity', {
+            caseId: requestCaseId,
+            commandKey: command.commandKey,
+          }),
+          organizationId: authorization.organizationId,
+          caseId: requestCaseId,
+          workspaceId: options.workspaceId,
+          targetKind: command.targetKind,
           targetVersionId: command.targetVersionId,
-          action: current === undefined ? 'assigned' : current.assigneePrincipalRef === command.assigneePrincipalRef ? 'status-changed' : 'reassigned',
+          action:
+            current === undefined
+              ? 'assigned'
+              : current.assigneePrincipalRef === command.assigneePrincipalRef
+                ? 'status-changed'
+                : 'reassigned',
           principalRef: authorization.principalRef,
           subjectPrincipalRef: command.assigneePrincipalRef,
-          commandKey: command.commandKey, occurredAt: now,
+          commandKey: command.commandKey,
+          occurredAt: now,
         });
-        send(response, 200, await options.repository.putReviewAssignment(assignment, activity, { caseId: requestCaseId, workspaceId: options.workspaceId, boundAt: now }));
+        send(
+          response,
+          200,
+          await options.repository.putReviewAssignment(assignment, activity, {
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            boundAt: now,
+          }),
+        );
         return;
       }
-      if (request.method === 'POST' && url.pathname === '/api/reviewer-work/comments') {
-        const command = EvidenceReviewCommentCommandSchema.parse(await body(request));
-        const authorization = await requireAuthorized('review.decide', options.workspaceId, true);
-        if (!('caseId' in authorization) || requestCaseId === null) throw new EvidenceAuthorizationError(404, 'Not found.');
-        if (!evidenceReviewTargetExistsInCase({ snapshot: await options.repository.snapshot(), caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: command.targetKind, targetVersionId: command.targetVersionId }))
+      if (
+        request.method === 'POST' &&
+        url.pathname === '/api/reviewer-work/comments'
+      ) {
+        const command = EvidenceReviewCommentCommandSchema.parse(
+          await body(request),
+        );
+        const authorization = await requireAuthorized(
+          'review.decide',
+          options.workspaceId,
+          true,
+        );
+        if (!('caseId' in authorization) || requestCaseId === null)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        if (
+          !evidenceReviewTargetExistsInCase({
+            snapshot: await options.repository.snapshot(),
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            targetKind: command.targetKind,
+            targetVersionId: command.targetVersionId,
+          })
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const now = options.clock.now();
-        const commentId = deriveEvidenceReviewOperationId('comment', { caseId: requestCaseId, commandKey: command.commandKey });
-        const comment = EvidenceReviewCommentSchema.parse({ schemaVersion: 'evidence-review-comment/1', commentId, organizationId: authorization.organizationId, caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: command.targetKind, targetVersionId: command.targetVersionId, principalRef: authorization.principalRef, body: command.body, commandKey: command.commandKey, createdAt: now });
-        const activity = EvidenceReviewActivitySchema.parse({ schemaVersion: 'evidence-review-activity/1', activityId: deriveEvidenceReviewOperationId('activity', { caseId: requestCaseId, commandKey: command.commandKey }), organizationId: authorization.organizationId, caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: command.targetKind, targetVersionId: command.targetVersionId, action: 'commented', principalRef: authorization.principalRef, subjectPrincipalRef: null, commandKey: command.commandKey, occurredAt: now });
-        send(response, 201, await options.repository.appendReviewComment(comment, activity, { caseId: requestCaseId, workspaceId: options.workspaceId, boundAt: now }));
+        const commentId = deriveEvidenceReviewOperationId('comment', {
+          caseId: requestCaseId,
+          commandKey: command.commandKey,
+        });
+        const comment = EvidenceReviewCommentSchema.parse({
+          schemaVersion: 'evidence-review-comment/1',
+          commentId,
+          organizationId: authorization.organizationId,
+          caseId: requestCaseId,
+          workspaceId: options.workspaceId,
+          targetKind: command.targetKind,
+          targetVersionId: command.targetVersionId,
+          principalRef: authorization.principalRef,
+          body: command.body,
+          commandKey: command.commandKey,
+          createdAt: now,
+        });
+        const activity = EvidenceReviewActivitySchema.parse({
+          schemaVersion: 'evidence-review-activity/1',
+          activityId: deriveEvidenceReviewOperationId('activity', {
+            caseId: requestCaseId,
+            commandKey: command.commandKey,
+          }),
+          organizationId: authorization.organizationId,
+          caseId: requestCaseId,
+          workspaceId: options.workspaceId,
+          targetKind: command.targetKind,
+          targetVersionId: command.targetVersionId,
+          action: 'commented',
+          principalRef: authorization.principalRef,
+          subjectPrincipalRef: null,
+          commandKey: command.commandKey,
+          occurredAt: now,
+        });
+        send(
+          response,
+          201,
+          await options.repository.appendReviewComment(comment, activity, {
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            boundAt: now,
+          }),
+        );
         return;
       }
       if (request.method === 'POST' && url.pathname === '/api/reviews/bulk') {
-        const command = EvidenceBulkReviewCommandSchema.parse(await body(request));
-        const authorization = await requireAuthorized('review.decide', options.workspaceId, true);
-        if (!('caseId' in authorization) || requestCaseId === null) throw new EvidenceAuthorizationError(404, 'Not found.');
+        const command = EvidenceBulkReviewCommandSchema.parse(
+          await body(request),
+        );
+        const authorization = await requireAuthorized(
+          'review.decide',
+          options.workspaceId,
+          true,
+        );
+        if (!('caseId' in authorization) || requestCaseId === null)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
         const snapshot = await options.repository.snapshot();
-        if (!command.targets.every((target) => evidenceReviewTargetExistsInCase({ snapshot, caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: target.targetKind, targetVersionId: target.targetVersionId })))
+        if (
+          !command.targets.every((target) =>
+            evidenceReviewTargetExistsInCase({
+              snapshot,
+              caseId: requestCaseId,
+              workspaceId: options.workspaceId,
+              targetKind: target.targetKind,
+              targetVersionId: target.targetVersionId,
+            }),
+          )
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const now = options.clock.now();
-        const decisions = command.targets.map((target, index) => EvidenceCaseReviewDecisionSchema.parse({ schemaVersion: 'evidence-review-decision/3', reviewDecisionId: options.ids.next('review-decision'), caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: target.targetKind, targetVersionId: target.targetVersionId, action: command.action, principalRef: authorization.principalRef, principalAssurance: 'authenticated-case-session', authorization, rationale: command.rationale, decidedAt: now, commandKey: `${command.commandKey}:${String(index + 1)}`, basisEvidenceRevision: command.basisEvidenceRevision }));
-        const activities = command.targets.map((target, index) => EvidenceReviewActivitySchema.parse({ schemaVersion: 'evidence-review-activity/1', activityId: deriveEvidenceReviewOperationId('activity', { caseId: requestCaseId, commandKey: `${command.commandKey}:${String(index + 1)}` }), organizationId: authorization.organizationId, caseId: requestCaseId, workspaceId: options.workspaceId, targetKind: target.targetKind, targetVersionId: target.targetVersionId, action: 'bulk-decided', principalRef: authorization.principalRef, subjectPrincipalRef: null, commandKey: command.commandKey, occurredAt: now }));
-        send(response, 201, await options.repository.appendReviewDecisions(decisions, activities, { caseId: requestCaseId, workspaceId: options.workspaceId, boundAt: now }));
+        const decisions = command.targets.map((target, index) =>
+          EvidenceCaseReviewDecisionSchema.parse({
+            schemaVersion: 'evidence-review-decision/3',
+            reviewDecisionId: options.ids.next('review-decision'),
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            targetKind: target.targetKind,
+            targetVersionId: target.targetVersionId,
+            action: command.action,
+            principalRef: authorization.principalRef,
+            principalAssurance: 'authenticated-case-session',
+            authorization,
+            rationale: command.rationale,
+            decidedAt: now,
+            commandKey: `${command.commandKey}:${String(index + 1)}`,
+            basisEvidenceRevision: command.basisEvidenceRevision,
+          }),
+        );
+        const activities = command.targets.map((target, index) =>
+          EvidenceReviewActivitySchema.parse({
+            schemaVersion: 'evidence-review-activity/1',
+            activityId: deriveEvidenceReviewOperationId('activity', {
+              caseId: requestCaseId,
+              commandKey: `${command.commandKey}:${String(index + 1)}`,
+            }),
+            organizationId: authorization.organizationId,
+            caseId: requestCaseId,
+            workspaceId: options.workspaceId,
+            targetKind: target.targetKind,
+            targetVersionId: target.targetVersionId,
+            action: 'bulk-decided',
+            principalRef: authorization.principalRef,
+            subjectPrincipalRef: null,
+            commandKey: command.commandKey,
+            occurredAt: now,
+          }),
+        );
+        send(
+          response,
+          201,
+          await options.repository.appendReviewDecisions(
+            decisions,
+            activities,
+            {
+              caseId: requestCaseId,
+              workspaceId: options.workspaceId,
+              boundAt: now,
+            },
+          ),
+        );
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/observations') {

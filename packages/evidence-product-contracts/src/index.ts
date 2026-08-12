@@ -4,6 +4,7 @@ export * from './artifact-service.js';
 export * from './ingestion.js';
 export * from './ingestion-service.js';
 export * from './operations.js';
+export * from './case-insights.js';
 export * from './repository.js';
 export * from './review.js';
 export * from './scope.js';

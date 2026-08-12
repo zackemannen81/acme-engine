@@ -1,5 +1,13 @@
 # System Documentation
 
+Reviewer operations are case-bound records (`evidence-review-assignment/1`,
+`evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain
+append-only canonical history; an assignment is projected as completed once
+its exact target has a decision. Bulk review accepts at most 50 unique targets
+and validates the entire case-scoped batch before an atomic repository write.
+`evidence-case-search-query/1` provides stable exact filtering and offset
+pagination over a case snapshot; it performs no model inference.
+
 Last updated: 2026-08-09
 Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 

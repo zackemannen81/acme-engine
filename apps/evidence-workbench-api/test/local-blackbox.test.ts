@@ -109,6 +109,120 @@ afterEach(async () => {
 });
 
 describe('local Evidence workbench', () => {
+  it('assigns, comments, bulk reviews and searches only inside the selected case', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'evidence-review-operations-blackbox-'),
+    );
+    directories.push(directory);
+    const local = await createLocalEvidenceWorkbench({
+      dataFile: path.join(directory, 'product.json'),
+    });
+    const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    const authFetch = await authenticatedFetch(
+      address.url,
+      local.authCredentials,
+      local.caseId,
+    );
+    try {
+      const session = (await (
+        await authFetch(`${address.url}api/session`)
+      ).json()) as { principalRef: string };
+      const queue = (await (
+        await authFetch(`${address.url}api/work-queue`)
+      ).json()) as {
+        nextItems: { kind: string; observationVersionId?: string }[];
+      };
+      const targets = queue.nextItems
+        .filter((item) => item.kind === 'source-observation')
+        .map((item) =>
+          requiredValue(item.observationVersionId, 'observation id'),
+        );
+      expect(targets).toHaveLength(2);
+      const first = requiredValue(targets[0], 'first target');
+      const assigned = await authFetch(
+        `${address.url}api/reviewer-work/assignment`,
+        {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-review-assignment-command/1',
+            commandKey: 'assign-blackbox-1',
+            targetKind: 'observation',
+            targetVersionId: first,
+            assigneePrincipalRef: session.principalRef,
+            status: 'waiting',
+            expectedRevision: -1,
+          }),
+        },
+      );
+      expect(assigned.status, await assigned.clone().text()).toBe(200);
+      const commented = await authFetch(
+        `${address.url}api/reviewer-work/comments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-review-comment-command/1',
+            commandKey: 'comment-blackbox-1',
+            targetKind: 'observation',
+            targetVersionId: first,
+            body: 'Checked the immutable locator and exact quotation.',
+          }),
+        },
+      );
+      expect(commented.status, await commented.clone().text()).toBe(201);
+      const bulk = await authFetch(`${address.url}api/reviews/bulk`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          schemaVersion: 'evidence-bulk-review-command/1',
+          commandKey: 'bulk-blackbox-1',
+          targets: targets.map((targetVersionId) => ({
+            targetKind: 'observation',
+            targetVersionId,
+          })),
+          action: 'accept',
+          rationale: 'Each bounded source observation was checked.',
+          basisEvidenceRevision: null,
+        }),
+      });
+      expect(bulk.status, await bulk.clone().text()).toBe(201);
+      const work = (await (
+        await authFetch(`${address.url}api/reviewer-work?assignee=me`)
+      ).json()) as {
+        assignments: { status: string }[];
+        comments: unknown[];
+        activity: { action: string }[];
+      };
+      expect(work.assignments).toEqual([
+        expect.objectContaining({ status: 'completed' }),
+      ]);
+      expect(work.comments).toHaveLength(1);
+      expect(work.activity.map((item) => item.action)).toEqual([
+        'assigned',
+        'commented',
+        'bulk-decided',
+        'bulk-decided',
+      ]);
+      const search = (await (
+        await authFetch(
+          `${address.url}api/search?kind=observation&reviewStanding=accepted&pageSize=1`,
+        )
+      ).json()) as {
+        total: number;
+        items: unknown[];
+        nextCursor: string | null;
+      };
+      expect(search).toMatchObject({ total: 2 });
+      expect(search.items).toHaveLength(1);
+      expect(search.nextCursor).toBe('offset:1');
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        local.server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+  });
+
   it('imports bounded synthetic text and applies immutable redaction through case-first routes', async () => {
     const directory = await mkdtemp(
       path.join(os.tmpdir(), 'evidence-ingestion-blackbox-'),

@@ -489,30 +489,50 @@ export function createFileEvidenceProductRepository(options: {
               item.workspaceId === value.workspaceId &&
               item.commandKey === value.commandKey,
           );
-          if (existing !== undefined && !same(decisionCommand(existing), decisionCommand(value)))
+          if (
+            existing !== undefined &&
+            !same(decisionCommand(existing), decisionCommand(value))
+          )
             throw new EvidenceProductCommandCollisionError(value.commandKey);
           if (existing === undefined) nextDecisions.push(value);
-          const activity = activityValues[index] as (typeof activityValues)[number];
+          const activity = activityValues[
+            index
+          ] as (typeof activityValues)[number];
           const existingActivity = nextActivity.find(
             (item) => item.activityId === activity.activityId,
           );
-          if (existingActivity !== undefined && !same(existingActivity, activity))
+          if (
+            existingActivity !== undefined &&
+            !same(existingActivity, activity)
+          )
             throw new EvidenceProductCommandCollisionError(activity.commandKey);
           if (existingActivity === undefined) nextActivity.push(activity);
         }
         let next: EvidenceProductSnapshot = {
           ...snapshot,
-          reviewDecisions: nextDecisions.sort((a, b) =>
-            a.decidedAt.localeCompare(b.decidedAt) ||
-            a.reviewDecisionId.localeCompare(b.reviewDecisionId),
+          reviewDecisions: nextDecisions.sort(
+            (a, b) =>
+              a.decidedAt.localeCompare(b.decidedAt) ||
+              a.reviewDecisionId.localeCompare(b.reviewDecisionId),
           ),
-          reviewActivity: nextActivity.sort((a, b) =>
-            a.occurredAt.localeCompare(b.occurredAt) ||
-            a.activityId.localeCompare(b.activityId),
+          reviewActivity: nextActivity.sort(
+            (a, b) =>
+              a.occurredAt.localeCompare(b.occurredAt) ||
+              a.activityId.localeCompare(b.activityId),
           ),
         };
-        next = attachBindings(next, scope, 'review-decision', values as unknown as Record<string, unknown>[]);
-        next = attachBindings(next, scope, 'review-activity', activityValues as unknown as Record<string, unknown>[]);
+        next = attachBindings(
+          next,
+          scope,
+          'review-decision',
+          values as unknown as Record<string, unknown>[],
+        );
+        next = attachBindings(
+          next,
+          scope,
+          'review-activity',
+          activityValues as unknown as Record<string, unknown>[],
+        );
         return { value: values, snapshot: next };
       });
     },

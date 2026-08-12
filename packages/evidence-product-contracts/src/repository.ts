@@ -251,6 +251,8 @@ export async function recordCaseReviewDecision(
 ): Promise<EvidenceReviewDecision> {
   const { EvidenceCaseReviewCommandSchema, EvidenceCaseReviewDecisionSchema } =
     await import('./schemas.js');
+  const { EvidenceReviewActivitySchema, deriveEvidenceReviewOperationId } =
+    await import('./operations.js');
   const validated = EvidenceCaseReviewCommandSchema.parse(command);
   if (
     authorization.action !== 'review.decide' ||
@@ -258,27 +260,51 @@ export async function recordCaseReviewDecision(
     authorization.workspaceId === null
   )
     throw new Error('Case review authorization context is incomplete.');
-  return repository.appendReviewDecision(
-    EvidenceCaseReviewDecisionSchema.parse({
-      schemaVersion: 'evidence-review-decision/3',
-      reviewDecisionId: ids.next('review-decision'),
-      caseId: authorization.caseId,
-      workspaceId: authorization.workspaceId,
-      targetKind: validated.targetKind,
-      targetVersionId: validated.targetVersionId,
-      action: validated.action,
-      principalRef: authorization.principalRef,
-      principalAssurance: 'authenticated-case-session',
-      authorization,
-      rationale: validated.rationale,
-      decidedAt: clock.now(),
-      commandKey: validated.commandKey,
-      basisEvidenceRevision: validated.basisEvidenceRevision,
-    }),
+  const decidedAt = clock.now();
+  const decision = EvidenceCaseReviewDecisionSchema.parse({
+    schemaVersion: 'evidence-review-decision/3',
+    reviewDecisionId: ids.next('review-decision'),
+    caseId: authorization.caseId,
+    workspaceId: authorization.workspaceId,
+    targetKind: validated.targetKind,
+    targetVersionId: validated.targetVersionId,
+    action: validated.action,
+    principalRef: authorization.principalRef,
+    principalAssurance: 'authenticated-case-session',
+    authorization,
+    rationale: validated.rationale,
+    decidedAt,
+    commandKey: validated.commandKey,
+    basisEvidenceRevision: validated.basisEvidenceRevision,
+  });
+  const [recorded] = await repository.appendReviewDecisions(
+    [decision],
+    [
+      EvidenceReviewActivitySchema.parse({
+        schemaVersion: 'evidence-review-activity/1',
+        activityId: deriveEvidenceReviewOperationId('activity', {
+          caseId: authorization.caseId,
+          commandKey: validated.commandKey,
+        }),
+        organizationId: authorization.organizationId,
+        caseId: authorization.caseId,
+        workspaceId: authorization.workspaceId,
+        targetKind: validated.targetKind,
+        targetVersionId: validated.targetVersionId,
+        action: 'decided',
+        principalRef: authorization.principalRef,
+        subjectPrincipalRef: null,
+        commandKey: validated.commandKey,
+        occurredAt: decidedAt,
+      }),
+    ],
     {
       caseId: authorization.caseId,
       workspaceId: authorization.workspaceId,
-      boundAt: clock.now(),
+      boundAt: decidedAt,
     },
   );
+  if (recorded === undefined)
+    throw new Error('Review decision was not recorded.');
+  return recorded;
 }

@@ -31,7 +31,7 @@ import {
   EvidenceReviewActivitySchema,
   EvidenceReviewAssignmentSchema,
   EvidenceReviewCommentSchema,
-} from './operations.js';
+} from './review-operation-schemas.js';
 
 export const EVIDENCE_ENCRYPTED_SOURCE_PLACEHOLDER =
   '[ACME encrypted artifact representation]' as const;
