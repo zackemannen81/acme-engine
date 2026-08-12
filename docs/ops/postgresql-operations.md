@@ -118,6 +118,8 @@ docker run -d --name acme-pg-test \
   -p 55432:5432 postgres:15
 
 export ACME_POSTGRES_URL=postgresql://acme:acme@127.0.0.1:55432/acme
+# Emits package dist when missing (workspace packages export only ./dist),
+# then runs vitest.postgres.config.ts. CI postgres job also runs typecheck first.
 pnpm test:postgres
 
 docker rm -f acme-pg-test

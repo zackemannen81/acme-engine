@@ -96,6 +96,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Workspace packages export only ./dist (see package.json exports).
+      # The hermetic verify job emits dist via typecheck before tests; this
+      # job must do the same or Vitest cannot resolve @acme/* entry points.
+      - name: Typecheck (emit package dist)
+        run: pnpm typecheck
+
       - name: Run PostgreSQL adapter suite
         env:
           ACME_POSTGRES_URL: postgresql://acme:acme@127.0.0.1:5432/acme
