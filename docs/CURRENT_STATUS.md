@@ -353,20 +353,25 @@ exist for domain and product foundations: observe/relate/timeline/assessment
 tasks, attention/export helpers, primary views through open questions, product
 assessment storage and gated technical-audit views (disabled by default).
 ADR-0033 decides the PostgreSQL persistence architecture. ACME-0085 delivered
-slice 7: `@acme/adapter-postgres` and `@acme/adapter-evidence-product-postgres`
-against plain PostgreSQL 15, passing the unchanged conformance kits plus the
-ADR-0033 gates. SQLite and the file product store remain the hermetic defaults.
-Hosted shell, deployment and non-synthetic paths remain unimplemented.
+slice 7 adapters. ACME-0086 / ADR-0034 delivered the hosted shell: multi-process
+composition on PostgreSQL with single-user identity, `/health`, deploy compose
+and restart durability proof. SQLite and the file product store remain hermetic
+defaults. Non-synthetic paths remain unimplemented (slice 9 governance).
 
 ## Active Work
 
-No product task is active in `docs/CURRENT_TASK.md` after ACME-0085. The
-recommended next product task is slice 8 (hosted shell), which still requires
-identity/authorization ADR work and hosting topology decisions. Independent
-alternatives remain E1 trust-stage evidence (G12) or the WP-T residuals (T2 plan
-`measurements`, T3 adapter declaration policy, optional T4 browser CI smoke).
+No product task is active in `docs/CURRENT_TASK.md` after ACME-0086. The next
+Evidence step is slice 9 readiness only when governance explicitly authorizes
+it. Independent alternatives remain E1 trust-stage evidence (G12) or the WP-T
+residuals (T2 plan `measurements`, T3 adapter declaration policy, optional T4
+browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0086:** Delivered Evidence Integrity slice 8 hosted shell. ADR-0034
+  fixes single-user hosted identity (no Supabase Auth). Deploy compose under
+  `deploy/evidence-workbench/`, ops notes, health endpoint, and gated PostgreSQL
+  restart black-box proving product review decisions survive process reopen.
 
 - **ACME-0085:** Delivered Evidence Integrity slice 7. `@acme/adapter-postgres`
   implements the aggregate `ExecutionRepository` and `QualityEvaluationStore`

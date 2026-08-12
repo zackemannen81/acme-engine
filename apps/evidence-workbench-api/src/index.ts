@@ -76,6 +76,14 @@ export function createEvidenceWorkbenchApi(options: {
     try {
       const origin = `http://${request.headers.host ?? '127.0.0.1'}`;
       const url = new URL(request.url ?? '/', origin);
+      if (request.method === 'GET' && url.pathname === '/health') {
+        send(response, 200, {
+          status: 'ok',
+          service: 'evidence-workbench-api',
+          workspaceId: options.workspaceId,
+        });
+        return;
+      }
       if (request.method === 'GET' && url.pathname === '/') {
         const html = renderEvidenceWorkbenchShell({
           workspaceId: options.workspaceId,

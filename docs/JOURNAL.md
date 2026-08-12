@@ -1,5 +1,21 @@
 # Journal
 
+## 2026-08-12 — ACME-0086 Hosted shell
+
+- Date: 2026-08-12
+- Author: Grok
+- Task: ACME-0086
+- Branch: `dev/legal-evidence`
+- Summary: Delivered Evidence Integrity Workbench slice 8. Accepted ADR-0034
+  (single-user hosted identity, no Supabase Auth). Added `/health`, deploy
+  compose under `deploy/evidence-workbench/`, hosted ops notes, and a gated
+  PostgreSQL restart black-box proving review decisions survive process
+  close/reopen on the product store.
+- Verification: hermetic suite green; `pnpm test:postgres` including restart
+  proof (when ACME_POSTGRES_URL is set).
+- Handoff: slice 9 readiness is governance-only and is not activated.
+- Signature: Grok
+
 ## 2026-08-12 — ACME-0085 PostgreSQL slice 7 adapters
 
 - Date: 2026-08-12

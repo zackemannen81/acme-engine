@@ -400,7 +400,13 @@ export async function createLocalEvidenceWorkbench(
   });
 
   let seededThisProcess = false;
-  if (productSnapshot.sources.length === 0) {
+  // Seed when no sources yet, or when sources exist without observations
+  // (partial prior startup) and this process still requested a seed mode.
+  const needsSeed =
+    seedFixtures.length > 0 &&
+    (productSnapshot.sources.length === 0 ||
+      productSnapshot.observations.length === 0);
+  if (needsSeed) {
     for (const fixture of seedFixtures) {
       const job = await worker.start({
         schemaVersion: 'evidence-import-command/1',

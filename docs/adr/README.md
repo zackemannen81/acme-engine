@@ -68,3 +68,4 @@ current architecture.
 - [`0031-evidence-review-overlay-and-versioned-views.md`](0031-evidence-review-overlay-and-versioned-views.md)
 - [`0032-evidence-v1-correction-occurrence-pairing.md`](0032-evidence-v1-correction-occurrence-pairing.md)
 - [`0033-postgresql-persistence-architecture.md`](0033-postgresql-persistence-architecture.md)
+- [`0034-poc-1-hosted-shell-identity-and-topology.md`](0034-poc-1-hosted-shell-identity-and-topology.md)

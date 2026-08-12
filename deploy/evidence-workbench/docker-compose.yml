@@ -1,0 +1,33 @@
+# Hosted Evidence Integrity Workbench (slice 8 / ACME-0086)
+# Prerequisites: monorepo built (`pnpm build`), PostgreSQL 15 reachable.
+# Does not start Supabase; point ACME_POSTGRES_URL at direct PG (not 6543).
+
+services:
+  evidence-api:
+    image: node:24-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ../..:/app
+    command:
+      - node
+      - apps/evidence-workbench-api/dist/local-main.js
+    environment:
+      EVIDENCE_WORKBENCH_PORT: '8790'
+      EVIDENCE_WORKBENCH_SEED: ${EVIDENCE_WORKBENCH_SEED:-development}
+      ACME_PERSISTENCE: postgres
+      ACME_POSTGRES_URL: ${ACME_POSTGRES_URL}
+      NODE_ENV: production
+    ports:
+      - '${EVIDENCE_WORKBENCH_HOST_PORT:-8790}:8790'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:8790/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped

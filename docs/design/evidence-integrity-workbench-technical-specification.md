@@ -1133,13 +1133,14 @@ All proven under ACME-0085.
 
 Documentation: [`docs/ops/postgresql-operations.md`](../ops/postgresql-operations.md).
 
-### Slice 8 — Hosted shell
+### Slice 8 — Hosted shell (delivered by ACME-0086)
 
 Reviewer capability: complete the identical primary journey through hosted web,
 API and worker processes on self-hosted Supabase PostgreSQL.
 
-Prerequisites: slice 7 plus separate identity/authorization and, if used,
-object-store consistency ADRs.
+Prerequisites: slice 7 plus
+[ADR-0034](../adr/0034-poc-1-hosted-shell-identity-and-topology.md) (single-user
+hosted identity; Supabase Auth remains disabled). Object storage not adopted.
 
 Deliverables: hosted composition, authenticated identity only after its ADR,
 deployment configuration, observability and bounded live-provider gate.
