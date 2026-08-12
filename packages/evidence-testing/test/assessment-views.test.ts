@@ -101,6 +101,31 @@ describe('Evidence Slice 5 primary views', () => {
           commandKey: 'review-e-a01-accept',
           basisEvidenceRevision: null,
         },
+        {
+          schemaVersion: 'evidence-review-decision/2',
+          reviewDecisionId: 'review-e-a01-authenticated',
+          workspaceId: assessment.workspaceId,
+          targetKind: 'assessment',
+          targetVersionId: assessment.assessmentVersionId,
+          action: 'accept',
+          principalRef: 'principal-authenticated-reviewer',
+          principalAssurance: 'authenticated-session',
+          authorization: {
+            schemaVersion: 'evidence-authorization-context/1',
+            principalRef: 'principal-authenticated-reviewer',
+            organizationId: 'organization-evaluation',
+            membershipId: 'membership-authenticated-reviewer',
+            effectiveRole: 'reviewer',
+            workspaceId: assessment.workspaceId,
+            action: 'review.decide',
+            policyVersion: 'evidence-auth-policy/1',
+            decidedAt: '2026-08-11T00:31:00.000Z',
+          },
+          rationale: 'Authenticated review preserved after legacy history.',
+          decidedAt: '2026-08-11T00:31:00.000Z',
+          commandKey: 'review-e-a01-authenticated',
+          basisEvidenceRevision: null,
+        },
       ],
     });
     const view = buildEvidencePrimaryAssessmentView({
@@ -130,7 +155,18 @@ describe('Evidence Slice 5 primary views', () => {
     expect(
       queue.nextItems.filter(({ kind }) => kind === 'assessment-attention'),
     ).toHaveLength(1);
-    expect(history.decisions.map(({ action }) => action)).toEqual(['accept']);
+    expect(history.decisions).toMatchObject([
+      {
+        reviewerRef: 'local-reviewer',
+        principalAssurance: 'unauthenticated-local',
+        action: 'accept',
+      },
+      {
+        reviewerRef: 'principal-authenticated-reviewer',
+        principalAssurance: 'authenticated-session',
+        action: 'accept',
+      },
+    ]);
     expect(scanPrimaryViewVocabulary({ view, queue, history })).toEqual([]);
     expect(Object.isFrozen(view)).toBe(true);
     expect(Object.isFrozen(view.claims)).toBe(true);

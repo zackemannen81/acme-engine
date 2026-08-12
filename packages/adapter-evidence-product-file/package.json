@@ -17,11 +17,14 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@acme/evidence-artifacts": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/module-evidence": "workspace:*"
   },
   "devDependencies": {
+    "@acme/adapter-evidence-auth-memory": "workspace:*",
+    "@acme/evidence-auth": "workspace:*",
     "@acme/evidence-testing": "workspace:*"
   }
 }

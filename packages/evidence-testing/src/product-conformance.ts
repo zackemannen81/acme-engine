@@ -213,3 +213,119 @@ export function evidencePrimaryViewConformance(options: {
     });
   });
 }
+
+export function evidenceIngestionRepositoryConformance(options: {
+  readonly createRepository: () => EvidenceProductRepository;
+}): void {
+  describe('evidence ingestion repository conformance', () => {
+    it('persists case-scoped import and atomically freezes an applied redaction log', async () => {
+      const repository = options.createRepository();
+      const scope = {
+        caseId: 'case-ingestion-conformance',
+        workspaceId: 'workspace-ingestion-conformance',
+        boundAt: timestamp,
+      } as const;
+      await repository.putWorkspace(
+        {
+          schemaVersion: 'evidence-workspace/1',
+          workspaceId: scope.workspaceId,
+          label: 'Synthetic ingestion conformance',
+          dataPolicy: 'synthetic-only',
+          evidenceRevision: 0,
+          createdAt: timestamp,
+        },
+        scope,
+      );
+      const record = {
+        schemaVersion: 'evidence-text-import-record/1' as const,
+        importId: 'import-conformance-1',
+        organizationId: 'organization-conformance',
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        logicalArtifactId: 'ART-CONFORMANCE',
+        artifactVersionId: 'evidence_artifact_' + '1'.repeat(64),
+        commandKey: 'import-command-conformance-1',
+        commandDigest: '2'.repeat(64),
+        dataClass: 'synthetic-utf8-plain-text/1' as const,
+        attestationVersion: 'evidence-synthetic-attestation/1' as const,
+        originalRepresentationId: 'representation-original-conformance',
+        canonicalRepresentationId: 'representation-canonical-conformance',
+        originalSha256: '3'.repeat(64),
+        canonicalSha256: '4'.repeat(64),
+        originalByteLength: 10,
+        canonicalByteLength: 10,
+        principalRef: 'principal-conformance',
+        policyVersion: 'policy-conformance/1',
+        state: 'activated' as const,
+        reasonCode: null,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      await repository.putTextImport(record, scope);
+      const operation = {
+        schemaVersion: 'evidence-redaction-operation/1' as const,
+        operationId: 'operation-conformance-1',
+        ordinal: 1,
+        startByte: 0,
+        endByte: 1,
+        removedBytesSha256: '5'.repeat(64),
+        reasonCode: 'personal-data' as const,
+        rationale: null,
+        replacementVersion: 'evidence-redaction-token/1' as const,
+      };
+      const draft = {
+        schemaVersion: 'evidence-redaction-draft/1' as const,
+        draftId: 'draft-conformance-1',
+        organizationId: record.organizationId,
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        predecessorRepresentationId: record.canonicalRepresentationId,
+        expectedRepresentationRevision: 1,
+        policyReference: 'policy-reference-conformance/1',
+        operations: [operation],
+        authorPrincipalRef: record.principalRef,
+        state: 'draft' as const,
+        revision: 0,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      await repository.putRedactionDraft(draft, scope);
+      const applied = { ...draft, state: 'applied' as const, revision: 1 };
+      const log = {
+        schemaVersion: 'evidence-redaction-log/1' as const,
+        redactionLogId: 'redaction-log-conformance-1',
+        organizationId: record.organizationId,
+        caseId: scope.caseId,
+        workspaceId: scope.workspaceId,
+        draftId: draft.draftId,
+        commandKey: 'redaction-command-conformance-1',
+        predecessorRepresentationId: record.canonicalRepresentationId,
+        derivedRepresentationId: 'representation-redacted-conformance',
+        predecessorArtifactVersionId: record.artifactVersionId,
+        derivedArtifactVersionId: 'evidence_artifact_' + '6'.repeat(64),
+        predecessorSha256: record.canonicalSha256,
+        resultSha256: '7'.repeat(64),
+        operations: [operation],
+        transformationVersion: 'evidence-redaction-transform/1' as const,
+        principalRef: record.principalRef,
+        policyVersion: record.policyVersion,
+        appliedAt: timestamp,
+      };
+      await repository.applyRedaction(applied, log, scope);
+      const snapshot = await repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      expect(snapshot.textImports).toEqual([record]);
+      expect(snapshot.redactionDrafts).toEqual([applied]);
+      expect(snapshot.redactionLogs).toEqual([log]);
+      await expect(
+        repository.applyRedaction(
+          applied,
+          { ...log, resultSha256: '8'.repeat(64) },
+          scope,
+        ),
+      ).rejects.toThrow();
+    });
+  });
+}

@@ -108,6 +108,136 @@ export function createEvidenceProductMigrations(
           ON ${qIdent(name)}.change_sets (workspace_id, to_evidence_revision, command_key)`,
       ]),
     }),
+    Object.freeze({
+      version: 3,
+      name: 'evidence-case-object-bindings',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.case_object_bindings (
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          object_kind text NOT NULL,
+          object_id text NOT NULL,
+          bound_at text NOT NULL,
+          record_json text NOT NULL,
+          PRIMARY KEY (case_id, workspace_id, object_kind, object_id),
+          UNIQUE (case_id, object_kind, object_id)
+        )`,
+        `CREATE INDEX case_object_bindings_scope
+          ON ${qIdent(name)}.case_object_bindings (case_id, workspace_id, object_kind, object_id)`,
+      ]),
+    }),
+    Object.freeze({
+      version: 4,
+      name: 'evidence-secure-artifact-metadata-and-audit',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.artifact_representations (
+          representation_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          artifact_version_id text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE TABLE ${qIdent(name)}.artifact_envelopes (
+          representation_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          object_key text NOT NULL UNIQUE,
+          record_json text NOT NULL
+        )`,
+        `CREATE TABLE ${qIdent(name)}.artifact_staging (
+          staging_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          representation_id text NOT NULL,
+          command_key text NOT NULL,
+          record_json text NOT NULL,
+          UNIQUE (case_id, command_key)
+        )`,
+        `CREATE TABLE ${qIdent(name)}.artifact_lifecycle (
+          lifecycle_event_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          representation_id text NOT NULL,
+          occurred_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX artifact_lifecycle_order ON ${qIdent(name)}.artifact_lifecycle
+          (case_id, representation_id, occurred_at, lifecycle_event_id)`,
+        `CREATE TABLE ${qIdent(name)}.security_audit (
+          audit_event_id text PRIMARY KEY,
+          organization_id text NOT NULL,
+          case_id text NULL,
+          principal_ref text NOT NULL,
+          occurred_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX security_audit_case_order ON ${qIdent(name)}.security_audit
+          (case_id, occurred_at, audit_event_id)`,
+      ]),
+    }),
+    Object.freeze({
+      version: 5,
+      name: 'evidence-text-import-and-redaction',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.text_imports (
+          import_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          command_key text NOT NULL,
+          record_json text NOT NULL,
+          UNIQUE (case_id, command_key)
+        )`,
+        `CREATE TABLE ${qIdent(name)}.redaction_drafts (
+          draft_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          revision integer NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE TABLE ${qIdent(name)}.redaction_logs (
+          redaction_log_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          command_key text NOT NULL UNIQUE,
+          applied_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+      ]),
+    }),
+    Object.freeze({
+      version: 6,
+      name: 'evidence-reviewer-operations',
+      statements: Object.freeze([
+        `CREATE TABLE ${qIdent(name)}.review_assignments (
+          assignment_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          target_kind text NOT NULL,
+          target_version_id text NOT NULL,
+          revision integer NOT NULL,
+          record_json text NOT NULL,
+          UNIQUE (case_id, target_kind, target_version_id)
+        )`,
+        `CREATE TABLE ${qIdent(name)}.review_comments (
+          comment_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          target_version_id text NOT NULL,
+          created_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE TABLE ${qIdent(name)}.review_activity (
+          activity_id text PRIMARY KEY,
+          case_id text NOT NULL,
+          workspace_id text NOT NULL,
+          target_version_id text NOT NULL,
+          occurred_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX review_activity_case_order ON ${qIdent(name)}.review_activity
+          (case_id, occurred_at, activity_id)`,
+      ]),
+    }),
   ]);
 }
 

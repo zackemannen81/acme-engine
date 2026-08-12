@@ -1,6 +1,17 @@
 import { randomBytes, randomUUID } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { createFileEvidenceArtifactObjectStore } from '@acme/adapter-evidence-artifact-file';
+import { createS3EvidenceArtifactObjectStore } from '@acme/adapter-evidence-artifact-s3';
+import {
+  createDeterministicEvidenceAuthenticator,
+  createInMemoryEvidenceIdentityRepository,
+} from '@acme/adapter-evidence-auth-memory';
+import {
+  createPostgresEvidenceIdentityRepository,
+  migrateEvidenceIdentitySchema,
+} from '@acme/adapter-evidence-auth-postgres';
 import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
 import { createPostgresEvidenceProductRepository } from '@acme/adapter-evidence-product-postgres';
 import { migrateEvidenceProductSchema } from '@acme/adapter-evidence-product-postgres';
@@ -25,19 +36,40 @@ import {
   createResponsePipeline,
   createStateEngine,
   deriveExecutionId,
+  nodeHashing,
   type Clock,
   type ExecutionRepository,
   type IdGenerator,
   type ModelSelection,
   type RepositoryEvidence,
 } from '@acme/core';
+import {
+  createEvidenceSessionService,
+  deriveEvidencePrincipalRef,
+  type EvidenceCredentialAuthenticator,
+  type EvidenceIdentityRepository,
+  EvidenceCaseMembershipSchema,
+  EvidenceCaseSchema,
+} from '@acme/evidence-auth';
+import {
+  createEvidenceArtifactKeyring,
+  loadEvidenceArtifactKeyringFromFiles,
+  type EvidenceArtifactKeyProvider,
+  type EvidenceArtifactObjectStore,
+} from '@acme/evidence-artifacts';
 import { Pool } from 'pg';
 import {
   EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
   effectiveReviewDecision,
   EVIDENCE_WORKSPACE_SCHEMA_VERSION,
+  bindLegacySyntheticCaseObjects,
+  createEvidenceArtifactService,
+  createEvidenceIngestionService,
+  createSecureEvidenceProductRepository,
+  reconcileEvidenceCases,
   type EvidenceProductClock,
   type EvidenceProductIds,
+  type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
 import {
   EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
@@ -74,6 +106,12 @@ import {
 } from './index.js';
 
 const WORKSPACE_ID = 'rillford-annex-local';
+const CASE_ID = 'rillford-annex-synthetic-case';
+const ORGANIZATION_ID = 'acme-synthetic-organization';
+const DEVELOPMENT_AUTH_ISSUER = 'https://local.auth.invalid/';
+const DEVELOPMENT_AUTH_SUBJECT = 'synthetic-reviewer-1';
+const DEVELOPMENT_AUTH_EMAIL = 'reviewer@acme.local';
+const DEVELOPMENT_AUTH_PASSWORD = 'acme-synthetic-reviewer';
 const DEVELOPMENT_COMMAND_KEY = 'development-observe-dev-t01-v1';
 const PRE_LATE_RELATE_COMMAND_KEY = 'evaluation-relate-pre-log-1';
 const OBSERVE_SELECTION: ModelSelection = {
@@ -204,6 +242,131 @@ function systemIds(): IdGenerator {
 
 function productIds(): EvidenceProductIds {
   return { next: () => `review-decision-${randomUUID()}` };
+}
+
+async function localArtifactKey(file: string): Promise<Uint8Array> {
+  await mkdir(path.dirname(file), { recursive: true });
+  try {
+    return Buffer.from((await readFile(file, 'utf8')).trim(), 'base64');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  const generated = randomBytes(32);
+  try {
+    await writeFile(file, generated.toString('base64'), {
+      encoding: 'utf8',
+      flag: 'wx',
+      mode: 0o600,
+    });
+    return generated;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    return Buffer.from((await readFile(file, 'utf8')).trim(), 'base64');
+  }
+}
+
+export async function createEvidenceArtifactInfrastructure(input: {
+  readonly basePath: string;
+  readonly hosted: boolean;
+}): Promise<{
+  readonly objectStore: EvidenceArtifactObjectStore;
+  readonly keyProvider: EvidenceArtifactKeyProvider;
+}> {
+  const configuredKeyFile = process.env['ACME_ARTIFACT_KEK_FILE']?.trim();
+  const configuredKeyManifest =
+    process.env['ACME_ARTIFACT_KEK_MANIFEST']?.trim();
+  if (input.hosted && !configuredKeyFile && !configuredKeyManifest)
+    throw new Error(
+      'Hosted artifact storage requires ACME_ARTIFACT_KEK_FILE or ACME_ARTIFACT_KEK_MANIFEST.',
+    );
+  const keyFile = path.resolve(
+    configuredKeyFile || `${input.basePath}.artifact-kek`,
+  );
+  const activeKeyId =
+    process.env['ACME_ARTIFACT_KEK_ID']?.trim() || 'evidence-kek';
+  const activeKeyVersion = Number(
+    process.env['ACME_ARTIFACT_KEK_VERSION']?.trim() || '1',
+  );
+  const manifestedFiles =
+    configuredKeyManifest === undefined
+      ? null
+      : (JSON.parse(
+          await readFile(path.resolve(configuredKeyManifest), 'utf8'),
+        ) as unknown);
+  if (manifestedFiles !== null && !Array.isArray(manifestedFiles))
+    throw new Error('Artifact KEK manifest must be an array.');
+  const manifestFiles =
+    manifestedFiles === null
+      ? null
+      : manifestedFiles.map((item) => {
+          if (
+            typeof item !== 'object' ||
+            item === null ||
+            typeof (item as Record<string, unknown>)['keyId'] !== 'string' ||
+            typeof (item as Record<string, unknown>)['keyVersion'] !==
+              'number' ||
+            typeof (item as Record<string, unknown>)['path'] !== 'string'
+          )
+            throw new Error('Artifact KEK manifest entry is invalid.');
+          return {
+            keyId: (item as { keyId: string }).keyId,
+            keyVersion: (item as { keyVersion: number }).keyVersion,
+            path: path.resolve((item as { path: string }).path),
+          };
+        });
+  const keyProvider =
+    configuredKeyFile || manifestFiles !== null
+      ? await loadEvidenceArtifactKeyringFromFiles({
+          activeKeyId,
+          activeKeyVersion,
+          files: manifestFiles ?? [
+            { keyId: activeKeyId, keyVersion: activeKeyVersion, path: keyFile },
+          ],
+        })
+      : createEvidenceArtifactKeyring({
+          activeKeyId: 'local-evidence-kek',
+          activeKeyVersion: 1,
+          keys: [
+            {
+              keyId: 'local-evidence-kek',
+              keyVersion: 1,
+              key: await localArtifactKey(keyFile),
+            },
+          ],
+        });
+  const storeKind = process.env['ACME_ARTIFACT_STORE']?.trim().toLowerCase();
+  if (input.hosted && storeKind !== 's3')
+    throw new Error('Hosted artifact storage requires ACME_ARTIFACT_STORE=s3.');
+  if (storeKind === 's3') {
+    const endpoint = process.env['ACME_ARTIFACT_S3_ENDPOINT']?.trim();
+    const region = process.env['ACME_ARTIFACT_S3_REGION']?.trim();
+    const bucket = process.env['ACME_ARTIFACT_S3_BUCKET']?.trim();
+    const accessKeyId = process.env['ACME_ARTIFACT_S3_ACCESS_KEY_ID']?.trim();
+    const secretFile = process.env['ACME_ARTIFACT_S3_SECRET_FILE']?.trim();
+    if (!endpoint || !region || !bucket || !accessKeyId || !secretFile)
+      throw new Error('S3 artifact storage configuration is incomplete.');
+    return {
+      keyProvider,
+      objectStore: createS3EvidenceArtifactObjectStore({
+        endpoint,
+        region,
+        bucket,
+        accessKeyId,
+        secretAccessKey: (
+          await readFile(path.resolve(secretFile), 'utf8')
+        ).trim(),
+      }),
+    };
+  }
+  return {
+    keyProvider,
+    objectStore: createFileEvidenceArtifactObjectStore({
+      root: path.resolve(
+        process.env['ACME_ARTIFACT_FILE_ROOT']?.trim() ||
+          `${input.basePath}.objects`,
+      ),
+    }),
+  };
 }
 
 function fixtureGateway(
@@ -362,6 +525,16 @@ export async function createLocalEvidenceWorkbench(
     readonly seedMode?: SeedMode;
     /** Override persistence selection; default reads ACME_PERSISTENCE. */
     readonly persistence?: 'file' | 'postgres';
+    readonly authenticator?: EvidenceCredentialAuthenticator;
+    readonly authIdentity?: {
+      readonly issuer: string;
+      readonly subject: string;
+      readonly displayLabel: string;
+      readonly email: string;
+    };
+    readonly sessionKey?: Uint8Array;
+    readonly secureCookies?: boolean;
+    readonly publicOrigin?: string;
   } = {},
 ) {
   const clock = options.clock ?? systemClock();
@@ -380,7 +553,8 @@ export async function createLocalEvidenceWorkbench(
   const postgres = usePostgresPersistence(options);
 
   let closePersistence: () => Promise<void> = async () => {};
-  let productRepository;
+  let rawProductRepository: EvidenceProductRepository;
+  let identityRepository: EvidenceIdentityRepository;
   let ledger: SnapshotLedger;
 
   if (postgres) {
@@ -392,7 +566,9 @@ export async function createLocalEvidenceWorkbench(
     await migratePostgresSchema({ pool, appliedAt: clock.now() });
     await verifyPostgresSchema({ pool });
     await migrateEvidenceProductSchema({ pool, appliedAt: clock.now() });
-    productRepository = createPostgresEvidenceProductRepository({ pool });
+    await migrateEvidenceIdentitySchema({ pool, appliedAt: clock.now() });
+    rawProductRepository = createPostgresEvidenceProductRepository({ pool });
+    identityRepository = createPostgresEvidenceIdentityRepository({ pool });
     const payloadEncryptor = createAes256GcmPayloadEncryptor({
       key: new Uint8Array(randomBytes(32)),
       keyId: 'ephemeral-local-session',
@@ -412,9 +588,10 @@ export async function createLocalEvidenceWorkbench(
           ? '.local/evidence-workbench/evaluation-product.json'
           : '.local/evidence-workbench/product.json'),
     );
-    productRepository = createFileEvidenceProductRepository({
+    rawProductRepository = createFileEvidenceProductRepository({
       filePath: dataFile,
     });
+    identityRepository = createInMemoryEvidenceIdentityRepository();
     ledger = createInMemoryExecutionRepository({
       ids,
       payloadEncryptor: createAes256GcmPayloadEncryptor({
@@ -424,21 +601,294 @@ export async function createLocalEvidenceWorkbench(
     });
   }
 
+  const authIdentity = options.authIdentity ?? {
+    issuer: DEVELOPMENT_AUTH_ISSUER,
+    subject: DEVELOPMENT_AUTH_SUBJECT,
+    displayLabel: 'Synthetic reviewer',
+    email: DEVELOPMENT_AUTH_EMAIL,
+  };
+  const principalRef = deriveEvidencePrincipalRef(
+    nodeHashing,
+    authIdentity.issuer,
+    authIdentity.subject,
+  );
+  const identitySnapshot = await identityRepository.snapshot();
+  if (
+    !identitySnapshot.organizations.some(
+      (item) => item.organizationId === ORGANIZATION_ID,
+    )
+  ) {
+    await identityRepository.putOrganization({
+      schemaVersion: 'evidence-organization/1',
+      organizationId: ORGANIZATION_ID,
+      label: 'ACME synthetic review organization',
+      createdAt: clock.now(),
+    });
+  }
+  if (
+    !identitySnapshot.principals.some(
+      (item) => item.principalRef === principalRef,
+    )
+  ) {
+    await identityRepository.putPrincipal({
+      schemaVersion: 'evidence-principal-profile/1',
+      principalRef,
+      issuer: authIdentity.issuer,
+      subject: authIdentity.subject,
+      displayLabel: authIdentity.displayLabel,
+      createdAt: clock.now(),
+    });
+  }
+  if (
+    !identitySnapshot.memberships.some(
+      (item) => item.principalRef === principalRef,
+    )
+  ) {
+    await identityRepository.putMembership({
+      schemaVersion: 'evidence-organization-membership/1',
+      membershipId: `membership-${principalRef}`,
+      organizationId: ORGANIZATION_ID,
+      principalRef,
+      role: 'organization-admin',
+      status: 'active',
+      createdAt: clock.now(),
+      updatedAt: clock.now(),
+    });
+  }
+  if (
+    !identitySnapshot.workspaceBindings.some(
+      (item) => item.workspaceId === workspaceId,
+    )
+  ) {
+    await identityRepository.putWorkspaceBinding({
+      schemaVersion: 'evidence-workspace-organization-binding/1',
+      workspaceId,
+      organizationId: ORGANIZATION_ID,
+      boundAt: clock.now(),
+    });
+  }
+  const caseNow = clock.now();
+  if (!identitySnapshot.cases.some((item) => item.caseId === CASE_ID)) {
+    await identityRepository.putCase(
+      EvidenceCaseSchema.parse({
+        schemaVersion: 'evidence-case/1',
+        caseId: CASE_ID,
+        organizationId: ORGANIZATION_ID,
+        workspaceId,
+        title: 'Rillford Annex — local review',
+        caseReference: 'SYNTHETIC-RILLFORD-1',
+        metadata: { corpus: 'rillford-annex-review-1' },
+        dataPolicy: 'synthetic-only',
+        status: 'active',
+        revision: 1,
+        createdAt: caseNow,
+        updatedAt: caseNow,
+        createdByPrincipalRef: principalRef,
+        updatedByPrincipalRef: principalRef,
+      }),
+    );
+  }
+  if (
+    !identitySnapshot.caseMemberships.some(
+      (item) => item.caseId === CASE_ID && item.principalRef === principalRef,
+    )
+  ) {
+    await identityRepository.putCaseMembership(
+      EvidenceCaseMembershipSchema.parse({
+        schemaVersion: 'evidence-case-membership/1',
+        caseMembershipId: `case-membership-${CASE_ID}-${principalRef}`,
+        caseId: CASE_ID,
+        organizationId: ORGANIZATION_ID,
+        principalRef,
+        role: 'case-admin',
+        status: 'active',
+        createdAt: caseNow,
+        updatedAt: caseNow,
+        updatedByPrincipalRef: principalRef,
+      }),
+    );
+  }
+  const provisionedIdentity = await identityRepository.snapshot();
+  const provisionedPrincipal = provisionedIdentity.principals.find(
+    (item) => item.principalRef === principalRef,
+  );
+  const provisionedBinding = provisionedIdentity.workspaceBindings.find(
+    (item) => item.workspaceId === workspaceId,
+  );
+  const activeAdmin = provisionedIdentity.memberships.find(
+    (item) =>
+      item.organizationId === provisionedBinding?.organizationId &&
+      item.role === 'organization-admin' &&
+      item.status === 'active',
+  );
+  if (
+    provisionedPrincipal === undefined ||
+    new URL(provisionedPrincipal.issuer).toString() !==
+      new URL(authIdentity.issuer).toString() ||
+    provisionedPrincipal.subject !== authIdentity.subject ||
+    provisionedBinding?.organizationId !== ORGANIZATION_ID ||
+    activeAdmin === undefined
+  ) {
+    throw new Error(
+      'Evidence identity bootstrap is incomplete or inconsistent.',
+    );
+  }
+  const authenticator =
+    options.authenticator ??
+    createDeterministicEvidenceAuthenticator({
+      issuer: authIdentity.issuer,
+      accounts: [
+        {
+          email: authIdentity.email,
+          password: DEVELOPMENT_AUTH_PASSWORD,
+          subject: authIdentity.subject,
+          displayLabel: authIdentity.displayLabel,
+        },
+      ],
+      expiresAt: new Date(
+        Date.parse(clock.now()) + 15 * 60 * 1_000,
+      ).toISOString(),
+    });
+  const sessionProtector = createAes256GcmPayloadEncryptor({
+    key: options.sessionKey ?? new Uint8Array(randomBytes(32)),
+    keyId: 'evidence-session-key-1',
+  });
+  const sessions = createEvidenceSessionService({
+    repository: identityRepository,
+    authenticator,
+    clock,
+    secrets: {
+      nextToken: () => randomBytes(32).toString('base64url'),
+    },
+    hashing: nodeHashing,
+    protector: sessionProtector,
+  });
+
+  const artifactBasePath = path.resolve(
+    options.dataFile ??
+      (postgres
+        ? '.local/evidence-workbench/postgres-product'
+        : seedMode === 'evaluation'
+          ? '.local/evidence-workbench/evaluation-product.json'
+          : '.local/evidence-workbench/product.json'),
+  );
+  const artifacts = await createEvidenceArtifactInfrastructure({
+    basePath: artifactBasePath,
+    hosted: process.env['ACME_HOSTED']?.trim() === '1',
+  });
+  const artifactService = createEvidenceArtifactService({
+    repository: rawProductRepository,
+    objectStore: artifacts.objectStore,
+    keyProvider: artifacts.keyProvider,
+    clock,
+    ids: { next: (kind) => `${kind}-${randomUUID()}` },
+  });
+  const ingestionService = createEvidenceIngestionService({
+    repository: rawProductRepository,
+    artifacts: artifactService,
+    clock,
+    ids: {
+      next: (kind) =>
+        kind === 'logical-artifact'
+          ? `ART-${randomUUID().toUpperCase()}`
+          : `${kind}-${randomUUID()}`,
+    },
+  });
+  const productRepository = createSecureEvidenceProductRepository({
+    repository: rawProductRepository,
+    service: artifactService,
+    auditContext: () => ({
+      organizationId: ORGANIZATION_ID,
+      principalRef,
+      requestId: `system-artifact-${randomUUID()}`,
+      policyVersion: 'evidence-authz-policy/1',
+    }),
+  });
+
   let productSnapshot = await productRepository.snapshot();
+  const caseScope = {
+    caseId: CASE_ID,
+    workspaceId,
+    boundAt: caseNow,
+  } as const;
   if (
     !productSnapshot.workspaces.some(
       (workspace) => workspace.workspaceId === workspaceId,
     )
   ) {
-    await productRepository.putWorkspace({
-      schemaVersion: EVIDENCE_WORKSPACE_SCHEMA_VERSION,
-      workspaceId,
-      label: 'Rillford Annex — local review',
-      dataPolicy: 'synthetic-only',
-      evidenceRevision: 0,
-      createdAt: clock.now(),
+    await productRepository.putWorkspace(
+      {
+        schemaVersion: EVIDENCE_WORKSPACE_SCHEMA_VERSION,
+        workspaceId,
+        label: 'Rillford Annex — local review',
+        dataPolicy: 'synthetic-only',
+        evidenceRevision: 0,
+        createdAt: clock.now(),
+      },
+      caseScope,
+    );
+  }
+  await bindLegacySyntheticCaseObjects({
+    repository: rawProductRepository,
+    caseId: CASE_ID,
+    workspaceId,
+    boundAt: caseNow,
+  });
+  const legacyCaseSnapshot = await rawProductRepository.caseSnapshot(
+    CASE_ID,
+    workspaceId,
+  );
+  for (const source of legacyCaseSnapshot.sources) {
+    if (source.text === '[ACME encrypted artifact representation]') continue;
+    await artifactService.secureSource({
+      source,
+      scope: caseScope,
+      commandKey: `legacy-secure-${source.artifactVersionId}`,
+      audit: {
+        organizationId: ORGANIZATION_ID,
+        principalRef,
+        requestId: `startup-artifact-${source.artifactVersionId}`,
+        policyVersion: 'evidence-authz-policy/1',
+      },
     });
-    productSnapshot = await productRepository.snapshot();
+  }
+  const reconciliation = await artifactService.reconcile({
+    scope: caseScope,
+    now: clock.now(),
+    audit: {
+      organizationId: ORGANIZATION_ID,
+      principalRef,
+      requestId: `startup-artifact-reconcile-${CASE_ID}`,
+      policyVersion: 'evidence-case-auth-policy/1',
+    },
+  });
+  if (reconciliation.integrityFailures > 0)
+    throw new Error(
+      `Artifact reconciliation found ${String(reconciliation.integrityFailures)} integrity failure(s).`,
+    );
+  productSnapshot = await productRepository.snapshot();
+  await reconcileEvidenceCases({
+    identity: await identityRepository.snapshot(),
+    product: productSnapshot,
+  });
+  const boundIdentity = await identityRepository.snapshot();
+  for (const workspace of productSnapshot.workspaces) {
+    const binding = boundIdentity.workspaceBindings.find(
+      (item) => item.workspaceId === workspace.workspaceId,
+    );
+    if (
+      binding === undefined ||
+      !boundIdentity.memberships.some(
+        (item) =>
+          item.organizationId === binding.organizationId &&
+          item.role === 'organization-admin' &&
+          item.status === 'active',
+      )
+    ) {
+      throw new Error(
+        `Workspace ${workspace.workspaceId} has no bound organization with an active administrator.`,
+      );
+    }
   }
   const gateway = fixtureGateway(
     seedFixtures,
@@ -648,14 +1098,17 @@ export async function createLocalEvidenceWorkbench(
       productSnapshot.observations.length === 0);
   if (needsSeed) {
     for (const fixture of seedFixtures) {
-      const job = await worker.start({
-        schemaVersion: 'evidence-import-command/1',
-        workspaceId,
-        commandKey: fixture.commandKey,
-        artifactVersion: fixture.input.artifactVersion,
-        actorRoster: fixture.input.actorRoster,
-      });
-      const completed = await worker.wait(job.jobId);
+      const job = await worker.start(
+        {
+          schemaVersion: 'evidence-import-command/1',
+          workspaceId,
+          commandKey: fixture.commandKey,
+          artifactVersion: fixture.input.artifactVersion,
+          actorRoster: fixture.input.actorRoster,
+        },
+        caseScope,
+      );
+      const completed = await worker.wait(job.jobId, caseScope);
       if (completed.phase !== 'completed') throw new Error(completed.message);
     }
     seededThisProcess = true;
@@ -696,37 +1149,40 @@ export async function createLocalEvidenceWorkbench(
       const parsed = EvidenceOpenQuestionSchema.safeParse(value);
       return parsed.success ? [parsed.data] : [];
     });
-    await productRepository.putRelations(relations);
-    await productRepository.putOpenQuestions(openQuestions);
+    await productRepository.putRelations(relations, caseScope);
+    await productRepository.putOpenQuestions(openQuestions, caseScope);
     await productRepository.advanceEvidenceRevision(
       workspaceId,
       workspace.evidenceRevision,
       result.revision,
     );
-    await productRepository.putChangeSet({
-      schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
-      workspaceId,
-      commandKey: preLateRelate.commandKey,
-      recordedAt: clock.now(),
-      changeSet: createEvidenceChangeSet({
-        fromEvidenceRevision: workspace.evidenceRevision,
-        toEvidenceRevision: result.revision,
-        addedArtifactVersionIds: [],
-        addedObservationIds: [],
-        addedRelationIds: relations.map(({ relationId }) => relationId),
-        addedOpenQuestionIds: openQuestions.map(
-          ({ openQuestionId }) => openQuestionId,
-        ),
-        standingChanges: [],
-        actorReferenceKeys: [],
-        relationEndpointIds: relations.flatMap(({ endpoints }) =>
-          endpoints.map(({ id }) => id),
-        ),
-        temporalBounds: relations.flatMap(
-          ({ comparableScope }) => comparableScope.temporalBounds,
-        ),
-      }),
-    });
+    await productRepository.putChangeSet(
+      {
+        schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+        workspaceId,
+        commandKey: preLateRelate.commandKey,
+        recordedAt: clock.now(),
+        changeSet: createEvidenceChangeSet({
+          fromEvidenceRevision: workspace.evidenceRevision,
+          toEvidenceRevision: result.revision,
+          addedArtifactVersionIds: [],
+          addedObservationIds: [],
+          addedRelationIds: relations.map(({ relationId }) => relationId),
+          addedOpenQuestionIds: openQuestions.map(
+            ({ openQuestionId }) => openQuestionId,
+          ),
+          standingChanges: [],
+          actorReferenceKeys: [],
+          relationEndpointIds: relations.flatMap(({ endpoints }) =>
+            endpoints.map(({ id }) => id),
+          ),
+          temporalBounds: relations.flatMap(
+            ({ comparableScope }) => comparableScope.temporalBounds,
+          ),
+        }),
+      },
+      caseScope,
+    );
   }
 
   const server = createEvidenceWorkbenchApi({
@@ -735,6 +1191,19 @@ export async function createLocalEvidenceWorkbench(
     clock,
     ids: reviewIds,
     workspaceId,
+    caseId: CASE_ID,
+    auth: {
+      sessions,
+      repository: identityRepository,
+      cookieName:
+        options.secureCookies === true ? 'acme_session' : 'acme_session_dev',
+      secureCookies: options.secureCookies ?? false,
+      ...(options.publicOrigin === undefined
+        ? {}
+        : { publicOrigin: options.publicOrigin }),
+    },
+    artifactSecurity: artifactService,
+    ingestion: ingestionService,
     ...(lateFixture === null
       ? {}
       : {
@@ -759,10 +1228,22 @@ export async function createLocalEvidenceWorkbench(
     server,
     worker,
     productRepository,
+    artifactService,
+    artifactObjectStore: artifacts.objectStore,
     ledger,
     gateway,
     engine,
     workspaceId,
+    caseId: CASE_ID,
+    identityRepository,
+    sessions,
+    authCredentials: {
+      email: authIdentity.email,
+      password:
+        options.authenticator === undefined
+          ? DEVELOPMENT_AUTH_PASSWORD
+          : undefined,
+    },
     dataFile: postgres
       ? undefined
       : path.resolve(

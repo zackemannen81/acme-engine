@@ -23,6 +23,7 @@
     "test:live": "node --env-file-if-exists=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.live.config.ts",
     "test:postgres": "node ./tooling/postgres/run-postgres-tests.mjs",
     "test:scenario": "vitest run --passWithNoTests tests/scenario",
+    "test:supabase-auth": "vitest run --config vitest.supabase-auth.config.ts",
     "test:unit": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --noEmit --pretty false"
   },

@@ -186,6 +186,18 @@ describe('Evidence workbench PostgreSQL restart', () => {
         evidenceRevision: 1,
         createdAt: '2026-08-12T12:00:00.000Z',
       });
+      const identity = await first.identityRepository.snapshot();
+      const organizationId = identity.workspaceBindings.find(
+        (binding) => binding.workspaceId === first.workspaceId,
+      )?.organizationId;
+      if (organizationId === undefined)
+        throw new Error('Missing restart organization binding.');
+      await first.identityRepository.putWorkspaceBinding({
+        schemaVersion: 'evidence-workspace-organization-binding/1',
+        workspaceId: durableWorkspaceId,
+        organizationId,
+        boundAt: '2026-08-12T12:00:00.000Z',
+      });
       await first.productRepository.putAssessments([durableAssessment]);
       await first.productRepository.putChangeSet({
         schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
@@ -206,17 +218,37 @@ describe('Evidence workbench PostgreSQL restart', () => {
         }),
       });
 
+      const origin = address.url.slice(0, -1);
+      const login = await fetch(`${address.url}auth/session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin },
+        body: JSON.stringify(first.authCredentials),
+      });
+      expect(login.status).toBe(201);
+      const setCookies = login.headers.getSetCookie();
+      const cookie = setCookies.map((value) => value.split(';')[0]).join('; ');
+      const csrfPart = setCookies
+        .map((value) => value.split(';')[0])
+        .find((value) => value?.startsWith('acme_csrf='));
+      if (csrfPart === undefined)
+        throw new Error('Missing restart CSRF cookie.');
       const review = await fetch(`${address.url}api/reviews`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          cookie,
+          origin,
+          'x-acme-csrf': decodeURIComponent(
+            csrfPart.slice('acme_csrf='.length),
+          ),
+        },
         body: JSON.stringify({
-          schemaVersion: 'evidence-review-command/1',
+          schemaVersion: 'evidence-review-command/2',
           workspaceId: first.workspaceId,
           commandKey,
           targetKind: 'observation',
           targetVersionId: observation.observationId,
           action: 'accept',
-          reviewerRef: 'local-reviewer',
           rationale: 'Restart durability review.',
           basisEvidenceRevision: null,
         }),
@@ -227,7 +259,10 @@ describe('Evidence workbench PostgreSQL restart', () => {
       expect(afterReview.sources.length).toBeGreaterThan(0);
       expect(
         afterReview.reviewDecisions.some(
-          (decision) => decision.commandKey === commandKey,
+          (decision) =>
+            decision.commandKey === commandKey &&
+            decision.schemaVersion === 'evidence-review-decision/2' &&
+            decision.principalAssurance === 'authenticated-session',
         ),
       ).toBe(true);
       expect(
@@ -257,7 +292,10 @@ describe('Evidence workbench PostgreSQL restart', () => {
       expect(snapshotAfter.sources.length).toBeGreaterThan(0);
       expect(
         snapshotAfter.reviewDecisions.some(
-          (decision) => decision.commandKey === commandKey,
+          (decision) =>
+            decision.commandKey === commandKey &&
+            decision.schemaVersion === 'evidence-review-decision/2' &&
+            decision.principalAssurance === 'authenticated-session',
         ),
       ).toBe(true);
       expect(

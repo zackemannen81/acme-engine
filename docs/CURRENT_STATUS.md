@@ -59,6 +59,10 @@ implementation baseline:
 - ADR-0032: Evidence V1 correction-occurrence pairing
 - ADR-0033: PostgreSQL persistence architecture
 - ADR-0034: POC #1 hosted shell identity and topology
+- ADR-0035: Evidence authenticated principal and authorization foundation
+- ADR-0036: Evidence case management and isolation
+- ADR-0037: Evidence secure artifact foundation
+- ADR-0038: Bounded text ingestion and immutable redaction
 
 Milestones 1 and 2 are delivered. All five Milestone 2 acceptance conditions
 are proven: the shared conformance suite passes unchanged for SQLite, a
@@ -362,20 +366,89 @@ ADR-0033 decides the PostgreSQL persistence architecture. ACME-0085 delivered
 slice 7 adapters. ACME-0086 / ADR-0034 delivered the hosted shell: multi-process
 composition on PostgreSQL with single-user identity, `/health`, deploy compose
 and restart durability proof. SQLite and the file product store remain hermetic
-defaults. The approved completion and later-product sequence is recorded in
+defaults. ACME-0090 / ADR-0035 selected self-hosted Supabase Auth behind an
+opaque product-API BFF session, product-owned organization membership and a
+deny-by-default viewer/reviewer/organization-admin policy. That architecture
+is implemented by ACME-0091 across the BFF, browser, identity stores and
+versioned review contracts. New decisions use authenticated server-derived
+principals while temporary `unauthenticated-local` history remains immutable.
+The approved completion and later-product sequence is recorded in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 Non-synthetic paths remain unimplemented (slice 9 governance).
 
 ## Active Work
 
-No implementation task is active. ACME-0087 and its corrective child ACME-0089
-are complete and archived; ACME-0088 was superseded before implementation when
-its proposed retained-question assumption was disproven. Slice 5 is complete
-for the fixed synthetic journey. The next product stage requires its own frozen
-task and any non-synthetic path still requires the later security/readiness
-sequence.
+ACME-0097 implements ADR-0038 after ACME-0096 accepted it. An authenticated
+case reviewer can import one strictly bounded, attested synthetic UTF-8
+`text/plain` document through the case-first browser/API. The exact received
+bytes and canonical LF/NFC text become separately encrypted immutable objects;
+durable command/staging records support exact resubmission and cooperative
+pre-activation cancellation. Reviewers can save exact byte-range redaction
+drafts and case admins can apply them as new immutable source versions with
+append-only content-free logs. File restart and PostgreSQL migration v5 retain
+the records. PDF/DOCX/OCR/media and non-synthetic content remain prohibited.
+
+ACME-0095 implements Stage 4's secure artifact architecture after ACME-0094
+accepted ADR-0037. Existing synthetic source bytes now pass through immutable
+canonical representations, AES-256-GCM envelopes, controlled filesystem or
+server-side S3-compatible storage, versioned KEK wrapping, atomic metadata,
+case-scoped reconciliation, revisioned deletion tombstones and content-free
+product audit. Any non-synthetic path still requires bounded ingestion,
+redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
+
+- **ACME-0097:** Implemented bounded synthetic text ingestion and immutable
+  redaction. Added strict validators and pinned transforms, additive imported
+  logical-artifact identity, two independently encrypted representations,
+  durable idempotent import/redaction records, file/PostgreSQL conformance,
+  case-first API/browser flows, cancellation, restart and source-navigation
+  proofs. The Slice 9 gate is unchanged.
+- **ACME-0096:** Accepted ADR-0038. It pins the only Stage 5 input class and
+  limits, exact original/canonical activation, version/locator identity,
+  reviewer/admin authorization, durable jobs, exact UTF-8 byte-range redaction,
+  append-only logs, export semantics and failure/isolation proof matrix. It is
+  documentation-only and changes no data authority.
+- **ACME-0095:** Implemented ADR-0037 for the fixed synthetic corpus. Added
+  strict artifact/envelope/staging/lifecycle/audit/backup contracts, envelope
+  encryption and exact staged retry, filesystem and SigV4 S3-compatible object
+  adapters with shared conformance, file/PostgreSQL metadata, authenticated
+  read/export/admin audit, startup reconciliation, KEK re-wrap, revisioned
+  tombstoned deletion and isolated restore verification. Hosted startup now
+  requires mounted keys and private S3 configuration; arbitrary input remains
+  absent.
+- **ACME-0094:** Accepted ADR-0037. Original, canonical and later derivative
+  bytes are immutable case-owned representations behind a provider-neutral
+  object-store port. Hosted storage uses server-only Supabase S3 compatibility;
+  every object is application-encrypted with a per-object DEK and versioned
+  KEK, partial writes reconcile through staging/quarantine, and plaintext reads
+  require a successful content-free security-audit append. No data authority
+  changed.
+- **ACME-0093:** Implemented ADR-0036. Authenticated case creation/catalog,
+  metadata, archive/restore and participant APIs use optimistic revisions;
+  case-viewer/reviewer/admin membership controls evidence access. Immutable
+  case-object bindings scope file/PostgreSQL repositories, worker jobs,
+  citations and exports. Known-ID and mixed-reference black-boxes prove
+  same-organization cross-case non-disclosure. The legacy corpus is reconciled
+  into one explicit synthetic case.
+- **ACME-0092:** Accepted ADR-0036. Product cases become the public security
+  boundary over uniquely bound internal workspaces; explicit case membership,
+  immutable case-object ownership and case-first repository/worker traversal
+  are mandatory. Same-organization adversarial isolation remains an executable
+  implementation obligation and the synthetic-only barrier stays closed.
+- **ACME-0091:** Implemented ADR-0035. Hosted credentials use self-hosted
+  Supabase Auth behind opaque protected product sessions. All current product
+  routes enforce typed organization authorization, browser actor fields are
+  rejected and authenticated `/2` review decisions retain exact policy
+  context. Hermetic proofs pass; live Supabase and PostgreSQL proofs remain
+  explicit environment-gated checks.
+
+- **ACME-0090:** Accepted ADR-0035. Hosted credentials use self-hosted
+  Supabase Auth, while the product API owns an opaque HttpOnly BFF session and
+  derives stable principals from verified issuer/subject claims. Product-owned
+  organizations, workspace bindings and viewer/reviewer/organization-admin
+  roles authorize typed actions deny-by-default. Existing unauthenticated
+  review history remains immutable; ACME-0091 implements the decision.
 
 - **ACME-0086:** Delivered Evidence Integrity slice 8 hosted shell. ADR-0034
   fixes single-user hosted identity (no Supabase Auth). Deploy compose under

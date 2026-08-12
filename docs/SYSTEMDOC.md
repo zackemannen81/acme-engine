@@ -1155,6 +1155,70 @@ and a bundle SHA-256. Repeated exports from identical inputs are byte-identical;
 an attention delta or later review decision is intentionally reflected in a
 new export while the assessment artifact itself remains immutable.
 
+ADR-0035's identity and authorization architecture is implemented. Hosted
+credentials are verified by self-hosted Supabase Auth behind the product API.
+Browser JavaScript receives only an opaque
+HttpOnly BFF-session cookie; upstream access/refresh tokens remain protected
+server-side. Stable principals derive from verified issuer/subject claims.
+Product-owned organizations, active memberships and workspace bindings feed a
+pure deny-by-default viewer/reviewer/organization-admin action policy. The API,
+not a browser payload, supplies actor identity and authorization context to
+versioned `/2` review commands and decisions. Historical `unauthenticated-local`
+review decisions remain immutable and explicitly labelled. Case-role isolation
+is implemented by ADR-0036, and ADR-0037/ACME-0095 now implements content-free
+product audit plus secure artifacts for fixed synthetic sources. Every
+arbitrary and non-synthetic path remains a later gate.
+
+ADR-0036's case boundary is implemented. The product-visible `caseId` owns a
+unique internal workspace; explicit active case membership supplies
+case-viewer, case-reviewer or case-admin content authority. Organization-admin
+does not implicitly read evidence. Every product object receives append-only
+case ownership and repository, worker, citation, job and export traversal must
+begin from case scope rather than a global identifier. Existing synthetic
+objects migrate into one explicit legacy case, and orphaned, duplicate or
+mixed-case ownership fails closed. Case lifecycle and participant mutations
+use optimistic case revisions; membership and revision advance atomically.
+API, browser, worker and repository traversal are case-first, and adversarial
+same-organization tests cover every current route family. This does not change
+the `synthetic-only` data policy.
+
+ADR-0037 decides the secure artifact boundary. Product metadata owns immutable
+original, canonical-text and later derivative representations; encrypted bytes
+sit behind filesystem and hosted S3-compatible adapters. Each object uses a
+random DEK with AES-256-GCM and a versioned externally supplied KEK. Database/
+object writes use staging, verification and case-scoped reconciliation rather
+than pretending to share a transaction. Artifact reads fail closed on missing
+keys, digest/tag mismatch or unavailable product security audit. Deletion
+retains provenance/audit tombstones, and restore requires database, objects and
+the separate key catalogue. ACME-0095 implements this boundary: product JSON
+or PostgreSQL stores only placeholders and immutable metadata, object adapters
+share an exclusive-create/bounded-read conformance contract, startup
+reconciles staging and active digests, authenticated API reads append audit
+before releasing verified plaintext, and case-admin re-wrap/deletion remain
+revisioned and auditable. Hosted composition requires mounted key and S3
+secrets. It does not authorize arbitrary or non-synthetic ingestion.
+
+ADR-0038 is implemented by ACME-0097 for one synthetic-only class. The API
+bounds the JSON request before parsing, validates strict UTF-8/media/signature/
+control/line/size rules and derives a deterministic server-side logical id.
+The artifact service stages separately encrypted exact-original and LF/NFC
+canonical representations under different command/object identities. A
+durable `EvidenceTextImportRecord/1` binds command digest, attestation,
+principal, both hashes and both representations; exact resubmission resumes
+or returns the same result, while changed inputs collide. File repositories
+serialize transitions and PostgreSQL migration v5 adds import/draft/log
+tables; ordinal activation rejects competing logical-artifact versions.
+
+Redaction drafts and logs are product records. Operations are ordered UTF-8
+byte intervals, verify removed-byte hashes, cannot overlap or span LF, and use
+fixed replacement tokens. Applying a frozen draft creates a separately
+encrypted `redacted-text` representation and a new
+`SourceArtifactVersion` with `redaction-derivative` lineage. Existing locators,
+observations, reviews and assessments remain bound to the predecessor. The
+browser exposes case-first import, source navigation, draft and admin apply;
+security audit never stores input or removed text. This gives no
+non-synthetic authority.
+
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.

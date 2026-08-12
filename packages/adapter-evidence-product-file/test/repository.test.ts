@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  recordAuthenticatedReviewDecision,
   recordReviewDecision,
   type EvidenceProductIds,
 } from '@acme/evidence-product-contracts';
@@ -102,6 +103,33 @@ describe('file Evidence product repository', () => {
       ),
     ).rejects.toMatchObject({ code: 'EVIDENCE_PRODUCT_COMMAND_COLLISION' });
 
+    const authenticated = await recordAuthenticatedReviewDecision(
+      repository,
+      {
+        schemaVersion: 'evidence-review-command/2',
+        workspaceId: 'workspace-1',
+        commandKey: 'review-command-authenticated',
+        targetKind: 'observation',
+        targetVersionId: target.observationId,
+        action: 'accept',
+        rationale: 'Authenticated review against the exact source.',
+        basisEvidenceRevision: null,
+      },
+      {
+        schemaVersion: 'evidence-authorization-context/1',
+        principalRef: 'principal-authenticated',
+        organizationId: 'organization-1',
+        membershipId: 'membership-1',
+        effectiveRole: 'reviewer',
+        workspaceId: 'workspace-1',
+        action: 'review.decide',
+        policyVersion: 'evidence-auth-policy/1',
+        decidedAt: '2026-08-11T10:04:00.000Z',
+      },
+      { now: () => '2026-08-11T10:04:00.000Z' },
+      ids,
+    );
+
     const reopened = createFileEvidenceProductRepository({ filePath });
     const snapshot = await reopened.snapshot();
     expect(snapshot).toMatchObject({
@@ -109,7 +137,15 @@ describe('file Evidence product repository', () => {
       sources: [{ artifactVersionId: input.artifactVersion.artifactVersionId }],
     });
     expect(snapshot.observations).toHaveLength(2);
-    expect(snapshot.reviewDecisions).toEqual([first]);
+    expect(snapshot.reviewDecisions).toEqual([first, authenticated]);
+    expect(snapshot.reviewDecisions).toMatchObject([
+      { schemaVersion: 'evidence-review-decision/1' },
+      {
+        schemaVersion: 'evidence-review-decision/2',
+        principalRef: 'principal-authenticated',
+        principalAssurance: 'authenticated-session',
+      },
+    ]);
   });
 
   it('serializes snapshots with concurrent worker-style writes', async () => {

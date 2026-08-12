@@ -1,5 +1,194 @@
 # Journal
 
+## 2026-08-12 — ACME-0098 token-limit handoff
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0098
+- Summary: Paused the frozen Stage 6 reviewer-operations/search task at the
+  user's requested token-limit boundary. ACME-0097 ingestion/redaction is
+  complete and archived; ACME-0098 remains in progress and unverified.
+- Implemented, not yet accepted: reviewer assignment/comment/activity and
+  bulk-review/search contracts; snapshot/repository extensions; file and
+  PostgreSQL persistence with migration v6; and initial case-first API routes.
+- Exact resume point: repair the four known TypeScript errors in
+  `packages/evidence-product-contracts/src/operations.ts`, run typecheck, then
+  complete UI, activity/assignment semantics, conformance, isolation/restart
+  tests, full verification and documentation. See `docs/CURRENT_TASK.md` for
+  the complete handoff.
+- Verification: none claimed for the partial ACME-0098 implementation. The
+  latest completed task, ACME-0097, passed its recorded gates before archive.
+- Blockers: none known. Work stopped solely because the user requested a pause
+  with approximately four percent of the weekly token allowance remaining.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0094 Evidence secure artifact foundation ADR
+
+- Owner: Codex
+- Task: ACME-0094
+- Status: Complete
+- Decision: Accepted ADR-0037. Artifact originals, canonical text and future
+  derivatives become immutable case-owned representations with explicit
+  transformation provenance. Bytes live behind a provider-neutral port; local
+  uses a controlled filesystem and hosted uses the self-hosted Supabase
+  Storage S3-compatible endpoint with server-only credentials and a private
+  bucket.
+- Security: every representation is encrypted before storage with a random
+  AES-256-GCM DEK and authenticated case/provenance metadata. A versioned
+  injected key provider wraps DEKs; hosted POC keys arrive through root-owned
+  mounted secret files. Reads verify scope, audit, ciphertext digest, GCM/AAD,
+  plaintext length and digest before releasing bytes.
+- Consistency/operations: staging, exclusive upload, verification, activation,
+  quarantine and case-scoped reconciliation replace impossible cross-system
+  transactions. Explicit deletion retains provenance/audit tombstones. A
+  complete restore requires PostgreSQL, encrypted objects, digest manifest and
+  the separately protected key catalogue.
+- Audit: content-free append-only security events cover import, reads,
+  authorization failures, key operations, integrity failures, exports,
+  reconciliation and deletion. A successful audit write is required before
+  plaintext artifact bytes leave the service.
+- Authority: no code or deployment changed and every path remains
+  `synthetic-only`. Storage readiness is not ingestion or data-use authority.
+- Verification: `corepack pnpm docs:check` checked 194 Markdown files;
+  `git diff --check` passed.
+- Handoff: implement ADR-0037 in bounded ACME-0095 before Stage 5 ingestion or
+  redaction work.
+
+## 2026-08-12 — ACME-0093 Evidence case management and isolation implementation
+
+- Owner: Codex
+- Task: ACME-0093
+- Status: Complete
+- Summary: Implemented ADR-0036 end to end. Product-visible opaque cases own
+  unique internal workspaces. Authenticated APIs and the browser now create,
+  catalog/search, inspect, update, archive/restore and assign participants by
+  `caseId`; browser payloads contain no workspace, actor, role or organization
+  authority.
+- Authorization: explicit active case-viewer/reviewer/admin membership gates
+  case content. Organization-admin alone cannot read evidence. New review
+  decisions record authenticated `evidence-review-decision/3` case policy
+  context, while legacy `/1` and authenticated `/2` history stays immutable.
+- Isolation and persistence: immutable case-object bindings cover workspaces,
+  sources, observations, relations, questions, assessments, change sets, jobs
+  and decisions in file/PostgreSQL adapters. Scope-aware writes validate all
+  references before commit; PostgreSQL does so inside the write transaction.
+  Participant changes atomically persist membership and the next case revision.
+  Startup reconciliation fails closed on orphan, duplicate or contradictory
+  case/workspace ownership while allowing resumable provisioning.
+- Proof: same-organization black-boxes use known foreign source, observation,
+  assessment, job and export identifiers across every current route family and
+  receive non-disclosing refusal. Mixed-case relation/assessment writes roll
+  back; the same immutable content may be explicitly bound to two cases without
+  granting traversal between them. The legacy synthetic corpus reconciles into
+  one case without changing evidence or historical review identities.
+- Verification: typecheck, lint, boundaries, build and format passed; unit
+  105 files / 682 tests, conformance 11 / 70, integration 11 / 57 and scenario
+  7 / 26 passed; docs checked 192 Markdown files; `git diff --check` passed.
+  `corepack pnpm test:postgres` refused exactly because no
+  `ACME_POSTGRES_URL` or discrete PostgreSQL connection environment was
+  configured; no gated test was silently skipped.
+- Data authority: remains `synthetic-only`. No arbitrary ingestion, object
+  storage, encryption/key lifecycle, redaction or non-synthetic path was added.
+- Handoff: Stage 3 is complete. Activate the Stage 4 secure artifact foundation
+  decision task before implementing object storage or sensitive ingestion.
+
+## 2026-08-12 — ACME-0092 Evidence case management and isolation ADR
+
+- Owner: Codex
+- Task: ACME-0092
+- Status: Complete
+- Summary: Accepted ADR-0036 as the Stage 3 case/workspace boundary. Product
+  routes use an opaque `caseId` over one immutable internal workspace mapping;
+  explicit case membership supplies case-viewer, case-reviewer or case-admin
+  authority, while organization-admin alone cannot read evidence. Every
+  product object receives append-only case ownership, and repository, worker,
+  citation, job and export traversal must start from case scope.
+- Security decision: global-ID lookup followed by response filtering is not an
+  accepted boundary. The implementation must prove same-organization
+  cross-case non-disclosure across all current route families, known
+  adversarial identifiers and mixed-case reference attempts. Existing
+  synthetic data migrates into one explicit legacy case; contradictory or
+  orphaned ownership fails closed.
+- Scope: no code, arbitrary ingestion, encryption, redaction or non-synthetic
+  authority was added. All cases remain permanently `synthetic-only` in Stage
+  3.
+- Verification: `corepack pnpm docs:check` checked 191 Markdown files for links
+  and fences; `git diff --check` passed.
+- Handoff: Activate ACME-0093 to implement ADR-0036, including case lifecycle,
+  participants, case-first routes, durable ownership and executable isolation
+  proofs.
+
+## 2026-08-12 — ACME-0091 authenticated principal and authorization implementation
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0091
+- Branch: `dev/legal-evidence`
+- Summary: Implemented ADR-0035 end to end. `@acme/evidence-auth` owns stable
+  issuer/subject principals, organizations/memberships/workspace bindings,
+  protected opaque sessions and the pure viewer/reviewer/organization-admin
+  policy. Deterministic memory, durable PostgreSQL and verified Supabase Auth/
+  JWKS adapters sit behind ports.
+- Product boundary: All product API route families now require the opaque BFF
+  session and a typed action. Unsafe operations enforce exact origin and CSRF;
+  login is bounded, cookies are host-only HttpOnly/Secure/SameSite Strict in
+  hosted mode, refresh stays server-side and logout revocation is monotonic.
+  Workspace projections fail closed from durable change-set ownership so a
+  populated foreign organization's sources, observations, history, jobs,
+  assessments and exports are not traversable through another workspace.
+- Compatibility: New browser writes use strict actor-free
+  `evidence-review-command/2`; the server writes authenticated `/2` decisions
+  with exact authorization context. Historical `/1` decisions remain
+  immutable, readable and honestly `unauthenticated-local` after file reopen.
+- Verification: typecheck, lint, format, boundary, docs, build and diff checks
+  passed. Canonical suites passed 673 unit, 70 conformance, 57 integration and
+  26 scenario tests. A focused auth/product/browser run passed 23 tests.
+  Browser automation proved data-free login, authenticated exact-source review,
+  queue update and logout back to a data-free shell.
+- Gated environment evidence: `test:postgres` refused without an
+  `ACME_POSTGRES_URL`; Docker Desktop was not running and no local PostgreSQL
+  service existed. The suite now contains identity migration/restart/
+  concurrency and authenticated product restart proofs. `test:supabase-auth`
+  refused without explicit opt-in and dedicated test credentials; generated
+  ES256/JWKS offline proofs passed. Neither refusal widens hosted or real-data
+  authority.
+- Handoff: Stage 2 is complete. Freeze the Stage 3 case/workspace management
+  and isolation architecture task next. Every non-synthetic data path remains
+  prohibited.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0090 authenticated principal/authorization ADR
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0090
+- Branch: `dev/legal-evidence`
+- Summary: Accepted ADR-0035 as the Stage 2 identity and authorization
+  architecture. Self-hosted Supabase Auth owns hosted credentials and upstream
+  sessions; the product API remains the only browser-facing service and issues
+  an opaque HttpOnly BFF session so upstream tokens never enter browser
+  JavaScript or local storage.
+- Product authority: Stable principals derive from verified issuer/subject
+  claims. Product-owned organizations, memberships and workspace bindings feed
+  a deny-by-default viewer/reviewer/organization-admin role/action matrix.
+  Browser commands may not supply reviewer/principal/role identity; the API
+  creates the authorization context after session and membership checks.
+- Compatibility: Existing `evidence-review-decision/1` records remain
+  immutable and honestly `unauthenticated-local`. Implementation must add new
+  actor-free commands and server-derived authenticated decision versions,
+  fail-closed bootstrap/migrations and deterministic auth adapters. ADR-0035
+  supersedes only ADR-0034's temporary identity choice, not its topology.
+- Scope boundary: Documentation and decision only. No code, dependency,
+  migration, deployment runtime, case management, object storage, ingestion,
+  data class or Slice 9 authority changed. A separately reviewable
+  implementation proposal is recorded in `docs/backlog/`.
+- Verification: `corepack pnpm docs:check` passed for 185 Markdown files;
+  `git diff --check` passed; traceability and changed-file scans passed.
+- Handoff: No task is active. The recommended next task is the bounded
+  ADR-0035 implementation; case isolation remains Stage 3 and all
+  non-synthetic data remains prohibited.
+- Signature: Codex
+
 ## 2026-08-12 — ACME-0087 Slice 5 product journey complete
 
 - Date: 2026-08-12
@@ -239,6 +428,105 @@
   port and the PostgreSQL major version of the deployed self-hosted release,
   neither of which can be answered from the repository.
 - Signature: Claude
+
+## 2026-08-12 — ACME-0095 secure artifact foundation
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0095
+- Summary: Implemented ADR-0037 end to end for the fixed synthetic corpus.
+  Canonical source text is now an immutable representation encrypted with a
+  per-object AES-256-GCM DEK; product persistence retains only a placeholder,
+  immutable hashes/envelopes/lifecycle and content-free security audit.
+- Contracts and policy: added versioned representation, envelope, staging,
+  lifecycle, audit and backup-manifest schemas; provider-neutral object/key
+  ports; exact crash retry; fail-closed read; KEK re-wrap; reconciliation;
+  revisioned deletion; and restore verification.
+- Adapters and persistence: added controlled filesystem and SigV4
+  S3-compatible ciphertext stores under one conformance contract, plus atomic
+  file/PostgreSQL artifact metadata and audit with migration v4. Same command
+  concurrency converges on one staged object and activation.
+- Product path: local startup migrates existing synthetic sources without
+  changing Evidence identities or locators. Authenticated API reads audit the
+  server-derived principal before plaintext release; exports and denied reads
+  are audited. Case admins have content-free audit/artifact views, DEK re-wrap
+  and revisioned tombstoned deletion. Hosted startup refuses without mounted
+  KEK/S3 secret files and private S3 configuration.
+- Operations: added the artifact runbook for staging, rotation, deletion and
+  coordinated database/object/key backup and isolated restore. Compose now
+  mounts credentials and keys as secrets.
+- Verification: typecheck, lint, boundaries, build, format, docs and diff
+  checks pass. Unit passes 111 files/695 tests (one first-run 5.033s timeout
+  under full load passed unchanged at 4.447s on immediate rerun), conformance
+  12/74, integration 12/62 and scenario 7/26. Focused crypto/object/artifact/
+  API and secret-scan gates pass. PostgreSQL gate refused exactly because no
+  configured environment exists; S3 conformance used the hermetic signed
+  transport.
+- Data authority: unchanged. There is no arbitrary byte input and no
+  non-synthetic path.
+- Follow-up: freeze the bounded text ingestion and redaction architecture as
+  the next sequential task.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0096 bounded text ingestion and redaction ADR
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0096
+- Summary: Accepted ADR-0038 as the Stage 5 architecture. It permits only one
+  bounded synthetic strict-UTF-8 plain-text input class and explicitly refuses
+  active/binary/document/media formats and every non-synthetic path.
+- Decision: accepted imports preserve separately encrypted exact-original and
+  LF/NFC canonical representations and activate them atomically. Evidence
+  identity and `line-range-1` locators remain bound to the exact canonical
+  version. Redaction creates a new immutable source/representation from sorted,
+  non-overlapping, non-newline-spanning UTF-8 byte ranges and appends a log of
+  operations and removed-byte hashes without removed content. Existing
+  evidence never retargets.
+- Security: pinned role/action boundaries, synthetic attestation, request/
+  content/count/rate limits, two-object staging/recovery, audit, explicit
+  export semantics and same-organization cross-case non-disclosure proofs.
+- Verification: ADR/data-class/identity/redaction/threat matrices reviewed;
+  `corepack pnpm docs:check` and `git diff --check` pass.
+- Data authority: unchanged; this task adds no input route or behavior.
+- Follow-up: implement ADR-0038 as a separately frozen synthetic-only task.
+- Signature: Codex
+
+## 2026-08-12 — ACME-0097 bounded text ingestion and immutable redaction
+
+- Date: 2026-08-12
+- Author: Codex
+- Task: ACME-0097
+- Summary: Implemented ADR-0038 end to end for the single
+  `synthetic-utf8-plain-text/1` class. Case-first authenticated browser/API
+  import validates bounded strict UTF-8, media/signature/control/line limits,
+  derives server identities and stores exact-original plus LF/NFC canonical
+  bytes as distinct encrypted objects.
+- Durability and isolation: deterministic logical/import identities, staged
+  envelopes, command digests and durable records make exact resubmission
+  idempotent and changed resubmission collide. File serialization and
+  PostgreSQL migration v5 persist import/draft/log state; competing artifact
+  ordinals are rejected. Cancellation is pre-activation only and expired
+  staging reconciles to quarantine. Every projection uses immutable case
+  bindings.
+- Redaction: reviewers save exact UTF-8 byte-range drafts; case admins apply a
+  frozen revision. Scalar splits, overlaps, LF spans and removed-byte digest
+  mismatches refuse. Apply creates a new encrypted `redacted-text` source
+  version and append-only log without removed text; old locators and evidence
+  remain on their original version.
+- Product proof: the Documents UI imports, navigates, drafts and applies. The
+  case-first black box verifies two independent input representations,
+  redacted source navigation, content-free log and file restart. Shared
+  file/PostgreSQL repository conformance covers the new records.
+- Verification: typecheck, lint, boundaries, build, format and format-check
+  pass; unit 112 files/704 tests, conformance 12/75, integration 12/62 and
+  scenario 7/26 pass; docs check 199 Markdown files and diff-check pass.
+  PostgreSQL refused exactly because no connection environment exists; S3 is
+  covered by its hermetic signed-transport conformance.
+- Data authority: unchanged. PDF/DOCX/OCR/media, non-synthetic and every other
+  class remain refused pending Slice 9.
+- Follow-up: Stage 6 reviewer operations and corpus-scale navigation.
+- Signature: Codex
 
 ## 2026-08-11 — ACME-0083 Secondary technical audit
 

@@ -8,6 +8,7 @@ import { createFileEvidenceProductRepository } from '../../packages/adapter-evid
 import {
   evidencePrimaryViewConformance,
   evidenceProductRepositoryConformance,
+  evidenceIngestionRepositoryConformance,
 } from '../../packages/evidence-testing/src/product-conformance.js';
 
 const root = mkdtempSync(
@@ -23,3 +24,4 @@ afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 evidenceProductRepositoryConformance({ createRepository });
 evidencePrimaryViewConformance({ createRepository });
+evidenceIngestionRepositoryConformance({ createRepository });

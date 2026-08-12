@@ -31,7 +31,13 @@ Implementation status: ACME-0077–0087 plus corrective child ACME-0089
 delivered slices 0–8. Slice 5 includes the remaining primary views, durable
 attention, deterministic ZIP and full product path. Pre-late E-A01 has no
 open-question references; post-import E-A02 retains all three sealed questions.
-Slice 9 readiness remains separately activatable.
+ADR-0035/ACME-0091, ADR-0036/ACME-0093 and ADR-0037/ACME-0095 subsequently
+deliver authenticated principals, case isolation and the secure artifact
+foundation for the fixed synthetic corpus. Slice 9 readiness remains
+separately activatable.
+ADR-0038 additionally decides and ACME-0097 implements one bounded synthetic
+UTF-8 plain-text import class and immutable redacted derivatives. Excluded
+formats and non-synthetic material remain refused.
 ADR-0032 fixes the conservative V1 correction-occurrence pairing used by both
 projection and views.
 
@@ -536,11 +542,17 @@ assessment creation and product review decisions do not increment it.
 
 ## 7. Product Review Overlay
 
-### 7.1 Reviewer mode
+### 7.1 Reviewer identity and authorization
 
-The first product mode is single-user and local. Configuration supplies one
-immutable reviewer reference. There is one reviewer role and no login,
-invitation, session, authorization matrix or identity-provider integration.
+ADR-0035 and ACME-0091 replace the public single-user boundary with a verified
+product session. Hosted credentials are owned by self-hosted Supabase Auth;
+the product API stores only an opaque cookie digest plus encrypted upstream
+credentials. Product-owned organizations, active memberships and workspace
+bindings authorize typed actions through the deny-by-default
+viewer/reviewer/organization-admin matrix. The browser cannot select actor,
+organization or role.
+
+Historical decisions retain the original contract:
 
 Every `evidence-review-decision/1` records:
 
@@ -557,6 +569,27 @@ Every `evidence-review-decision/1` records:
 | `decidedAt` | Product-clock ISO timestamp. |
 | `commandKey` | Caller idempotency key unique within workspace. |
 | `basisEvidenceRevision` | Required only for `reaffirm`; forbidden otherwise. |
+
+[ADR-0035](../adr/0035-evidence-authenticated-principal-and-authorization.md)
+is implemented. Authenticated APIs reject the client-owned `/1` command and
+accept strict `evidence-review-command/2` without actor fields. They write
+`evidence-review-decision/2` with server-derived `principalRef`,
+`principalAssurance: authenticated-session` and the exact organization,
+membership, effective role, action, workspace, policy version and decision
+time. Existing `/1` records remain immutable and explicitly
+`unauthenticated-local`.
+
+ADR-0036 and ACME-0093 add the product case boundary above workspaces. Public
+routes use `/api/cases/:caseId/...`; browser commands contain neither
+`workspaceId` nor actor/role authority. Active case-viewer, case-reviewer or
+case-admin membership authorizes content. Organization-admin may administer
+membership recovery but cannot read evidence without explicit case membership.
+`evidence-review-command/3` carries no client scope and the server records an
+`evidence-review-decision/3` with the exact authenticated case authorization
+context. Immutable case-object bindings scope every stored source,
+observation, relation, question, assessment, change set, job and review
+decision. A reference outside that binding set refuses the transaction before
+commit.
 
 The review store is append-only. Identical command reuse is idempotent;
 divergent reuse is a collision. Effective standing is a pure fold ordered by
@@ -775,8 +808,12 @@ by ADR-0029 and specified by
 and `evidence` schemas under separate roles with no cross-schema foreign key or
 transaction, and separate migration ledgers. The browser never uses PostgREST or
 a Supabase client against ACME schemas, and ADR-0033 makes that an executable
-anonymous-role denial gate. Supabase Auth, Storage, Realtime and Studio remain
-undecided and are not implied by the persistence decision.
+anonymous-role denial gate. ADR-0035 adopts Supabase Auth behind an opaque
+product-API BFF session, implemented by ACME-0091 with a third independent
+`evidence_identity` schema. ADR-0037/ACME-0095 add server-only private
+S3-compatible Storage for application-encrypted artifact ciphertext; browsers
+still receive no Storage credentials, URLs or object keys. Realtime and Studio
+remain unused.
 
 ## 12. Proof Matrix
 
@@ -943,6 +980,7 @@ apps/evidence-workbench-web
 apps/evidence-workbench-api
 apps/evidence-workbench-worker
   → @acme/evidence-product-contracts
+  → @acme/evidence-auth
   → @acme/evidence-views
   → @acme/module-evidence
   → @acme/core
@@ -960,12 +998,13 @@ adapters
 | `@acme/module-evidence` | Domain schemas, ids, source binding, memory policy, reducer, invariants and Evidence tasks | Product UI/workflow, auth, database or provider SDK |
 | `@acme/evidence-views` | Pure primary and secondary view schemas/builders and classification registry | Commands, persistence, model calls or canonical decisions |
 | `@acme/evidence-product-contracts` | Workspace/import/job/review commands, immutable source-document port, review overlay, change-set and export contracts | Evidence semantics or raw ACME mutations |
+| `@acme/evidence-auth` | Provider-neutral principals, organizations, memberships, workspace bindings, protected BFF sessions and pure authorization policy | Credential-provider wire calls, HTTP or Evidence semantics |
 | `@acme/evidence-testing` | Synthetic manifest/truth loaders, golden builder, evaluators and scenario fixtures | Runtime product authority or evaluation-truth prompt access |
 | Web app | Primary reviewer rendering and optional secondary navigation | Direct database/provider/object-store access |
-| API app | Product commands/queries, local reviewer configuration, budgets and composition | Domain policy decisions |
+| API app | Authenticated BFF session endpoints, product commands/queries, authorization composition and budgets | Domain policy decisions or browser-visible upstream tokens |
 | Worker app | Bounded job orchestration, progress, cooperative cancel and explicit outbox drain | Multi-step logic inside ExecutionEngine |
 | SQLite adapter | Local ACME and product persistence behind ports | Evidence policy |
-| Future PostgreSQL adapter | Plain PostgreSQL-wire implementation and migrations | Supabase-specific browser API or domain policy |
+| PostgreSQL adapters | Plain PostgreSQL-wire execution, product and identity repositories with independent migrations | Supabase-specific browser API or domain policy |
 
 Forbidden dependency directions include:
 
@@ -1145,7 +1184,9 @@ API and worker processes on self-hosted Supabase PostgreSQL.
 
 Prerequisites: slice 7 plus
 [ADR-0034](../adr/0034-poc-1-hosted-shell-identity-and-topology.md) (single-user
-hosted identity; Supabase Auth remains disabled). Object storage not adopted.
+hosted identity; Supabase Auth remains disabled in the delivered shell).
+ADR-0035 supersedes that temporary identity for the later Stage 2
+implementation. Object storage is not adopted.
 
 Deliverables: hosted composition, authenticated identity only after its ADR,
 deployment configuration, observability and bounded live-provider gate.
@@ -1180,11 +1221,12 @@ Documentation: all new authority and residual risks before ingestion.
 | Decision | Status / trigger |
 | --- | --- |
 | PostgreSQL schema, transaction boundary, migrations and conformance | **Decided by [ADR-0033](../adr/0033-postgresql-persistence-architecture.md).** Platform remains self-hosted Supabase; adapter remains plain PostgreSQL wire. |
-| Identity provider, authentication and authorization | ADR-0034 keeps Slice 8 single-user with `unauthenticated-local`; multi-user identity and authorization require a new ADR before any non-synthetic path. |
-| Object-storage vendor and database/object consistency | New ADR before any artifact bytes move outside the text document repository. |
-| Supabase Auth, Storage, Realtime or Studio | Undecided and unused unless a later ADR adopts a component. |
+| Identity provider, authentication and authorization | **Decided by [ADR-0035](../adr/0035-evidence-authenticated-principal-and-authorization.md) and implemented by ACME-0091.** Self-hosted Supabase Auth sits behind an opaque product-API BFF session, while product-owned memberships and typed roles authorize actions. |
+| Object-storage vendor and database/object consistency | **Decided by [ADR-0037](../adr/0037-evidence-secure-artifact-foundation.md) and implemented by ACME-0095.** Immutable application-encrypted objects use staged verification across PostgreSQL and filesystem/S3-compatible storage. |
+| Supabase Auth, Storage, Realtime or Studio | Auth is implemented by ACME-0091. ACME-0095 uses only the server-side S3-compatible Storage interface for private ciphertext. Realtime and Studio remain unused. |
 | Hosting platform, topology and region | Deferred to slice 8 charter. |
 | Live model and budget | Deferred to a gated slice; mocks remain default. |
+| Bounded synthetic text ingestion and immutable redaction | **Implemented by ACME-0097 under [ADR-0038](../adr/0038-bounded-text-ingestion-and-immutable-redaction.md).** Strict UTF-8 browser import, encrypted original/canonical objects, durable file/PostgreSQL records and immutable redacted derivatives are synthetic-only. |
 | PDF/OCR/audio/video/media locators | Outside V1; new schemas, validation and threat analysis required. |
 | Any non-synthetic data path | Blocked by ADR-0028 until slice 9 authority exists. |
 | Dynamic discovery, workflow runtime and vector retrieval | Deferred until measured need; not part of this product plan. |

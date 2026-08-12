@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
+import { sha256 } from '@acme/core';
 
 import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
 import { buildEvidenceReviewedAssessmentExport } from '@acme/evidence-product-contracts';
@@ -14,6 +15,67 @@ import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candid
 
 import { listenEvidenceWorkbenchApi } from '../src/index.js';
 import { createLocalEvidenceWorkbench } from '../src/local.js';
+
+async function authenticatedFetch(
+  baseUrl: string,
+  credentials: { email: string; password: string | undefined },
+  caseId: string,
+): Promise<typeof fetch> {
+  if (credentials.password === undefined)
+    throw new Error('The deterministic test login requires a password.');
+  const login = await globalThis.fetch(`${baseUrl}auth/session`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      origin: baseUrl.slice(0, -1),
+    },
+    body: JSON.stringify(credentials),
+  });
+  expect(login.status, await login.clone().text()).toBe(201);
+  const cookieValues = login.headers.getSetCookie();
+  const cookie = cookieValues.map((value) => value.split(';')[0]).join('; ');
+  const csrfCookie = cookieValues
+    .map((value) => value.split(';')[0])
+    .find((value) => value?.startsWith('acme_csrf='));
+  if (csrfCookie === undefined) throw new Error('Missing CSRF cookie.');
+  const csrf = decodeURIComponent(csrfCookie.slice('acme_csrf='.length));
+
+  return async (input, init = {}) => {
+    const method = init.method ?? 'GET';
+    const headers = new Headers(init.headers);
+    headers.set('cookie', cookie);
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+      headers.set('origin', baseUrl.slice(0, -1));
+      headers.set('x-acme-csrf', csrf);
+    }
+    const target = new URL(
+      typeof input === 'string' || input instanceof URL ? input : input.url,
+    );
+    if (
+      target.pathname.startsWith('/api/') &&
+      !target.pathname.startsWith('/api/cases/') &&
+      target.pathname !== '/api/session'
+    ) {
+      target.pathname = `/api/cases/${encodeURIComponent(caseId)}${target.pathname.slice(4)}`;
+      target.searchParams.delete('workspaceId');
+    }
+    let body = init.body;
+    if (typeof body === 'string') {
+      const payload = JSON.parse(body) as Record<string, unknown>;
+      delete payload.workspaceId;
+      if (payload.schemaVersion === 'evidence-review-command/2')
+        payload.schemaVersion = 'evidence-review-command/3';
+      if (payload.schemaVersion === 'evidence-assessment-command/1')
+        payload.schemaVersion = 'evidence-case-assessment-command/1';
+      body = JSON.stringify(payload);
+    }
+    return globalThis.fetch(target, {
+      ...init,
+      headers,
+      ...(body === undefined ? {} : { body }),
+    });
+  };
+}
 
 const directories: string[] = [];
 function requiredValue<T>(value: T | undefined, label: string): T {
@@ -47,6 +109,146 @@ afterEach(async () => {
 });
 
 describe('local Evidence workbench', () => {
+  it('imports bounded synthetic text and applies immutable redaction through case-first routes', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'evidence-ingestion-blackbox-'),
+    );
+    directories.push(directory);
+    const dataFile = path.join(directory, 'product.json');
+    const local = await createLocalEvidenceWorkbench({ dataFile });
+    const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    const authFetch = await authenticatedFetch(
+      address.url,
+      local.authCredentials,
+      local.caseId,
+    );
+    let derivedArtifactVersionId = '';
+    try {
+      const text = 'Name: Åsa\nPlace: Rillford\n';
+      const importedResponse = await authFetch(
+        `${address.url}api/text-imports`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              schemaVersion: 'evidence-text-import-metadata/1',
+              commandKey: 'browser-import-blackbox-1',
+              intent: { kind: 'create' },
+              title: 'Synthetic browser transcript',
+              artifactKind: 'interview-transcript',
+              declaredMediaType: 'text/plain; charset=utf-8',
+              dataClass: 'synthetic-utf8-plain-text/1',
+              attestationVersion: 'evidence-synthetic-attestation/1',
+              syntheticAuthorityAttested: true,
+            },
+            text,
+          }),
+        },
+      );
+      expect(
+        importedResponse.status,
+        await importedResponse.clone().text(),
+      ).toBe(201);
+      const imported = (await importedResponse.json()) as {
+        artifactVersionId: string;
+        canonicalRepresentationId: string;
+      };
+      const sourceResponse = await authFetch(
+        `${address.url}api/sources/${encodeURIComponent(imported.artifactVersionId)}`,
+      );
+      expect(sourceResponse.status).toBe(200);
+      expect(await sourceResponse.text()).toContain(
+        'Synthetic browser transcript',
+      );
+
+      const encoded = new TextEncoder().encode(text);
+      const startByte = new TextEncoder().encode('Name: ').byteLength;
+      const endByte = new TextEncoder().encode('Name: Åsa').byteLength;
+      const draftResponse = await authFetch(
+        `${address.url}api/redactions/drafts`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            predecessorRepresentationId: imported.canonicalRepresentationId,
+            expectedRepresentationRevision: 1,
+            policyReference: 'blackbox-policy/1',
+            operations: [
+              {
+                schemaVersion: 'evidence-redaction-operation/1',
+                operationId: 'redaction-operation-blackbox-1',
+                ordinal: 1,
+                startByte,
+                endByte,
+                removedBytesSha256: sha256(encoded.slice(startByte, endByte)),
+                reasonCode: 'personal-data',
+                rationale: null,
+                replacementVersion: 'evidence-redaction-token/1',
+              },
+            ],
+          }),
+        },
+      );
+      expect(draftResponse.status, await draftResponse.clone().text()).toBe(
+        201,
+      );
+      const draft = (await draftResponse.json()) as { draftId: string };
+      const applyResponse = await authFetch(
+        `${address.url}api/redactions/${encodeURIComponent(draft.draftId)}/apply`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ commandKey: 'apply-redaction-blackbox-1' }),
+        },
+      );
+      expect(applyResponse.status, await applyResponse.clone().text()).toBe(
+        201,
+      );
+      const log = (await applyResponse.json()) as {
+        derivedArtifactVersionId: string;
+      };
+      derivedArtifactVersionId = log.derivedArtifactVersionId;
+      const redactedResponse = await authFetch(
+        `${address.url}api/sources/${encodeURIComponent(log.derivedArtifactVersionId)}`,
+      );
+      expect(await redactedResponse.text()).toContain(
+        '[REDACTED:personal-data]',
+      );
+      const records = await local.productRepository.caseSnapshot(
+        local.caseId,
+        local.workspaceId,
+      );
+      expect(
+        records.artifactRepresentations
+          .filter(
+            (item) => item.artifactVersionId === imported.artifactVersionId,
+          )
+          .map((item) => item.kind)
+          .sort(),
+      ).toEqual(['canonical-text', 'original']);
+      expect(records.redactionLogs).toHaveLength(1);
+      expect(records.redactionLogs[0]?.operations[0]).not.toHaveProperty(
+        'removedText',
+      );
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        local.server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
+    const restarted = await createLocalEvidenceWorkbench({ dataFile });
+    const restartedSnapshot = await restarted.productRepository.caseSnapshot(
+      restarted.caseId,
+      restarted.workspaceId,
+    );
+    expect(restartedSnapshot.redactionLogs).toHaveLength(1);
+    expect(
+      restartedSnapshot.sources.find(
+        (item) => item.artifactVersionId === derivedArtifactVersionId,
+      )?.text,
+    ).toContain('[REDACTED:personal-data]');
+  });
+
   it('runs source import, polling, primary views and review with technical audit disabled', async () => {
     const directory = await mkdtemp(
       path.join(os.tmpdir(), 'evidence-blackbox-'),
@@ -64,14 +266,19 @@ describe('local Evidence workbench', () => {
       },
     });
     const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    const authFetch = await authenticatedFetch(
+      address.url,
+      local.authCredentials,
+      local.caseId,
+    );
     try {
-      const page = await fetch(address.url);
+      const page = await authFetch(address.url);
       expect(page.status).toBe(200);
       expect(await page.text()).toContain(
         'Review source-bound observations beside their exact lines.',
       );
 
-      const queueResponse = await fetch(
+      const queueResponse = await authFetch(
         `${address.url}api/work-queue?workspaceId=${local.workspaceId}`,
       );
       const queue = (await queueResponse.json()) as {
@@ -95,7 +302,7 @@ describe('local Evidence workbench', () => {
       ).toEqual(['[DEV-T01@v1:L4-L4]', '[DEV-T01@v1:L6-L6]']);
 
       const first = requiredValue(observationItems[0], 'first review item');
-      const sourceResponse = await fetch(
+      const sourceResponse = await authFetch(
         `${address.url}api/sources/${encodeURIComponent(first.citation.artifactVersionId)}?workspaceId=${local.workspaceId}`,
       );
       const source = (await sourceResponse.json()) as {
@@ -105,30 +312,29 @@ describe('local Evidence workbench', () => {
       expect(source.observations).toHaveLength(2);
       expect(source.source.lines).toHaveLength(6);
 
-      const reviewResponse = await fetch(`${address.url}api/reviews`, {
+      const reviewResponse = await authFetch(`${address.url}api/reviews`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          schemaVersion: 'evidence-review-command/1',
+          schemaVersion: 'evidence-review-command/2',
           workspaceId: local.workspaceId,
           commandKey: 'blackbox-review-1',
           targetKind: 'observation',
           targetVersionId: first.observationVersionId,
           action: 'accept',
-          reviewerRef: 'local-reviewer',
           rationale: 'Exact quote and source label confirmed.',
           basisEvidenceRevision: null,
         }),
       });
       expect(reviewResponse.status).toBe(201);
       const updatedQueue = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/work-queue?workspaceId=${local.workspaceId}`,
         )
       ).json()) as { nextItems: unknown[] };
       expect(updatedQueue.nextItems).toHaveLength(1);
       expect(
-        (await fetch(`${address.url}api/technical/provenance`)).status,
+        (await authFetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);
 
       const fixture = developmentObserveArtifactInput();
@@ -170,13 +376,18 @@ describe('local Evidence workbench', () => {
       reviewIds: { next: () => 'review-evaluation-0001' },
     });
     const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    const authFetch = await authenticatedFetch(
+      address.url,
+      local.authCredentials,
+      local.caseId,
+    );
     try {
       expect(local.gateway.invocations()).toHaveLength(5);
-      const pageText = await (await fetch(address.url)).text();
+      const pageText = await (await authFetch(address.url)).text();
       expect(pageText).toContain('Compare accounts');
       expect(pageText).toContain('Relations');
 
-      const ledgerResponse = await fetch(
+      const ledgerResponse = await authFetch(
         `${address.url}api/observations?workspaceId=${local.workspaceId}`,
       );
       expect(ledgerResponse.status).toBe(200);
@@ -197,7 +408,7 @@ describe('local Evidence workbench', () => {
         }),
       );
 
-      const relationsResponse = await fetch(
+      const relationsResponse = await authFetch(
         `${address.url}api/relations?workspaceId=${local.workspaceId}`,
       );
       expect(relationsResponse.status).toBe(200);
@@ -216,7 +427,7 @@ describe('local Evidence workbench', () => {
         }),
       );
 
-      const comparisonResponse = await fetch(
+      const comparisonResponse = await authFetch(
         `${address.url}api/accounts/compare?workspaceId=${local.workspaceId}`,
       );
       expect(comparisonResponse.status).toBe(200);
@@ -234,7 +445,7 @@ describe('local Evidence workbench', () => {
       for (const { sourcePath } of comparison.priorVersionNavigation) {
         expect(
           (
-            await fetch(
+            await authFetch(
               `${address.url}api${sourcePath}?workspaceId=${local.workspaceId}`,
             )
           ).status,
@@ -255,7 +466,7 @@ describe('local Evidence workbench', () => {
       expect(duplicate.phase).toBe('completed');
       expect(local.gateway.invocations()).toHaveLength(5);
       expect(
-        (await fetch(`${address.url}api/technical/provenance`)).status,
+        (await authFetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);
     } finally {
       await new Promise<void>((resolve, reject) =>
@@ -282,6 +493,11 @@ describe('local Evidence workbench', () => {
       },
     });
     const address = await listenEvidenceWorkbenchApi(local.server, { port: 0 });
+    const authFetch = await authenticatedFetch(
+      address.url,
+      local.authCredentials,
+      local.caseId,
+    );
     let command = 0;
     const review = async (
       targetKind: 'observation' | 'relation' | 'assessment',
@@ -289,17 +505,16 @@ describe('local Evidence workbench', () => {
       action: 'accept' | 'reaffirm',
       basisEvidenceRevision: number | null = null,
     ) => {
-      const response = await fetch(`${address.url}api/reviews`, {
+      const response = await authFetch(`${address.url}api/reviews`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          schemaVersion: 'evidence-review-command/1',
+          schemaVersion: 'evidence-review-command/2',
           workspaceId: local.workspaceId,
           commandKey: `assessment-blackbox-review-${String(++command)}`,
           targetKind,
           targetVersionId,
           action,
-          reviewerRef: 'local-reviewer',
           rationale: 'Reviewed against the exact immutable source context.',
           basisEvidenceRevision,
         }),
@@ -307,7 +522,7 @@ describe('local Evidence workbench', () => {
       expect(response.status).toBe(201);
     };
     const propose = async (sequence: number, predecessor: string | null) => {
-      const response = await fetch(`${address.url}api/assessments`, {
+      const response = await authFetch(`${address.url}api/assessments`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -386,7 +601,7 @@ describe('local Evidence workbench', () => {
       ).toThrow(/refuses non-synthetic/u);
 
       const firstViewBefore = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/assessments/${first.assessmentVersionId}`,
         )
       ).json()) as {
@@ -398,10 +613,10 @@ describe('local Evidence workbench', () => {
         shareable: true,
         dueForAttention: false,
       });
-      const exportOne = await fetch(
+      const exportOne = await authFetch(
         `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
       );
-      const exportTwo = await fetch(
+      const exportTwo = await authFetch(
         `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
       );
       const bytesOne = new Uint8Array(await exportOne.arrayBuffer());
@@ -434,7 +649,7 @@ describe('local Evidence workbench', () => {
         expect(files.has(sourcePath)).toBe(true);
         expect(markdown).toContain(`${sourcePath}#L`);
         const sourceView = (await (
-          await fetch(
+          await authFetch(
             `${address.url}api/sources/${citation.artifactVersionId}?workspaceId=${local.workspaceId}`,
           )
         ).json()) as {
@@ -453,7 +668,7 @@ describe('local Evidence workbench', () => {
             assessmentVersionId === first.assessmentVersionId,
         ),
       );
-      const lateResponse = await fetch(
+      const lateResponse = await authFetch(
         `${address.url}api/imports/late-evidence`,
         {
           method: 'POST',
@@ -468,7 +683,7 @@ describe('local Evidence workbench', () => {
       expect(local.gateway.invocations()).toHaveLength(8);
 
       const dueView = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/assessments/${first.assessmentVersionId}`,
         )
       ).json()) as {
@@ -479,7 +694,7 @@ describe('local Evidence workbench', () => {
       expect(dueView.dueForAttention).toBe(true);
       expect(dueView.newEvidenceNotices).toHaveLength(1);
       const queue = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/work-queue?workspaceId=${local.workspaceId}`,
         )
       ).json()) as {
@@ -492,7 +707,7 @@ describe('local Evidence workbench', () => {
       ).toHaveLength(1);
       const exportAfterLate = new Uint8Array(
         await (
-          await fetch(
+          await authFetch(
             `${address.url.slice(0, -1)}${firstViewBefore.exportPath}`,
           )
         ).arrayBuffer(),
@@ -524,13 +739,13 @@ describe('local Evidence workbench', () => {
         dueView.workspace.evidenceRevision,
       );
       const reaffirmed = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/assessments/${first.assessmentVersionId}`,
         )
       ).json()) as { dueForAttention: boolean };
       expect(reaffirmed.dueForAttention).toBe(false);
       const history = (await (
-        await fetch(
+        await authFetch(
           `${address.url}api/reviews/assessment/${first.assessmentVersionId}`,
         )
       ).json()) as { decisions: { action: string }[] };
@@ -560,7 +775,7 @@ describe('local Evidence workbench', () => {
       expect(local.gateway.invocations()).toHaveLength(9);
       await review('assessment', second.assessmentVersionId, 'accept');
       expect(
-        (await fetch(`${address.url}api/technical/provenance`)).status,
+        (await authFetch(`${address.url}api/technical/provenance`)).status,
       ).toBe(404);
     } finally {
       await new Promise<void>((resolve, reject) =>

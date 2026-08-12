@@ -93,6 +93,21 @@ importers:
 
   apps/evidence-workbench-api:
     dependencies:
+      '@acme/adapter-evidence-artifact-file':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-artifact-file
+      '@acme/adapter-evidence-artifact-s3':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-artifact-s3
+      '@acme/adapter-evidence-auth-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-auth-memory
+      '@acme/adapter-evidence-auth-postgres':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-auth-postgres
+      '@acme/adapter-evidence-auth-supabase':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-auth-supabase
       '@acme/adapter-evidence-product-file':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-product-file
@@ -111,6 +126,12 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../../packages/evidence-artifacts
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../../packages/evidence-auth
       '@acme/evidence-product-contracts':
         specifier: workspace:*
         version: link:../../packages/evidence-product-contracts
@@ -182,11 +203,60 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/adapter-evidence-artifact-file:
+    dependencies:
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
+
+  packages/adapter-evidence-artifact-s3:
+    dependencies:
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
+
+  packages/adapter-evidence-auth-memory:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../evidence-auth
+
+  packages/adapter-evidence-auth-postgres:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../evidence-auth
+      pg:
+        specifier: 8.16.3
+        version: 8.16.3
+    devDependencies:
+      '@types/pg':
+        specifier: 8.15.5
+        version: 8.15.5
+
+  packages/adapter-evidence-auth-supabase:
+    dependencies:
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../evidence-auth
+      jose:
+        specifier: 6.2.8
+        version: 6.2.8
+
   packages/adapter-evidence-product-file:
     dependencies:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
       '@acme/evidence-product-contracts':
         specifier: workspace:*
         version: link:../evidence-product-contracts
@@ -194,6 +264,12 @@ importers:
         specifier: workspace:*
         version: link:../module-evidence
     devDependencies:
+      '@acme/adapter-evidence-auth-memory':
+        specifier: workspace:*
+        version: link:../adapter-evidence-auth-memory
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../evidence-auth
       '@acme/evidence-testing':
         specifier: workspace:*
         version: link:../evidence-testing
@@ -203,6 +279,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
       '@acme/evidence-product-contracts':
         specifier: workspace:*
         version: link:../evidence-product-contracts
@@ -289,11 +368,35 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@types/node@24.13.3)(tsx@4.23.1)(yaml@2.8.1)
 
+  packages/evidence-artifacts:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/evidence-auth:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/evidence-product-contracts:
     dependencies:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../evidence-auth
       '@acme/module-evidence':
         specifier: workspace:*
         version: link:../module-evidence
@@ -306,6 +409,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../core
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
       '@acme/evidence-product-contracts':
         specifier: workspace:*
         version: link:../evidence-product-contracts
@@ -1164,6 +1270,9 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+
+  jose@6.2.8:
+    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
 
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
@@ -2316,6 +2425,8 @@ snapshots:
   is-path-inside@4.0.0: {}
 
   isexe@2.0.0: {}
+
+  jose@6.2.8: {}
 
   json-buffer@3.0.1: {}
 

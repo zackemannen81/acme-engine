@@ -322,8 +322,9 @@ PostgreSQL platform is decided by
 [ADR-0029](../adr/0029-poc-1-self-hosted-supabase-persistence-platform.md): POC
 #1 uses self-hosted Supabase, and the ACME adapter targets plain PostgreSQL
 over the wire protocol rather than any Supabase-specific API. The identity
-provider, object-storage vendor and hosting platform remain deliberately
-deferred.
+provider and hosting platform were initially deferred. ADR-0035 later selects
+self-hosted Supabase Auth and ADR-0037 selects the server-only Supabase
+S3-compatible interface for private application-encrypted artifact objects.
 
 No browser-to-database access is allowed. Product tables and ACME persistence
 may use separate PostgreSQL schemas, but one adapter-owned transaction must
@@ -535,6 +536,19 @@ Sandbox code sketches, task names and event names are not public contracts.
 - semantic baseline values and frozen model-comparison thresholds;
 - OCR, PDF, audio, image and video ingestion; and
 - any use beyond synthetic text artifacts.
+
+Subsequent decisions close part of that historical deferral: ADR-0034 decides
+the hosted topology, ADR-0035 adopts Supabase Auth plus the product BFF/
+authorization boundary, and ADR-0036 fixes explicit case management and
+isolation. ACME-0091 implements identity; ACME-0093 implements case lifecycle,
+membership, durable ownership and same-organization cross-case
+non-disclosure. ADR-0037/ACME-0095 implement immutable, application-encrypted
+filesystem/S3-compatible artifact storage for the fixed synthetic corpus,
+including key lifecycle, product audit and restore verification. Arbitrary
+ingestion and every non-synthetic use remain unactivated.
+ADR-0038 further accepts an implementation architecture for bounded synthetic
+UTF-8 plain text and immutable redacted derivatives. It does not activate that
+workflow or change the later-corpus gate.
 
 ## Official Risk and Evaluation Sources
 

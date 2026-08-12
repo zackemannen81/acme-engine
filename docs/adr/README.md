@@ -69,3 +69,7 @@ current architecture.
 - [`0032-evidence-v1-correction-occurrence-pairing.md`](0032-evidence-v1-correction-occurrence-pairing.md)
 - [`0033-postgresql-persistence-architecture.md`](0033-postgresql-persistence-architecture.md)
 - [`0034-poc-1-hosted-shell-identity-and-topology.md`](0034-poc-1-hosted-shell-identity-and-topology.md)
+- [`0035-evidence-authenticated-principal-and-authorization.md`](0035-evidence-authenticated-principal-and-authorization.md)
+- [`0036-evidence-case-management-and-isolation.md`](0036-evidence-case-management-and-isolation.md)
+- [`0037-evidence-secure-artifact-foundation.md`](0037-evidence-secure-artifact-foundation.md)
+- [`0038-bounded-text-ingestion-and-immutable-redaction.md`](0038-bounded-text-ingestion-and-immutable-redaction.md)

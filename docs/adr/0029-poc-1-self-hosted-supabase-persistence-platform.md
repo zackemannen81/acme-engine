@@ -2,6 +2,11 @@
 
 Status: Accepted
 
+> Superseded in part on 2026-08-12: [ADR-0037](0037-evidence-secure-artifact-foundation.md)
+> selects the server-only Supabase Storage S3-compatible endpoint for hosted
+> encrypted artifact objects. The PostgreSQL and browser-isolation decisions
+> in this ADR remain accepted.
+
 Date: 2026-08-11
 
 Decision owners: ACME maintainers

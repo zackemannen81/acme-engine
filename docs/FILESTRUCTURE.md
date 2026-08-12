@@ -33,7 +33,7 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/{index.ts,local.ts,local-main.ts}
-│   │   └── test/local-blackbox.test.ts
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -188,6 +188,16 @@ acme-engine/
 │   │   │   └── transaction.ts
 │   │   └── test/
 │   │       └── driver-errors.test.ts
+│   ├── adapter-evidence-artifact-file/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/index.test.ts
+│   ├── adapter-evidence-artifact-s3/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/index.test.ts
 │   ├── adapter-evidence-product-postgres/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -259,15 +269,43 @@ acme-engine/
 │   │   └── test/
 │   │       ├── live-judge.test.ts
 │   │       └── quality-evaluation.test.ts
+│   ├── evidence-auth/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/{index.ts,policy.ts,repository.ts,schemas.ts,session.ts}
+│   │   └── test/policy.test.ts
+│   ├── adapter-evidence-auth-memory/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/{repository.test.ts,session.test.ts}
+│   ├── adapter-evidence-auth-postgres/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/{index.ts,migrations.ts,repository.ts}
+│   ├── adapter-evidence-auth-supabase/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/index.test.ts
 │   ├── adapter-evidence-product-file/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/index.ts
-│   │   └── test/repository.test.ts
+│   │   └── test/{case-management.test.ts,repository.test.ts}
+│   ├── evidence-artifacts/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/{envelope.ts,index.ts,key-provider.ts,ports.ts,schemas.ts}
+│   │   └── test/envelope.test.ts
 │   ├── evidence-product-contracts/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   └── src/{index.ts,repository.ts,review.ts,schemas.ts}
+│   │   └── src/{artifact-service.ts,case.ts,index.ts,ingestion.ts,ingestion-service.ts,repository.ts,review.ts,schemas.ts,scope.ts}
 │   ├── evidence-testing/
 │   │   ├── README.md
 │   │   ├── package.json
@@ -294,6 +332,7 @@ acme-engine/
 │   │       ├── development-observe.test.ts
 │   │       ├── evaluation-candidates.test.ts
 │   │       ├── identity-vectors.test.ts
+│   │       ├── ingestion-redaction.test.ts
 │   │       └── prompt-guard.test.ts
 │   ├── evidence-views/
 │   │   ├── package.json
@@ -406,10 +445,12 @@ acme-engine/
 │   │   └── process-loss.ts
 │   ├── live/
 │   │   ├── openai-responses.test.ts
-│   │   └── scenario-multi-step.test.ts
+│   │   ├── scenario-multi-step.test.ts
+│   │   └── supabase-auth.test.ts
 │   ├── postgres/
 │   │   ├── adapter-postgres.conformance.test.ts
 │   │   ├── evidence-product-postgres.conformance.test.ts
+│   │   ├── evidence-auth-postgres.test.ts
 │   │   ├── harness.ts
 │   │   ├── lazy-repository.ts
 │   │   ├── postgres-gates.test.ts
@@ -460,6 +501,8 @@ acme-engine/
 │       └── tsconfig.base.json
 ├── docs/
 │   ├── ops/
+│   │   ├── evidence-artifact-operations.md
+│   │   ├── hosted-shell.md
 │   │   └── postgresql-operations.md
 │   ├── adr/
 │   │   ├── 0001-typescript-pnpm-workspace.md
@@ -494,6 +537,12 @@ acme-engine/
 │   │   ├── 0030-evidence-v1-identity-and-canonical-placement.md
 │   │   ├── 0031-evidence-review-overlay-and-versioned-views.md
 │   │   ├── 0032-evidence-v1-correction-occurrence-pairing.md
+│   │   ├── 0033-postgresql-persistence-architecture.md
+│   │   ├── 0034-poc-1-hosted-shell-identity-and-topology.md
+│   │   ├── 0035-evidence-authenticated-principal-and-authorization.md
+│   │   ├── 0036-evidence-case-management-and-isolation.md
+│   │   ├── 0037-evidence-secure-artifact-foundation.md
+│   │   ├── 0038-bounded-text-ingestion-and-immutable-redaction.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -530,7 +579,8 @@ acme-engine/
 │   ├── backlog/
 │   │   ├── README.md
 │   │   ├── domain-test-ui-implementation.md
-│   │   └── driver-error-classification.md
+│   │   ├── driver-error-classification.md
+│   │   └── evidence-authentication-authorization-implementation.md
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
@@ -632,6 +682,8 @@ acme-engine/
 │   │   ├── ACME-0087_complete-slice-5-assessment-journey.md
 │   │   ├── ACME-0088_reseal-pre-late-e-a01.md
 │   │   ├── ACME-0089_reseal-e-a01-without-late-questions.md
+│   │   ├── ACME-0090_authenticated-principal-authorization-adr.md
+│   │   ├── ACME-0091_authenticated-principal-authorization.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -668,6 +720,7 @@ acme-engine/
 ├── tsconfig.tests.json
 ├── vitest.config.ts
 ├── vitest.live.config.ts
+├── vitest.supabase-auth.config.ts
 └── vitest.postgres.config.ts
 ```
 
@@ -723,12 +776,32 @@ content remains intentionally omitted here.
   bound candidate validation, conservative correction pairing, typed temporal
   behavior, attention/export helpers, compact state/delta, pure reducer/
   invariants and memory policy.
-- `@acme/evidence-product-contracts`: local workspace, source-import, job and
+- `@acme/evidence-artifacts`: strict immutable representation, envelope,
+  staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
+  envelope encryption, versioned KEK keyring and object/key provider ports.
+- `@acme/adapter-evidence-artifact-file` and
+  `@acme/adapter-evidence-artifact-s3`: exclusive-create, bounded-read
+  ciphertext object stores for local and hosted composition under one shared
+  conformance contract.
+- `@acme/evidence-product-contracts`: explicit case lifecycle, participant,
+  immutable case-object scope, secure artifact and bounded ingestion/redaction
+  services, local workspace, source-import, job and
   append-only exact-version review, durable change-set and assessment-command
   contracts plus the product repository port and deterministic reviewed-
   assessment ZIP renderer.
-- `@acme/adapter-evidence-product-file`: atomic local JSON-file implementation
-  of the product repository, separate from the ACME ledger.
+- `@acme/evidence-auth`: provider-neutral principals, organizations,
+  organization/case memberships, case/workspace bindings, protected BFF
+  sessions and pure deny-by-default ADR-0035/0036 policies.
+- `@acme/adapter-evidence-auth-memory`,
+  `@acme/adapter-evidence-auth-postgres` and
+  `@acme/adapter-evidence-auth-supabase`: deterministic identity/session test
+  seams, durable independent identity persistence and verified hosted
+  credential/JWKS transport respectively.
+- `@acme/adapter-evidence-product-file` and
+  `@acme/adapter-evidence-product-postgres`: atomic local/durable product
+  repository implementations, including case-bound artifact metadata,
+  synthetic text-import/redaction records and security audit, separate from
+  the ACME ledger. PostgreSQL migration v5 owns the Stage 5 tables.
 - `@acme/evidence-views`: pure registered primary work-queue, source-review,
   observation-ledger, account-comparison, relation-review, timeline and open-
   question view contracts/builders plus gated technical provenance/replay
@@ -764,13 +837,18 @@ content remains intentionally omitted here.
   discovery on `./node-source`. Leaf package.
 - `@acme/evidence-workbench-api`, `@acme/evidence-workbench-worker` and
   `@acme/evidence-workbench-web`: the Evidence loopback and hosted reviewer
-  composition through primary open-question views.
+  case-first composition through primary open-question views.
   The API owns commands/queries and local composition, the bounded in-process
   worker owns job progress/cancellation, and the dependency-free HTML shell
   consumes only product endpoints. It serves source review, observation
   ledger, account comparison, relation review, timeline, open questions,
   assessment/re-review, immutable history and reviewed ZIP export; technical
-  audit defaults to disabled.
+  audit defaults to disabled. ACME-0091 adds login/logout/session BFF routes,
+  CSRF/origin enforcement and server-derived authenticated review decisions;
+  ACME-0095 adds encrypted artifact hydration, product security audit and
+  case-admin artifact inspection, re-wrap and revisioned deletion. ACME-0097
+  adds the Documents import view, immutable redaction draft/apply flow and
+  restart-safe case-first records.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -807,10 +885,20 @@ under `docs/concepts_sandbox/temp/`.
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
 normative POC #1 implementation plan. Slices 0–8 are delivered; ACME-0087 and
 corrective child ACME-0089 completed Slice 5's source-bound assessment journey.
-The approved later sequence is
+ADR-0035 now decides the Stage 2 Supabase Auth/BFF-session, product-principal,
+organization-membership and deny-by-default role architecture; ACME-0091
+implements it in the new auth packages and Evidence workbench apps. The
+approved later sequence is
 recorded in
 `docs/design/evidence-integrity-workbench-product-completion-plan.md`; it does
 not authorize any non-synthetic data path.
+
+ADR-0036 decides the Stage 3 case/workspace management and isolation boundary:
+case-first product routes, explicit case roles, immutable case-object ownership
+and same-organization isolation proofs over uniquely bound internal workspaces.
+ACME-0093 implements it and remains synthetic-only. ADR-0037/ACME-0095 add the
+secure artifact foundation for existing synthetic sources; bounded ingestion,
+redaction and non-synthetic authority remain later tasks.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR
@@ -821,7 +909,8 @@ implementation; each package needs its own activated ACME task.
 is decided architecture, roadmap or current scope, and no task may cite it as
 authority.
 
-The `docs/backlog/` proposals record residual work. Driver-error
+The `docs/backlog/` proposals record residual work. ADR-0035's authentication/
+authorization proposal is retained as implemented discovery context. Driver-error
 classification is resolved (ACME-0057); the file remains as resolved context.
 Domain Test UI implementation notes remain for optional residuals. Resolved
 proposals may stay for discovery context or be removed once finished.

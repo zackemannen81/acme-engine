@@ -54,7 +54,28 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   append-only review overlay, complete primary reviewer views and Slice 5
   assessment/re-review journey, optional technical audit, file/PostgreSQL
   persistence, deterministic reviewed ZIP and hosted multi-process shell.
+  ADR-0035's Supabase Auth/BFF-session, product-principal,
+  organization-membership and deny-by-default role architecture is
+  implemented. New review decisions use authenticated server-derived
+  principals; legacy `unauthenticated-local` records remain immutable.
   Every non-synthetic data path remains unimplemented and gated by Slice 9.
+  ADR-0037's secure artifact foundation is implemented for the fixed synthetic
+  corpus: immutable canonical representations are application-encrypted behind
+  filesystem/S3-compatible ports, keys stay in versioned mounted secret files,
+  reads/exports/admin operations are content-free audited, and staging,
+  reconciliation, re-wrap, tombstoned deletion and restore verification are
+  executable. This does not authorize arbitrary ingestion.
+  ADR-0038 accepts the next synthetic-only boundary: one bounded strict UTF-8
+  plain-text import class, exact original plus canonical representations and
+  immutable non-newline-spanning redacted derivatives with append-only logs.
+  ACME-0097 implements that boundary through case-first authenticated API and
+  browser flows, encrypted staged representations, durable import/redaction
+  records, deterministic retry identities and file/PostgreSQL persistence.
+  PDF/DOCX/OCR/media and every non-synthetic class remain refused.
+  ADR-0036's case boundary is implemented: opaque public cases own unique
+  internal workspaces, explicit case memberships control content access,
+  immutable case-object bindings scope repository/worker/API traversal, and
+  same-organization adversarial route tests prove cross-case non-disclosure.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

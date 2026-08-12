@@ -23,7 +23,7 @@ export const EVIDENCE_PRIMARY_OPEN_QUESTIONS_VIEW_SCHEMA_VERSION =
 export const EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION =
   'evidence-primary-assessment-view/1' as const;
 export const EVIDENCE_PRIMARY_REVIEW_HISTORY_VIEW_SCHEMA_VERSION =
-  'evidence-primary-review-history-view/1' as const;
+  'evidence-primary-review-history-view/2' as const;
 export const EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION =
   'evidence-technical-provenance-view/1' as const;
 export const EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION =
@@ -598,7 +598,11 @@ export const EvidencePrimaryReviewHistoryViewSchema = z
         .object({
           reviewDecisionId: EvidenceNonBlankStringSchema,
           reviewerRef: EvidenceNonBlankStringSchema,
-          principalAssurance: z.literal('unauthenticated-local'),
+          principalAssurance: z.enum([
+            'unauthenticated-local',
+            'authenticated-session',
+            'authenticated-case-session',
+          ]),
           action: EvidenceReviewActionSchema,
           rationale: EvidenceNonBlankStringSchema,
           decidedAt: EvidenceNonBlankStringSchema,

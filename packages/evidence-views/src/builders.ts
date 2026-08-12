@@ -128,6 +128,12 @@ function standing(decision: EvidenceReviewDecision | null) {
   }
 }
 
+function decisionActorRef(decision: EvidenceReviewDecision): string {
+  return decision.schemaVersion === 'evidence-review-decision/1'
+    ? decision.reviewerRef
+    : decision.principalRef;
+}
+
 function timeDisplay(value: EvidenceTemporalBound): string {
   switch (value.kind) {
     case 'exact':
@@ -497,7 +503,7 @@ export function buildEvidencePrimaryWorkQueueView(input: {
           : {
               targetVersionId: recent.targetVersionId,
               action: recent.action,
-              reviewerRef: recent.reviewerRef,
+              reviewerRef: decisionActorRef(recent),
               rationale: recent.rationale,
               decidedAt: recent.decidedAt,
             },
@@ -634,7 +640,7 @@ export function buildEvidencePrimaryReviewHistoryView(input: {
     )
     .map((decision) => ({
       reviewDecisionId: decision.reviewDecisionId,
-      reviewerRef: decision.reviewerRef,
+      reviewerRef: decisionActorRef(decision),
       principalAssurance: decision.principalAssurance,
       action: decision.action,
       rationale: decision.rationale,

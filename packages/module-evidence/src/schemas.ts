@@ -56,7 +56,7 @@ export const EvidenceDerivedIdSchema = z
   .regex(/^evidence_[a-z]+_[0-9a-f]{64}$/u);
 export const EvidenceLogicalArtifactIdSchema = z
   .string()
-  .regex(/^(?:SCR|DEV|EVAL)-(?:T|E)\d{2}$/u);
+  .regex(/^(?:(?:SCR|DEV|EVAL)-(?:T|E)\d{2}|ART-[A-Z0-9][A-Z0-9-]{2,63})$/u);
 export const EvidenceIsoTimestampSchema = EvidenceNonBlankStringSchema.refine(
   (value) =>
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u.test(value) &&
@@ -106,7 +106,9 @@ export const SourceArtifactVersionSchema = z
     locatorScheme: z.literal(EVIDENCE_LOCATOR_SCHEME),
     lineCount: z.number().int().positive(),
     predecessorVersionId: EvidenceDerivedIdSchema.nullable(),
-    correctionReason: z.literal('transcription-correction').nullable(),
+    correctionReason: z
+      .enum(['transcription-correction', 'redaction-derivative'])
+      .nullable(),
     text: EvidenceNonBlankStringSchema.refine(
       (value) => canonicalizeEvidenceText(value) === value,
       'Source text must already be UTF-8/LF/NFC canonical text.',

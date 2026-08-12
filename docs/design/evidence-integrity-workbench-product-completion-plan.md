@@ -4,7 +4,7 @@ Status: Approved delivery direction
 
 Date: 2026-08-12
 
-Current task: none; ACME-0087/0089 completed and archived
+Current task: ACME-0097 implements Stage 5 under ADR-0038
 
 ## Purpose and Authority
 
@@ -13,10 +13,12 @@ Integrity Workbench to a complete product proof and, later, a security-gated
 non-synthetic pilot. It supplements but does not supersede ADR-0028, the
 accepted product definition or the normative technical specification.
 
-No later stage is activated by this plan. Authentication, case management,
-object storage, non-synthetic ingestion and Slice 9 still require their own
-frozen tasks and decisions. No real, confidential, privileged, identifiable or
-criminal-offence data is authorized.
+Stage 2 is implemented by ACME-0091 under ADR-0035. ADR-0036 now decides the
+Stage 3 case/workspace management and isolation boundary, and ACME-0093
+implements it end to end. ADR-0037/ACME-0095 now implement secure object
+storage for the fixed synthetic corpus. Arbitrary ingestion and Slice 9 still
+require their own frozen tasks and decisions. No real,
+confidential, privileged, identifiable or criminal-offence data is authorized.
 
 ## Current Product Reality
 
@@ -44,10 +46,10 @@ Slice 5 is accepted and archived.
 | Stage | Product outcome | Authority rule |
 | --- | --- | --- |
 | 1. Complete synthetic Slice 5 | A reviewer creates, reviews, revisits and exports a source-bound assessment entirely through the product application. | Complete (ACME-0087/0089); synthetic-only. |
-| 2. Principal and authorization foundation | Verified sessions, organization membership, product roles and server-derived principals replace browser-supplied reviewer identity. | New ADR and task required. |
-| 3. Case/workspace management and isolation | Create, list, archive and search cases; manage participants/status; prove that no API, job, citation, search result, export or stored object crosses a case boundary. | New ADR and executable isolation gates required. |
-| 4. Secure artifact foundation | Immutable originals, canonical artifact versions, encryption/key lifecycle, retention/deletion, incident controls and product audit exist before sensitive ingestion. | Separate security/storage decisions required. |
-| 5. Bounded ingestion and redaction | Text import becomes a real product workflow; redacted derivatives retain exact transformation history without mutating originals. PDF/DOCX/OCR remain later formats. | Data-class and object-storage authority required. |
+| 2. Principal and authorization foundation | Verified sessions, organization membership, product roles and server-derived principals replace browser-supplied reviewer identity. | Complete (ACME-0091 / ADR-0035); synthetic-only and not case isolation. |
+| 3. Case/workspace management and isolation | Create, list, archive and search cases; manage participants/status; prove that no API, job, citation, search result, export or stored object crosses a case boundary. | Complete (ACME-0093 / ADR-0036); synthetic-only. |
+| 4. Secure artifact foundation | Immutable originals, canonical artifact versions, encryption/key lifecycle, retention/deletion, incident controls and product audit exist before sensitive ingestion. | Complete (ACME-0095 / ADR-0037) for the fixed synthetic corpus; no arbitrary ingestion. |
+| 5. Bounded ingestion and redaction | Text import becomes a real product workflow; redacted derivatives retain exact transformation history without mutating originals. PDF/DOCX/OCR remain later formats. | Complete (ACME-0097 / ADR-0038); synthetic-only. |
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Product tasks after case isolation. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | New versioned view/export contracts. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Export policy and audit gates required. |
@@ -64,6 +66,21 @@ from a verified server-side session, authorize an explicit action against an
 organization and case, and record the effective principal and policy result.
 Browser payloads must not choose `reviewerRef` or gain access by supplying a
 different `workspaceId`.
+
+ADR-0035 fixes the Stage 2 mechanism and ACME-0091 implements it: self-hosted
+Supabase Auth owns hosted credentials, the product API owns an opaque BFF
+session, and product-owned organization memberships plus typed roles authorize
+actions deny-by-default. It explicitly stops short of case isolation.
+
+ADR-0036 fixes the Stage 3 boundary. Product-facing routes use an opaque
+`caseId`; the existing workspace remains a uniquely bound internal execution
+partition. Explicit case membership, not organization role alone, grants
+evidence access. Every product object receives immutable case ownership and
+all repository, worker, citation and export traversal starts from case scope.
+ACME-0093 proves same-organization isolation with adversarial known identifiers
+before Stage 4 begins. Case-first routes reject browser-supplied workspace
+authority, writes validate scoped references before commit, and participant
+changes advance the case revision atomically.
 
 Case isolation precedes real ingestion. It must cover:
 

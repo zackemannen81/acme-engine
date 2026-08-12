@@ -10,6 +10,7 @@ import {
   type EvidenceAssessmentCommand,
   type EvidenceImportCommand,
   type EvidenceProductClock,
+  type EvidenceCaseObjectScope,
   type EvidenceProductJob,
   type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
@@ -59,11 +60,21 @@ export interface EvidencePostImportExecutor {
 }
 
 export interface EvidenceWorkbenchWorker {
-  start(command: EvidenceImportCommand): Promise<EvidenceProductJob>;
-  wait(jobId: string): Promise<EvidenceProductJob>;
-  cancel(jobId: string): Promise<EvidenceProductJob>;
+  start(
+    command: EvidenceImportCommand,
+    scope?: EvidenceCaseObjectScope,
+  ): Promise<EvidenceProductJob>;
+  wait(
+    jobId: string,
+    scope?: EvidenceCaseObjectScope,
+  ): Promise<EvidenceProductJob>;
+  cancel(
+    jobId: string,
+    scope?: EvidenceCaseObjectScope,
+  ): Promise<EvidenceProductJob>;
   proposeAssessment(
     command: EvidenceAssessmentCommand,
+    scope?: EvidenceCaseObjectScope,
   ): Promise<EvidenceAssessment>;
 }
 
@@ -84,6 +95,7 @@ export function createEvidenceWorkbenchWorker(options: {
   async function update(
     job: EvidenceProductJob,
     patch: Partial<EvidenceProductJob>,
+    scope?: EvidenceCaseObjectScope,
   ): Promise<EvidenceProductJob> {
     return options.repository.putJob(
       EvidenceProductJobSchema.parse({
@@ -91,6 +103,7 @@ export function createEvidenceWorkbenchWorker(options: {
         ...patch,
         updatedAt: options.clock.now(),
       }),
+      scope,
     );
   }
 
@@ -98,20 +111,29 @@ export function createEvidenceWorkbenchWorker(options: {
     command: EvidenceImportCommand,
     queued: EvidenceProductJob,
     controller: AbortController,
+    scope?: EvidenceCaseObjectScope,
   ): Promise<EvidenceProductJob> {
     let job = queued;
     try {
       if (controller.signal.aborted)
-        return update(job, {
-          phase: 'cancelled',
-          message: 'Import cancelled before source review.',
-        });
-      await options.repository.putSource(command.artifactVersion);
-      job = await update(job, {
-        phase: 'observing',
-        completedUnits: 1,
-        message: 'Reading exact source lines.',
-      });
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Import cancelled before source review.',
+          },
+          scope,
+        );
+      await options.repository.putSource(command.artifactVersion, scope);
+      job = await update(
+        job,
+        {
+          phase: 'observing',
+          completedUnits: 1,
+          message: 'Reading exact source lines.',
+        },
+        scope,
+      );
       const snapshot = await options.repository.snapshot();
       const workspace = snapshot.workspaces.find(
         ({ workspaceId }) => workspaceId === command.workspaceId,
@@ -127,11 +149,15 @@ export function createEvidenceWorkbenchWorker(options: {
         signal: controller.signal,
       });
       if (controller.signal.aborted)
-        return update(job, {
-          phase: 'cancelled',
-          message: 'Import cancelled before review items were saved.',
-        });
-      await options.repository.putObservations(observed.observations);
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Import cancelled before review items were saved.',
+          },
+          scope,
+        );
+      await options.repository.putObservations(observed.observations, scope);
       await options.repository.advanceEvidenceRevision(
         command.workspaceId,
         workspace.evidenceRevision,
@@ -145,8 +171,11 @@ export function createEvidenceWorkbenchWorker(options: {
         signal: controller.signal,
       });
       if (postImport !== undefined && postImport !== null) {
-        await options.repository.putRelations(postImport.relations);
-        await options.repository.putOpenQuestions(postImport.openQuestions);
+        await options.repository.putRelations(postImport.relations, scope);
+        await options.repository.putOpenQuestions(
+          postImport.openQuestions,
+          scope,
+        );
         await options.repository.advanceEvidenceRevision(
           command.workspaceId,
           observed.revision,
@@ -201,31 +230,52 @@ export function createEvidenceWorkbenchWorker(options: {
             ),
           }),
         }),
+        scope,
       );
-      return update(job, {
-        phase: 'completed',
-        completedUnits: 2,
-        message: 'Source observations are ready for review.',
-      });
+      return update(
+        job,
+        {
+          phase: 'completed',
+          completedUnits: 2,
+          message: 'Source observations are ready for review.',
+        },
+        scope,
+      );
     } catch (error) {
       if (controller.signal.aborted)
-        return update(job, {
-          phase: 'cancelled',
-          message: 'Import cancelled.',
-        });
-      return update(job, {
-        phase: 'failed',
-        message: error instanceof Error ? error.message : 'Import failed.',
-      });
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Import cancelled.',
+          },
+          scope,
+        );
+      return update(
+        job,
+        {
+          phase: 'failed',
+          message: error instanceof Error ? error.message : 'Import failed.',
+        },
+        scope,
+      );
     } finally {
       controllers.delete(queued.jobId);
     }
   }
 
   return {
-    async start(commandValue) {
+    async start(commandValue, scope) {
       const command = EvidenceImportCommandSchema.parse(commandValue);
-      const snapshot = await options.repository.snapshot();
+      if (scope !== undefined && scope.workspaceId !== command.workspaceId)
+        throw new Error('Worker case scope does not match workspace command.');
+      const snapshot =
+        scope === undefined
+          ? await options.repository.snapshot()
+          : await options.repository.caseSnapshot(
+              scope.caseId,
+              scope.workspaceId,
+            );
       const existing = snapshot.jobs.find(
         ({ workspaceId, commandKey }) =>
           workspaceId === command.workspaceId &&
@@ -240,6 +290,8 @@ export function createEvidenceWorkbenchWorker(options: {
         return existing;
       }
       const now = options.clock.now();
+      if (scope !== undefined)
+        await options.repository.putSource(command.artifactVersion, scope);
       const queued = await options.repository.putJob(
         EvidenceProductJobSchema.parse({
           schemaVersion: EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION,
@@ -255,25 +307,37 @@ export function createEvidenceWorkbenchWorker(options: {
           createdAt: now,
           updatedAt: now,
         }),
+        scope,
       );
       const controller = new AbortController();
       controllers.set(queued.jobId, controller);
-      const promise = run(command, queued, controller);
+      const promise = run(command, queued, controller, scope);
       running.set(queued.jobId, promise);
       void promise.finally(() => running.delete(queued.jobId));
       return queued;
     },
-    async wait(jobId) {
+    async wait(jobId, scope) {
       const promise = running.get(jobId);
       if (promise !== undefined) return promise;
-      const job = (await options.repository.snapshot()).jobs.find(
-        (value) => value.jobId === jobId,
-      );
+      const job = (
+        scope === undefined
+          ? await options.repository.snapshot()
+          : await options.repository.caseSnapshot(
+              scope.caseId,
+              scope.workspaceId,
+            )
+      ).jobs.find((value) => value.jobId === jobId);
       if (job === undefined) throw new RangeError(`Unknown job ${jobId}.`);
       return job;
     },
-    async cancel(jobId) {
-      const snapshot = await options.repository.snapshot();
+    async cancel(jobId, scope) {
+      const snapshot =
+        scope === undefined
+          ? await options.repository.snapshot()
+          : await options.repository.caseSnapshot(
+              scope.caseId,
+              scope.workspaceId,
+            );
       const job = snapshot.jobs.find((value) => value.jobId === jobId);
       if (job === undefined) throw new RangeError(`Unknown job ${jobId}.`);
       if (
@@ -283,25 +347,39 @@ export function createEvidenceWorkbenchWorker(options: {
       )
         return job;
       controllers.get(jobId)?.abort();
-      return update(job, {
-        cancelRequested: true,
-        message: 'Cancellation requested.',
-      });
+      return update(
+        job,
+        {
+          cancelRequested: true,
+          message: 'Cancellation requested.',
+        },
+        scope,
+      );
     },
-    async proposeAssessment(commandValue) {
+    async proposeAssessment(commandValue, scope) {
       const command = EvidenceAssessmentCommandSchema.parse(commandValue);
+      if (scope !== undefined && scope.workspaceId !== command.workspaceId)
+        throw new Error('Worker case scope does not match assessment command.');
       if (options.assessmentExecutor === undefined)
         throw new RangeError('Assessment execution is unavailable.');
-      const existing = (await options.repository.snapshot()).assessments.find(
+      const existing = (
+        scope === undefined
+          ? await options.repository.snapshot()
+          : await options.repository.caseSnapshot(
+              scope.caseId,
+              scope.workspaceId,
+            )
+      ).assessments.find(
         (assessment) =>
           assessment.workspaceId === command.workspaceId &&
           assessment.sequence === command.sequence,
       );
       if (existing !== undefined) return existing;
       const result = await options.assessmentExecutor.propose({ command });
-      const [stored] = await options.repository.putAssessments([
-        result.assessment,
-      ]);
+      const [stored] = await options.repository.putAssessments(
+        [result.assessment],
+        scope,
+      );
       if (stored === undefined) throw new Error('Assessment was not stored.');
       return stored;
     },

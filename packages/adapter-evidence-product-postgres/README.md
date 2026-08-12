@@ -12,6 +12,9 @@ ACME-0085). Implements the same `EvidenceProductRepository` port as
 - Migration 2 adds immutable per-command change sets used to reproduce Slice
   5 late-evidence attention after process restart; assessment and append-only
   exact-version review records remain in their existing product tables.
+- Migration 3 adds immutable case-object bindings. Scope-aware writes insert
+  bindings and validate all cross-object references inside the same
+  transaction, so a mixed-case reference rolls back before commit.
 - Own migration ledger `evidence.schema_migrations` with transaction-scoped
   advisory locking.
 - No foreign keys into the `acme` schema.

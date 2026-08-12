@@ -8,6 +8,7 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
+    { "path": "../evidence-artifacts" },
     { "path": "../core" },
     { "path": "../module-evidence" },
     { "path": "../evidence-product-contracts" }

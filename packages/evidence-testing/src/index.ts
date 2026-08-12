@@ -16,3 +16,4 @@ export * from './evaluation-assessment.js';
 export * from './evaluation-relate.js';
 export * from './prompt-guard.js';
 export * from './schemas.js';
+export * from './artifact-object-store-conformance.js';

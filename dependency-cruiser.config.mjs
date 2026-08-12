@@ -102,7 +102,7 @@ export default {
       from: {
         path: '(?:^|/)(?:packages|apps)/[^/]+/src',
         pathNot:
-          '(?:^|/)packages/adapter-(?:postgres|evidence-product-postgres)/src|(?:^|/)apps/(?:cli|evidence-workbench-api)/src',
+          '(?:^|/)packages/adapter-(?:postgres|evidence-product-postgres|evidence-auth-postgres)/src|(?:^|/)apps/(?:cli|evidence-workbench-api)/src',
       },
       to: {
         path: '(?:^|/)pg(?:/|$)',
@@ -167,6 +167,18 @@ export default {
       },
       to: {
         path: '^packages/[^/]+/src/(?!index\\.ts$)',
+      },
+    },
+    {
+      name: 'evidence-browser-uses-product-api-not-auth-or-database',
+      severity: 'error',
+      comment:
+        'The Evidence browser shell may use product HTTP endpoints only; credential, JWT and database dependencies remain behind the BFF (ADR-0035).',
+      from: {
+        path: '(?:^|/)apps/evidence-workbench-web/src',
+      },
+      to: {
+        path: '^(?:packages/(?:adapter-[^/]+|evidence-auth)(?:/|$)|node_modules/(?:pg|jose|@supabase)(?:/|$))',
       },
     },
     {

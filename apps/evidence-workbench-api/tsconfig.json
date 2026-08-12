@@ -8,6 +8,13 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
+    { "path": "../../packages/adapter-evidence-artifact-file" },
+    { "path": "../../packages/adapter-evidence-artifact-s3" },
+    { "path": "../../packages/adapter-evidence-auth-memory" },
+    { "path": "../../packages/adapter-evidence-auth-postgres" },
+    { "path": "../../packages/adapter-evidence-auth-supabase" },
+    { "path": "../../packages/evidence-auth" },
+    { "path": "../../packages/evidence-artifacts" },
     { "path": "../../packages/core" },
     { "path": "../../packages/adapter-memory" },
     { "path": "../../packages/adapter-model-mock" },

@@ -40,7 +40,7 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     defaultPath: '/assessments/:assessmentVersionId',
   },
   {
-    schemaVersion: 'evidence-primary-review-history-view/1',
+    schemaVersion: 'evidence-primary-review-history-view/2',
     classification: 'primary-domain',
     defaultPath: '/reviews/:targetKind/:targetVersionId',
   },

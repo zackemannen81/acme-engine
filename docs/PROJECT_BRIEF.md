@@ -209,9 +209,32 @@ Evidence Integrity slices 0–8: the fixed synthetic corpus, observation,
 relation, timeline and assessment tasks, the complete primary reviewer journey,
 optional technical audit, PostgreSQL persistence and a hosted multi-process
 shell. ACME-0089 re-sealed pre-late E-A01 without forward question references;
-post-import E-A02 retains all three sealed questions. The hosted product
-remains single-user and synthetic-only. The approved later sequencing plan is
+post-import E-A02 retains all three sealed questions. ADR-0035 decides the
+authenticated-principal and organization-authorization architecture:
+self-hosted Supabase Auth behind a product-API BFF, opaque server-side sessions
+and deny-by-default product roles. ACME-0091 implements this boundary across
+the hosted composition, browser and durable identity/session store. The
+product remains synthetic-only. The approved later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
-Authentication, case management, secure ingestion, Case Integrity Report and
-Slice 9 non-synthetic readiness remain separate later decisions and tasks. No
-non-synthetic data path is authorized.
+ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
+navigation, durable object ownership and same-organization cross-case
+non-disclosure. ADR-0037 and ACME-0095 add the secure artifact foundation for
+the fixed synthetic corpus. Ingestion/redaction, Case Integrity Report and
+Slice 9 non-synthetic readiness remain separate later tasks. No non-synthetic
+data path is authorized.
+
+ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
+and ACME-0097 implements it end to end.
+Only strict, size-limited synthetic UTF-8 plain text is eligible; accepted
+imports preserve exact original bytes and create a separate LF/NFC canonical
+representation. Redaction creates a new immutable version from exact UTF-8
+byte ranges and an append-only content-free log. PDF/DOCX/OCR/media and all
+non-synthetic data remain prohibited pending Slice 9.
+
+ADR-0037 now decides the next secure artifact foundation: immutable
+original/canonical representations, application envelope encryption, a
+server-only S3-compatible hosted object store, key rotation, reconciliation,
+deletion tombstones, security audit and coordinated restore. ACME-0095
+implements those boundaries end to end for existing synthetic canonical text,
+including filesystem/S3 conformance and file/PostgreSQL metadata. It remains
+synthetic-only and exposes no arbitrary byte-input path.

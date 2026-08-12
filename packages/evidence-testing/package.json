@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@acme/core": "workspace:*",
+    "@acme/evidence-artifacts": "workspace:*",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/evidence-views": "workspace:*",
     "@acme/module-evidence": "workspace:*",

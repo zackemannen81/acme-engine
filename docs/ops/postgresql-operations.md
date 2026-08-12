@@ -60,11 +60,12 @@ never rolls back a committed ledger write (ADR-0027).
 | Schema | Contents | Role |
 | --- | --- | --- |
 | `acme` | Execution ledger + quality evaluations | `acme_engine` |
-| `evidence` | Product store (workspaces, sources, reviews, …) | `evidence_app` |
+| `evidence` | Product store (case-object bindings, workspaces, sources, reviews, …) | `evidence_app` |
+| `evidence_identity` | Product principals, organizations, cases, memberships and protected sessions | product API only |
 
 There are no cross-schema foreign keys and no cross-schema transactions.
 
-Browser isolation: revoke `acme` and `evidence` from `anon`, `authenticated`,
+Browser isolation: revoke `acme`, `evidence` and `evidence_identity` from `anon`, `authenticated`,
 and `PUBLIC`. Apply `packages/adapter-postgres/sql/roles.sql` after migration
 from an administrative connection. Slice 7 includes a gate that connects as
 `anon` and expects permission denied.
@@ -90,7 +91,12 @@ Programmatic:
 await migratePostgresSchema({ pool, appliedAt: new Date().toISOString() });
 await verifyPostgresSchema({ pool });
 await migrateEvidenceProductSchema({ pool, appliedAt: new Date().toISOString() });
+await migrateEvidenceIdentitySchema({ pool, appliedAt: new Date().toISOString() });
 ```
+
+Evidence product migration 3 installs immutable case-object ownership;
+identity migration 2 installs cases and case memberships. Both must be applied
+before a Stage 3 process serves traffic.
 
 ## Backup and restore
 

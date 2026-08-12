@@ -17,6 +17,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@acme/evidence-artifacts": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/module-evidence": "workspace:*",

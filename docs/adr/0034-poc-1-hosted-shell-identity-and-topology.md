@@ -6,6 +6,12 @@ Date: 2026-08-12
 
 Decision owners: ACME maintainers
 
+> Superseded in part on 2026-08-12: [ADR-0035](0035-evidence-authenticated-principal-and-authorization.md)
+> replaces this ADR's temporary `unauthenticated-local` hosted identity with
+> the accepted Supabase Auth/BFF-session and organization-authorization
+> architecture. The topology, PostgreSQL, browser-to-product-API, object-
+> storage and live-provider decisions below remain accepted.
+
 ## Context
 
 Evidence Integrity Workbench slice 8 requires a hosted web, API and worker

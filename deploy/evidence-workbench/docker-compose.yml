@@ -1,4 +1,4 @@
-# Hosted Evidence Integrity Workbench (slice 8 / ACME-0086)
+# Hosted Evidence Integrity Workbench (slice 8 + ADR-0035 auth)
 # Prerequisites: monorepo built (`pnpm build`), PostgreSQL 15 reachable.
 # Does not start Supabase; point ACME_POSTGRES_URL at direct PG (not 6543).
 
@@ -15,8 +15,30 @@ services:
       EVIDENCE_WORKBENCH_PORT: '8790'
       EVIDENCE_WORKBENCH_SEED: ${EVIDENCE_WORKBENCH_SEED:-development}
       ACME_PERSISTENCE: postgres
+      ACME_HOSTED: '1'
       ACME_POSTGRES_URL: ${ACME_POSTGRES_URL}
+      ACME_ARTIFACT_STORE: s3
+      ACME_ARTIFACT_S3_ENDPOINT: ${ACME_ARTIFACT_S3_ENDPOINT}
+      ACME_ARTIFACT_S3_REGION: ${ACME_ARTIFACT_S3_REGION}
+      ACME_ARTIFACT_S3_BUCKET: ${ACME_ARTIFACT_S3_BUCKET}
+      ACME_ARTIFACT_S3_ACCESS_KEY_ID: ${ACME_ARTIFACT_S3_ACCESS_KEY_ID}
+      ACME_ARTIFACT_S3_SECRET_FILE: /run/secrets/evidence_artifact_s3_secret
+      ACME_ARTIFACT_KEK_MANIFEST: /run/secrets/evidence_artifact_kek_manifest
+      ACME_ARTIFACT_KEK_ID: ${ACME_ARTIFACT_KEK_ID:-evidence-kek}
+      ACME_ARTIFACT_KEK_VERSION: ${ACME_ARTIFACT_KEK_VERSION:-1}
+      EVIDENCE_AUTH_MODE: supabase
+      EVIDENCE_SUPABASE_URL: ${EVIDENCE_SUPABASE_URL}
+      EVIDENCE_SUPABASE_ISSUER: ${EVIDENCE_SUPABASE_ISSUER}
+      EVIDENCE_SUPABASE_PUBLISHABLE_KEY: ${EVIDENCE_SUPABASE_PUBLISHABLE_KEY}
+      EVIDENCE_BOOTSTRAP_AUTH_SUBJECT: ${EVIDENCE_BOOTSTRAP_AUTH_SUBJECT}
+      EVIDENCE_BOOTSTRAP_AUTH_EMAIL: ${EVIDENCE_BOOTSTRAP_AUTH_EMAIL}
+      EVIDENCE_SESSION_KEY_BASE64: ${EVIDENCE_SESSION_KEY_BASE64}
+      EVIDENCE_PUBLIC_ORIGIN: ${EVIDENCE_PUBLIC_ORIGIN}
       NODE_ENV: production
+    secrets:
+      - evidence_artifact_s3_secret
+      - evidence_artifact_kek_manifest
+      - evidence_artifact_kek_v1
     ports:
       - '${EVIDENCE_WORKBENCH_HOST_PORT:-8790}:8790'
     healthcheck:
@@ -31,3 +53,11 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+
+secrets:
+  evidence_artifact_s3_secret:
+    file: ${ACME_ARTIFACT_S3_SECRET_HOST_FILE}
+  evidence_artifact_kek_manifest:
+    file: ${ACME_ARTIFACT_KEK_MANIFEST_HOST_FILE}
+  evidence_artifact_kek_v1:
+    file: ${ACME_ARTIFACT_KEK_V1_HOST_FILE}

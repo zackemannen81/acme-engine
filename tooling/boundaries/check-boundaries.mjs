@@ -45,6 +45,10 @@ const testUiLeafFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/apps/cli/src/forbidden-test-ui.ts',
 );
+const evidenceBrowserAuthFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/apps/evidence-workbench-web/src/forbidden-auth.ts',
+);
 const sealedTruthFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden-sealed-truth.ts',
@@ -170,6 +174,10 @@ verifyForbiddenFixture(
 verifyForbiddenFixture(
   testUiLeafFixturePath,
   'nothing-imports-the-test-ui-app',
+);
+verifyForbiddenFixture(
+  evidenceBrowserAuthFixturePath,
+  'evidence-browser-uses-product-api-not-auth-or-database',
 );
 verifyForbiddenFixture(
   sealedTruthFixturePath,
