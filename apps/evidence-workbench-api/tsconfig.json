@@ -12,6 +12,8 @@
     { "path": "../../packages/adapter-memory" },
     { "path": "../../packages/adapter-model-mock" },
     { "path": "../../packages/adapter-evidence-product-file" },
+    { "path": "../../packages/adapter-evidence-product-postgres" },
+    { "path": "../../packages/adapter-postgres" },
     { "path": "../../packages/module-evidence" },
     { "path": "../../packages/evidence-testing" },
     { "path": "../../packages/evidence-product-contracts" },

@@ -21,12 +21,17 @@
     "@acme/adapter-model-mock": "workspace:*",
     "@acme/adapter-model-openai": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
+    "@acme/adapter-postgres": "workspace:*",
     "@acme/core": "workspace:*",
+    "pg": "8.16.3",
     "@acme/evaluation": "workspace:*",
     "@acme/module-narrative": "workspace:*",
     "@acme/module-research": "workspace:*",
     "@acme/testing": "workspace:*",
     "yaml": "2.8.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.15.5"
   },
   "bin": {
     "acme": "./dist/main.js"

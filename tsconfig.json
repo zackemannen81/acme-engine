@@ -11,6 +11,12 @@
       "path": "./packages/adapter-sqlite"
     },
     {
+      "path": "./packages/adapter-postgres"
+    },
+    {
+      "path": "./packages/adapter-evidence-product-postgres"
+    },
+    {
       "path": "./packages/adapter-model-openai"
     },
     {

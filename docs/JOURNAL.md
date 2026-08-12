@@ -1,5 +1,34 @@
 # Journal
 
+## 2026-08-12 — ACME-0085 PostgreSQL slice 7 adapters
+
+- Date: 2026-08-12
+- Author: Grok
+- Task: ACME-0085
+- Branch: `dev/legal-evidence`
+- Summary: Implemented Evidence Integrity Workbench slice 7 against ADR-0033.
+  Delivered `@acme/adapter-postgres` (schema `acme`: ExecutionRepository +
+  QualityEvaluationStore, injected `pg` pool, advisory-locked migrations,
+  SQLSTATE driver mapping, READ COMMITTED UoW with CAS, atomic SKIP LOCKED
+  outbox lease, REPEATABLE READ multi-statement reads) and
+  `@acme/adapter-evidence-product-postgres` (schema `evidence`, file-snapshot
+  translation). Roles/revocation SQL, schema-per-test gated suite
+  (`pnpm test:postgres`, refuses without connection), CI postgres job, CLI
+  `--adapter postgres`, workbench `ACME_PERSISTENCE=postgres`, and
+  `docs/ops/postgresql-operations.md`. Environment facts: PG 15, direct 5432,
+  never transaction pooler 6543. Shared conformance kits unchanged.
+- Verification: `pnpm test:postgres` 25/25 on ephemeral `postgres:15`
+  (`ACME_POSTGRES_URL=postgresql://acme:acme@127.0.0.1:55432/acme`). Typecheck
+  green. Hermetic suite and remaining docs gates recorded with the same
+  handoff. No live provider calls. No commit/push (parent owns that).
+- Documentation: CURRENT_STATUS, SYSTEMDOC, FILESTRUCTURE, technical-spec
+  slice 7 status, package READMEs, ops doc; task archived as
+  `docs/finished/ACME-0085_postgresql-slice-7.md`; CURRENT_TASK restored from
+  template.
+- Handoff: next product slice is hosted shell (slice 8) after
+  identity/authorization ADR; SQLite remains hermetic default.
+- Signature: Grok
+
 ## 2026-08-12 — ACME-0084 PostgreSQL persistence architecture
 
 - Date: 2026-08-12

@@ -2,11 +2,18 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import path from 'node:path';
 
 import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
+import { createPostgresEvidenceProductRepository } from '@acme/adapter-evidence-product-postgres';
+import { migrateEvidenceProductSchema } from '@acme/adapter-evidence-product-postgres';
 import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
 import {
   createScriptedModelGateway,
   type ScriptedModelGateway,
 } from '@acme/adapter-model-mock';
+import {
+  createPostgresExecutionRepository,
+  migratePostgresSchema,
+  verifyPostgresSchema,
+} from '@acme/adapter-postgres';
 import {
   canonicalJson,
   createAes256GcmPayloadEncryptor,
@@ -18,9 +25,12 @@ import {
   createStateEngine,
   deriveExecutionId,
   type Clock,
+  type ExecutionRepository,
   type IdGenerator,
   type ModelSelection,
+  type RepositoryEvidence,
 } from '@acme/core';
+import { Pool } from 'pg';
 import {
   EVIDENCE_WORKSPACE_SCHEMA_VERSION,
   type EvidenceProductClock,
@@ -214,6 +224,41 @@ function fixtureGateway(
   });
 }
 
+function postgresUrlFromEnv(): string {
+  const direct = process.env['ACME_POSTGRES_URL'];
+  if (direct !== undefined && direct.trim().length > 0) {
+    return direct;
+  }
+  const host = process.env['ACME_POSTGRES_HOST'];
+  if (host === undefined || host.trim().length === 0) {
+    throw new Error(
+      'ACME_PERSISTENCE=postgres requires ACME_POSTGRES_URL or ACME_POSTGRES_HOST.',
+    );
+  }
+  const port = process.env['ACME_POSTGRES_PORT'] ?? '5432';
+  const user = process.env['ACME_POSTGRES_USER'] ?? 'acme';
+  const password = process.env['ACME_POSTGRES_PASSWORD'] ?? 'acme';
+  const database = process.env['ACME_POSTGRES_DATABASE'] ?? 'acme';
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+}
+
+function usePostgresPersistence(options: {
+  readonly persistence?: 'file' | 'postgres';
+}): boolean {
+  if (options.persistence === 'postgres') {
+    return true;
+  }
+  if (options.persistence === 'file') {
+    return false;
+  }
+  const env = process.env['ACME_PERSISTENCE']?.trim().toLowerCase();
+  return env === 'postgres';
+}
+
+type SnapshotLedger = ExecutionRepository & {
+  snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
+};
+
 export async function createLocalEvidenceWorkbench(
   options: {
     readonly dataFile?: string;
@@ -222,6 +267,8 @@ export async function createLocalEvidenceWorkbench(
     readonly reviewIds?: EvidenceProductIds;
     readonly seedDevelopmentSource?: boolean;
     readonly seedMode?: SeedMode;
+    /** Override persistence selection; default reads ACME_PERSISTENCE. */
+    readonly persistence?: 'file' | 'postgres';
   } = {},
 ) {
   const clock = options.clock ?? systemClock();
@@ -232,15 +279,53 @@ export async function createLocalEvidenceWorkbench(
     (options.seedDevelopmentSource === false ? 'none' : 'development');
   const seedFixtures = observeFixtures(seedMode);
   const relate = relateFixture(seedMode);
-  const dataFile = path.resolve(
-    options.dataFile ??
-      (seedMode === 'evaluation'
-        ? '.local/evidence-workbench/evaluation-product.json'
-        : '.local/evidence-workbench/product.json'),
-  );
-  const productRepository = createFileEvidenceProductRepository({
-    filePath: dataFile,
-  });
+  const postgres = usePostgresPersistence(options);
+
+  let closePersistence: () => Promise<void> = async () => {};
+  let productRepository;
+  let ledger: SnapshotLedger;
+
+  if (postgres) {
+    const pool = new Pool({
+      connectionString: postgresUrlFromEnv(),
+      max: 8,
+      application_name: 'acme-evidence-workbench',
+    });
+    await migratePostgresSchema({ pool, appliedAt: clock.now() });
+    await verifyPostgresSchema({ pool });
+    await migrateEvidenceProductSchema({ pool, appliedAt: clock.now() });
+    productRepository = createPostgresEvidenceProductRepository({ pool });
+    const payloadEncryptor = createAes256GcmPayloadEncryptor({
+      key: new Uint8Array(randomBytes(32)),
+      keyId: 'ephemeral-local-session',
+    });
+    ledger = createPostgresExecutionRepository({
+      pool,
+      ids,
+      payloadEncryptor,
+    });
+    closePersistence = async () => {
+      await pool.end();
+    };
+  } else {
+    const dataFile = path.resolve(
+      options.dataFile ??
+        (seedMode === 'evaluation'
+          ? '.local/evidence-workbench/evaluation-product.json'
+          : '.local/evidence-workbench/product.json'),
+    );
+    productRepository = createFileEvidenceProductRepository({
+      filePath: dataFile,
+    });
+    ledger = createInMemoryExecutionRepository({
+      ids,
+      payloadEncryptor: createAes256GcmPayloadEncryptor({
+        key: new Uint8Array(randomBytes(32)),
+        keyId: 'ephemeral-local-session',
+      }),
+    });
+  }
+
   let productSnapshot = await productRepository.snapshot();
   if (
     !productSnapshot.workspaces.some(
@@ -257,14 +342,6 @@ export async function createLocalEvidenceWorkbench(
     });
     productSnapshot = await productRepository.snapshot();
   }
-
-  const ledger = createInMemoryExecutionRepository({
-    ids,
-    payloadEncryptor: createAes256GcmPayloadEncryptor({
-      key: new Uint8Array(randomBytes(32)),
-      keyId: 'ephemeral-local-session',
-    }),
-  });
   const gateway = fixtureGateway(seedFixtures, relate, clock);
   const engine = createExecutionEngine({
     clock,
@@ -304,16 +381,15 @@ export async function createLocalEvidenceWorkbench(
         );
         if (result.status !== 'committed')
           throw new Error(result.error.message);
-        const observations = ledger
-          .snapshot()
-          .memoryRecords.flatMap((record) => {
-            const parsed = EvidenceObservationSchema.safeParse(record.value);
-            return parsed.success &&
-              parsed.data.artifactVersionId ===
-                value.artifactVersion.artifactVersionId
-              ? [parsed.data]
-              : [];
-          });
+        const evidence = await ledger.snapshot();
+        const observations = evidence.memoryRecords.flatMap((record) => {
+          const parsed = EvidenceObservationSchema.safeParse(record.value);
+          return parsed.success &&
+            parsed.data.artifactVersionId ===
+              value.artifactVersion.artifactVersionId
+            ? [parsed.data]
+            : [];
+        });
         return {
           revision: result.revision,
           observations,
@@ -361,7 +437,8 @@ export async function createLocalEvidenceWorkbench(
       policy: { retention: 'encrypted-payload' },
     });
     if (result.status !== 'committed') throw new Error(result.error.message);
-    const memories = ledger.snapshot().memoryRecords.flatMap((record) => {
+    const evidence = await ledger.snapshot();
+    const memories = evidence.memoryRecords.flatMap((record) => {
       const parsed = EvidenceMemoryValueSchema.safeParse(record.value);
       return parsed.success ? [parsed.data] : [];
     });
@@ -389,8 +466,9 @@ export async function createLocalEvidenceWorkbench(
     ids: reviewIds,
     workspaceId: WORKSPACE_ID,
     technicalAudit: { enabled: false },
-    evidenceProjection() {
-      const latest = ledger.snapshot().state.snapshots.at(-1);
+    async evidenceProjection() {
+      const evidence = await ledger.snapshot();
+      const latest = evidence.state.snapshots.at(-1);
       return latest === undefined
         ? initialEvidenceState()
         : EvidenceStateSchema.parse(latest.value);
@@ -404,7 +482,16 @@ export async function createLocalEvidenceWorkbench(
     gateway,
     engine,
     workspaceId: WORKSPACE_ID,
-    dataFile,
+    dataFile: postgres
+      ? undefined
+      : path.resolve(
+          options.dataFile ??
+            (seedMode === 'evaluation'
+              ? '.local/evidence-workbench/evaluation-product.json'
+              : '.local/evidence-workbench/product.json'),
+        ),
+    persistence: postgres ? ('postgres' as const) : ('file' as const),
+    close: closePersistence,
   };
 }
 

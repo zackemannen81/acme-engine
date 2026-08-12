@@ -154,12 +154,12 @@ async function resolveExecuteGateway(
   return gatewayFromOpenAi(request.model, options);
 }
 
-function executionEvidence(
+async function executionEvidence(
   repository: InspectableRepository,
   executionId: string,
   showPayloads: boolean,
-): Readonly<Record<string, JsonValue>> {
-  const evidence = repository.snapshot();
+): Promise<Readonly<Record<string, JsonValue>>> {
+  const evidence = await repository.snapshot();
   const execution = evidence.executions.find(
     (entry) => entry.executionId === executionId,
   );
@@ -257,7 +257,7 @@ async function execute(
     );
     return committed ? EXIT_OK : EXIT_OUTCOME;
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
@@ -347,21 +347,21 @@ async function replay(
     );
     return report.status === 'match' ? EXIT_OK : EXIT_OUTCOME;
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
-function inspectExecution(
+async function inspectExecution(
   command: Extract<Command, { kind: 'execution-inspect' }>,
   options: RunOptions,
-): number {
+): Promise<number> {
   const composition = createComposition(
     command.common.adapter,
     command.common.database,
     options,
   );
   try {
-    const body = executionEvidence(
+    const body = await executionEvidence(
       composition.repository,
       command.executionId,
       command.common.showPayloads,
@@ -375,29 +375,27 @@ function inspectExecution(
     ]);
     return EXIT_OK;
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
-function inspectState(
+async function inspectState(
   command: Extract<Command, { kind: 'state-inspect' }>,
   options: RunOptions,
-): number {
+): Promise<number> {
   const composition = createComposition(
     command.common.adapter,
     command.common.database,
     options,
   );
   try {
-    const snapshots = composition.repository
-      .snapshot()
-      .state.snapshots.filter(
-        (entry) =>
-          entry.namespace === command.namespace &&
-          entry.entityId === command.entityId &&
-          (command.revision === undefined ||
-            entry.revision === command.revision),
-      );
+    const evidence = await composition.repository.snapshot();
+    const snapshots = evidence.state.snapshots.filter(
+      (entry) =>
+        entry.namespace === command.namespace &&
+        entry.entityId === command.entityId &&
+        (command.revision === undefined || entry.revision === command.revision),
+    );
     const body = {
       namespace: command.namespace,
       entityId: command.entityId,
@@ -423,28 +421,27 @@ function inspectState(
     );
     return snapshots.length === 0 ? EXIT_OUTCOME : EXIT_OK;
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
-function inspectMemory(
+async function inspectMemory(
   command: Extract<Command, { kind: 'memory-inspect' }>,
   options: RunOptions,
-): number {
+): Promise<number> {
   const composition = createComposition(
     command.common.adapter,
     command.common.database,
     options,
   );
   try {
-    const records = composition.repository
-      .snapshot()
-      .memoryRecords.filter(
-        (entry) =>
-          entry.namespace === command.namespace &&
-          entry.entityId === command.entityId &&
-          (command.status === undefined || entry.status === command.status),
-      );
+    const evidence = await composition.repository.snapshot();
+    const records = evidence.memoryRecords.filter(
+      (entry) =>
+        entry.namespace === command.namespace &&
+        entry.entityId === command.entityId &&
+        (command.status === undefined || entry.status === command.status),
+    );
     const body = {
       namespace: command.namespace,
       entityId: command.entityId,
@@ -471,7 +468,7 @@ function inspectMemory(
     );
     return records.length === 0 ? EXIT_OUTCOME : EXIT_OK;
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
@@ -488,7 +485,7 @@ async function withComposition(
   try {
     return await work(composition);
   } finally {
-    composition.close();
+    await composition.close();
   }
 }
 
@@ -719,7 +716,7 @@ function listStranded(
   options: RunOptions,
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
-    const evidence = composition.repository.snapshot();
+    const evidence = await composition.repository.snapshot();
     const report = listStrandedExecutions(
       {
         executions: evidence.executions,
@@ -904,7 +901,7 @@ function dischargeExecution(
   options: RunOptions,
 ): Promise<number> {
   return withComposition(command.common, options, async (composition) => {
-    const evidence = composition.repository.snapshot();
+    const evidence = await composition.repository.snapshot();
     const prepared = prepareOperatorDischarge(
       {
         executions: evidence.executions,
@@ -956,15 +953,15 @@ export async function run(
       case 'execution-replay':
         return await replay(command, options);
       case 'execution-inspect':
-        return inspectExecution(command, options);
+        return await inspectExecution(command, options);
       case 'execution-stranded':
         return await listStranded(command, options);
       case 'execution-discharge':
         return await dischargeExecution(command, options);
       case 'state-inspect':
-        return inspectState(command, options);
+        return await inspectState(command, options);
       case 'memory-inspect':
-        return inspectMemory(command, options);
+        return await inspectMemory(command, options);
       case 'outbox-inspect':
         return await inspectOutbox(command, options);
       case 'outbox-drain':

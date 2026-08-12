@@ -58,6 +58,30 @@ export default {
       },
     },
     {
+      name: 'postgres-adapter-depends-only-on-core-and-evaluation',
+      severity: 'error',
+      comment:
+        'The PostgreSQL adapter may depend on itself, core and the domain-neutral evaluation layer, not apps, modules, or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-postgres/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|evaluation(?:/|$)|adapter-postgres(?:/|$)))',
+      },
+    },
+    {
+      name: 'evidence-product-postgres-adapter-depends-only-on-product-stack',
+      severity: 'error',
+      comment:
+        'The Evidence product PostgreSQL adapter may depend on itself, core, product contracts and the evidence module, not apps or other adapters.',
+      from: {
+        path: '(?:^|/)packages/adapter-evidence-product-postgres/src',
+      },
+      to: {
+        path: '^(?:apps|packages/(?!core(?:/|$)|module-evidence(?:/|$)|evidence-product-contracts(?:/|$)|adapter-evidence-product-postgres(?:/|$)))',
+      },
+    },
+    {
       name: 'sqlite-driver-stays-behind-its-adapter',
       severity: 'error',
       comment:
@@ -68,6 +92,20 @@ export default {
       },
       to: {
         path: '(?:^|/)better-sqlite3(?:/|$)',
+      },
+    },
+    {
+      name: 'postgres-driver-stays-behind-its-adapters',
+      severity: 'error',
+      comment:
+        'Only PostgreSQL adapters and composition roots that own pool lifecycle may reach pg; core, modules, and other packages must use repository ports (ADR-0033).',
+      from: {
+        path: '(?:^|/)(?:packages|apps)/[^/]+/src',
+        pathNot:
+          '(?:^|/)packages/adapter-(?:postgres|evidence-product-postgres)/src|(?:^|/)apps/(?:cli|evidence-workbench-api)/src',
+      },
+      to: {
+        path: '(?:^|/)pg(?:/|$)',
       },
     },
     {

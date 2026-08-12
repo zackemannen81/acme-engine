@@ -1130,19 +1130,23 @@ disabled completely. Human decisions bind exact immutable versions and live in
 a separate product repository; approval never mutates Evidence records or an
 operation digest.
 
-Implementation is divided into separately activatable slices 0–9. Slices 0
-(corpus and contracts), 1 (one-source review) and 2 (account comparison) are
-delivered; the remaining slices are general relations; timeline/open
-questions; assessment/re-review; optional technical audit; self-hosted
-Supabase PostgreSQL adapter; hosted shell; and a separate readiness gate before
-any non-synthetic data. SQLite remains the local/CI default through the first
-product proof. No later slice is active merely because the plan exists.
+Implementation is divided into separately activatable slices 0–9. Slices 0–7
+are delivered: corpus and contracts; one-source review; account comparison;
+general relations; timeline/open questions; assessment/re-review; optional
+technical audit; and the self-hosted Supabase PostgreSQL adapters
+(`@acme/adapter-postgres` for the ACME ledger and quality store over schema
+`acme`, `@acme/adapter-evidence-product-postgres` for the product store over
+schema `evidence`, ADR-0033). Remaining slices are hosted shell and a separate
+readiness gate before any non-synthetic data. SQLite and the file product store
+remain the local/hermetic CI defaults; PostgreSQL is opt-in via composition
+(`--adapter postgres` / `ACME_PERSISTENCE=postgres`) and
+`pnpm test:postgres`.
 
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.
-- Core, testing, in-memory, SQLite, model adapters and reference modules are
-  separate workspace packages.
+- Core, testing, in-memory, SQLite, PostgreSQL, model adapters and reference
+  modules are separate workspace packages.
 - `ExecutionEngine` executes one task; `ScenarioRunner` sequences tasks.
 - Retry, repair and revision are bounded and ledgered.
 - Replay uses recorded model results and never invokes a live provider.

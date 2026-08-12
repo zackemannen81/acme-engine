@@ -18,9 +18,26 @@ if (!['development', 'evaluation', 'none'].includes(seedValue)) {
   );
 }
 const dataFile = process.env['EVIDENCE_WORKBENCH_DATA_FILE'];
+const persistenceEnv = process.env['ACME_PERSISTENCE']?.trim().toLowerCase();
 const local = await createLocalEvidenceWorkbench({
   seedMode: seedValue as 'development' | 'evaluation' | 'none',
   ...(dataFile === undefined ? {} : { dataFile }),
+  ...(persistenceEnv === 'postgres'
+    ? { persistence: 'postgres' as const }
+    : {}),
 });
 const address = await listenEvidenceWorkbenchApi(local.server, { port });
-process.stdout.write(`Evidence Integrity Workbench ready at ${address.url}\n`);
+process.stdout.write(
+  `Evidence Integrity Workbench ready at ${address.url} (persistence=${local.persistence})\n`,
+);
+
+const shutdown = async () => {
+  await local.close();
+  process.exit(0);
+};
+process.on('SIGINT', () => {
+  void shutdown();
+});
+process.on('SIGTERM', () => {
+  void shutdown();
+});

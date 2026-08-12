@@ -1110,22 +1110,28 @@ Documentation: separation map and operator audit instructions.
 
 ### Slice 7 — Self-hosted Supabase PostgreSQL adapter
 
+**Status: delivered (ACME-0085).**
+
 Reviewer capability: restart API/worker processes and continue the same
 reviewed workspace durably on the accepted PostgreSQL platform.
 
 Prerequisites: slice 6 and
 [ADR-0033](../adr/0033-postgresql-persistence-architecture.md), both satisfied.
 
-Deliverables: plain PostgreSQL-wire ACME and product-store adapters, migration
-runner and shared conformance kits. Supabase-specific APIs are not used.
+Deliverables: `@acme/adapter-postgres` (schema `acme`) and
+`@acme/adapter-evidence-product-postgres` (schema `evidence`), migration
+runners with advisory locks, roles/revocation SQL, gated `pnpm test:postgres`,
+CLI/workbench composition opt-in. Supabase-specific APIs are not used.
+SQLite and the file product store remain hermetic defaults.
 
 Required gates: parity with SQLite/in-memory conformance, aggregate transaction
 rollback, contended expected-revision write, resume/replay, append-only review
 ordering, migration/reopen and browser isolation from ACME schemas. ADR-0033
 adds three: disjoint concurrent outbox leases, anonymous-role denial against
 both schemas, and exactly one applied migration set under concurrent startup.
+All proven under ACME-0085.
 
-Documentation: operations, backups, connection limits and migration policy.
+Documentation: [`docs/ops/postgresql-operations.md`](../ops/postgresql-operations.md).
 
 ### Slice 8 — Hosted shell
 

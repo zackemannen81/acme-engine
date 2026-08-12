@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -172,6 +172,30 @@ acme-engine/
 │   │       ├── encrypted-payload.test.ts
 │   │       ├── migrations.test.ts
 │   │       └── quality-evaluation-store.test.ts
+│   ├── adapter-postgres/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── README.md
+│   │   ├── sql/roles.sql
+│   │   ├── src/
+│   │   │   ├── driver-errors.ts
+│   │   │   ├── index.ts
+│   │   │   ├── migrations.ts
+│   │   │   ├── quality-evaluation-store.ts
+│   │   │   ├── repository.ts
+│   │   │   ├── rows.ts
+│   │   │   ├── schema.ts
+│   │   │   └── transaction.ts
+│   │   └── test/
+│   │       └── driver-errors.test.ts
+│   ├── adapter-evidence-product-postgres/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── index.ts
+│   │       ├── migrations.ts
+│   │       └── repository.ts
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -383,6 +407,13 @@ acme-engine/
 │   ├── live/
 │   │   ├── openai-responses.test.ts
 │   │   └── scenario-multi-step.test.ts
+│   ├── postgres/
+│   │   ├── adapter-postgres.conformance.test.ts
+│   │   ├── evidence-product-postgres.conformance.test.ts
+│   │   ├── harness.ts
+│   │   ├── lazy-repository.ts
+│   │   ├── postgres-gates.test.ts
+│   │   └── quality-evaluation-postgres.conformance.test.ts
 │   ├── integration/
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
@@ -423,9 +454,13 @@ acme-engine/
 │   │       └── packages/module-fixture/src/forbidden-sealed-truth.ts
 │   ├── docs/
 │   │   └── check-docs.mjs
+│   ├── postgres/
+│   │   └── run-postgres-tests.mjs
 │   └── typescript/
 │       └── tsconfig.base.json
 ├── docs/
+│   ├── ops/
+│   │   └── postgresql-operations.md
 │   ├── adr/
 │   │   ├── 0001-typescript-pnpm-workspace.md
 │   │   ├── 0002-static-task-typed-module-composition.md
@@ -621,7 +656,8 @@ acme-engine/
 ├── tsconfig.json
 ├── tsconfig.tests.json
 ├── vitest.config.ts
-└── vitest.live.config.ts
+├── vitest.live.config.ts
+└── vitest.postgres.config.ts
 ```
 
 `hrd/` contains the Swedish, human-readable presentation, whitepaper and

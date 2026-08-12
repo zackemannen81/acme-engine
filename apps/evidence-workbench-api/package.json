@@ -23,14 +23,20 @@
   },
   "dependencies": {
     "@acme/adapter-evidence-product-file": "workspace:*",
+    "@acme/adapter-evidence-product-postgres": "workspace:*",
     "@acme/adapter-memory": "workspace:*",
     "@acme/adapter-model-mock": "workspace:*",
+    "@acme/adapter-postgres": "workspace:*",
     "@acme/core": "workspace:*",
+    "pg": "8.16.3",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/evidence-testing": "workspace:*",
     "@acme/evidence-views": "workspace:*",
     "@acme/evidence-workbench-web": "workspace:*",
     "@acme/evidence-workbench-worker": "workspace:*",
     "@acme/module-evidence": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/pg": "8.15.5"
   }
 }

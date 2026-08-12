@@ -56,7 +56,7 @@ export function createEvidenceWorkbenchApi(options: {
   readonly ids: EvidenceProductIds;
   readonly workspaceId: string;
   readonly technicalAudit?: { readonly enabled: boolean };
-  readonly evidenceProjection?: () => EvidenceState;
+  readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
   readonly technicalAuditSource?: () => {
     readonly domainObjectId: string;
     readonly executionId: string;
@@ -161,7 +161,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryObservationLedgerView({
             workspaceId,
             snapshot: await options.repository.snapshot(),
-            evidenceState: options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(),
           }),
         );
         return;
@@ -185,7 +185,7 @@ export function createEvidenceWorkbenchApi(options: {
             changedAccountLogicalArtifactIds:
               changed.length === 0 ? ['EVAL-T02'] : changed,
             snapshot: await options.repository.snapshot(),
-            evidenceState: options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(),
           }),
         );
         return;
@@ -201,7 +201,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryRelationReviewView({
             workspaceId,
             snapshot: await options.repository.snapshot(),
-            evidenceState: options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(),
           }),
         );
         return;
@@ -230,7 +230,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryOpenQuestionsView({
             workspaceId,
             snapshot: await options.repository.snapshot(),
-            evidenceState: options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(),
           }),
         );
         return;

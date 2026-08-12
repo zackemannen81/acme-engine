@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 
 export class UsageError extends Error {}
 
-export type AdapterName = 'memory' | 'sqlite';
+export type AdapterName = 'memory' | 'sqlite' | 'postgres';
 
 /** How `execute` obtains a ModelGateway. */
 export type ExecuteGateway =
@@ -118,9 +118,9 @@ export type Command =
 
 export const USAGE = `acme — ACME composition root
 
-  acme execute --request <file> --script <file> [--adapter memory|sqlite]
+  acme execute --request <file> --script <file> [--adapter memory|sqlite|postgres]
                [--database <path>] [--json]
-  acme execute --request <file> --gateway openai [--adapter memory|sqlite]
+  acme execute --request <file> --gateway openai [--adapter memory|sqlite|postgres]
                [--database <path>] [--json]
   acme scenario run <file> [--adapter memory|sqlite] [--database <path>] [--json]
   acme execution replay <execution-id> --mode verify [--adapter ...] [--database <path>] [--json]
@@ -145,8 +145,9 @@ export const USAGE = `acme — ACME composition root
   acme outbox redrive <event-id> [--adapter ...] [--database <path>] [--json]
   acme outbox redrive --all-failed [--limit <n>] [--adapter ...] [--database <path>] [--json]
 
-  --adapter        memory (default) or sqlite
+  --adapter        memory (default), sqlite, or postgres
   --database       required with --adapter sqlite
+                   postgres uses ACME_POSTGRES_URL (or HOST/PORT/USER/PASSWORD/DATABASE)
   --script         deterministic model-call script (mock gateway)
   --gateway        openai for a live Responses call (requires OPENAI_API_KEY;
                    model from ACME_OPENAI_MODEL or ACME_LIVE_MODEL)
@@ -205,12 +206,17 @@ function nonNegativeInteger(raw: unknown, flag: string): number {
 
 function common(values: Record<string, unknown>): CommonOptions {
   const adapter = (values['adapter'] ?? 'memory') as string;
-  if (adapter !== 'memory' && adapter !== 'sqlite') {
-    throw new UsageError('--adapter must be memory or sqlite.');
+  if (adapter !== 'memory' && adapter !== 'sqlite' && adapter !== 'postgres') {
+    throw new UsageError('--adapter must be memory, sqlite, or postgres.');
   }
   const database = values['database'] as string | undefined;
   if (adapter === 'sqlite' && database === undefined) {
     throw new UsageError('--adapter sqlite requires --database <path>.');
+  }
+  if (adapter === 'postgres' && database !== undefined) {
+    throw new UsageError(
+      '--database is only meaningful with --adapter sqlite; PostgreSQL uses ACME_POSTGRES_URL.',
+    );
   }
   if (adapter === 'memory' && database !== undefined) {
     throw new UsageError(
@@ -218,7 +224,7 @@ function common(values: Record<string, unknown>): CommonOptions {
     );
   }
   return {
-    adapter,
+    adapter: adapter as AdapterName,
     ...(database === undefined ? {} : { database }),
     json: values['json'] === true,
     showPayloads: values['show-payloads'] === true,

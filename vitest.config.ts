@@ -10,6 +10,7 @@ export default defineConfig({
     ],
     // The live gate costs money and needs a credential. It is excluded here
     // so no default run, and therefore no CI step, can reach it.
-    exclude: [...configDefaults.exclude, 'tests/live/**'],
+    // PostgreSQL gates need a server and are invoked only via test:postgres.
+    exclude: [...configDefaults.exclude, 'tests/live/**', 'tests/postgres/**'],
   },
 });

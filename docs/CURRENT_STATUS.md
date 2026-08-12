@@ -351,66 +351,34 @@ technical plan is
 The direction, platform and implementation plan are accepted. Slices 0–5
 exist for domain and product foundations: observe/relate/timeline/assessment
 tasks, attention/export helpers, primary views through open questions, product
-assessment storage and gated technical-audit views (disabled by default). ADR-0033 now decides the
-PostgreSQL persistence architecture slice 7 must implement — driver and pool
-ownership, `acme`/`evidence` schema separation, transaction boundary and
-compare-and-swap, outbox leasing, canonical-value representation, migrations,
-error classification, connection lifecycle, verification environment and the
-one-instance-per-data-classification isolation policy — and closes ADR-0029's
-two open items. PostgreSQL adapter, hosted shell, deployment and non-synthetic
-paths remain unimplemented.
+assessment storage and gated technical-audit views (disabled by default).
+ADR-0033 decides the PostgreSQL persistence architecture. ACME-0085 delivered
+slice 7: `@acme/adapter-postgres` and `@acme/adapter-evidence-product-postgres`
+against plain PostgreSQL 15, passing the unchanged conformance kits plus the
+ADR-0033 gates. SQLite and the file product store remain the hermetic defaults.
+Hosted shell, deployment and non-synthetic paths remain unimplemented.
 
 ## Active Work
 
-ACME-0085, Evidence Integrity Workbench slice 7, is active as a `Draft`: the
-self-hosted Supabase PostgreSQL adapter implemented against ADR-0033. Its
-charter is not frozen and carries six open questions, including whether slice 7
-stays one task or splits into engine and product-store tasks. No code exists.
-ACME-0084 delivered and archived ADR-0033, which was slice 7's remaining
-prerequisite after ACME-0083 closed slice 6. ACME-0066–0068 closed WP-Q Q2–Q4 (CLI
-quality surfaces, pure S11 view, live-model judge) and ACME-0069 closed WP-T
-T1 / G08 (async launch, progress and cancellation under ADR-0027); both
-landed on `grok/gapfixes2` and are merged to `main`. ACME-0070 then
-resynchronized the governing documents with that reality. ACME-0071 produced
-an English, repository-derived OpenAI/FDE project deck and matching PDF under
-`hrd/`, and ACME-0072 added a Markdown counterpart. ACME-0073 then produced a
-decision-ready discovery report for the first real POC application and the
-supporting source memo
-[`first-poc-application-discovery.md`](design/first-poc-application-discovery.md).
-It provisionally recommended an evidence-to-decision Research workbench and a
-TypeScript/PostgreSQL product baseline. ACME-0074 then accepted the **Evidence
-Integrity Workbench** as POC #1 under ADR-0028, locked its synthetic-corpus,
-source-bound, immutable-evidence and human-review boundaries, and retained
-Research Synthesis as the intended POC #2. The product selection and boundary
-are now authoritative, and ADR-0029 has since decided the POC #1 persistence
-platform. ACME-0076 then delivered the normative technical specification and
-ADRs 0030–0031: exactly seven logical synthetic artifacts in eight versions,
-the first Evidence task and identity family, primary versus technical views,
-append-only review decisions, deterministic assessment export, frozen proof
-gates and separately activatable slices 0–9. ACME-0077 then delivered slice 0:
-the exact synthetic corpus and truth, public Evidence contracts and identities,
-compact state/reducer/invariants, memory/module scaffold, deterministic golden
-builder and sealed-truth dependency guard. ACME-0078 then delivered slice 1:
-the executable source-observation task, deterministic `DEV-T01` mock, separate
-file-backed product repository and append-only review overlay, pure work-queue
-and source-review views, and a loopback API/web/worker path with technical
-audit disabled. ACME-0079 then delivered slice 2: five deterministic evaluation
-executions yield the exact ten sealed observations, conservative correction
-pairing marks only the two `EVAL-T01` v1 predecessors superseded, and primary
-ledger/account-comparison views keep the later changed account and every source
-version navigable. ACME-0080 then delivered slice 3: `evidence.relate-
-observations@1.0.0`, eight golden L3 relations, three open questions, contest
-projection for scoped contradictions, primary relation review and evaluation
-seed. ACME-0081 then delivered slice 4: pure timeline ordering, temporal
-overlap helper, and primary timeline/open-question views. ACME-0083 then
-delivered slice 6, and ACME-0084 delivered ADR-0033, which was slice 7's
-remaining prerequisite. The recommended next product task is therefore slice 7
-itself, the self-hosted Supabase PostgreSQL adapter, implemented against
-ADR-0033. Independent alternatives remain E1
-trust-stage evidence (G12) or the WP-T residuals (T2 plan `measurements`, T3
-adapter declaration policy, optional T4 browser CI smoke).
+No product task is active in `docs/CURRENT_TASK.md` after ACME-0085. The
+recommended next product task is slice 8 (hosted shell), which still requires
+identity/authorization ADR work and hosting topology decisions. Independent
+alternatives remain E1 trust-stage evidence (G12) or the WP-T residuals (T2 plan
+`measurements`, T3 adapter declaration policy, optional T4 browser CI smoke).
 
 ### Recent completed work (summary)
+
+- **ACME-0085:** Delivered Evidence Integrity slice 7. `@acme/adapter-postgres`
+  implements the aggregate `ExecutionRepository` and `QualityEvaluationStore`
+  over schema `acme` with injected `pg.Pool`, advisory-locked migrations,
+  SQLSTATE driver mapping, `READ COMMITTED` Unit of Work, CAS state/memory
+  writes, atomic `FOR UPDATE SKIP LOCKED` outbox leasing and repeatable-read
+  multi-statement reads. `@acme/adapter-evidence-product-postgres` implements
+  the product store over schema `evidence`. Roles/revocation SQL, schema-per-test
+  gated suite (`pnpm test:postgres`), CI postgres job, CLI `--adapter postgres`
+  and workbench `ACME_PERSISTENCE=postgres` composition, and
+  `docs/ops/postgresql-operations.md` are included. Environment facts: PG 15,
+  direct port 5432, never transaction pooler 6543.
 
 - **ACME-0084:** Delivered ADR-0033, the PostgreSQL persistence architecture,
   closing ADR-0029's two open items and slice 7's remaining prerequisite. It

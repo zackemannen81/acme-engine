@@ -115,7 +115,7 @@ describe('local Evidence workbench', () => {
       expect(duplicate.phase).toBe('completed');
       expect(local.gateway.invocations()).toHaveLength(1);
       const executionId = requiredValue(
-        local.ledger.snapshot().executions[0],
+        (await local.ledger.snapshot()).executions[0],
         'observed execution',
       ).executionId;
       expect(await local.engine.replayVerify(executionId)).toMatchObject({
