@@ -1,0 +1,11 @@
+{
+  "grants": [
+    {
+      "namespace": "narrative",
+      "entityId": "demo-story",
+      "state": true,
+      "memoryKinds": ["narrative.character-fact"],
+      "memoryValues": true
+    }
+  ]
+}

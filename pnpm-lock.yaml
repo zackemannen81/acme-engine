@@ -189,6 +189,9 @@ importers:
       '@acme/module-research':
         specifier: workspace:*
         version: link:../../packages/module-research
+      '@acme/provenance-states':
+        specifier: workspace:*
+        version: link:../../packages/provenance-states
 
   apps/test-ui:
     dependencies:

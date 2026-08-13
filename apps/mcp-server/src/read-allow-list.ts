@@ -1,4 +1,14 @@
-import type { JsonValue, RankedMemory, StateSnapshot } from '@acme/core';
+import type {
+  JsonValue,
+  MemoryRecord,
+  RankedMemory,
+  StateSnapshot,
+} from '@acme/core';
+import {
+  readProvenance,
+  weakestState,
+  type ProvenanceState,
+} from '@acme/provenance-states';
 
 /**
  * ## Why this file exists, and why it is not a disclosure primitive
@@ -58,11 +68,40 @@ export function findGrant(
   );
 }
 
+/**
+ * Where a fact came from, read out of `ProvenanceRef.documentKeys` by
+ * `@acme/provenance-states`. This is the one piece of provenance an MCP client
+ * genuinely needs and can safely have: a client asked to act on a remembered
+ * fact should know whether it was quoted from an artifact, asserted by someone,
+ * derived, or deliberately unsourced.
+ *
+ * Only the states travel. The keys themselves are locators into the deployment's
+ * documents and stay behind, so this adds a signal without widening the leak
+ * the `withheld` report below describes.
+ */
+export interface DisclosedOrigin {
+  /**
+   * The weakest origin behind the record, because a claim is only as
+   * well-founded as its weakest support. `null` means no key carried a
+   * structured origin at all — not "unknown", but "never expressed".
+   */
+  readonly weakestState: ProvenanceState | null;
+  /** Every distinct state present, sorted, so a mixed-support fact is visible. */
+  readonly states: readonly ProvenanceState[];
+  /**
+   * Document keys written before this convention existed. A count, never the
+   * keys: the count says "support exists and is unclassified", the keys would
+   * say where to look.
+   */
+  readonly unstructuredKeys: number;
+}
+
 export interface DisclosedMemory {
   readonly kind: string;
   readonly identityKey: string;
   readonly status: string;
   readonly score: number;
+  readonly origin: DisclosedOrigin;
   readonly value?: JsonValue;
 }
 
@@ -96,6 +135,11 @@ const WITHHELD_REASON =
  * Fields present on every `MemoryRecord` the engine returns that this server
  * never discloses, because nothing downstream of an MCP client should receive
  * internal execution provenance.
+ *
+ * `provenance` stays on this list even though `origin` above is computed from
+ * it. The raw refs carry execution ids, contract refs and document keys, which
+ * are locators into the deployment; the origin states are a classification of
+ * the support and carry no locator.
  */
 const ALWAYS_WITHHELD_MEMORY_FIELDS: readonly string[] = Object.freeze([
   'firstSeenAt',
@@ -108,6 +152,52 @@ const ALWAYS_WITHHELD_MEMORY_FIELDS: readonly string[] = Object.freeze([
   'schemaVersion',
   'strength',
 ]);
+
+/**
+ * A `MemoryRecord` carries an array of `ProvenanceRef`, one per supporting
+ * execution, and each ref carries its own document keys. The origins of all of
+ * them together are the support for the record.
+ */
+export function readOrigin(record: MemoryRecord): DisclosedOrigin {
+  const readings = record.provenance.map((ref) => readProvenance(ref));
+  const states = [
+    ...new Set(
+      readings.flatMap((reading) => reading.origins.map((o) => o.state)),
+    ),
+  ].sort();
+  const weakest = readings
+    .map((reading) => weakestState(reading))
+    .filter((state): state is ProvenanceState => state !== null)
+    .reduce<ProvenanceState | null>(
+      (lowest, state) =>
+        lowest === null || STATE_STRENGTH[state] < STATE_STRENGTH[lowest]
+          ? state
+          : lowest,
+      null,
+    );
+  return {
+    weakestState: weakest,
+    states: Object.freeze(states),
+    unstructuredKeys: readings.reduce(
+      (total, reading) => total + reading.unstructuredKeys.length,
+      0,
+    ),
+  };
+}
+
+/**
+ * Mirrors the ordering `@acme/provenance-states` uses inside one ref, so
+ * combining refs cannot silently disagree with combining keys.
+ */
+const STATE_STRENGTH: Readonly<Record<ProvenanceState, number>> = Object.freeze(
+  {
+    unknown: 0,
+    withheld: 1,
+    derived: 2,
+    asserted: 3,
+    sourced: 4,
+  },
+);
 
 export interface DisclosedRead {
   readonly memories: readonly DisclosedMemory[];
@@ -129,6 +219,7 @@ export function discloseRead(
     identityKey: record.identityKey,
     status: record.status,
     score,
+    origin: readOrigin(record),
     ...(grant.memoryValues ? { value: record.value } : {}),
   }));
   const disclosedState =

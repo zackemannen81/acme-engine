@@ -21,6 +21,9 @@
     },
     {
       "path": "../../packages/module-research"
+    },
+    {
+      "path": "../../packages/provenance-states"
     }
   ]
 }
