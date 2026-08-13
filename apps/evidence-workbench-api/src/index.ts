@@ -2061,6 +2061,56 @@ export function createEvidenceWorkbenchApi(options: {
   });
 }
 
+/**
+ * Ports the WHATWG URL standard marks as bad. `fetch` refuses a URL on any of
+ * them with `Error: bad port`, so a server bound to one is reachable by a raw
+ * socket but not by any client the workbench actually uses.
+ *
+ * This matters because `listen(0, ...)` takes whatever the operating system
+ * hands out. The default ephemeral ranges happen to sit above this list —
+ * 49152+ on Windows, 32768+ on Linux — but the range is configurable, and a
+ * machine tuned to start at 1024 allocates straight through it. The failure is
+ * then intermittent, machine-specific and invisible in CI.
+ */
+export const FETCH_BLOCKED_PORTS: ReadonlySet<number> = Object.freeze(
+  new Set([
+    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79,
+    87, 95, 101, 102, 103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135,
+    137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530, 531,
+    532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993, 995, 1719, 1720,
+    1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667,
+    6668, 6669, 6679, 6697, 10080,
+  ]),
+);
+
+const EPHEMERAL_BIND_ATTEMPTS = 32;
+
+async function bindOnce(
+  server: Server,
+  port: number,
+  host: string,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+}
+
+async function releasePort(server: Server): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error === undefined || error === null) {
+        resolve();
+        return;
+      }
+      reject(error);
+    });
+  });
+}
+
 export async function listenEvidenceWorkbenchApi(
   server: Server,
   options: { readonly host?: string; readonly port?: number } = {},
@@ -2070,20 +2120,37 @@ export async function listenEvidenceWorkbenchApi(
   readonly url: string;
 }> {
   const host = options.host ?? '127.0.0.1';
-  const port = options.port ?? 8790;
-  await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, host, () => {
-      server.off('error', reject);
-      resolve();
-    });
-  });
-  const address = server.address();
-  if (address === null || typeof address === 'string')
-    throw new Error('Workbench did not bind a TCP port.');
-  return {
-    host,
-    port: address.port,
-    url: `http://${host}:${String(address.port)}/`,
-  };
+  const requestedPort = options.port ?? 8790;
+  const ephemeral = requestedPort === 0;
+
+  // An explicitly chosen bad port is a caller mistake worth naming now rather
+  // than as an opaque `fetch failed` at the first request.
+  if (!ephemeral && FETCH_BLOCKED_PORTS.has(requestedPort)) {
+    throw new Error(
+      `Port ${String(requestedPort)} is blocked by the URL standard, so fetch cannot reach it.`,
+    );
+  }
+
+  const attempts = ephemeral ? EPHEMERAL_BIND_ATTEMPTS : 1;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    await bindOnce(server, requestedPort, host);
+    const address = server.address();
+    if (address === null || typeof address === 'string') {
+      throw new Error('Workbench did not bind a TCP port.');
+    }
+    if (!FETCH_BLOCKED_PORTS.has(address.port)) {
+      return {
+        host,
+        port: address.port,
+        url: `http://${host}:${String(address.port)}/`,
+      };
+    }
+    // The operating system handed out a port fetch will not accept. Give it
+    // back and ask again; ephemeral allocation is sequential, so the next one
+    // differs.
+    await releasePort(server);
+  }
+  throw new Error(
+    `Could not obtain a usable ephemeral port in ${String(attempts)} attempts.`,
+  );
 }
