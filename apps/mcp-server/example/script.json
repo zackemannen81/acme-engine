@@ -1,0 +1,36 @@
+{
+  "profiles": [
+    {
+      "selection": {
+        "profile": "offline-json"
+      },
+      "capabilities": {
+        "structuredOutput": true,
+        "tools": false,
+        "vision": false
+      }
+    }
+  ],
+  "calls": [
+    {
+      "executionId": "execution_c811bbd1d883a70fdac5700dd6216bfe4e7c39fcd8d35f47748bf17866183c1e",
+      "callKey": "model:0",
+      "selection": {
+        "profile": "offline-json"
+      },
+      "expectedRequestHash": "cc4b0eadef1a900315e5464710308e64a59a67bfb154c07ea33fe4936ba8cfd9",
+      "outcome": {
+        "kind": "response",
+        "response": {
+          "provider": "fixture",
+          "model": "fixture-json-1",
+          "receivedAt": "2026-08-13T09:00:00.000Z",
+          "finishReason": "stop",
+          "text": "{\"observations\":[{\"type\":\"character-fact\",\"subject\":\"Mira\",\"predicate\":\"eye color\",\"value\":\"green\",\"confidence\":0.9},{\"type\":\"world-rule\",\"rule\":\"Light never crosses the ridge at night.\",\"confidence\":0.8}],\"scene\":{\"location\":\"Signal Tower\",\"time\":\"Night\",\"summary\":\"Mira states her eye color and the ridge rule to Ion.\"}}",
+          "usage": {},
+          "metadata": {}
+        }
+      }
+    }
+  ]
+}
