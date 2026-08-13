@@ -477,6 +477,18 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/module-personal:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
+      '@acme/provenance-states':
+        specifier: workspace:*
+        version: link:../provenance-states
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/module-research:
     dependencies:
       '@acme/core':
@@ -485,6 +497,12 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/provenance-states:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/testing:
     dependencies:
