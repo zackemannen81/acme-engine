@@ -68,6 +68,12 @@
       "path": "./packages/evidence-views"
     },
     {
+      "path": "./packages/module-personal"
+    },
+    {
+      "path": "./packages/provenance-states"
+    },
+    {
       "path": "./packages/testing"
     },
     {
