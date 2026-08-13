@@ -74,6 +74,9 @@
       "path": "./apps/cli"
     },
     {
+      "path": "./apps/mcp-server"
+    },
+    {
       "path": "./apps/test-ui"
     },
     {

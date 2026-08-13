@@ -172,6 +172,24 @@ importers:
         specifier: workspace:*
         version: link:../../packages/module-evidence
 
+  apps/mcp-server:
+    dependencies:
+      '@acme/adapter-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-memory
+      '@acme/adapter-model-mock':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-mock
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@acme/module-narrative':
+        specifier: workspace:*
+        version: link:../../packages/module-narrative
+      '@acme/module-research':
+        specifier: workspace:*
+        version: link:../../packages/module-research
+
   apps/test-ui:
     dependencies:
       '@acme/adapter-memory':
