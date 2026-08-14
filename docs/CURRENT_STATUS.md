@@ -409,6 +409,13 @@ product completion plan are delivered. Stage 9 non-synthetic readiness stays
 closed and needs its own ADR and qualified review before any task may activate
 it.
 
+ACME-0101 corrected a defect that made the browser client unusable: the shell
+rendered an unterminated string literal, so the whole module failed to parse
+and no handler was bound, including sign-in. It entered with ACME-0097 and
+shipped undetected through ACME-0098 to ACME-0100 because the shell test only
+matched substrings in the rendered HTML. The shell test now compiles the
+emitted browser module.
+
 ACME-0100 implements Stage 8. `buildEvidenceAssessmentOutputDocument` resolves
 one reviewed assessment into a citation-complete document and refuses anything
 it cannot bind to an exact source-bound observation. Four renderers read that
@@ -451,6 +458,10 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0101:** Corrective. Repaired the browser shell's unterminated string
+  literal, which had made the entire client fail to parse, and added a gate
+  that compiles the emitted module instead of only matching substrings in it.
+  No product behavior, contract or data authority changed.
 - **ACME-0100:** Implemented Stage 8. Added the `evidence-assessment-output/1`
   document and four deterministic renderers (JSON, Markdown, DOCX, PDF) with no
   new dependency, a per-case export policy with a format allowlist,
@@ -967,3 +978,15 @@ Ordering, dependencies and activatable slices live in
   SQLite store (Q1), CLI `quality list|inspect|judge` (Q2), pure
   `acme-view-quality-evaluation/1` (Q3), and live-model judge outside the
   sync harness with offline injected-transport proof (Q4).
+- **Local workbench is single-session.** The local file composition persists the
+  product store but keeps its ACME execution ledger in memory, so restarting
+  against an existing product file leaves the evidence projection at revision 0
+  while the file records revision N. Every state-projecting view — observation
+  ledger, compare accounts, relations, timeline, open questions — then fails
+  with `Workspace evidence revision does not match the supplied Evidence
+  projection.` Work queue, source review, assessment, search, case overview and
+  the Case Integrity Report are unaffected. Workaround: delete
+  `.local/evidence-workbench` before a new session. Proposal and options:
+  [`docs/backlog/local-workbench-durable-ledger.md`](backlog/local-workbench-durable-ledger.md).
+  The hosted PostgreSQL composition has a durable ledger and does not exhibit
+  this.

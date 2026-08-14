@@ -20,6 +20,7 @@ as `docs/CURRENT_TASK.md`.
 | --- | --- |
 | [`domain-test-ui-implementation.md`](domain-test-ui-implementation.md) | Core phases 0–6 and complete S1–S10 browser flow delivered through ACME-0053; async launch delivered by ACME-0069; T2/T3/T4 residuals remain optional |
 | [`driver-error-classification.md`](driver-error-classification.md) | Resolved by ACME-0057; kept for discovery context |
+| [`local-workbench-durable-ledger.md`](local-workbench-durable-ledger.md) | Proposed 2026-08-12; the local file composition cannot serve state-projecting views after a restart because its ACME ledger is in memory |
 
 Resolved proposals are removed from this directory once archived under
 `docs/finished/` (ACME-0029 closed strict structured-output schema work;

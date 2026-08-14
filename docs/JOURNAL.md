@@ -1,5 +1,97 @@
 # Journal
 
+## 2026-08-12 — Local workbench evidence-projection mismatch (diagnosis, no code change)
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: none active; discovery recorded in `docs/backlog/`
+- Summary: The operator reported several pages showing `Workspace evidence
+  revision does not match the supplied Evidence projection.` Diagnosed and
+  reproduced; no code change was kept, because the right fix is an
+  architecture choice that needs its own charter.
+- Cause: the local file composition persists the product store to
+  `.local/evidence-workbench/*.json` but builds the ACME ledger with
+  `createInMemoryExecutionRepository`. The seed import runs only when the
+  product store has no sources or observations, so a restart against an
+  existing file skips it and leaves the ledger empty. `evidenceProjection()`
+  then returns revision 0 against a file recording revision N, and every
+  builder calling `requireProjectionRevision` throws — observation ledger,
+  compare accounts, relations, timeline and open questions. Work queue, source
+  review, assessment, search, overview and the integrity report do not project
+  domain state and keep working, which is why only some pages failed.
+- Reproduced deterministically with two starts against one data file:
+  development seed `product=1 projection=1 -> ok` then
+  `product=1 projection=0 -> throws`; evaluation seed the same at revision 5.
+- Attempted and backed out: a startup refusal naming the file and the remedy.
+  It broke a supported flow — `local-blackbox.test.ts` deliberately restarts
+  against an existing product file to prove import and redaction records
+  survive, reading the repository directly without serving a projecting view.
+  Bending that test to fit the guard would have been the wrong trade, so the
+  guard was reverted in full rather than kept.
+- Also relevant: the workbench README already states the ledger is
+  "deliberately" in memory and instructs using a fresh product file per
+  session. The behaviour is intended; what is missing is any signal when the
+  instruction is not followed. That makes this a design gap, not a defect, and
+  therefore backlog rather than a corrective task.
+- Recorded: `docs/backlog/local-workbench-durable-ledger.md` with three
+  options — durable SQLite ledger for the local composition (recommended),
+  startup refusal with an explicit opt-out, or rebuilding the projection from
+  the product store (rejected on sight: state is reducer-owned).
+- Operator action taken: backed up and removed `.local/evidence-workbench` so
+  the running instance seeds fresh. The backup is in this session's scratchpad,
+  not in the repository.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm test` — 728 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm build`; `pnpm docs:check`; `git diff --check` clean. The working tree
+  carries no code change from this diagnosis.
+- Signature: Claude
+
+## 2026-08-12 — ACME-0101 browser shell parse failure (corrective)
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: ACME-0101
+- Summary: The operator reported that sign-in did not work and mentioned a
+  JavaScript error. The browser client was not partly broken — it was entirely
+  dead. The rendered module contained an unterminated string literal, and a
+  parse error anywhere in a module means none of it runs, so no handler was
+  ever bound, including the sign-in form's.
+- Root cause: `apps/evidence-workbench-web/src/index.ts` renders the whole
+  client from one TypeScript template literal, and `draftRedaction` was written
+  as `.join('\n')`. Inside a template literal `\n` is an escape the literal
+  consumes, so the served JavaScript carried a real line break inside a
+  single-quoted string. The fix is `.join('\\n')`.
+- Reproduced rather than reasoned about: started the local workbench, read
+  `Uncaught SyntaxError: Invalid or unexpected token` from the browser console,
+  extracted the served module and ran `node --check` on it to get the exact
+  offending line. After the fix a clean tab logs only the expected `401` from
+  the unauthenticated `/api/session` probe — which is the call that renders the
+  sign-in form.
+- Not mine, and worth stating plainly: the defect entered with ACME-0097's
+  Documents/redaction view and shipped through ACME-0098, ACME-0099 and
+  ACME-0100. Every one of those tasks ran a green shell test. The test only
+  asserted `toContain` substrings, which pass happily while every button in the
+  product is dead. That is the real lesson here: the shell had no gate that
+  could observe whether its output was valid JavaScript at all.
+- The new gate compiles the emitted module with `new vm.Script` and never runs
+  it, wrapping it in an async arrow because the module uses top-level await. It
+  was proven load-bearing: reintroducing `.join('\n')` fails it, restoring the
+  fix passes it. A scan for other template-consumed escapes in the shell found
+  none.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 728 unit (115 files, up from 727), 78
+  conformance, 62 integration, 26 scenario; `pnpm build`; `pnpm docs:check`;
+  `git diff --check` clean.
+- Not verified: sign-in end to end. Completing the form means entering a
+  password, which I do not do; the operator can, with the synthetic-only
+  development credential documented in the workbench API README. Everything up
+  to that point — module parses, form renders, no console error — is checked.
+- Spend: none.
+- Follow-ups: a real browser-driven smoke test of sign-in would be its own
+  charter. The shell remains one large unchecked template literal; the parse
+  gate now bounds the worst failure mode but not logic errors inside it.
+- Signature: Claude
+
 ## 2026-08-12 — ACME-0100 assessment output and export operations complete
 
 - Date: 2026-08-12

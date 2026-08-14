@@ -1,8 +1,33 @@
+import { Script } from 'node:vm';
+
 import { describe, expect, it } from 'vitest';
 
 import { renderEvidenceWorkbenchShell } from '../src/index.js';
 
+function browserModuleSource(html: string): string {
+  const match = /<script type="module">([\s\S]*?)<\/script>/u.exec(html);
+  if (match?.[1] === undefined)
+    throw new Error('The shell rendered no browser module.');
+  return match[1];
+}
+
 describe('renderEvidenceWorkbenchShell', () => {
+  /**
+   * The shell is one template literal that emits JavaScript, so a source
+   * escape the literal consumes — `\n` inside a rendered string, for example —
+   * produces a module the browser cannot parse at all. Substring assertions
+   * cannot see that: they pass while every button in the product is dead.
+   * Compiling the emitted module is the only check that catches it.
+   */
+  it('emits a browser module that actually parses', () => {
+    const source = browserModuleSource(
+      renderEvidenceWorkbenchShell({ caseId: 'case-dev' }),
+    );
+    // Compiles without running: the module uses top-level await, so it is
+    // wrapped in an async arrow to keep that legal outside a real module.
+    expect(() => new Script(`(async()=>{${source}\n})()`)).not.toThrow();
+  });
+
   it('uses an inline review note instead of a blocking browser prompt', () => {
     const html = renderEvidenceWorkbenchShell({ caseId: 'case-dev' });
 
