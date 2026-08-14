@@ -1,5 +1,68 @@
 # Journal
 
+## 2026-08-14 — ACME-0102 workbench live model boundary (ADR-0039)
+
+- Date: 2026-08-14
+- Author: Claude
+- Task: ACME-0102
+- Summary: Accepted ADR-0039, which decides how the Evidence Integrity
+  Workbench may call a live model provider. Documentation-only; the product
+  still composes the scripted mock gateway and no live call is possible until
+  the implementation task lands.
+- Why the decision was needed at all: the workbench composes
+  `createScriptedModelGateway` with responses pinned to request hashes of the
+  seven fixed artifacts, and Stage 5 ingestion runs no model. Any document
+  outside the sealed corpus yields zero observations, so relations, timeline,
+  contradictions and assessment are all unreachable for new material. That is
+  structural, not a gap in coverage.
+- The four pre-freeze answers were carried into the ADR with their reasoning
+  rather than as bare rulings, so a later decision can argue against them.
+- **A new `evidence-live-confirmation/1` rather than reusing ADR-0023's.** The
+  existing document carries a free-text `confirmer`; ADR-0035 exists precisely
+  so a browser payload cannot choose the acting identity, and reusing the field
+  would have quietly undone that. Its `caseCount` also means "test-plan cases"
+  and collides with the product's evidence `caseId`. The new document binds
+  `caseId`, so a live authorization cannot leave the ADR-0036 boundary. The
+  pure primitives — forbidden-credential scan, budget assertion, typed refusal
+  reasons — are shared rather than duplicated.
+- **Confirmation is not authorization.** Worth stating separately because it is
+  the easiest thing to get wrong: the confirmation is a cost and intent gate,
+  access stays with ADR-0035 policy and ADR-0036 membership. A new
+  deny-by-default `live-model.run` action, case-admin only, gates the capability
+  itself, and an unauthorized principal gets `404` so live cannot be used to
+  probe case existence.
+- **Two ceilings, not one.** The confirmation declares a run ceiling; a
+  deployment ceiling in configuration caps it and no route may raise it. Retry
+  and repair calls count as calls. Exhaustion terminates the run, and because
+  execution events stay candidates until the state transaction commits, a
+  terminated run leaves no canonical evidence and no revision increment.
+- **`encrypted-payload` retention.** `hash-only` would degrade `replayVerify`
+  to `unavailable` and forfeit ADR-0017 resume — paying a second time on
+  interruption and losing a proof the product already asserts. The cost is that
+  payloads become durable content records, acceptable under `synthetic-only`
+  and explicitly revisited at Slice 9. It also surfaced a concrete consequence:
+  the local composition's payload key is ephemeral per process, so a hosted
+  deployment must supply a durable key or silently lose replay after restart.
+- **All three tasks live.** Restricting to `observe-artifact` buys no safety,
+  because the trust pipeline is gateway-independent: the same validation,
+  prohibited-authority refusals and source-binding gates run whichever gateway
+  produced the candidate. It would only remove everything past extraction. Cost
+  is the risk that actually changes, and the budget is what handles it.
+- Verification: `pnpm docs:check` — 208 Markdown files; `pnpm format:check`;
+  `git diff --check` clean; diff confirmed to contain no `.ts`, schema or
+  `package.json` change. Typecheck, lint and the test suites were not re-run
+  because nothing outside `docs/` changed.
+- Docs: ADR-0039 added and indexed; the technical specification's deferred
+  decision marked decided; `SYSTEMDOC` and `CURRENT_STATUS` synchronized;
+  ACME-0102 archived.
+- Spend: none. No live provider call was made by this task, which is the
+  boundary it decides.
+- Follow-ups: implement ADR-0039 as a separately frozen task against its
+  section 10 gates. Cumulative per-principal budget accounting is deferred.
+  Retention is revisited at Slice 9, and the durable payload key folds into
+  ADR-0037's open KEK question. Slice 9 itself remains closed.
+- Signature: Claude
+
 ## 2026-08-12 — Local workbench evidence-projection mismatch (diagnosis, no code change)
 
 - Date: 2026-08-12

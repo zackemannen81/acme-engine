@@ -1310,6 +1310,35 @@ whose own digest does not match all refuse. File and PostgreSQL adapters persist
 both new record kinds under migration v7 with shared conformance. This adds no
 data authority; every output remains synthetic-only.
 
+ADR-0039 decides the workbench live model boundary; it is accepted but not yet
+implemented, and the product still composes the scripted mock gateway only.
+Live model access and non-synthetic data are independent gates: ADR-0039
+authorizes a live provider path over `synthetic-only` material and grants no
+data authority, leaving Slice 9 closed.
+
+Four independent keys are required before a provider is contacted: deployment
+opt-in from the environment, a valid `evidence-live-confirmation/1` whose
+`caseId` equals the requested case, an environment-supplied credential, and a
+principal holding the new deny-by-default `live-model.run` action on that case.
+The confirmation is a cost and intent gate and never an access gate; it carries
+no actor field, because the effective principal stays server-derived under
+ADR-0035, and its case binding keeps a live authorization inside the ADR-0036
+boundary. Credentials never appear in a payload, confirmation, job record,
+audit record or error.
+
+Cost is bounded twice: a run ceiling declared in the confirmation, and a
+deployment ceiling in configuration that no route may raise. Retry, repair and
+revision calls all count. Exhaustion terminates the run, and because execution
+events stay candidates until the state transaction commits, a terminated run
+leaves no canonical evidence and no revision increment. Product live executions
+use ADR-0016 `encrypted-payload` retention so replay verification and ADR-0017
+resume survive going live; a hosted deployment must therefore supply a durable
+payload key, and the retention choice is revisited per data class at Slice 9.
+All three evidence tasks may run live, because the trust pipeline is
+gateway-independent — model output is an untrusted candidate whichever gateway
+produced it. Live events extend the content-free security-audit vocabulary, and
+every refusal is audited even when no call was made.
+
 ## Remaining Implementation Baseline
 
 - Node.js 24 LTS, pnpm 10, strict ESM TypeScript 6 and Zod 4.

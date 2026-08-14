@@ -1225,7 +1225,7 @@ Documentation: all new authority and residual risks before ingestion.
 | Object-storage vendor and database/object consistency | **Decided by [ADR-0037](../adr/0037-evidence-secure-artifact-foundation.md) and implemented by ACME-0095.** Immutable application-encrypted objects use staged verification across PostgreSQL and filesystem/S3-compatible storage. |
 | Supabase Auth, Storage, Realtime or Studio | Auth is implemented by ACME-0091. ACME-0095 uses only the server-side S3-compatible Storage interface for private ciphertext. Realtime and Studio remain unused. |
 | Hosting platform, topology and region | Deferred to slice 8 charter. |
-| Live model and budget | Deferred to a gated slice; mocks remain default. |
+| Live model and budget | **Decided by [ADR-0039](../adr/0039-evidence-workbench-live-model-boundary.md).** A versioned case-bound confirmation, environment-only credentials, a run ceiling capped by a deployment ceiling, `encrypted-payload` retention and content-free live audit. Mocks remain default and no data authority is granted. Implementation is a separate frozen task. |
 | Bounded synthetic text ingestion and immutable redaction | **Implemented by ACME-0097 under [ADR-0038](../adr/0038-bounded-text-ingestion-and-immutable-redaction.md).** Strict UTF-8 browser import, encrypted original/canonical objects, durable file/PostgreSQL records and immutable redacted derivatives are synthetic-only. |
 | PDF/OCR/audio/video/media locators | Outside V1; new schemas, validation and threat analysis required. |
 | Any non-synthetic data path | Blocked by ADR-0028 until slice 9 authority exists. |

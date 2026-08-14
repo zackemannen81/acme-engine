@@ -73,3 +73,4 @@ current architecture.
 - [`0036-evidence-case-management-and-isolation.md`](0036-evidence-case-management-and-isolation.md)
 - [`0037-evidence-secure-artifact-foundation.md`](0037-evidence-secure-artifact-foundation.md)
 - [`0038-bounded-text-ingestion-and-immutable-redaction.md`](0038-bounded-text-ingestion-and-immutable-redaction.md)
+- [`0039-evidence-workbench-live-model-boundary.md`](0039-evidence-workbench-live-model-boundary.md)

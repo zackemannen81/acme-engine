@@ -404,10 +404,16 @@ Non-synthetic paths remain unimplemented (slice 9 governance).
 
 ## Active Work
 
-Stage 8 is complete (ACME-0100). Nothing is in progress. Stages 1–8 of the
-product completion plan are delivered. Stage 9 non-synthetic readiness stays
-closed and needs its own ADR and qualified review before any task may activate
-it.
+Stages 1–8 of the product completion plan are delivered. ACME-0102 accepted
+ADR-0039, the workbench live model boundary; its implementation is the next
+chartered step and has not started. The product still composes the scripted
+mock gateway only, so no live call is possible today.
+
+Stage 9 non-synthetic readiness stays closed and needs its own ADR and
+qualified review before any task may activate it. ADR-0039 grants no data
+authority: live model access and non-synthetic data are independent gates.
+Prerequisites for Stage 9 are gathered in
+[`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
 
 ACME-0101 corrected a defect that made the browser client unusable: the shell
 rendered an unterminated string literal, so the whole module failed to parse
@@ -458,6 +464,13 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0102:** Accepted ADR-0039, the workbench live model boundary. It fixes
+  a case-bound `evidence-live-confirmation/1` with no actor field,
+  environment-only credentials, a run ceiling capped by a deployment ceiling,
+  `encrypted-payload` retention, content-free live audit, failure semantics and
+  the refusal matrix the implementation must prove. All three evidence tasks
+  are permitted live because the trust pipeline is gateway-independent. It is
+  documentation-only, grants no data authority and leaves Slice 9 closed.
 - **ACME-0101:** Corrective. Repaired the browser shell's unterminated string
   literal, which had made the entire client fail to parse, and added a gate
   that compiles the emitted module instead of only matching substrings in it.
