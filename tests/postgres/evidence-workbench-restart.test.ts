@@ -4,10 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { listenEvidenceWorkbenchApi } from '../../apps/evidence-workbench-api/src/index.js';
 import { createLocalEvidenceWorkbench } from '../../apps/evidence-workbench-api/src/local.js';
-import {
-  EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
-  EVIDENCE_WORKSPACE_SCHEMA_VERSION,
-} from '../../packages/evidence-product-contracts/src/index.js';
+import { EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION } from '../../packages/evidence-product-contracts/src/index.js';
 import { developmentObserveArtifactInput } from '../../packages/evidence-testing/src/development-observe.js';
 import {
   buildGoldenMaterial,
@@ -131,33 +128,11 @@ describe('Evidence workbench PostgreSQL restart', () => {
 
     const commandKey = `restart-proof-review-${randomUUID()}`;
     const { source, observation } = developmentObservation();
-    const durableWorkspaceId = `restart-workspace-${randomUUID()}`;
     const changeSetCommandKey = `restart-change-set-${randomUUID()}`;
     const baseAssessment = buildGoldenMaterial(
       loadSealedEvaluationTruth(),
     ).assessments.get('E-A01');
     if (baseAssessment === undefined) throw new Error('Missing E-A01 fixture.');
-    const assessmentContent = {
-      claims: baseAssessment.claims,
-      openQuestionIds: baseAssessment.openQuestionIds,
-      citations: baseAssessment.citations,
-      predecessorAssessmentVersionId:
-        baseAssessment.predecessorAssessmentVersionId,
-    };
-    const assessmentContentHash = deriveEvidenceAssessmentContentHash(
-      assessmentContent as never,
-    );
-    const durableAssessment = {
-      ...baseAssessment,
-      workspaceId: durableWorkspaceId,
-      contentHash: assessmentContentHash,
-      assessmentVersionId: deriveEvidenceAssessmentId({
-        workspaceId: durableWorkspaceId,
-        sequence: baseAssessment.sequence,
-        basisEvidenceRevision: baseAssessment.basisEvidenceRevision,
-        contentHash: assessmentContentHash,
-      }),
-    };
 
     const first = await createLocalEvidenceWorkbench({
       persistence: 'postgres',
@@ -166,6 +141,54 @@ describe('Evidence workbench PostgreSQL restart', () => {
       ids: countingIds('restart-a'),
       reviewIds: { next: () => `review-${randomUUID()}` },
     });
+
+    // The assessment belongs to the composition's own workspace, so its
+    // derived identity is computed once that workspace id is known.
+    //
+    // It cites this case's single observation rather than the golden E-A01
+    // citations. Startup adopts unbound objects of the workspace into the
+    // case, and an assessment citing the evaluation corpus would then fail
+    // scoped-reference validation. Durability is what this test proves; which
+    // evidence the assessment happens to cite is not.
+    const assessmentContent = {
+      claims: [
+        {
+          claimKey: 'restart-durability-claim',
+          text: 'The actor reached the hatch inside the stated range.',
+          supportObservationIds: [observation.observationId],
+          conflictRelationIds: [],
+          qualificationRelationIds: [],
+          supportUnresolved: false,
+          uncertainty: 'medium' as const,
+          uncertaintyRationale:
+            'One source-bound occurrence with a claimed range.',
+        },
+      ],
+      openQuestionIds: [],
+      citations: [
+        {
+          evidenceId: observation.observationId,
+          artifactVersionId: observation.artifactVersionId,
+          locatorId: observation.locator.locatorId,
+        },
+      ],
+      predecessorAssessmentVersionId: null,
+    };
+    const assessmentContentHash = deriveEvidenceAssessmentContentHash(
+      assessmentContent as never,
+    );
+    const durableAssessment = {
+      ...baseAssessment,
+      ...assessmentContent,
+      workspaceId: first.workspaceId,
+      contentHash: assessmentContentHash,
+      assessmentVersionId: deriveEvidenceAssessmentId({
+        workspaceId: first.workspaceId,
+        sequence: baseAssessment.sequence,
+        basisEvidenceRevision: baseAssessment.basisEvidenceRevision,
+        contentHash: assessmentContentHash,
+      }),
+    };
     const address = await listenEvidenceWorkbenchApi(first.server, {
       port: 0,
     });
@@ -176,32 +199,21 @@ describe('Evidence workbench PostgreSQL restart', () => {
         status: 'ok',
       });
 
+      // ADR-0036 requires every workspace to own exactly one case, and
+      // case-first routes derive the workspace from the case rather than from
+      // a request body. The durable records therefore live in the
+      // composition's own workspace and are bound to its case.
+      const caseScope = {
+        caseId: first.caseId,
+        workspaceId: first.workspaceId,
+        boundAt: '2026-08-12T12:00:00.000Z',
+      } as const;
       await first.productRepository.putSource(source);
       await first.productRepository.putObservations([observation]);
-      await first.productRepository.putWorkspace({
-        schemaVersion: EVIDENCE_WORKSPACE_SCHEMA_VERSION,
-        workspaceId: durableWorkspaceId,
-        label: 'Restart assessment workspace',
-        dataPolicy: 'synthetic-only',
-        evidenceRevision: 1,
-        createdAt: '2026-08-12T12:00:00.000Z',
-      });
-      const identity = await first.identityRepository.snapshot();
-      const organizationId = identity.workspaceBindings.find(
-        (binding) => binding.workspaceId === first.workspaceId,
-      )?.organizationId;
-      if (organizationId === undefined)
-        throw new Error('Missing restart organization binding.');
-      await first.identityRepository.putWorkspaceBinding({
-        schemaVersion: 'evidence-workspace-organization-binding/1',
-        workspaceId: durableWorkspaceId,
-        organizationId,
-        boundAt: '2026-08-12T12:00:00.000Z',
-      });
       await first.productRepository.putAssessments([durableAssessment]);
       await first.productRepository.putChangeSet({
         schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
-        workspaceId: durableWorkspaceId,
+        workspaceId: first.workspaceId,
         commandKey: changeSetCommandKey,
         recordedAt: '2026-08-12T12:00:00.000Z',
         changeSet: createEvidenceChangeSet({
@@ -217,6 +229,24 @@ describe('Evidence workbench PostgreSQL restart', () => {
           temporalBounds: [],
         }),
       });
+      await first.productRepository.bindCaseObjects([
+        {
+          schemaVersion: 'evidence-case-object-binding/1',
+          ...caseScope,
+          objectKind: 'source',
+          objectId: source.artifactVersionId,
+        },
+        {
+          schemaVersion: 'evidence-case-object-binding/1',
+          ...caseScope,
+          objectKind: 'observation',
+          objectId: observation.observationId,
+        },
+      ]);
+      // The golden E-A01 assessment cites the evaluation corpus, which this
+      // case does not contain, so binding it would fail scoped-reference
+      // validation. It stays a durable unscoped record: this test proves it
+      // survives a restart, not that it is reviewable inside this case.
 
       const origin = address.url.slice(0, -1);
       const login = await fetch(`${address.url}auth/session`, {
@@ -232,28 +262,30 @@ describe('Evidence workbench PostgreSQL restart', () => {
         .find((value) => value?.startsWith('acme_csrf='));
       if (csrfPart === undefined)
         throw new Error('Missing restart CSRF cookie.');
-      const review = await fetch(`${address.url}api/reviews`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          cookie,
-          origin,
-          'x-acme-csrf': decodeURIComponent(
-            csrfPart.slice('acme_csrf='.length),
-          ),
+      const review = await fetch(
+        `${address.url}api/cases/${encodeURIComponent(first.caseId)}/reviews`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie,
+            origin,
+            'x-acme-csrf': decodeURIComponent(
+              csrfPart.slice('acme_csrf='.length),
+            ),
+          },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-review-command/3',
+            commandKey,
+            targetKind: 'observation',
+            targetVersionId: observation.observationId,
+            action: 'accept',
+            rationale: 'Restart durability review.',
+            basisEvidenceRevision: null,
+          }),
         },
-        body: JSON.stringify({
-          schemaVersion: 'evidence-review-command/2',
-          workspaceId: first.workspaceId,
-          commandKey,
-          targetKind: 'observation',
-          targetVersionId: observation.observationId,
-          action: 'accept',
-          rationale: 'Restart durability review.',
-          basisEvidenceRevision: null,
-        }),
-      });
-      expect(review.status).toBe(201);
+      );
+      expect(review.status, await review.clone().text()).toBe(201);
 
       const afterReview = await first.productRepository.snapshot();
       expect(afterReview.sources.length).toBeGreaterThan(0);
@@ -261,8 +293,8 @@ describe('Evidence workbench PostgreSQL restart', () => {
         afterReview.reviewDecisions.some(
           (decision) =>
             decision.commandKey === commandKey &&
-            decision.schemaVersion === 'evidence-review-decision/2' &&
-            decision.principalAssurance === 'authenticated-session',
+            decision.schemaVersion === 'evidence-review-decision/3' &&
+            decision.principalAssurance === 'authenticated-case-session',
         ),
       ).toBe(true);
       expect(
@@ -294,8 +326,8 @@ describe('Evidence workbench PostgreSQL restart', () => {
         snapshotAfter.reviewDecisions.some(
           (decision) =>
             decision.commandKey === commandKey &&
-            decision.schemaVersion === 'evidence-review-decision/2' &&
-            decision.principalAssurance === 'authenticated-session',
+            decision.schemaVersion === 'evidence-review-decision/3' &&
+            decision.principalAssurance === 'authenticated-case-session',
         ),
       ).toBe(true);
       expect(

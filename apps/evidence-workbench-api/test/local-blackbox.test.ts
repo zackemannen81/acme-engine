@@ -601,7 +601,10 @@ describe('local Evidence workbench', () => {
         local.server.close((error) => (error ? reject(error) : resolve())),
       );
     }
-  });
+    // Five mock executions against the file-backed store put this close to the
+    // default 5s timeout, so it flakes on a loaded machine. The bound is
+    // explicit rather than incidental.
+  }, 30_000);
 
   it('completes assessment review, late-evidence attention, re-review and deterministic export', async () => {
     const directory = await mkdtemp(

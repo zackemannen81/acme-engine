@@ -464,6 +464,13 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0103:** Corrective. Modernized the PostgreSQL restart durability test
+  to ADR-0036 case-first routing after CI surfaced it as broken. The breakage
+  dated from `9037ca1` and had been invisible because no session had ever run
+  `pnpm test:postgres`; this task ran it against a real `postgres:15` for the
+  first time — 34 tests from a clean database, covering migration v7 and the
+  export-policy and export-audit write paths. Also bounded a load-sensitive
+  timeout flake in the local blackbox suite. No product behavior changed.
 - **ACME-0102:** Accepted ADR-0039, the workbench live model boundary. It fixes
   a case-bound `evidence-live-confirmation/1` with no actor field,
   environment-only credentials, a run ceiling capped by a deployment ceiling,

@@ -1,5 +1,62 @@
 # Journal
 
+## 2026-08-14 — ACME-0103 PostgreSQL restart test modernized to case-first
+
+- Date: 2026-08-14
+- Author: Claude
+- Task: ACME-0103
+- Summary: CI's PostgreSQL job failed with `expected 404 to be 201`. The
+  restart durability test had gone stale against ADR-0036 case-first routing
+  and nothing had ever executed it. Fixed and verified against a real server.
+- This is the first session in which `pnpm test:postgres` actually ran. Every
+  prior journal entry — ACME-0098, ACME-0100, ACME-0101 — recorded it as
+  refused for want of a configured server, and said so rather than claiming a
+  result. The operator started Docker, so the gap could finally be closed:
+  34 tests, 6 files, against `postgres:15` from a freshly created database
+  matching the CI service. A disposable container was used; the operator's
+  Supabase stack was never touched by test migrations.
+- Origin, checked rather than assumed: the guard that 404s `/api/reviews`
+  without a case prefix came in `9037ca1`, before ACME-0099 and ACME-0100.
+  Commit `756042b` only appended two prefixes to the same list. The test has
+  been broken since `9037ca1`, invisibly, because the suite never ran.
+- The first plausible cause was not the only one. Removing `/api/reviews` from
+  the guard locally still gave 404: the test reviewed an observation under
+  `first.workspaceId` while its change set bound that observation to a separate
+  `durableWorkspaceId`. Two independent staleness bugs behind one assertion,
+  and stopping at the first would have produced a fix that still failed.
+- The separate workspace turned out to be deliberate. Startup adopts unbound
+  objects of the composition's workspace into its case, so the original test
+  parked the golden E-A01 assessment in a workspace the composition did not
+  manage. ADR-0036 then closed that door: reconciliation requires every
+  workspace to own exactly one case, so a parked workspace fails on restart.
+  With both routes blocked, the fix had to change what the assessment cites
+  rather than where it lives — it now cites this case's single observation.
+- Assertions changed deliberately: `evidence-review-decision/2` to `/3`, and
+  `authenticated-session` to `authenticated-case-session`. That is a real
+  change in what is proven, and it is the correct one — the legacy `/2` path is
+  unreachable and implements the caller-supplied `workspaceId` pattern
+  ADR-0036 exists to forbid.
+- Reported rather than fixed: `POST /api/reviews` still carries a
+  `requestCaseId === null` branch reading `command.workspaceId` from the body.
+  The guard makes it unreachable, so it is dead code implementing a forbidden
+  pattern. Removing it is a separate charter; leaving it means whoever next
+  touches the guard could revive it.
+- A second, unrelated flake surfaced and was addressed: the full default suite
+  intermittently failed `compares corrected and later accounts…` at 17s against
+  the default 5s timeout, while passing at 4.3s on an idle machine. It is
+  load-sensitive rather than a regression, but 4.3s against a 5s bound will
+  flake in CI, so it now carries an explicit 30s timeout like its sibling.
+- Not addressed, and worth naming: an ENOENT race in
+  `tests/integration/test-ui-workbench.test.ts` around `workspace/jobs/*.json`
+  appeared once under the same load. It is a real latent flake and is recorded
+  as a follow-up rather than quietly ignored.
+- Verification: `pnpm test:postgres` — 34 tests from a clean database;
+  `pnpm test` — 728 unit (115 files), 78 conformance, 62 integration, 26
+  scenario; `pnpm typecheck`; `pnpm lint`; `pnpm format:check`; `pnpm build`;
+  `pnpm docs:check`; `git diff --check` clean.
+- Spend: none.
+- Signature: Claude
+
 ## 2026-08-14 — ACME-0102 workbench live model boundary (ADR-0039)
 
 - Date: 2026-08-14

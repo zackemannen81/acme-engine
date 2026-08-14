@@ -198,10 +198,11 @@ observation and assessment citing the unredacted version.
 
 ### D5. Operational debt that must clear first
 
-- [ ] `pnpm test:postgres` executed against a real server. Migration v7 and the
-      PostgreSQL export-policy and export-audit write paths are typechecked and
-      conformance-covered but have never been executed. Hosted mode *is*
-      PostgreSQL.
+- [x] `pnpm test:postgres` executed against a real server. Done 2026-08-14
+      under ACME-0103 against `postgres:15`: 34 tests, including migration v7
+      and the PostgreSQL export-policy and export-audit write paths. Hosted
+      mode *is* PostgreSQL, so this stays a standing gate rather than a
+      one-time tick — run it before any pilot.
 - [ ] Local workbench single-session defect resolved or explicitly accepted —
       see [`local-workbench-durable-ledger.md`](local-workbench-durable-ledger.md).
 - [ ] Hosted deployment topology, region and operator ownership settled.
