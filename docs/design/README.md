@@ -19,8 +19,9 @@ Application surfaces:
   Report and Slice 9 readiness. ACME-0087/0089 completed the Slice 5
   prerequisite, ACME-0090/ADR-0035 decided the Stage 2 identity and
   authorization architecture, and ACME-0091 implements it. Stages 3–8 are
-  delivered through ACME-0093/0095/0097/0098/0099/0100; only Stage 9 remains,
-  and it is gated. The plan does not authorize real data or later stages.
+  delivered through ACME-0093/0095/0097/0098/0099/0100. ADR-0040 now
+  authorizes only the Stage A anonymized judicial text class; its runtime stays
+  gated on implementation and later classes remain closed.
 
 - [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
   — normative implementation plan for POC #1. It freezes the seven-artifact,
@@ -29,14 +30,15 @@ Application surfaces:
   proof matrix and separately activatable slices 0–9 under ADR-0030 and
   ADR-0031. ACME-0077–0087 plus corrective child ACME-0089 delivered slices
   0–8, including the full source-bound assessment/re-review product journey;
-  every non-synthetic path still requires separate authority.
+  ADR-0040 supplies separate authority for one unimplemented Stage A class;
+  Stage B and every broader path still require their own decision.
 
 - [`evidence-integrity-workbench-product-definition.md`](evidence-integrity-workbench-product-definition.md)
   — accepted normative product definition for ACME's first real POC under
   [`ADR-0028`](../adr/0028-first-poc-evidence-integrity-workbench.md). It fixes
   the synthetic-corpus, source-bound authority, human-review and prohibited-
-  legal-conclusion boundaries. It authorizes product direction, not
-  implementation or real-data handling.
+  legal-conclusion boundaries. ADR-0040 adds the narrow Stage A live
+  applicability decision without weakening those permanent rules.
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and

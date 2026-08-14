@@ -1157,7 +1157,9 @@ source-bound without changing its import order.
 The later product/security sequence is recorded
 in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
-Slice 9 remains a separate readiness gate before any non-synthetic data.
+ADR-0040 now accepts the first bounded Slice 9 class and live-profile
+applicability boundary. The runtime remains synthetic-only until that profile
+is implemented and its executable gates pass.
 SQLite and the file product store remain the local/hermetic CI defaults;
 PostgreSQL is opt-in via composition (`--adapter postgres` /
 `ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
@@ -1312,9 +1314,23 @@ data authority; every output remains synthetic-only.
 
 ADR-0039 decides the workbench live model boundary; it is accepted but not yet
 implemented, and the product still composes the scripted mock gateway only.
-Live model access and non-synthetic data are independent gates: ADR-0039
-authorizes a live provider path over `synthetic-only` material and grants no
-data authority, leaving Slice 9 closed.
+ADR-0040 adds the product applicability boundary and accepts exactly one Stage
+A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
+source text, already anonymized/redacted before import, operator-authorized for
+the POC and live-provider transmission, and bounded by ADR-0038's strict UTF-8
+text mechanics. It is distinct from fixture origin and requires external-source
+provenance. Operator-prepared text may name an outside PDF container and
+extraction method in provenance, but the product does not ingest that PDF.
+Stage B FUP material, arbitrary ingestion and PDF/DOCX/OCR/media remain
+unauthorized.
+
+The versioned `evidence-poc1-live/1` composition is conjunctive and fail closed:
+it must prove `durable-postgresql` persistence, `live-provider` gateway,
+`authorized-external` source origin and authenticated/configured
+`authorized-live` execution. Ambient credentials, deployment labels or any
+mixed mock/in-memory/fixture tuple cannot activate it. The existing
+synthetic/test profile, sealed corpus and deterministic mocks remain the
+offline default.
 
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose
@@ -1333,11 +1349,21 @@ events stay candidates until the state transaction commits, a terminated run
 leaves no canonical evidence and no revision increment. Product live executions
 use ADR-0016 `encrypted-payload` retention so replay verification and ADR-0017
 resume survive going live; a hosted deployment must therefore supply a durable
-payload key, and the retention choice is revisited per data class at Slice 9.
+payload key. ADR-0040 fixes encrypted-payload retention for the Stage A live
+profile so provider evidence can resume without a duplicate call.
 All three evidence tasks may run live, because the trust pipeline is
 gateway-independent — model output is an untrusted candidate whichever gateway
 produced it. Live events extend the content-free security-audit vocabulary, and
 every refusal is audited even when no call was made.
+
+ADR-0040 preserves the permanent product rules across both profiles: immutable
+source/version/locator provenance, candidate-not-truth semantics, append-only
+human decisions, typed relations and temporal uncertainty, case isolation,
+source-complete persistent assessments and visible attention after new
+evidence. A primary browser path rather than technical audit, CLI, JSON or
+database access is the completion surface. The live profile is not complete
+until the real Stage A journey, PostgreSQL restart and late-evidence
+reassessment are proven end to end.
 
 ## Remaining Implementation Baseline
 

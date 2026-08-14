@@ -518,9 +518,9 @@ Sandbox code sketches, task names and event names are not public contracts.
 | False contradiction | Comparable-scope requirement, typed uncertainty and unresolved option |
 | Evidence loss | Immutable occurrences, version lineage, append-only decisions and replay |
 | Identity collapse | Conservative deterministic identity and explicit unresolved state |
-| Sensitive-data exposure | Synthetic-only corpus, redacted logs and no browser/provider credentials |
+| Sensitive-data exposure | Profile-specific data authority, encrypted artifacts, redacted logs and no browser/provider credentials |
 | Scope creep into legal advice | Immutable prohibited behaviors and ADR requirement for change |
-| Provider retention | Explicit retention configuration and data-handling review before any non-synthetic live path |
+| Provider retention | Explicit retention configuration and per-data-class provider authority before any live path |
 | Premature infrastructure | Modular monolith and measured scale triggers |
 
 ## Decisions Deferred to the Implementation Charter
@@ -535,7 +535,8 @@ Sandbox code sketches, task names and event names are not public contracts.
 - exact synthetic case narrative and annotation workflow;
 - semantic baseline values and frozen model-comparison thresholds;
 - OCR, PDF, audio, image and video ingestion; and
-- any use beyond synthetic text artifacts.
+- any use beyond the accepted synthetic profile and separately authorized data
+  classes.
 
 Subsequent decisions close part of that historical deferral: ADR-0034 decides
 the hosted topology, ADR-0035 adopts Supabase Auth plus the product BFF/
@@ -547,8 +548,11 @@ filesystem/S3-compatible artifact storage for the fixed synthetic corpus,
 including key lifecycle, product audit and restore verification. Arbitrary
 ingestion and every non-synthetic use remain unactivated.
 ADR-0038 further accepts an implementation architecture for bounded synthetic
-UTF-8 plain text and immutable redacted derivatives. It does not activate that
-workflow or change the later-corpus gate.
+UTF-8 plain text and immutable redacted derivatives. ADR-0040 subsequently
+accepts one separate POC #1 Stage A class,
+`stage-a-anonymized-judicial-text/1`, and a fail-closed live profile. This does
+not relabel the synthetic contract or authorize Stage B FUP material,
+arbitrary ingestion or excluded formats.
 
 ## Official Risk and Evaluation Sources
 
@@ -573,6 +577,7 @@ any regulatory classification.
 - [ADR-0018 — Outbox delivery boundary](../adr/0018-outbox-delivery-boundary.md)
 - [ADR-0025 — Post-execution quality evaluation](../adr/0025-post-execution-quality-evaluation.md)
 - [ADR-0029 — POC #1 persistence platform is self-hosted Supabase](../adr/0029-poc-1-self-hosted-supabase-persistence-platform.md)
+- [ADR-0040 — POC #1 live product applicability](../adr/0040-poc-1-live-product-applicability.md)
 
 The earlier Legal/Evidence material under `docs/concepts_sandbox/` supplied
 comparison input only. This document and ADR-0028 are the accepted authority;

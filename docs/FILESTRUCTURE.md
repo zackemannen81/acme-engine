@@ -913,6 +913,11 @@ ACME-0093 implements it and remains synthetic-only. ADR-0037/ACME-0095 add the
 secure artifact foundation for existing synthetic sources; bounded ingestion,
 redaction and non-synthetic authority remain later tasks.
 
+ADR-0040 distinguishes permanent Evidence Workbench invariants from the
+synthetic/test phase controls. It authorizes one bounded Stage A anonymized
+judicial text class behind an unimplemented, fail-closed PostgreSQL/live-
+provider/external-source/authorized-execution profile; Stage B remains closed.
+
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR
 constraints, and recommends an activation order. It does not authorize

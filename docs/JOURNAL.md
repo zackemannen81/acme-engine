@@ -1,5 +1,51 @@
 # Journal
 
+## 2026-08-15 — ACME-0104 POC #1 live product applicability (ADR-0040)
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0104
+- Summary: Accepted ADR-0040, the applicability decision that advances the
+  Evidence Integrity Workbench from a synthetic-only implementation phase to
+  one bounded Stage A live proof without weakening its permanent evidence,
+  review, security or case-isolation rules. Documentation-only; the runtime
+  still rejects real-source import and composes the scripted gateway.
+- Permanent invariants: candidate-not-truth, immutable exact
+  source/version/locator provenance, append-only coexistence of versions and
+  review decisions, typed relations and temporal uncertainty, persistent
+  citation-complete assessments, visible late-evidence attention,
+  deny-by-default case isolation and the L5 conclusion prohibition apply to
+  every profile.
+- Phase-local controls: the seven/eight fixed corpus, sealed hashes,
+  `synthetic-only` policy, synthetic authority attestation and deterministic
+  scripted gateway continue to govern the existing test profile and offline
+  gates. They are no longer misclassified as universal product invariants.
+- Stage A authority: exactly `stage-a-anonymized-judicial-text/1` — authorized
+  real judicial text already anonymized/redacted before import, constrained by
+  the existing strict UTF-8 mechanics and encrypted artifact boundary. Text
+  prepared outside ACME from a PDF records parent digest and extraction
+  identity; ACME does not gain a PDF import path. Stage B FUP material and all
+  broader/sensitive classes remain closed.
+- Live invariant: `evidence-poc1-live/1` must machine-check the conjunction of
+  durable PostgreSQL, live provider, authorized-external source origin and
+  authenticated/configured authorized-live execution. Credentials or a
+  deployment label cannot activate it, and any mock/in-memory/fixture mixture
+  refuses.
+- Real material: the operator supplied two anonymized judicial PDFs outside
+  the repository. Read-only inspection found 52 and 23 text-bearing pages,
+  101,732 and 39,786 extracted characters, and no empty extraction page. No
+  source bytes or extracted content entered Git. They are ready for the later
+  operator-prepared-text provenance/import checkpoint.
+- Verification: `pnpm docs:check` — 210 Markdown files; `pnpm format:check`;
+  `git diff --check` clean; manual link, terminology and applicability review.
+  Historical ADRs were not edited. Code/test gates were not run because this
+  charter changed only documentation and `AGENTS.md`.
+- Spend: none. No provider call was made.
+- Follow-up: implement ADR-0039 and ADR-0040 as a typed fail-closed live
+  composition, then add the Stage A contract/import path and real primary
+  reviewer journey. Stage B is independent and must not block that sequence.
+- Signature: Codex
+
 ## 2026-08-14 — ACME-0103 PostgreSQL restart test modernized to case-first
 
 - Date: 2026-08-14

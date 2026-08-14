@@ -1,7 +1,7 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-08-09
+Last updated: 2026-08-15
 
 ## Identity
 
@@ -170,8 +170,10 @@ Its implementation-ready plan is
 with Evidence identity/placement fixed by ADR-0030 and the reviewer/view
 boundary fixed by ADR-0031.
 
-It operates over a fixed synthetic evidence corpus and helps a non-adjudicative
-reviewer establish what each source contains, where an observation occurs, how
+Its delivered test profile operates over a fixed synthetic evidence corpus.
+ADR-0040 accepts a bounded POC #1 live profile over authorized, anonymized real
+judicial UTF-8 source text. Both help a non-adjudicative reviewer establish
+what each source contains, where an observation occurs, how
 accounts and artifacts relate, what the timeline permits, what remains
 uncertain and which questions remain unanswered. Every material assessment
 must traverse back to accepted source-bound evidence and an exact locator.
@@ -180,9 +182,10 @@ The POC keeps source observations, expressed propositions, evidence relations,
 versioned assessments and legal conclusions at separate authority levels. It
 must not determine credibility, guilt, liability, legal sufficiency,
 admissibility or privilege; give tailored legal advice; automate a high-impact
-decision; or process real confidential, privileged or criminal-offence
-personal data. Human review is mandatory before an assessment becomes
-shareable, and human acceptance does not make an assessment legally true.
+decision; or process confidential, privileged or criminal-offence personal
+data under the Stage A authority. Human review is mandatory before an
+assessment becomes shareable, and human acceptance does not make an assessment
+legally true.
 
 The product remains outside `packages/core`. Evidence meaning belongs to a new
 domain module; product workflow belongs to an application; provider,
@@ -214,7 +217,9 @@ authenticated-principal and organization-authorization architecture:
 self-hosted Supabase Auth behind a product-API BFF, opaque server-side sessions
 and deny-by-default product roles. ACME-0091 implements this boundary across
 the hosted composition, browser and durable identity/session store. The
-product remains synthetic-only. The approved later sequencing plan is
+implemented product remains synthetic-only. ADR-0040 now authorizes a distinct
+Stage A live profile, but its runtime is not implemented. The approved later
+sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
 navigation, durable object ownership and same-organization cross-case
@@ -226,8 +231,11 @@ case snapshot in which every reported row names its exact source-bound
 observations. ACME-0100 adds Stage 8: deterministic JSON/Markdown/DOCX/PDF
 assessment output from one citation-complete document, a per-case export policy,
 append-only export audit and product backup/restore verification. Stages 1–8 are
-delivered. Slice 9 non-synthetic readiness remains a separate later task and no
-non-synthetic data path is authorized.
+delivered. ADR-0040 accepts the first Slice 9 class:
+`stage-a-anonymized-judicial-text/1`. Activation is fail closed until the
+versioned live profile proves durable PostgreSQL, a live provider,
+authorized-external source origin and authorized-live execution. Stage B FUP
+material and every broader data path remain unauthorized.
 
 ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
 and ACME-0097 implements it end to end.
@@ -235,7 +243,8 @@ Only strict, size-limited synthetic UTF-8 plain text is eligible; accepted
 imports preserve exact original bytes and create a separate LF/NFC canonical
 representation. Redaction creates a new immutable version from exact UTF-8
 byte ranges and an append-only content-free log. PDF/DOCX/OCR/media and all
-non-synthetic data remain prohibited pending Slice 9.
+non-synthetic data remain prohibited on this synthetic import contract. Stage
+A requires its separate ADR-0040 contract and live profile.
 
 ADR-0037 now decides the next secure artifact foundation: immutable
 original/canonical representations, application envelope encryption, a

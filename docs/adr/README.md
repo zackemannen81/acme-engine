@@ -74,3 +74,4 @@ current architecture.
 - [`0037-evidence-secure-artifact-foundation.md`](0037-evidence-secure-artifact-foundation.md)
 - [`0038-bounded-text-ingestion-and-immutable-redaction.md`](0038-bounded-text-ingestion-and-immutable-redaction.md)
 - [`0039-evidence-workbench-live-model-boundary.md`](0039-evidence-workbench-live-model-boundary.md)
+- [`0040-poc-1-live-product-applicability.md`](0040-poc-1-live-product-applicability.md)

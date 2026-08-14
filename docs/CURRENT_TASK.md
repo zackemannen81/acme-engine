@@ -2,27 +2,11 @@
 
 Task ID:
 Parent Task: None
-Status: No active task
+Status: Draft
 Owner:
 Created:
-Last updated: 2026-08-14
-
-> No task is active. Stages 1–8 of the Evidence Integrity Workbench completion
-> plan are delivered, and ACME-0102 accepted
-> [ADR-0039](adr/0039-evidence-workbench-live-model-boundary.md), the workbench
-> live model boundary.
->
-> Recommended next charter: **implement ADR-0039** against its section 10
-> gates. The product still composes the scripted mock gateway only, so no live
-> call is possible until that lands.
->
-> Stage 9 non-synthetic readiness remains **gated** and cannot be activated by
-> implication; its prerequisites are gathered in
-> [the Slice 9 checklist](backlog/slice-9-prerequisite-checklist.md). ADR-0039
-> grants no data authority — live model and non-synthetic data are independent
-> gates.
->
-> Create the next explicitly approved task below before changing the repository.
+Last updated:
+Charter frozen at:
 
 ## Read First
 

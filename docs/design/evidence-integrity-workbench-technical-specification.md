@@ -33,8 +33,9 @@ attention, deterministic ZIP and full product path. Pre-late E-A01 has no
 open-question references; post-import E-A02 retains all three sealed questions.
 ADR-0035/ACME-0091, ADR-0036/ACME-0093 and ADR-0037/ACME-0095 subsequently
 deliver authenticated principals, case isolation and the secure artifact
-foundation for the fixed synthetic corpus. Slice 9 readiness remains
-separately activatable.
+foundation for the fixed synthetic corpus. ADR-0040 now accepts the first
+separately activatable Slice 9 class and live-product profile; neither is
+implemented yet.
 ADR-0038 additionally decides and ACME-0097 implements one bounded synthetic
 UTF-8 plain-text import class and immutable redacted derivatives. Excluded
 formats and non-synthetic material remain refused.
@@ -1228,7 +1229,8 @@ Documentation: all new authority and residual risks before ingestion.
 | Live model and budget | **Decided by [ADR-0039](../adr/0039-evidence-workbench-live-model-boundary.md).** A versioned case-bound confirmation, environment-only credentials, a run ceiling capped by a deployment ceiling, `encrypted-payload` retention and content-free live audit. Mocks remain default and no data authority is granted. Implementation is a separate frozen task. |
 | Bounded synthetic text ingestion and immutable redaction | **Implemented by ACME-0097 under [ADR-0038](../adr/0038-bounded-text-ingestion-and-immutable-redaction.md).** Strict UTF-8 browser import, encrypted original/canonical objects, durable file/PostgreSQL records and immutable redacted derivatives are synthetic-only. |
 | PDF/OCR/audio/video/media locators | Outside V1; new schemas, validation and threat analysis required. |
-| Any non-synthetic data path | Blocked by ADR-0028 until slice 9 authority exists. |
+| Stage A anonymized real judicial UTF-8 text | **Accepted but not implemented by [ADR-0040](../adr/0040-poc-1-live-product-applicability.md).** It requires the fail-closed `evidence-poc1-live/1` composition, external-source provenance and the existing bounded text/encrypted artifact controls. |
+| Stage B FUP or any other non-synthetic data path | Blocked until a later data-class ADR supplies explicit authority. |
 | Dynamic discovery, workflow runtime and vector retrieval | Deferred until measured need; not part of this product plan. |
 
 No future choice may weaken the Primary Product Rule, source-binding gates or

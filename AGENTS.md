@@ -71,7 +71,10 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   ACME-0097 implements that boundary through case-first authenticated API and
   browser flows, encrypted staged representations, durable import/redaction
   records, deterministic retry identities and file/PostgreSQL persistence.
-  PDF/DOCX/OCR/media and every non-synthetic class remain refused.
+  PDF/DOCX/OCR/media remain refused. ADR-0040 now authorizes one distinct POC
+  #1 Stage A class, `stage-a-anonymized-judicial-text/1`, behind an unimplemented
+  fail-closed live profile; the existing import/runtime remains synthetic-only
+  until that profile is delivered.
   ADR-0036's case boundary is implemented: opaque public cases own unique
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
@@ -86,8 +89,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   byte-deterministic JSON, Markdown, DOCX and PDF with no new dependency, a
   per-case export policy, append-only export-audit records for every release
   and refusal, and a product backup manifest with fail-closed restore
-  verification. Stages 1–8 are complete. Stage 9 non-synthetic readiness
-  remains closed and cannot activate by implication.
+  verification. Stages 1–8 are complete. ADR-0040 supplies the explicit Stage
+  A Slice 9 authority without authorizing Stage B FUP material, arbitrary
+  ingestion or activation by implication.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

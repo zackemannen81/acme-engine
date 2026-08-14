@@ -2,23 +2,25 @@
 
 Status: Approved delivery direction
 
-Date: 2026-08-12
+Date: 2026-08-15
 
-Current task: none active. Stages 1–8 are delivered; Stage 9 remains gated.
+Current task: ACME-0104. Stages 1–8 are delivered; ADR-0040 accepts bounded
+Stage A authority and its runtime remains gated on implementation.
 
 ## Purpose and Authority
 
 This plan records the agreed sequence from the current synthetic Evidence
-Integrity Workbench to a complete product proof and, later, a security-gated
-non-synthetic pilot. It supplements but does not supersede ADR-0028, the
+Integrity Workbench to a complete product proof and a bounded Stage A live
+proof. It supplements but does not supersede ADR-0028, ADR-0040, the
 accepted product definition or the normative technical specification.
 
 Stage 2 is implemented by ACME-0091 under ADR-0035. ADR-0036 now decides the
 Stage 3 case/workspace management and isolation boundary, and ACME-0093
 implements it end to end. ADR-0037/ACME-0095 now implement secure object
-storage for the fixed synthetic corpus. Arbitrary ingestion and Slice 9 still
-require their own frozen tasks and decisions. No real,
-confidential, privileged, identifiable or criminal-offence data is authorized.
+storage for the fixed synthetic corpus. ADR-0040 now authorizes only
+`stage-a-anonymized-judicial-text/1`; implementation remains fail closed.
+Stage B FUP, arbitrary ingestion, confidential, privileged, identifiable and
+criminal-offence data remain unauthorized.
 
 ## Current Product Reality
 
@@ -53,7 +55,8 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9. Non-synthetic readiness | A qualified review may authorize one bounded new data class after every prerequisite is proven. | Slice 9 ADR; never automatic activation. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Authority accepted by ADR-0040; implementation and executable gates pending. |
+| 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.
 Every stage needs one or more separately frozen charters. Discoveries do not
@@ -164,9 +167,8 @@ because the frozen ACME-0099 charter did not list them:
 
 ## Slice 9 Data-class Direction
 
-The Slice 9 ADR should define a deny-by-default classification ladder rather
-than authorize "real case data" as one category. A candidate progression for
-qualified review is:
+ADR-0040 establishes a deny-by-default classification ladder rather than
+authorizing "real case data" as one category. The progression is:
 
 1. synthetic material;
 2. public or explicitly licensed non-confidential text with no personal,
@@ -176,18 +178,18 @@ qualified review is:
 4. identifiable or otherwise sensitive material only under later, stricter
    authority.
 
-The first Slice 9 decision should authorize at most one bounded class, purpose,
-organization, region, provider path and retention period. It must document
-lawful basis and data rights, processor/geography terms, access control,
-retention/deletion, incident response, provider handling, redaction/export
-policy and the DPIA determination. Criminal-offence and privileged data remain
-blocked until specifically reviewed and authorized.
+The first Slice 9 decision authorizes only anonymized real judicial UTF-8 text
+already under operator control for this POC. ADR-0040 fixes the live provider,
+durable PostgreSQL, external-source provenance, authorized execution and
+encrypted-payload boundary. Remaining deployment/operational evidence must be
+made executable during implementation. Criminal-offence, privileged, Stage B
+FUP and broader data remain blocked until separately reviewed and authorized.
 
 ## Activation and Completion Rules
 
-- ACME-0087 must complete and archive before a Slice 9 task is activated.
-- Product-security prerequisites may be designed after ACME-0087, but no
-  non-synthetic path opens until their executable gates pass.
+- ACME-0087 is complete and archived; ADR-0040 supplies Stage A authority.
+- No Stage A path opens until the typed live composition and its executable
+  gates pass.
 - The Primary Product Rule, source-binding invariants and prohibited authority
   remain unchanged.
 - Case Integrity Report work is a later product task and is explicitly outside

@@ -405,14 +405,17 @@ Non-synthetic paths remain unimplemented (slice 9 governance).
 ## Active Work
 
 Stages 1–8 of the product completion plan are delivered. ACME-0102 accepted
-ADR-0039, the workbench live model boundary; its implementation is the next
-chartered step and has not started. The product still composes the scripted
-mock gateway only, so no live call is possible today.
+ADR-0039, the workbench live model boundary. ADR-0040 now accepts one bounded
+Stage A class, `stage-a-anonymized-judicial-text/1`, and the fail-closed
+`evidence-poc1-live/1` profile. Their implementation is the next code step and
+has not started. The product still composes the scripted mock gateway and
+accepts only its synthetic import class, so no live call or real-source import
+is possible today.
 
-Stage 9 non-synthetic readiness stays closed and needs its own ADR and
-qualified review before any task may activate it. ADR-0039 grants no data
-authority: live model access and non-synthetic data are independent gates.
-Prerequisites for Stage 9 are gathered in
+Stage A activation must prove the complete ADR-0040 tuple: durable PostgreSQL,
+live provider, authorized-external source origin and authorized-live execution.
+Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
+The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
 
 ACME-0101 corrected a defect that made the browser client unusable: the shell
@@ -464,6 +467,12 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0104:** Accepted ADR-0040. It distinguishes permanent
+  evidence/security/review invariants from synthetic-phase controls, authorizes
+  only anonymized real judicial UTF-8 text for Stage A, separates later Stage B
+  FUP material and requires a typed four-part live composition that fails
+  closed. This documentation checkpoint does not implement or activate the
+  live path.
 - **ACME-0103:** Corrective. Modernized the PostgreSQL restart durability test
   to ADR-0036 case-first routing after CI surfaced it as broken. The breakage
   dated from `9037ca1` and had been invisible because no session had ever run
