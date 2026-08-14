@@ -91,7 +91,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   and refusal, and a product backup manifest with fail-closed restore
   verification. Stages 1–8 are complete. ADR-0040 supplies the explicit Stage
   A Slice 9 authority without authorizing Stage B FUP material, arbitrary
-  ingestion or activation by implication.
+  ingestion or activation by implication. ACME-0105 implements the typed
+  fail-closed live composition capability and durable payload-key boundary;
+  no product route can invoke it until the next vertical increment.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

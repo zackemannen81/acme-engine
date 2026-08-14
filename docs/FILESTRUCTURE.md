@@ -32,8 +32,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{index.ts,local.ts,local-main.ts}
-│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
+│   │   ├── src/{index.ts,live.ts,local.ts,local-main.ts}
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,live-composition.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -156,6 +156,12 @@ acme-engine/
 │   │       ├── gateway.test.ts
 │   │       ├── schema-lower.test.ts
 │   │       └── transport-fetch.test.ts
+│   ├── live-safety/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/live-safety.test.ts
 │   ├── adapter-sqlite/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -770,6 +776,9 @@ content remains intentionally omitted here.
   preflight refusal for unlowerable constructs. A `fetch` transport is
   published from the separate `./transport-fetch` entry point, so the default
   surface stays network-free.
+- `@acme/live-safety`: pure provider-neutral credential-field refusal,
+  explicit opt-in, environment-credential and nested budget primitives shared
+  by live application surfaces. It performs no I/O and owns no authorization.
 - `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
   checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
   `better-sqlite3` is its only external runtime dependency.
@@ -861,7 +870,11 @@ content remains intentionally omitted here.
   ACME-0095 adds encrypted artifact hydration, product security audit and
   case-admin artifact inspection, re-wrap and revisioned deletion. ACME-0097
   adds the Documents import view, immutable redaction draft/apply flow and
-  restart-safe case-first records.
+  restart-safe case-first records. ACME-0105 adds the closed
+  `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
+  authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
+  key are required before an OpenAI gateway can be released. No product route
+  invokes it yet.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.

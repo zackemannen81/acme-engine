@@ -1312,8 +1312,9 @@ whose own digest does not match all refuse. File and PostgreSQL adapters persist
 both new record kinds under migration v7 with shared conformance. This adds no
 data authority; every output remains synthetic-only.
 
-ADR-0039 decides the workbench live model boundary; it is accepted but not yet
-implemented, and the product still composes the scripted mock gateway only.
+ADR-0039 decides the workbench live model boundary. ACME-0105 implements its
+confirmation/composition foundation while the default execution engine remains
+the scripted mock and no product route can invoke live yet.
 ADR-0040 adds the product applicability boundary and accepts exactly one Stage
 A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
 source text, already anonymized/redacted before import, operator-authorized for
@@ -1331,6 +1332,24 @@ it must prove `durable-postgresql` persistence, `live-provider` gateway,
 mixed mock/in-memory/fixture tuple cannot activate it. The existing
 synthetic/test profile, sealed corpus and deterministic mocks remain the
 offline default.
+
+`@acme/live-safety` owns the provider-neutral recursive credential-field scan,
+explicit opt-in parsing, environment credential resolution and nested
+run/confirmation/deployment budget checks; the Domain Test UI reuses these
+primitives without changing its ADR-0023 confirmation. Evidence adds its own
+strict `evidence-live-confirmation/1` with case id and no actor. Only
+`case-admin` owns `live-model.run`; organization roles and other case roles do
+not.
+
+Hosted startup may create an `EvidenceLiveCapability` only when the profile,
+PostgreSQL persistence, hosted mode, provider configuration, deployment
+ceilings and base64-mounted 32-byte payload key all validate. The PostgreSQL
+execution repository then uses that durable key rather than the ephemeral
+local-session key. The capability closes over the provider credential but does
+not construct/release its OpenAI gateway until an operation supplies the exact
+case authorization, matching confirmation and authorized Stage A source. No
+call occurs at startup. ACME-0105 deliberately adds no route or job command, so
+the current browser workflow cannot yet reach the provider.
 
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose

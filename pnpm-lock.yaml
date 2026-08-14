@@ -120,6 +120,9 @@ importers:
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
+      '@acme/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
@@ -147,6 +150,9 @@ importers:
       '@acme/evidence-workbench-worker':
         specifier: workspace:*
         version: link:../evidence-workbench-worker
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../../packages/live-safety
       '@acme/module-evidence':
         specifier: workspace:*
         version: link:../../packages/module-evidence
@@ -186,6 +192,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../../packages/live-safety
       '@acme/module-narrative':
         specifier: workspace:*
         version: link:../../packages/module-narrative
@@ -440,6 +449,8 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/live-safety: {}
 
   packages/module-evidence:
     dependencies:

@@ -4,8 +4,9 @@ Status: Approved delivery direction
 
 Date: 2026-08-15
 
-Current task: ACME-0104. Stages 1–8 are delivered; ADR-0040 accepts bounded
-Stage A authority and its runtime remains gated on implementation.
+Current task: none active. Stages 1–8 are delivered; ADR-0040 accepts bounded
+Stage A authority and ACME-0105 delivers its fail-closed composition
+capability. Import/job/browser activation is the next dependency.
 
 ## Purpose and Authority
 
@@ -55,7 +56,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Authority accepted by ADR-0040; implementation and executable gates pending. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Authority accepted by ADR-0040; ACME-0105 completes the closed live-composition boundary, while data contract, job/browser path and end-to-end proof remain pending. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.

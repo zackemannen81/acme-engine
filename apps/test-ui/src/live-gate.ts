@@ -6,6 +6,17 @@
  * gateway.
  */
 
+import {
+  LIVE_SAFETY_REFUSAL,
+  LiveSafetyRefused as LiveGateRefused,
+  assertLiveBudget,
+  assertNoLiveCredentialFields,
+  isLiveOptInValue,
+  requireLiveOptIn,
+} from '@acme/live-safety';
+
+export { LiveGateRefused };
+
 export const LIVE_CONFIRMATION_VERSION = 'acme-live-confirmation/1' as const;
 
 export type LiveProvider = 'openai';
@@ -27,16 +38,6 @@ export interface LiveEvaluationConfirmation {
   readonly rationale: string;
 }
 
-export class LiveGateRefused extends Error {
-  readonly reason: string;
-
-  constructor(reason: string, message: string) {
-    super(message);
-    this.name = 'LiveGateRefused';
-    this.reason = reason;
-  }
-}
-
 export const LIVE_GATE_REFUSAL = {
   version: 'LIVE_CONFIRMATION_VERSION',
   optIn: 'LIVE_OPT_IN_REQUIRED',
@@ -47,25 +48,11 @@ export const LIVE_GATE_REFUSAL = {
   costCeiling: 'LIVE_COST_CEILING_INVALID',
   confirmer: 'LIVE_CONFIRMER_REQUIRED',
   rationale: 'LIVE_RATIONALE_REQUIRED',
-  credentials: 'LIVE_CREDENTIALS_FORBIDDEN',
-  budget: 'LIVE_BUDGET_EXCEEDED',
-  envOptIn: 'LIVE_ENV_OPT_IN_REQUIRED',
-  apiKey: 'LIVE_API_KEY_REQUIRED',
+  credentials: LIVE_SAFETY_REFUSAL.credentials,
+  budget: LIVE_SAFETY_REFUSAL.callBudget,
+  envOptIn: LIVE_SAFETY_REFUSAL.envOptIn,
+  apiKey: LIVE_SAFETY_REFUSAL.credentialMissing,
 } as const;
-
-/** Field names that must never appear on a confirmation document. */
-const FORBIDDEN_CREDENTIAL_KEYS = new Set([
-  'apikey',
-  'api_key',
-  'token',
-  'secret',
-  'password',
-  'authorization',
-  'openai_api_key',
-  'bearer',
-  'credential',
-  'credentials',
-]);
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -73,27 +60,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-function assertNoCredentialFields(
-  raw: Record<string, unknown>,
-  path: string,
-): void {
-  for (const [key, value] of Object.entries(raw)) {
-    const normalized = key.replaceAll(/[-]/gu, '').toLowerCase();
-    if (
-      FORBIDDEN_CREDENTIAL_KEYS.has(key.toLowerCase()) ||
-      FORBIDDEN_CREDENTIAL_KEYS.has(normalized)
-    ) {
-      throw new LiveGateRefused(
-        LIVE_GATE_REFUSAL.credentials,
-        `A live confirmation must not carry credential field ${path}${key}.`,
-      );
-    }
-    if (isObject(value)) {
-      assertNoCredentialFields(value, `${path}${key}.`);
-    }
-  }
 }
 
 /**
@@ -111,7 +77,7 @@ export function parseLiveConfirmation(
       'A live confirmation must be an object.',
     );
   }
-  assertNoCredentialFields(raw, '');
+  assertNoLiveCredentialFields(raw);
 
   if (raw['version'] !== LIVE_CONFIRMATION_VERSION) {
     throw new LiveGateRefused(
@@ -223,12 +189,10 @@ export function requireLiveGate(options: {
   readonly liveOptIn: boolean;
   readonly confirmation: unknown;
 }): LiveEvaluationConfirmation {
-  if (!options.liveOptIn) {
-    throw new LiveGateRefused(
-      LIVE_GATE_REFUSAL.envOptIn,
-      'Live evaluation requires ACME_TEST_UI_LIVE=1 (or true) in the environment.',
-    );
-  }
+  requireLiveOptIn(
+    options.liveOptIn,
+    'Live evaluation requires ACME_TEST_UI_LIVE=1 (or true) in the environment.',
+  );
   return parseLiveConfirmation(options.confirmation);
 }
 
@@ -237,18 +201,22 @@ export function assertWithinBudget(
   confirmation: LiveEvaluationConfirmation,
   requestMaxModelCalls: number,
 ): void {
-  if (requestMaxModelCalls > confirmation.maxModelCalls) {
-    throw new LiveGateRefused(
-      LIVE_GATE_REFUSAL.budget,
-      `Request maxModelCalls (${requestMaxModelCalls}) exceeds confirmed ceiling (${confirmation.maxModelCalls}).`,
-    );
-  }
+  assertLiveBudget({
+    requested: {
+      maxModelCalls: requestMaxModelCalls,
+      costCeilingMinor: null,
+    },
+    confirmed: {
+      maxModelCalls: confirmation.maxModelCalls,
+      costCeilingMinor: null,
+    },
+    deployment: {
+      maxModelCalls: confirmation.maxModelCalls,
+      costCeilingMinor: null,
+    },
+  });
 }
 
 export function isLiveOptInEnv(value: string | undefined): boolean {
-  if (value === undefined) {
-    return false;
-  }
-  const normalized = value.trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  return isLiveOptInValue(value);
 }

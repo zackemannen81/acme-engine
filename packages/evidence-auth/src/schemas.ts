@@ -18,6 +18,7 @@ export const EvidenceProductActionSchema = z.enum([
   'review.decide',
   'assessment.propose',
   'synthetic-fixture.run',
+  'live-model.run',
   'job.cancel',
   'technical-audit.read',
   'organization-membership.manage',

@@ -20,8 +20,9 @@ Application surfaces:
   prerequisite, ACME-0090/ADR-0035 decided the Stage 2 identity and
   authorization architecture, and ACME-0091 implements it. Stages 3–8 are
   delivered through ACME-0093/0095/0097/0098/0099/0100. ADR-0040 now
-  authorizes only the Stage A anonymized judicial text class; its runtime stays
-  gated on implementation and later classes remain closed.
+  authorizes only the Stage A anonymized judicial text class. ACME-0105
+  implements its closed composition capability; import/job/browser activation
+  stays gated and later classes remain closed.
 
 - [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
   — normative implementation plan for POC #1. It freezes the seven-artifact,

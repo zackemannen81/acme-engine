@@ -84,6 +84,8 @@ import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
 import type { EvidenceState } from '@acme/module-evidence';
 
+export * from './live.js';
+
 function zCaseStatus(value: string): 'active' | 'archived' {
   if (value === 'active' || value === 'archived') return value;
   throw new SyntaxError('status must be active or archived.');

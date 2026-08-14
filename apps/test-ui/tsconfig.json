@@ -20,6 +20,9 @@
       "path": "../../packages/core"
     },
     {
+      "path": "../../packages/live-safety"
+    },
+    {
       "path": "../../packages/module-narrative"
     },
     {

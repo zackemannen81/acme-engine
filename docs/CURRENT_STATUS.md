@@ -407,10 +407,14 @@ Non-synthetic paths remain unimplemented (slice 9 governance).
 Stages 1–8 of the product completion plan are delivered. ACME-0102 accepted
 ADR-0039, the workbench live model boundary. ADR-0040 now accepts one bounded
 Stage A class, `stage-a-anonymized-judicial-text/1`, and the fail-closed
-`evidence-poc1-live/1` profile. Their implementation is the next code step and
-has not started. The product still composes the scripted mock gateway and
-accepts only its synthetic import class, so no live call or real-source import
-is possible today.
+`evidence-poc1-live/1` profile. ACME-0105 implements the shared live-safety
+primitives, Evidence confirmation parser, case-admin-only `live-model.run` and
+the closed hosted capability. It requires durable PostgreSQL, hosted mode, a
+live provider, a mounted durable payload key and deployment ceilings before it
+exists; it releases a gateway only after case-bound authorization and Stage A
+source authority. The default engine remains the scripted mock and no new
+product route invokes the capability, so no live call or real-source import is
+possible through the product today.
 
 Stage A activation must prove the complete ADR-0040 tuple: durable PostgreSQL,
 live provider, authorized-external source origin and authorized-live execution.
@@ -467,6 +471,12 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0105:** Implemented the fail-closed POC #1 live composition boundary.
+  `@acme/live-safety` now supplies credential, opt-in and nested-budget
+  primitives shared with the Domain Test UI. The Evidence API adds strict
+  `evidence-live-confirmation/1`, the four-part live resolver, durable hosted
+  payload-key configuration and an OpenAI gateway factory released only after
+  case-admin/source authority. The callable job/browser path remains next.
 - **ACME-0104:** Accepted ADR-0040. It distinguishes permanent
   evidence/security/review invariants from synthetic-phase controls, authorizes
   only anonymized real judicial UTF-8 text for Stage A, separates later Stage B

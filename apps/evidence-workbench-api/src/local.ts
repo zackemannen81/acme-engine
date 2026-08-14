@@ -20,6 +20,7 @@ import {
   createScriptedModelGateway,
   type ScriptedModelGateway,
 } from '@acme/adapter-model-mock';
+import type { ProviderTransport } from '@acme/adapter-model-openai';
 import {
   createPostgresExecutionRepository,
   migratePostgresSchema,
@@ -99,11 +100,16 @@ import {
   type EvidenceRelateObservationsOutput,
 } from '@acme/module-evidence';
 import { createEvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
+import { isLiveOptInValue } from '@acme/live-safety';
 
 import {
   createEvidenceWorkbenchApi,
   listenEvidenceWorkbenchApi,
 } from './index.js';
+import {
+  createEvidenceLiveCapability,
+  type EvidenceLiveCapability,
+} from './live.js';
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const CASE_ID = 'rillford-annex-synthetic-case';
@@ -515,6 +521,37 @@ type SnapshotLedger = ExecutionRepository & {
   snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
 };
 
+export interface EvidenceLiveCompositionOptions {
+  readonly liveOptIn?: boolean;
+  readonly hosted?: boolean;
+  readonly profile?: string;
+  readonly model?: string;
+  readonly apiKey?: string;
+  readonly payloadKey?: Uint8Array;
+  readonly payloadKeyId?: string;
+  readonly deploymentMaxModelCalls?: number;
+  readonly deploymentCostCeilingMinor?: number | null;
+  readonly deploymentCurrency?: string | null;
+  readonly transport?: ProviderTransport;
+}
+
+function optionalNumber(value: string | undefined): number | undefined {
+  if (value === undefined || value.trim().length === 0) return undefined;
+  return Number(value);
+}
+
+async function configuredLivePayloadKey(input: {
+  readonly enabled: boolean;
+  readonly injected?: Uint8Array;
+}): Promise<Uint8Array | undefined> {
+  if (!input.enabled) return undefined;
+  if (input.injected !== undefined) return input.injected;
+  const file = process.env['ACME_EVIDENCE_PAYLOAD_KEY_FILE']?.trim();
+  if (!file) return undefined;
+  const encoded = (await readFile(path.resolve(file), 'utf8')).trim();
+  return new Uint8Array(Buffer.from(encoded, 'base64'));
+}
+
 export async function createLocalEvidenceWorkbench(
   options: {
     readonly dataFile?: string;
@@ -535,6 +572,8 @@ export async function createLocalEvidenceWorkbench(
     readonly sessionKey?: Uint8Array;
     readonly secureCookies?: boolean;
     readonly publicOrigin?: string;
+    /** Test/embedding overrides. Production reads the corresponding env only. */
+    readonly live?: EvidenceLiveCompositionOptions;
   } = {},
 ) {
   const clock = options.clock ?? systemClock();
@@ -551,6 +590,64 @@ export async function createLocalEvidenceWorkbench(
     seedMode === 'evaluation' ? evaluationAssessmentCases() : [];
   const workspaceId = assessmentFixtures[0]?.input.workspaceId ?? WORKSPACE_ID;
   const postgres = usePostgresPersistence(options);
+  const liveOptIn =
+    options.live?.liveOptIn ??
+    isLiveOptInValue(process.env['ACME_EVIDENCE_LIVE']);
+  const livePayloadKey = await configuredLivePayloadKey({
+    enabled: liveOptIn,
+    ...(options.live?.payloadKey === undefined
+      ? {}
+      : { injected: options.live.payloadKey }),
+  });
+  const livePayloadKeyId =
+    options.live?.payloadKeyId ??
+    process.env['ACME_EVIDENCE_PAYLOAD_KEY_ID']?.trim();
+  const liveCapability: EvidenceLiveCapability | null =
+    createEvidenceLiveCapability({
+      liveOptIn,
+      hosted:
+        options.live?.hosted ?? process.env['ACME_HOSTED']?.trim() === '1',
+      profile:
+        options.live?.profile ??
+        process.env['ACME_EVIDENCE_COMPOSITION_PROFILE']?.trim(),
+      persistence: postgres ? 'durable-postgresql' : 'file',
+      modelGateway: 'live-provider',
+      model:
+        options.live?.model ?? process.env['ACME_EVIDENCE_LIVE_MODEL']?.trim(),
+      apiKey: options.live?.apiKey ?? process.env['OPENAI_API_KEY'],
+      payloadKey: livePayloadKey,
+      payloadKeyId: livePayloadKeyId,
+      deploymentBudget: {
+        maxModelCalls:
+          options.live?.deploymentMaxModelCalls ??
+          optionalNumber(process.env['ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS']) ??
+          0,
+        costCeilingMinor:
+          options.live?.deploymentCostCeilingMinor ??
+          optionalNumber(
+            process.env['ACME_EVIDENCE_LIVE_COST_CEILING_MINOR'],
+          ) ??
+          null,
+      },
+      deploymentCurrency:
+        options.live?.deploymentCurrency ??
+        process.env['ACME_EVIDENCE_LIVE_CURRENCY']?.trim() ??
+        null,
+      clock,
+      ...(options.live?.transport === undefined
+        ? {}
+        : { transport: options.live.transport }),
+    });
+  const ledgerPayloadEncryptor = createAes256GcmPayloadEncryptor({
+    key:
+      liveCapability === null || livePayloadKey === undefined
+        ? new Uint8Array(randomBytes(32))
+        : livePayloadKey,
+    keyId:
+      liveCapability === null || livePayloadKeyId === undefined
+        ? 'ephemeral-local-session'
+        : livePayloadKeyId,
+  });
 
   let closePersistence: () => Promise<void> = async () => {};
   let rawProductRepository: EvidenceProductRepository;
@@ -569,14 +666,10 @@ export async function createLocalEvidenceWorkbench(
     await migrateEvidenceIdentitySchema({ pool, appliedAt: clock.now() });
     rawProductRepository = createPostgresEvidenceProductRepository({ pool });
     identityRepository = createPostgresEvidenceIdentityRepository({ pool });
-    const payloadEncryptor = createAes256GcmPayloadEncryptor({
-      key: new Uint8Array(randomBytes(32)),
-      keyId: 'ephemeral-local-session',
-    });
     ledger = createPostgresExecutionRepository({
       pool,
       ids,
-      payloadEncryptor,
+      payloadEncryptor: ledgerPayloadEncryptor,
     });
     closePersistence = async () => {
       await pool.end();
@@ -594,10 +687,7 @@ export async function createLocalEvidenceWorkbench(
     identityRepository = createInMemoryEvidenceIdentityRepository();
     ledger = createInMemoryExecutionRepository({
       ids,
-      payloadEncryptor: createAes256GcmPayloadEncryptor({
-        key: new Uint8Array(randomBytes(32)),
-        keyId: 'ephemeral-local-session',
-      }),
+      payloadEncryptor: ledgerPayloadEncryptor,
     });
   }
 
@@ -1232,6 +1322,7 @@ export async function createLocalEvidenceWorkbench(
     artifactObjectStore: artifacts.objectStore,
     ledger,
     gateway,
+    liveCapability,
     engine,
     workspaceId,
     caseId: CASE_ID,

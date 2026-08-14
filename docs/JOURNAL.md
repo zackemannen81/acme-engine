@@ -1,5 +1,49 @@
 # Journal
 
+## 2026-08-15 — ACME-0105 Evidence live composition boundary
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0105
+- Summary: Implemented the first runtime checkpoint after ADR-0040. The
+  Evidence hosted composition can now create a closed
+  `evidence-poc1-live/1` capability, but only after hosted mode, durable
+  PostgreSQL, live provider configuration, deployment ceilings and a mounted
+  durable payload key all validate. Default/local execution remains the
+  scripted gateway and no product route can invoke live yet.
+- Shared boundary: added pure leaf package `@acme/live-safety` for recursive
+  credential-field refusal, explicit environment opt-in, environment-only
+  credential resolution and nested run/confirmation/deployment budget checks.
+  The Domain Test UI now reuses those primitives without changing its
+  `acme-live-confirmation/1` public behavior.
+- Evidence boundary: added strict `evidence-live-confirmation/1` with exact
+  case binding and no actor field. `live-model.run` is denied to organization
+  roles, case-viewer and case-reviewer and granted only to case-admin. The
+  capability releases an OpenAI gateway only when that server-derived context,
+  a matching confirmation and an attested `authorized-external`
+  `stage-a-anonymized-judicial-text/1` source are present together.
+- Durable retention: live-enabled PostgreSQL composition reads a base64
+  32-byte key from `ACME_EVIDENCE_PAYLOAD_KEY_FILE`, uses its stable configured
+  id and refuses an absent/invalid/ephemeral key. Credentials alone activate
+  nothing, startup makes no provider call and serialized capability metadata
+  contains no credential.
+- Proof: a fully authorized run reached the existing OpenAI Responses adapter
+  through an injected transport; every mixed profile refused before transport,
+  and the default composition exposed only the scripted gateway with zero
+  invocations.
+- Verification: focused suites 39 tests; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; `pnpm test` — 742 unit, 78 conformance, 62 integration,
+  26 scenario; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 212
+  Markdown files; `git diff --check`. The first `pnpm test:postgres` correctly
+  refused without configuration; a disposable `postgres:15` was then started
+  on an isolated port and all 34 PostgreSQL tests passed from a clean database.
+  The container was stopped and removed afterward.
+- Spend: none. No live provider call was made.
+- Follow-up: version the Stage A data/import provenance contract and add the
+  authenticated live job/API/browser path with content-free audit. That path
+  must use this capability rather than constructing a gateway directly.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0104 POC #1 live product applicability (ADR-0040)
 
 - Date: 2026-08-15
