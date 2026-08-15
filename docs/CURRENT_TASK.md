@@ -58,7 +58,7 @@ its typed observation version identity for all review/history routes.
 
 ### Minimum Verification Gates
 
-- [ ] Focused type/lint/static live-gate checks
+- [x] Focused type/lint/static live-gate checks
 - [ ] typecheck, lint, boundaries, test, build, format, docs and diff
 
 ## References
@@ -70,7 +70,7 @@ its typed observation version identity for all review/history routes.
 ## Checklist
 
 - [x] Freeze bounded offline correction.
-- [ ] Bind harness to public view type and correct identity field.
+- [x] Bind harness to public view type and correct identity field.
 - [ ] Run focused/canonical verification.
 - [ ] Reality-sync docs, archive and commit.
 
@@ -79,6 +79,9 @@ its typed observation version identity for all review/history routes.
 - This is a harness contract fix; product API and view schemas remain unchanged.
 - No live opt-in or credential may be loaded.
 - A checkpoint after every substep is required.
+- The handwritten response shape is removed. TypeScript now imports
+  `EvidencePrimarySourceReviewView`; all three review/history references use
+  `observationVersionId`. Typecheck, lint, format and closed-gate checks pass.
 
 ## Charter Amendment Log
 
@@ -97,8 +100,8 @@ its typed observation version identity for all review/history routes.
 
 ## Handoff and Follow-ups
 
-- Current state: task frozen; no code change and no provider call.
-- Next recommended step: apply typed identity correction.
+- Current state: typed correction and focused gates pass; no provider call.
+- Next recommended step: run canonical offline verification.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.

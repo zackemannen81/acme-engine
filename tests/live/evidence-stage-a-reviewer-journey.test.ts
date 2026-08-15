@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { listenEvidenceWorkbenchApi } from '../../apps/evidence-workbench-api/src/index.js';
 import { createLocalEvidenceWorkbench } from '../../apps/evidence-workbench-api/src/local.js';
+import type { EvidencePrimarySourceReviewView } from '../../packages/evidence-views/src/index.js';
 
 const ENABLED = process.env['ACME_EVIDENCE_STAGE_A_REVIEWER_LIVE'] === '1';
 
@@ -242,19 +243,7 @@ async function sourceObservations(
     `api/cases/${encodeURIComponent(caseId)}/sources/${encodeURIComponent(artifactVersionId)}`,
   );
   expect(response.status, await response.clone().text()).toBe(200);
-  const source = (await response.json()) as {
-    source: { artifactVersionId: string };
-    observations: Array<{
-      observationId: string;
-      exactQuote: string;
-      citation: {
-        artifactVersionId: string;
-        locatorId: string;
-        startLine: number;
-        endLine: number;
-      };
-    }>;
-  };
+  const source = (await response.json()) as EvidencePrimarySourceReviewView;
   expect(source.source.artifactVersionId).toBe(artifactVersionId);
   expect(source.observations.length).toBeGreaterThan(0);
   expect(
@@ -485,7 +474,7 @@ describe.skipIf(!ENABLED)('Evidence Stage A live reviewer journey', () => {
           await review(request, caseId, {
             commandKey: `stage-a-reviewer-d1-review-${String(index)}-${stamp}`,
             targetKind: 'observation',
-            targetVersionId: observation.observationId,
+            targetVersionId: observation.observationVersionId,
             action:
               index === 0
                 ? 'reject'
@@ -502,7 +491,7 @@ describe.skipIf(!ENABLED)('Evidence Stage A live reviewer journey', () => {
           if (observation === undefined)
             throw new Error('Missing reviewed Stage A observation.');
           const history = await request(
-            `api/cases/${encodeURIComponent(caseId)}/reviews/observation/${encodeURIComponent(observation.observationId)}`,
+            `api/cases/${encodeURIComponent(caseId)}/reviews/observation/${encodeURIComponent(observation.observationVersionId)}`,
           );
           expect(history.status, await history.clone().text()).toBe(200);
           expect(await history.json()).toMatchObject({
@@ -634,7 +623,7 @@ describe.skipIf(!ENABLED)('Evidence Stage A live reviewer journey', () => {
           await review(request, caseId, {
             commandKey: `stage-a-reviewer-d2-review-${String(index)}-${stamp}`,
             targetKind: 'observation',
-            targetVersionId: observation.observationId,
+            targetVersionId: observation.observationVersionId,
             action: 'accept',
           });
         }
