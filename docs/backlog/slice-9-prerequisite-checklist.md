@@ -170,6 +170,9 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
 ACME-0123 adds the fail-closed two-source live acceptance harness for the same
 journey. It is green offline but its paid relation/assessment/reviewer run has
 not yet occurred.
+ACME-0124 ran the first of those jobs successfully but stopped before review on
+an ACME-0123 source-view field-name mismatch. This is a concrete harness
+correction, not a new product prerequisite.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and

@@ -1,5 +1,29 @@
 # Journal
 
+## 2026-08-15 — ACME-0124 superseded after source-view mismatch
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0124
+- Preflight: D1/D2 parent and LF/NFC extraction hashes reproduced exactly;
+  fresh empty PostgreSQL, private MinIO, random mounted keys and signed S3
+  create/stat/read/list/delete passed.
+- Provider outcome: the first D1 observation job stopped normally at 66,818
+  input plus 491 output tokens. Eight output `/4` segment identifiers were
+  supplied, valid and unique; runtime derived eight exact quotes/locators and
+  committed one execution/document/commit plus eight observations.
+- Stop: the first reviewer POST supplied an undefined target because the new
+  harness expected `observationId` from a public source view that exposes
+  `observationVersionId`. The API refused 400. Zero review decisions, relations
+  or assessments wrote; five planned jobs never started.
+- Safety: no retry. Exact containers, network, D1/D2 temporary text and four
+  key/credential files were removed. Both PDFs and ignored `.env.local` are
+  unchanged; no source, secret or provider identifier entered Git.
+- Disposition: superseded rather than weakening its one-shot charter. Correct
+  the single view-contract field offline, run canonical gates and only then
+  freeze another bounded live journey.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0123 Stage A live reviewer harness
 
 - Date: 2026-08-15

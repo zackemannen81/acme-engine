@@ -521,6 +521,14 @@ questions, citation-complete assessments, stale predecessor history and a
 reviewed successor; and asserts that the primary domain shell works while
 technical audit stays unavailable. The harness is fully green offline and no
 provider call has run through it yet.
+ACME-0124 consumed the harness's first job only. D1 again produced one
+committed `@1.6.0` batch with eight valid unique segment selections and eight
+runtime-derived observations. The first reviewer request then failed closed
+before any later provider job because ACME-0123 read `observationId` from the
+primary source view instead of its public `observationVersionId` field. Zero
+review decisions, relations or assessments wrote. The one-shot task was not
+retried and all disposable state was removed; a bounded offline harness
+correction is the next dependency.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

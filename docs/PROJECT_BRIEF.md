@@ -256,6 +256,11 @@ remaining journey: six individually one-call-bounded product jobs span review,
 relations/questions, assessment, restart, later evidence, stale history,
 reassessment and final restart. It is green offline; a separately frozen paid
 acceptance remains.
+ACME-0124 proved the first D1 job again but exposed one harness-only contract
+mismatch before review: the primary source view publishes
+`observationVersionId`, not the internal-record name `observationId`. The API
+failed closed; only one of six calls occurred. Correct the harness offline
+before another separately frozen live journey.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

@@ -1536,6 +1536,13 @@ assertions cover all three reviewer standings, relations/questions, citation-
 complete reviewed assessments, stale immutable history and a reviewed
 successor; the technical-audit route must remain unavailable. The harness is
 not authority to run live and has passed only offline verification so far.
+ACME-0124's first D1 observation job passed and committed eight observations,
+then the harness failed before review because it used the domain record field
+`observationId` against the primary source view contract, which deliberately
+exposes `observationVersionId`. The API refused the undefined review target;
+no relation or assessment call occurred. This is an acceptance-harness defect,
+not a product persistence/provider defect, and requires an offline correction
+before a separately frozen new run.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and
