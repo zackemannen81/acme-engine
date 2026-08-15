@@ -1,0 +1,46 @@
+{
+  "contractVersion": "aal-acme-adapter/3",
+  "requestKey": "aal-v3-conformance-1",
+  "correlationId": "correlation-v3-1",
+  "workspaceId": "workspace-conformance",
+  "subject": {
+    "entityType": "observation",
+    "entityId": "neutral-entity-1",
+    "expectedApplicationVersion": 7
+  },
+  "engineTarget": {
+    "repository": "felixnissen/acme-engine",
+    "commit": "f21855417b75988e5bdcfcb481e4f4729a5f5fba",
+    "namespace": "neutral",
+    "entityId": "neutral-entity-1",
+    "expectedEngineRevision": 0,
+    "model": {
+      "profile": "neutral-offline",
+      "providerHint": "fixture",
+      "modelHint": "fixture-json-1"
+    },
+    "policy": {
+      "timeoutMs": 30000,
+      "maxModelCalls": 1,
+      "maxRepairCalls": 0,
+      "maxRevisionCalls": 0,
+      "retention": "hash-only"
+    }
+  },
+  "task": {
+    "id": "neutral.observe",
+    "engineTask": "observe",
+    "version": "1.0.0",
+    "contractRef": "neutral.observe@1.0.0",
+    "inputSchemaSha256": "916cb4b10edde1af5f441bf15e1209ed6c8c7b84399e75a9f694be33c46b034c",
+    "outputSchemaSha256": "96585ce4ed19a25b2e3d41d85eb4b503acdb01f84114d745cfdbce5996319ff1"
+  },
+  "sourceArtifactIds": [
+    "artifact-1",
+    "artifact-2"
+  ],
+  "input": {
+    "documentKey": "neutral-document-1",
+    "text": "Alpha is stable."
+  }
+}
