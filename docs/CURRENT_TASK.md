@@ -69,7 +69,7 @@ attention and reassessment through authenticated case-first product APIs.
 
 ### Minimum Verification Gates
 
-- [ ] Focused type/static live-gate checks
+- [x] Focused type/static live-gate checks
 - [ ] Existing Stage A PostgreSQL journey on fresh PostgreSQL
 - [ ] typecheck, lint, boundaries, test, build, format, docs and diff
 
@@ -83,8 +83,8 @@ attention and reassessment through authenticated case-first product APIs.
 ## Checklist
 
 - [x] Freeze the bounded offline harness task.
-- [ ] Implement authenticated two-source live reviewer journey.
-- [ ] Add content-free domain/restart assertions and safety guards.
+- [x] Implement authenticated two-source live reviewer journey.
+- [x] Add content-free domain/restart assertions and safety guards.
 - [ ] Run focused and canonical offline verification.
 - [ ] Reality-sync docs, archive and commit.
 
@@ -97,6 +97,11 @@ attention and reassessment through authenticated case-first product APIs.
 - API-driving is acceptance automation for the same case-first endpoints used
   by the primary browser; assertions target domain state, not ACME internals.
 - A checkpoint after every substep is required.
+- The new opt-in gate encodes six one-call executions across three process
+  compositions, uses only authenticated case-first product routes, exercises
+  accept/reject/unresolved review and refuses technical-audit substitution.
+- Typecheck passed; the gate compiles/skips closed without opt-in, and 15
+  focused live-safety/secret/composition tests passed.
 
 ## Charter Amendment Log
 
@@ -115,8 +120,9 @@ attention and reassessment through authenticated case-first product APIs.
 
 ## Handoff and Follow-ups
 
-- Current state: task frozen; no harness code or provider call yet.
-- Next recommended step: implement the smallest complete live gate.
+- Current state: complete harness and focused static gates pass; no source,
+  credential or provider call occurred.
+- Next recommended step: run fresh PostgreSQL and canonical offline gates.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.
