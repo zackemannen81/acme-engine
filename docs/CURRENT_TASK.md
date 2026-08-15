@@ -74,8 +74,8 @@ ACME-specific ignored credential, one provider call maximum and the existing
 
 ### Minimum Verification Gates
 
-- [ ] Source digest/byte/page/extraction preflight
-- [ ] Clean PostgreSQL/private S3 health and signed-adapter preflight
+- [x] Source digest/byte/page/extraction preflight
+- [x] Clean PostgreSQL/private S3 health and signed-adapter preflight
 - [ ] Exact Stage A one-call live gate
 - [ ] Post-run call/commit/observation/locator assertions
 - [ ] Credential/source/key Git hygiene and complete cleanup
@@ -92,8 +92,8 @@ ACME-specific ignored credential, one provider call maximum and the existing
 ## Checklist
 
 - [x] Activate/freeze the one-call charter.
-- [ ] Reverify/prepare external source representation.
-- [ ] Start/preflight disposable infrastructure.
+- [x] Reverify/prepare external source representation.
+- [x] Start/preflight disposable infrastructure.
 - [ ] Run exact isolated acceptance once.
 - [ ] Inspect content-free evidence and clean disposable state.
 - [ ] Reality-sync docs, archive and commit.
@@ -106,6 +106,13 @@ ACME-specific ignored credential, one provider call maximum and the existing
 - Provider selects supplied `sourceSegmentId`; runtime owns quote and locator.
 - Success proves interoperability/source binding, not exhaustive coverage.
 - A checkpoint after every substep is required.
+- Parent PDF is unchanged: 106,907 bytes, 52 pages, SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`.
+  pypdf 6.10.0 reproduced 106,072 strict LF/NFC UTF-8 bytes SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`;
+  52/52 pages non-empty, no NUL/replacement/CR.
+- Fresh loopback PostgreSQL 16 began empty; private MinIO and new random
+  mounted keys are healthy. Signed S3 create/stat/read/list/delete passed.
 
 ## Charter Amendment Log
 
@@ -113,7 +120,7 @@ ACME-specific ignored credential, one provider call maximum and the existing
 
 ## Verification
 
-- [ ] Record source/infrastructure preflight without content.
+- [x] Source/infrastructure preflight recorded above without content.
 - [ ] Record exact call/result and persistence counts.
 - [ ] Record cleanup/docs/hygiene.
 
