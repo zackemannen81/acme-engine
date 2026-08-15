@@ -16,6 +16,7 @@ export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION_V4 = '1.3.0' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION_V5 = '1.4.0' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION_V6 = '1.5.0' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION = '1.6.0' as const;
+export const EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_VERSION = '1.1.0' as const;
 export const EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_VERSION = '1.1.0' as const;
 
 export const EvidenceTaskCatalogueEntrySchema = z
@@ -62,7 +63,7 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
       },
       {
         id: EVIDENCE_RELATE_OBSERVATIONS_TASK,
-        version: EVIDENCE_TASK_VERSION,
+        version: EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_VERSION,
         earliestSlice: 3,
         role: 'analyzer',
         modelBacked: true,
@@ -123,6 +124,11 @@ export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V6 = immutableEvidence({
 });
 
 export const EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_RELATE_OBSERVATIONS_TASK,
+  version: EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_VERSION,
+});
+
+export const EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF_V1 = immutableEvidence({
   id: EVIDENCE_RELATE_OBSERVATIONS_TASK,
   version: EVIDENCE_TASK_VERSION,
 });

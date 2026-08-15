@@ -62,7 +62,7 @@ Active `evidence.relate-observations@1.1.0`, still output `/1`, with historical
 
 ### Minimum Verification Gates
 
-- [ ] Focused catalogue/prompt/hash/replay/composition tests
+- [x] Focused catalogue/prompt/hash/replay/composition tests
 - [ ] typecheck, lint, boundaries, test, PostgreSQL, build, format, docs, diff
 
 ## References
@@ -74,8 +74,8 @@ Active `evidence.relate-observations@1.1.0`, still output `/1`, with historical
 ## Checklist
 
 - [x] Freeze offline relation-prompt successor.
-- [ ] Version contract and preserve historical replay.
-- [ ] Update registrations, fixtures and focused tests.
+- [x] Version contract and preserve historical replay.
+- [x] Update registrations, fixtures and focused tests.
 - [ ] Run canonical verification.
 - [ ] Reality-sync docs, archive and commit.
 
@@ -87,6 +87,11 @@ Active `evidence.relate-observations@1.1.0`, still output `/1`, with historical
   open-question triggers and relation endpoints.
 - No live opt-in or credential may be loaded.
 - A checkpoint after every substep is required.
+- Active request hash is
+  `1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f`;
+  historical `@1.0.0` remains
+  `9c4f7a883a6363d0a652f5d90e603e610d5969715069079ed1fdd5c3516815b0`.
+  Focused type/prompt/hash/registry/module/scenario/composition tests pass 15/15.
 
 ## Charter Amendment Log
 
@@ -103,8 +108,9 @@ Active `evidence.relate-observations@1.1.0`, still output `/1`, with historical
 
 ## Handoff and Follow-ups
 
-- Current state: task frozen; no code change and no provider call.
-- Next recommended step: implement versioned contract factory/tests.
+- Current state: active/historical contracts and focused gates pass; no
+  provider call.
+- Next recommended step: run fresh PostgreSQL and canonical verification.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.
