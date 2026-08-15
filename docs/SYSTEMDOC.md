@@ -1486,7 +1486,13 @@ six verbatim quotes carried offset line ranges and semantic validation refused
 the entire batch with no commit. A later contract/runtime decision must derive
 locators deterministically from uniquely occurring exact quotes before a fresh
 acceptance. ADR-0042/ACME-0114 implement that active `@1.3.0` boundary while
-preserving historical replay; fresh provider acceptance remains. ACME-0107,
+preserving historical replay. ACME-0115 then produced complete strict JSON but
+failed closed before semantics: one range used time-only strings instead of
+full UTC timestamps, and content-free inspection showed two long multi-line
+quotes had normalized whitespace rather than exact source form. A new additive
+contract must bound quotes to a short single canonical line and withhold
+normalized temporal values unless their full date and clock are source-visible
+before another acceptance. ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected

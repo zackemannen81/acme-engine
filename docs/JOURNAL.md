@@ -1,5 +1,39 @@
 # Journal
 
+## 2026-08-15 — ACME-0115 superseded after temporal schema refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0115
+- Summary: Ran one separately frozen Stage A provider gate against active
+  `evidence.observe-artifact@1.3.0` under the user-approved ACME credential and
+  200 SEK prepaid monetary ceiling. Exactly one provider call occurred.
+- Preflight: the unchanged 106,907-byte, 52-page parent PDF retained SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  pypdf 6.10.0 reproduced the 106,072-byte LF/NFC UTF-8 representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean PostgreSQL/MinIO and random mounted keys passed empty-database and
+  signed S3 create/stat/read/delete checks.
+- Provider result: `gpt-5.6-luna` returned stop, 36,871 input + 2,266 output =
+  39,137 total tokens and six complete strict-JSON candidates.
+- Refusal: candidate six supplied a range with two eight-character clock
+  strings visible in its quote but no complete date, `T` or `Z`; output `/2`
+  requires full UTC ISO values. Strict schema validation emitted two
+  `MODEL_RESPONSE_SCHEMA` issues before semantic locator validation. Four
+  quotes were exact/unique; two long multi-line candidates preserved text only
+  after whitespace normalization and were not treated as exact.
+- Safety: the execution stored one encrypted succeeded model call but zero
+  engine documents and zero product observations. No retry/repair ran. Both
+  `--rm` containers, their network and the exact source/key/credential temp
+  directory were removed; original PDF and ignored `.env.local` are unchanged.
+- Disposition: this one-call charter is consumed and superseded. The next
+  offline contract must require short single-line verbatim quotes and require
+  temporal `unknown` unless each normalized value's full date and clock occur
+  inside that quote. Historical replay must remain exact.
+- Verification: content-free PostgreSQL call/commit/issue assertions;
+  `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0114 runtime-derived observation locators
 
 - Date: 2026-08-15

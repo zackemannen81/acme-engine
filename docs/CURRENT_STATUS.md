@@ -465,9 +465,16 @@ was ADR-0042/ACME-0114. Active `evidence.observe-artifact@1.3.0` output `/2`
 removes line fields from the provider schema, validates that each exact quote
 occurs exactly once in the canonical artifact and derives inclusive line
 locators in runtime before identity or projection. Historical `@1.0.0`–
-`@1.2.0` output `/1` remains exact for replay. Full-source coverage still
-needs a separate segmentation/coverage workflow; a fresh real-provider
-acceptance remains.
+`@1.2.0` output `/1` remains exact for replay. ACME-0115's fresh `@1.3.0` call
+then returned complete strict JSON with six candidates, but schema validation
+refused one time-only range (two eight-character clock values rather than full
+UTC ISO timestamps). Four quotes were exact/unique; two long multi-line quotes
+matched source only after whitespace normalization and remained correctly
+unbound. Zero engine documents and product observations committed. The next
+offline dependency is a replay-compatible contract requiring short single-line
+verbatim quotes and `unknown` temporal bounds unless complete dates and clocks
+are visible in the quote. Full-source coverage still needs a separate
+segmentation/coverage workflow.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -521,7 +528,7 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
-- **ACME-0112 / ACME-0113 / ACME-0114:** Versioned the observation contract as a
+- **ACME-0112 through ACME-0115:** Versioned the observation contract as a
   bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
   retaining historical replay. The subsequent sole real call returned
   complete strict JSON with six verbatim source quotes, proving truncation was
@@ -529,7 +536,9 @@ redaction and Slice 9 readiness.
   validation refused all six and committed nothing. ADR-0042/ACME-0114 now
   remove locator fields from active output `/2`, require one exact source
   occurrence and derive canonical line ranges in runtime while retaining all
-  historical request/output contracts for replay.
+  historical request/output contracts for replay. ACME-0115's subsequent sole
+  call exposed time-only normalized ranges and two whitespace-normalized long
+  multi-line quotes; strict schema/exact binding again committed nothing.
 - **ACME-0110:** Completed the Stage A engineering journey through reviewed
   reassessment. Additive source-complete assessment input, command/job/audit
   contracts and browser/API/worker execution preserve historical synthetic

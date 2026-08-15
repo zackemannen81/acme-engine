@@ -195,6 +195,11 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       occurring exact quote, preserving historical contract replay.
       ADR-0042/ACME-0114 implement active `@1.3.0` output `/2`; re-run the
       separately budgeted real-provider gate only after the offline checkpoint.
+- [ ] Require active candidates to use a short exact quote from one canonical
+      source line, and permit normalized exact/range/approximate time only when
+      every complete calendar date and clock value is visible in that quote;
+      otherwise require `unknown`. ACME-0115 exposed both multi-line whitespace
+      normalization and a time-only range under the current contract.
 - [ ] Decide deterministic segmentation, segment identities, deduplication and
       reviewer-visible coverage before making any exhaustive full-source
       analysis claim. A successful ADR-0041 batch proves candidate validity,
