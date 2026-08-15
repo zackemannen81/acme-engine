@@ -13,6 +13,7 @@ import {
   EVIDENCE_DELTA_SCHEMA_VERSION,
   deriveEvidenceArtifactVersionId,
   deriveEvidenceContentHash,
+  buildEvidenceSourceSegments,
   evidenceLineCount,
   locateUniqueEvidenceQuote,
   evidenceModule,
@@ -21,6 +22,7 @@ import {
   evidenceObserveArtifactContractV2,
   evidenceObserveArtifactContractV3,
   evidenceObserveArtifactContractV4,
+  evidenceObserveArtifactContractV5,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -29,6 +31,7 @@ import {
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
   type EvidenceObserveArtifactOutputV1,
+  type EvidenceObserveArtifactOutputV3,
   type EvidenceState,
 } from '../src/index.js';
 
@@ -69,12 +72,11 @@ const input: EvidenceObserveArtifactInput = {
   ],
 };
 const output: EvidenceObserveArtifactOutput = {
-  schemaVersion: 'evidence-observe-artifact-output/3',
+  schemaVersion: 'evidence-observe-artifact-output/4',
   observations: [
     {
       kind: 'statement-occurrence',
-      exactQuote:
-        'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+      sourceSegmentId: 'line-000004-segment-0001',
       actorReference: {
         status: 'resolved',
         sourceLabel: 'Nera Sol',
@@ -90,8 +92,7 @@ const output: EvidenceObserveArtifactOutput = {
     },
     {
       kind: 'statement-occurrence',
-      exactQuote:
-        'Nera Sol: The indicator showed amber while the hatch was open.',
+      sourceSegmentId: 'line-000006-segment-0001',
       actorReference: {
         status: 'resolved',
         sourceLabel: 'Nera Sol',
@@ -107,9 +108,23 @@ const output: EvidenceObserveArtifactOutput = {
     },
   ],
 };
+const historicalOutputV3: EvidenceObserveArtifactOutputV3 = {
+  schemaVersion: 'evidence-observe-artifact-output/3',
+  observations: output.observations.map((candidate, index) => {
+    const { sourceSegmentId: _sourceSegmentId, ...domainCandidate } = candidate;
+    void _sourceSegmentId;
+    return {
+      ...domainCandidate,
+      exactQuote:
+        index === 0
+          ? 'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.'
+          : 'Nera Sol: The indicator showed amber while the hatch was open.',
+    };
+  }),
+};
 const legacyOutput: EvidenceObserveArtifactOutputV1 = {
   schemaVersion: 'evidence-observe-artifact-output/1',
-  observations: output.observations.map((candidate, index) => ({
+  observations: historicalOutputV3.observations.map((candidate, index) => ({
     ...candidate,
     startLine: index === 0 ? 4 : 6,
     endLine: index === 0 ? 4 : 6,
@@ -173,8 +188,16 @@ describe('evidence.observe-artifact', () => {
       now: '2026-08-11T11:00:00.000Z',
     });
     expect(computeModelRequestHash(request)).toBe(
-      'f99652e8d7eee64f02ad931ecfc0ba34543a12aa38d8ef2aef6a8eb4a589314f',
+      '827587d11888c53edeef458499ce6c2a409b611f9be9cd10f706512654c11081',
     );
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV5.buildRequest(projected, {
+          executionId: 'execution-evidence-observe-single-line-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('f99652e8d7eee64f02ad931ecfc0ba34543a12aa38d8ef2aef6a8eb4a589314f');
     expect(
       computeModelRequestHash(
         evidenceObserveArtifactContractV4.buildRequest(projected, {
@@ -215,7 +238,7 @@ describe('evidence.observe-artifact', () => {
     });
     expect(request.messages[0]?.content[0]).toMatchObject({
       type: 'text',
-      text: expect.stringContaining('one canonical source line'),
+      text: expect.stringContaining('Select one supplied sourceSegmentId'),
     });
     expect(request.messages[0]?.content[0]).toMatchObject({
       type: 'text',
@@ -223,7 +246,7 @@ describe('evidence.observe-artifact', () => {
     });
     expect(request.messages[0]?.content[0]).toMatchObject({
       type: 'text',
-      text: expect.stringContaining('do not estimate or return line numbers'),
+      text: expect.stringContaining('never join segments'),
     });
     const jsonSchema = request.output.jsonSchema as {
       readonly properties?: {
@@ -238,8 +261,12 @@ describe('evidence.observe-artifact', () => {
       maxItems: 8,
     });
     expect(JSON.stringify(request.output.jsonSchema)).not.toMatch(
-      /startLine|endLine/u,
+      /startLine|endLine|exactQuote/u,
     );
+    expect(request.messages[1]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('line-000004-segment-0001'),
+    });
     expect(Object.isFrozen(request)).toBe(true);
   });
 
@@ -252,14 +279,14 @@ describe('evidence.observe-artifact', () => {
     for (const count of [1, 8]) {
       expect(
         evidenceObserveArtifactContract.outputSchema.safeParse({
-          schemaVersion: 'evidence-observe-artifact-output/3',
+          schemaVersion: 'evidence-observe-artifact-output/4',
           observations: Array.from({ length: count }, () => candidate),
         }).success,
       ).toBe(true);
     }
     expect(
       evidenceObserveArtifactContract.outputSchema.safeParse({
-        schemaVersion: 'evidence-observe-artifact-output/3',
+        schemaVersion: 'evidence-observe-artifact-output/4',
         observations: Array.from({ length: 9 }, () => candidate),
       }).success,
     ).toBe(false);
@@ -277,37 +304,45 @@ describe('evidence.observe-artifact', () => {
     ).toBe(false);
     expect(
       evidenceObserveArtifactContract.outputSchema.safeParse({
-        schemaVersion: 'evidence-observe-artifact-output/3',
+        schemaVersion: 'evidence-observe-artifact-output/4',
         observations: [legacyCandidate],
       }).success,
     ).toBe(false);
   });
 
-  it('rejects active multiline and oversized quotes while historical v4 remains replayable', () => {
+  it('rejects active quote authorship and malformed segment ids while historical v5 remains replayable', () => {
     const candidate = output.observations[0];
     if (candidate === undefined) throw new Error('Missing fixture candidate.');
-    for (const exactQuote of ['first\nsecond', 'x'.repeat(501)]) {
+    for (const sourceSegmentId of ['missing', 'line-1-segment-1']) {
       expect(
         evidenceObserveArtifactContract.outputSchema.safeParse({
-          schemaVersion: 'evidence-observe-artifact-output/3',
-          observations: [{ ...candidate, exactQuote }],
+          schemaVersion: 'evidence-observe-artifact-output/4',
+          observations: [{ ...candidate, sourceSegmentId }],
         }).success,
       ).toBe(false);
     }
     expect(
-      evidenceObserveArtifactContractV4.outputSchema.safeParse({
-        schemaVersion: 'evidence-observe-artifact-output/2',
-        observations: [{ ...candidate, exactQuote: 'first\nsecond' }],
+      evidenceObserveArtifactContract.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/4',
+        observations: [{ ...candidate, exactQuote: 'provider text' }],
+      }).success,
+    ).toBe(false);
+    const historical = historicalOutputV3.observations[0];
+    expect(
+      evidenceObserveArtifactContractV5.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/3',
+        observations: [{ ...historical, exactQuote: 'first line' }],
       }).success,
     ).toBe(true);
   });
 
-  it('keeps all five observation contract versions resolvable for replay', () => {
+  it('keeps all six observation contract versions resolvable for replay', () => {
     const registry = createContractRegistry([
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
       evidenceObserveArtifactContractV3,
       evidenceObserveArtifactContractV4,
+      evidenceObserveArtifactContractV5,
       evidenceObserveArtifactContract,
     ]);
     expect(
@@ -315,12 +350,13 @@ describe('evidence.observe-artifact', () => {
         .list()
         .filter(({ id }) => id === 'evidence.observe-artifact')
         .map(({ version }) => version),
-    ).toEqual(['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0']);
+    ).toEqual(['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0']);
     for (const contract of [
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
       evidenceObserveArtifactContractV3,
       evidenceObserveArtifactContractV4,
+      evidenceObserveArtifactContractV5,
       evidenceObserveArtifactContract,
     ]) {
       expect(registry.get(contract.ref)).toBe(contract);
@@ -352,7 +388,29 @@ describe('evidence.observe-artifact', () => {
     ]);
   });
 
-  it('derives unique one-line and multi-line quote locators and refuses ambiguity', () => {
+  it('builds stable bounded single-line segments and retains historical quote lookup', () => {
+    expect(buildEvidenceSourceSegments(text)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceSegmentId: 'line-000004-segment-0001',
+          exactQuote:
+            'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+          startLine: 4,
+          endLine: 4,
+        }),
+      ]),
+    );
+    const long = buildEvidenceSourceSegments(`a\n${'😀'.repeat(501)}\n   `);
+    expect(
+      long.map(({ sourceSegmentId, exactQuote }) => ({
+        sourceSegmentId,
+        length: [...exactQuote].length,
+      })),
+    ).toEqual([
+      { sourceSegmentId: 'line-000001-segment-0001', length: 1 },
+      { sourceSegmentId: 'line-000002-segment-0001', length: 500 },
+      { sourceSegmentId: 'line-000002-segment-0002', length: 1 },
+    ]);
     expect(
       locateUniqueEvidenceQuote(
         text,
@@ -378,7 +436,7 @@ describe('evidence.observe-artifact', () => {
     });
   });
 
-  it('rejects quote, kind, actor merge, invented time and prohibited conclusions', () => {
+  it('rejects unknown segments, kind, actor merge, invented time and prohibited conclusions', () => {
     const ambiguousInput: EvidenceObserveArtifactInput = {
       ...input,
       actorRoster: [
@@ -402,18 +460,22 @@ describe('evidence.observe-artifact', () => {
       );
     }
     const bad: EvidenceObserveArtifactOutput = {
-      schemaVersion: 'evidence-observe-artifact-output/3',
+      schemaVersion: 'evidence-observe-artifact-output/4',
       observations: [
         {
-          ...first,
           kind: 'exhibit-assertion',
-          exactQuote: 'Nera Sol: quote not present',
+          sourceSegmentId: first.sourceSegmentId,
           sourceActorReference: first.actorReference,
           temporalBound: {
             kind: 'exact',
             role: 'claimed-event-time',
             at: '2026-03-12T14:11:00Z',
           },
+        },
+        {
+          ...first,
+          sourceSegmentId: 'line-999999-segment-0001',
+          temporalBound: null,
         },
         {
           ...second,
@@ -431,25 +493,23 @@ describe('evidence.observe-artifact', () => {
     expect(codes).toEqual(
       expect.arrayContaining([
         'EVIDENCE_OBSERVATION_KIND_MISMATCH',
-        'EVIDENCE_QUOTE_NOT_FOUND',
+        'EVIDENCE_SOURCE_SEGMENT_NOT_FOUND',
         'EVIDENCE_ACTOR_AMBIGUITY_MUST_REMAIN_UNRESOLVED',
         'EVIDENCE_TEMPORAL_VALUE_NOT_SOURCE_BOUND',
         'EVIDENCE_PROHIBITED_CONCLUSION',
       ]),
     );
-    const repeatedInput = {
+    const repeatedInput: EvidenceObserveArtifactInput = {
       ...input,
       artifactVersion: {
         ...input.artifactVersion,
-        text: `${input.artifactVersion.text}\n${first.exactQuote}`,
+        text: `${input.artifactVersion.text}\nNera Sol: I reached the greenhouse hatch between 14:00 and 14:10.`,
         lineCount: input.artifactVersion.lineCount + 1,
       },
     };
     expect(
-      evidenceObserveArtifactContract
-        .validateSemantics(output, repeatedInput)
-        .map(({ code }) => code),
-    ).toContain('EVIDENCE_QUOTE_AMBIGUOUS');
+      evidenceObserveArtifactContract.validateSemantics(output, repeatedInput),
+    ).toEqual([]);
   });
 
   it('commits a source plus two observations in one evidence revision', async () => {

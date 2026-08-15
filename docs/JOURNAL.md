@@ -1,5 +1,37 @@
 # Journal
 
+## 2026-08-15 — ACME-0118 runtime-derived observation quotes
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0118
+- Decision: ADR-0043 removes exact-quote authorship from the active provider
+  contract. Active `evidence.observe-artifact@1.5.0` output `/4` selects one
+  runtime-defined `sourceSegmentId`; runtime derives the entire exact quote and
+  its one-line locator.
+- Segmentation: canonical LF/NFC text becomes deterministic non-empty segments
+  that never cross a line and contain at most 500 Unicode code points. Long
+  lines split without normalization. Unknown identifiers refuse; duplicate
+  source text remains unambiguous because segment identity carries its line.
+- Replay/identity: `@1.0.0` through `@1.4.0` and outputs `/1` through `/3`
+  remain registered with unchanged pinned request hashes. Active development
+  and evaluation fixtures select segments, while runtime-derived quote,
+  locator and resulting synthetic observation identities remain unchanged.
+- Verification: focused segment/contract/schema/replay/fixture/engine/live-job
+  suite 34 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 751 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh disposable PostgreSQL 16
+  container; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 228
+  Markdown files; `git diff --check`.
+- Correction during verification: the first full unit run used stale built
+  fixture hashes after source hashes were re-pinned. Rebuilding package outputs
+  synchronized package consumers; focused failures and the exact full suite
+  then passed. No behavior was weakened.
+- Safety/follow-up: no provider call, real source or credential was accessed.
+  Freeze a separate one-call acceptance against active `@1.5.0` under the
+  approved 200 SEK monetary ceiling; a valid batch remains non-exhaustive.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0117 superseded after exact-quote refusal
 
 - Date: 2026-08-15

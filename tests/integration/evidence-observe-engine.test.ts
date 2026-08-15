@@ -16,7 +16,6 @@ import {
   type ModelGateway,
 } from '../../packages/core/src/index.js';
 import {
-  EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
   developmentObserveArtifactInput,
   developmentObserveArtifactOutput,
 } from '../../packages/evidence-testing/src/index.js';
@@ -89,7 +88,7 @@ describe('Evidence observe execution reliability', () => {
             tools: false,
             vision: false,
             maxInputTokens: 32_000,
-            maxOutputTokens: 4_096,
+            maxOutputTokens: 8_192,
           },
         },
       ],
@@ -98,7 +97,8 @@ describe('Evidence observe execution reliability', () => {
           executionId,
           callKey: 'model:0',
           selection,
-          expectedRequestHash: EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
+          expectedRequestHash:
+            '92998d1fd1c9463218320845fa27bce2f82af957b19ecbb6e1a0aa8053b3cf12',
           outcome: {
             kind: 'response',
             response: {

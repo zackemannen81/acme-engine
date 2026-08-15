@@ -31,8 +31,10 @@ export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-observe-artifact-output/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V2 =
   'evidence-observe-artifact-output/2' as const;
-export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3 =
   'evidence-observe-artifact-output/3' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+  'evidence-observe-artifact-output/4' as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
   'evidence-relate-observations-input/1' as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
@@ -694,7 +696,7 @@ export const EvidenceSingleLineExactQuoteSchema =
     'Exact quote must be one canonical source line.',
   );
 
-export const EvidenceStatementOccurrenceCandidateSchema = z
+export const EvidenceStatementOccurrenceCandidateV3Schema = z
   .object({
     kind: z.literal('statement-occurrence'),
     exactQuote: EvidenceSingleLineExactQuoteSchema,
@@ -703,10 +705,46 @@ export const EvidenceStatementOccurrenceCandidateSchema = z
   })
   .strict();
 
-export const EvidenceExhibitAssertionCandidateSchema = z
+export const EvidenceExhibitAssertionCandidateV3Schema = z
   .object({
     kind: z.literal('exhibit-assertion'),
     exactQuote: EvidenceSingleLineExactQuoteSchema,
+    sourceActorReference: actorReferenceCandidate.nullable(),
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputV3Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3,
+    ),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV3Schema,
+        EvidenceExhibitAssertionCandidateV3Schema,
+      ]),
+    ),
+  })
+  .strict();
+
+export const EvidenceSourceSegmentIdSchema = z
+  .string()
+  .regex(/^line-[0-9]{6}-segment-[0-9]{4}$/u);
+
+export const EvidenceStatementOccurrenceCandidateSchema = z
+  .object({
+    kind: z.literal('statement-occurrence'),
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
+    actorReference: actorReferenceCandidate,
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceExhibitAssertionCandidateSchema = z
+  .object({
+    kind: z.literal('exhibit-assertion'),
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
     sourceActorReference: actorReferenceCandidate.nullable(),
     temporalBound: temporalCandidate.nullable(),
   })
@@ -729,6 +767,7 @@ export const EvidenceObserveArtifactReplayOutputSchema = z.discriminatedUnion(
   [
     EvidenceObserveArtifactOutputV1Schema,
     EvidenceObserveArtifactOutputV2Schema,
+    EvidenceObserveArtifactOutputV3Schema,
     EvidenceObserveArtifactOutputSchema,
   ],
 );
@@ -967,6 +1006,9 @@ export type EvidenceObserveArtifactOutputV1 = z.infer<
 >;
 export type EvidenceObserveArtifactOutputV2 = z.infer<
   typeof EvidenceObserveArtifactOutputV2Schema
+>;
+export type EvidenceObserveArtifactOutputV3 = z.infer<
+  typeof EvidenceObserveArtifactOutputV3Schema
 >;
 export type EvidenceObserveArtifactReplayOutput = z.infer<
   typeof EvidenceObserveArtifactReplayOutputSchema

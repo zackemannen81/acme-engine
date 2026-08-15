@@ -237,7 +237,9 @@ ACME-0117's sole fresh call passed strict output and avoided the temporal
 schema defect, but exact runtime binding refused five of eight provider-authored
 one-line quotes because they were not verbatim canonical source substrings.
 The next offline contract must move quote authority to runtime-defined bounded
-source segments while retaining historical replay.
+source segments while retaining historical replay. ADR-0043/ACME-0118 now do
+so in active `@1.5.0` output `/4`: the provider selects a deterministic segment
+identifier and runtime derives the full exact quote and one-line locator.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

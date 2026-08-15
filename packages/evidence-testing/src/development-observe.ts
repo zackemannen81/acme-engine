@@ -1,6 +1,7 @@
 import {
   EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
+  buildEvidenceSourceSegments,
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   type EvidenceObserveArtifactInput,
@@ -10,7 +11,7 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '4d9f62702e8439c51bcf3c1e8ed910d762e4114ba2c78be897589240c64104f4' as const;
+  '92998d1fd1c9463218320845fa27bce2f82af957b19ecbb6e1a0aa8053b3cf12' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
   return EvidenceObserveArtifactInputSchema.parse({
@@ -26,13 +27,23 @@ export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput 
 }
 
 export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutput {
+  const source = loadSourceArtifactVersion('DEV-T01', 1);
+  const segmentId = (exactQuote: string): string => {
+    const segment = buildEvidenceSourceSegments(source.text).find(
+      (item) => item.exactQuote === exactQuote,
+    );
+    if (segment === undefined)
+      throw new Error('Development quote is not one complete source segment.');
+    return segment.sourceSegmentId;
+  };
   return EvidenceObserveArtifactOutputSchema.parse({
     schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
     observations: [
       {
         kind: 'statement-occurrence',
-        exactQuote:
+        sourceSegmentId: segmentId(
           'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+        ),
         actorReference: {
           status: 'resolved',
           sourceLabel: 'Nera Sol',
@@ -48,8 +59,9 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
       },
       {
         kind: 'statement-occurrence',
-        exactQuote:
+        sourceSegmentId: segmentId(
           'Nera Sol: The indicator showed amber while the hatch was open.',
+        ),
         actorReference: {
           status: 'resolved',
           sourceLabel: 'Nera Sol',

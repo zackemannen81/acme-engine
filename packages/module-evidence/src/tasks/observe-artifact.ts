@@ -12,7 +12,10 @@ import {
 } from '@acme/core';
 
 import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
-import { locateUniqueEvidenceQuote } from '../canonical-text.js';
+import {
+  locateUniqueEvidenceQuote,
+  resolveEvidenceSourceSegment,
+} from '../canonical-text.js';
 import {
   EvidenceCorrectionPairingError,
   pairEvidenceCorrectionObservations,
@@ -132,13 +135,34 @@ function observation(
   input: EvidenceObserveArtifactInput,
 ): EvidenceObservation {
   const artifactVersionId = input.artifactVersion.artifactVersionId;
+  const selectedSegment =
+    'sourceSegmentId' in candidate
+      ? resolveEvidenceSourceSegment(
+          input.artifactVersion.text,
+          candidate.sourceSegmentId,
+        )
+      : undefined;
+  if ('sourceSegmentId' in candidate && selectedSegment === undefined) {
+    throw new AcmeError({
+      code: 'DOMAIN_INVALID_RESULT',
+      message: 'Active observation source segment does not exist.',
+      stage: 'interpreting',
+      retryable: false,
+    });
+  }
+  const exactQuote =
+    'exactQuote' in candidate
+      ? candidate.exactQuote
+      : (selectedSegment?.exactQuote as string);
   const lineRange =
     'startLine' in candidate && 'endLine' in candidate
       ? { startLine: candidate.startLine, endLine: candidate.endLine }
-      : locateUniqueEvidenceQuote(
-          input.artifactVersion.text,
-          candidate.exactQuote,
-        );
+      : selectedSegment !== undefined
+        ? {
+            startLine: selectedSegment.startLine,
+            endLine: selectedSegment.endLine,
+          }
+        : locateUniqueEvidenceQuote(input.artifactVersion.text, exactQuote);
   if ('status' in lineRange && lineRange.status !== 'unique') {
     throw new AcmeError({
       code: 'DOMAIN_INVALID_RESULT',
@@ -178,7 +202,7 @@ function observation(
     kind: candidate.kind,
     artifactVersionId,
     locatorId,
-    exactQuote: candidate.exactQuote,
+    exactQuote,
     sourceActorReference: sourceActor,
     temporalBound: temporal,
   });
@@ -190,7 +214,7 @@ function observation(
           observationId,
           artifactVersionId,
           locator,
-          exactQuote: candidate.exactQuote,
+          exactQuote,
           actorReference: sourceActor as EvidenceActorReference,
           temporalBound: temporal,
         }
@@ -200,7 +224,7 @@ function observation(
           observationId,
           artifactVersionId,
           locator,
-          exactQuote: candidate.exactQuote,
+          exactQuote,
           sourceActorReference: sourceActor,
           temporalBound: temporal,
         },

@@ -75,3 +75,6 @@ current architecture.
 - [`0038-bounded-text-ingestion-and-immutable-redaction.md`](0038-bounded-text-ingestion-and-immutable-redaction.md)
 - [`0039-evidence-workbench-live-model-boundary.md`](0039-evidence-workbench-live-model-boundary.md)
 - [`0040-poc-1-live-product-applicability.md`](0040-poc-1-live-product-applicability.md)
+- [`0041-bounded-observation-candidate-batches.md`](0041-bounded-observation-candidate-batches.md)
+- [`0042-runtime-derived-observation-locators.md`](0042-runtime-derived-observation-locators.md)
+- [`0043-runtime-derived-observation-quotes.md`](0043-runtime-derived-observation-quotes.md)

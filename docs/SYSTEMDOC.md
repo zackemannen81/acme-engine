@@ -1092,7 +1092,7 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.4.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.5.0` task projects one immutable source plus an
 explicit actor roster, uses strict structured output and refuses invalid quote,
 kind, actor, temporal and prohibited-authority candidates before commit. Its
 active prompt returns one to eight materially distinct, explicitly non-
@@ -1102,9 +1102,12 @@ quotes must occur exactly once in canonical source text, then runtime derives
 the inclusive line range before locator/observation identity and projection.
 Output `/3` additionally requires a quote from one canonical source line, at
 most 500 characters; its prompt requires temporal `unknown` when a complete
-date and clock are not both visible in that quote. Absent or duplicate quotes
-refuse without fuzzy matching. Historical `@1.0.0`–`@1.3.0` output `/1`–`/2`
-contracts remain registered unchanged for replay.
+date and clock are not both visible in that quote. Active output `/4` removes
+provider-authored quote text entirely. Runtime supplies deterministic non-empty
+single-line segments of at most 500 Unicode code points; the provider selects
+`sourceSegmentId`, then runtime derives the full quote and one-line locator.
+Unknown segment IDs refuse without fuzzy matching. Historical `@1.0.0`–
+`@1.4.0` outputs `/1`–`/3` remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing. The registered
 `evidence.relate-observations@1.0.0` task accepts current observations, proposes
@@ -1402,9 +1405,9 @@ fail before publishing a partial projection.
 `evidence-live-observation-command/1`, and `evidence-product-job/2` records a
 four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
 canonical text through the audited artifact service, executes
-`evidence.observe-artifact@1.4.0`, and writes product observations plus one
+`evidence.observe-artifact@1.5.0`, and writes product observations plus one
 evidence-revision advance only after the execution ledger reports committed.
-The historical `@1.0.0`–`@1.3.0` prompts/output remain registered for replay.
+The historical `@1.0.0`–`@1.4.0` prompts/output remain registered for replay.
 ADR-0041 makes the active result a one-to-eight
 candidate batch with `minItems`/`maxItems` preserved on the provider wire and
 an 8,192-output-token request. A successful batch is not evidence of exhaustive
@@ -1412,6 +1415,8 @@ full-source coverage; deterministic segmentation and coverage projection need
 a separate workflow decision. ADR-0042 removes model-authored line fields from
 active output `/2`; runtime accepts only a globally unique verbatim quote and
 derives its canonical line locator before the engine may commit.
+ADR-0043 removes exact-quote authorship from active output `/4`; runtime-defined
+segment identity now supplies both immutable quote text and locator.
 
 Provider responses use `encrypted-payload` retention. If product projection is
 interrupted after provider success, relaunching the same command uses the
@@ -1501,10 +1506,11 @@ complete strict candidates and no invalid temporal normalization, but five
 one-line strings were not verbatim canonical source substrings. Four compressed
 content across line boundaries with whitespace and/or punctuation changes; one
 also changed alphanumeric content. Exact runtime validation refused the batch
-with no commit. The next additive offline contract must make exact quote text
-runtime-derived from a deterministic bounded source segment selected by the
-provider, or prove an equivalently strict source-authority design, while all
-historical request/output contracts remain exact. Another acceptance remains.
+with no commit. ADR-0043/ACME-0118 implement the additive successor as active
+`@1.5.0` output `/4`: provider output selects one runtime-defined bounded
+segment identifier; runtime copies its complete exact text and derives its
+single-line locator. Unknown selectors refuse, and all historical request/
+output contracts remain exact. Another acceptance remains.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

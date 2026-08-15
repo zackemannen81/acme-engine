@@ -1,10 +1,12 @@
 import {
   EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
+  buildEvidenceSourceSegments,
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
+  type EvidenceObserveArtifactOutputV3,
 } from '@acme/module-evidence';
 
 import { loadSourceArtifactVersion } from './corpus.js';
@@ -35,11 +37,21 @@ function input(
 }
 
 function output(
-  observations: EvidenceObserveArtifactOutput['observations'],
+  logicalArtifactId: string,
+  versionOrdinal: number,
+  observations: EvidenceObserveArtifactOutputV3['observations'],
 ): EvidenceObserveArtifactOutput {
+  const segments = buildEvidenceSourceSegments(
+    loadSourceArtifactVersion(logicalArtifactId, versionOrdinal).text,
+  );
   return EvidenceObserveArtifactOutputSchema.parse({
     schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
-    observations,
+    observations: observations.map(({ exactQuote, ...observation }) => {
+      const segment = segments.find((item) => item.exactQuote === exactQuote);
+      if (segment === undefined)
+        throw new Error('Evaluation quote is not one complete source segment.');
+      return { ...observation, sourceSegmentId: segment.sourceSegmentId };
+    }),
   });
 }
 
@@ -59,9 +71,9 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T01',
       versionOrdinal: 1,
       requestHash:
-        '0f1da79b773afff6229e6fafc11bcc56362376c2c067a5963ebbdc619079a90a',
+        'ea78b7627ab98f2478025090c1e9cf805613e1b71603acedd12c2d6cb204028d',
       input: input('EVAL-T01', 1),
-      output: output([
+      output: output('EVAL-T01', 1, [
         {
           kind: 'statement-occurrence',
           exactQuote: 'Iven Marr: I arrived at about 09:18.',
@@ -101,9 +113,9 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T01',
       versionOrdinal: 2,
       requestHash:
-        '392d938136022090fc18820b4ce2ceaa0cd15a3a7bbec6c41ad0b4afe4f069b5',
+        '319aa529195025f7e498cd7d35224a2555af969e0e6b73d0125d6adac07cf94f',
       input: input('EVAL-T01', 2),
-      output: output([
+      output: output('EVAL-T01', 2, [
         {
           kind: 'statement-occurrence',
           exactQuote: 'Iven Marr: I arrived at about 09:08.',
@@ -143,9 +155,9 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T02',
       versionOrdinal: 1,
       requestHash:
-        'ebe5ef42304910c499846cacfc250d3670c3239815a6a73c6ea25f0888469d91',
+        'e15c63bc09dccf06c0ad2a93e7488d756b47de9df36e4b1de79787afdd2ffda9',
       input: input('EVAL-T02', 1),
-      output: output([
+      output: output('EVAL-T02', 1, [
         {
           kind: 'statement-occurrence',
           exactQuote:
@@ -187,9 +199,9 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T03',
       versionOrdinal: 1,
       requestHash:
-        'feab716def8fa1dcf32c20ee440e673a92bd52e6541ee15e2383ab2ef4edcbe7',
+        'e6f44698710a8109e2a89518f3a8c8b6037231331fa565d8013edc537130d8a1',
       input: input('EVAL-T03', 1),
-      output: output([
+      output: output('EVAL-T03', 1, [
         {
           kind: 'statement-occurrence',
           exactQuote:
@@ -230,9 +242,9 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-E01',
       versionOrdinal: 1,
       requestHash:
-        'e56e0f6d25252a95290cd9ad8633207f3bc54cd433a3d76be7880bd5fbff1b8a',
+        '5685838f95962584de6f7d6cac8496e15a625843202d42a5f092f024b023acf4',
       input: input('EVAL-E01', 1),
-      output: output([
+      output: output('EVAL-E01', 1, [
         {
           kind: 'exhibit-assertion',
           exactQuote: '09:16:00 | SC-4 | panel_changed_to_closed | I. Mar',

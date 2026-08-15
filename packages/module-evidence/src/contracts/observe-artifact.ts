@@ -10,8 +10,10 @@ import {
 } from '@acme/core';
 
 import {
+  buildEvidenceSourceSegments,
   exactQuoteOccurrenceCount,
   locateUniqueEvidenceQuote,
+  resolveEvidenceSourceSegment,
 } from '../canonical-text.js';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
@@ -19,6 +21,7 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V2,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V3,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V4,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V5,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -26,10 +29,12 @@ import {
   EvidenceObserveArtifactOutputSchema,
   EvidenceObserveArtifactOutputV1Schema,
   EvidenceObserveArtifactOutputV2Schema,
+  EvidenceObserveArtifactOutputV3Schema,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
   type EvidenceObserveArtifactOutputV1,
   type EvidenceObserveArtifactOutputV2,
+  type EvidenceObserveArtifactOutputV3,
 } from '../schemas.js';
 
 const PROHIBITED_CONCLUSION =
@@ -54,6 +59,13 @@ const EvidenceBoundedObserveArtifactOutputV1Schema =
 const EvidenceBoundedObserveArtifactOutputV2Schema =
   EvidenceObserveArtifactOutputV2Schema.extend({
     observations: EvidenceObserveArtifactOutputV2Schema.shape.observations
+      .min(1)
+      .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
+  });
+
+const EvidenceBoundedObserveArtifactOutputV3Schema =
+  EvidenceObserveArtifactOutputV3Schema.extend({
+    observations: EvidenceObserveArtifactOutputV3Schema.shape.observations
       .min(1)
       .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
   });
@@ -126,13 +138,15 @@ function createContract<
   TOutput extends
     | EvidenceObserveArtifactOutput
     | EvidenceObserveArtifactOutputV1
-    | EvidenceObserveArtifactOutputV2,
+    | EvidenceObserveArtifactOutputV2
+    | EvidenceObserveArtifactOutputV3,
 >(configuration: {
   readonly ref: ContractRef;
   readonly sourceDescription: string;
   readonly boundedCandidateBatch: boolean;
   readonly runtimeDerivedLocator: boolean;
   readonly singleLineCandidate: boolean;
+  readonly runtimeDerivedSegmentQuote: boolean;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
   readonly outputSchema: z.ZodType<TOutput>;
@@ -146,6 +160,24 @@ function createContract<
 
     buildRequest(input) {
       const validated = EvidenceObserveArtifactInputSchema.parse(input);
+      const { text: _canonicalText, ...artifactMetadata } =
+        validated.artifactVersion;
+      void _canonicalText;
+      const providerInput = configuration.runtimeDerivedSegmentQuote
+        ? {
+            schemaVersion: validated.schemaVersion,
+            artifactVersion: {
+              ...artifactMetadata,
+              sourceSegments: buildEvidenceSourceSegments(
+                validated.artifactVersion.text,
+              ).map(({ sourceSegmentId, exactQuote }) => ({
+                sourceSegmentId,
+                text: exactQuote,
+              })),
+            },
+            actorRoster: validated.actorRoster,
+          }
+        : validated;
       const request = {
         messages: [
           {
@@ -156,15 +188,20 @@ function createContract<
                 text:
                   `Extract only source-bound observations from the supplied ${configuration.sourceDescription}. ` +
                   (configuration.runtimeDerivedLocator
-                    ? 'Copy every exactQuote verbatim; do not estimate or return line numbers because runtime derives the canonical line range. '
+                    ? configuration.runtimeDerivedSegmentQuote
+                      ? 'Select one supplied sourceSegmentId per observation. Runtime derives the entire exact quote and canonical locator from that segment; never join segments and do not return quote text or line numbers. '
+                      : 'Copy every exactQuote verbatim; do not estimate or return line numbers because runtime derives the canonical line range. '
                     : 'Copy every exactQuote verbatim and use its exact one-based line range. ') +
                   (configuration.singleLineCandidate
                     ? 'Each exactQuote must be a short contiguous substring copied exactly from one canonical source line, with no line break and at most 500 characters. '
                     : '') +
                   'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
                   'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
-                  (configuration.singleLineCandidate
-                    ? 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in exactQuote; if exactQuote shows only a clock time or lacks the complete date, use unknown. '
+                  (configuration.singleLineCandidate ||
+                  configuration.runtimeDerivedSegmentQuote
+                    ? configuration.runtimeDerivedSegmentQuote
+                      ? 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in the selected source segment; if it shows only a clock time or lacks the complete date, use unknown. '
+                      : 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in exactQuote; if exactQuote shows only a clock time or lacks the complete date, use unknown. '
                     : 'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
                   (configuration.boundedCandidateBatch
@@ -179,7 +216,7 @@ function createContract<
             content: [
               {
                 type: 'text',
-                text: canonicalJson(validated as unknown as JsonValue),
+                text: canonicalJson(providerInput as unknown as JsonValue),
               },
             ],
           },
@@ -226,10 +263,37 @@ function createContract<
           seen.set(key, index);
         }
 
-        if (configuration.runtimeDerivedLocator) {
+        const selectedSegment =
+          configuration.runtimeDerivedSegmentQuote &&
+          'sourceSegmentId' in observation
+            ? resolveEvidenceSourceSegment(
+                input.artifactVersion.text,
+                observation.sourceSegmentId,
+              )
+            : undefined;
+        const exactQuote =
+          'exactQuote' in observation
+            ? observation.exactQuote
+            : selectedSegment?.exactQuote;
+        if (
+          configuration.runtimeDerivedSegmentQuote &&
+          selectedSegment === undefined
+        ) {
+          issues.push(
+            issue(
+              'EVIDENCE_SOURCE_SEGMENT_NOT_FOUND',
+              [...path, 'sourceSegmentId'],
+              'Source segment must exist in the runtime-defined segment set.',
+            ),
+          );
+        } else if (
+          configuration.runtimeDerivedLocator &&
+          !configuration.runtimeDerivedSegmentQuote &&
+          exactQuote !== undefined
+        ) {
           const location = locateUniqueEvidenceQuote(
             input.artifactVersion.text,
-            observation.exactQuote,
+            exactQuote,
           );
           if (location.status === 'absent') {
             issues.push(
@@ -288,7 +352,10 @@ function createContract<
             : observation.sourceActorReference;
         if (actor !== null) {
           const matching = matchingActorKeys(input, actor.sourceLabel);
-          if (!observation.exactQuote.includes(actor.sourceLabel)) {
+          if (
+            exactQuote === undefined ||
+            !exactQuote.includes(actor.sourceLabel)
+          ) {
             issues.push(
               issue(
                 'EVIDENCE_ACTOR_LABEL_NOT_SOURCE_BOUND',
@@ -322,13 +389,10 @@ function createContract<
             );
           }
         }
-        issues.push(
-          ...validateTemporal(
-            observation.temporalBound,
-            observation.exactQuote,
-            index,
-          ),
-        );
+        if (exactQuote !== undefined)
+          issues.push(
+            ...validateTemporal(observation.temporalBound, exactQuote, index),
+          );
       });
       return immutableEvidence(issues);
     },
@@ -342,6 +406,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     boundedCandidateBatch: false,
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -355,6 +420,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     boundedCandidateBatch: false,
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -368,6 +434,7 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     boundedCandidateBatch: true,
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV1Schema,
@@ -381,9 +448,24 @@ export const evidenceObserveArtifactContractV4 = Object.freeze(
     boundedCandidateBatch: true,
     runtimeDerivedLocator: true,
     singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_3_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV2Schema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV5 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V5,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: true,
+    runtimeDerivedSegmentQuote: false,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_4_0',
+    outputSchema: EvidenceBoundedObserveArtifactOutputV3Schema,
   }),
 );
 
@@ -393,9 +475,10 @@ export const evidenceObserveArtifactContract = Object.freeze(
     sourceDescription: 'artifact',
     boundedCandidateBatch: true,
     runtimeDerivedLocator: true,
-    singleLineCandidate: true,
+    singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: true,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_4_0',
+    schemaName: 'evidence_observe_artifact_1_5_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
   }),
 );

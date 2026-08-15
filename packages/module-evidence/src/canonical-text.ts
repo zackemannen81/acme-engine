@@ -1,5 +1,13 @@
 export const EVIDENCE_TEXT_CANONICALIZATION_ALGORITHM =
   'evidence-text-canonicalization-1' as const;
+export const EVIDENCE_SOURCE_SEGMENT_MAX_CODE_POINTS = 500;
+
+export interface EvidenceSourceSegment {
+  readonly sourceSegmentId: string;
+  readonly exactQuote: string;
+  readonly startLine: number;
+  readonly endLine: number;
+}
 
 export function canonicalizeEvidenceText(value: string): string {
   if (value.startsWith('\uFEFF')) {
@@ -43,6 +51,45 @@ export function evidenceLineRange(
     throw new RangeError('Evidence locator is outside the canonical line set.');
   }
   return lines.slice(startLine - 1, endLine).join('\n');
+}
+
+export function buildEvidenceSourceSegments(
+  value: string,
+): readonly EvidenceSourceSegment[] {
+  const lines = canonicalizeEvidenceText(value).split('\n');
+  if (lines.at(-1) === '') lines.pop();
+  const segments: EvidenceSourceSegment[] = [];
+  lines.forEach((line, lineIndex) => {
+    const codePoints = [...line];
+    for (
+      let offset = 0, segmentIndex = 0;
+      offset < codePoints.length;
+      offset += EVIDENCE_SOURCE_SEGMENT_MAX_CODE_POINTS, segmentIndex += 1
+    ) {
+      const exactQuote = codePoints
+        .slice(offset, offset + EVIDENCE_SOURCE_SEGMENT_MAX_CODE_POINTS)
+        .join('');
+      if (exactQuote.trim().length === 0) continue;
+      segments.push({
+        sourceSegmentId: `line-${String(lineIndex + 1).padStart(6, '0')}-segment-${String(segmentIndex + 1).padStart(4, '0')}`,
+        exactQuote,
+        startLine: lineIndex + 1,
+        endLine: lineIndex + 1,
+      });
+    }
+  });
+  return Object.freeze(
+    segments.map((segment) => Object.freeze(segment)),
+  ) as readonly EvidenceSourceSegment[];
+}
+
+export function resolveEvidenceSourceSegment(
+  value: string,
+  sourceSegmentId: string,
+): EvidenceSourceSegment | undefined {
+  return buildEvidenceSourceSegments(value).find(
+    (segment) => segment.sourceSegmentId === sourceSegmentId,
+  );
 }
 
 export type EvidenceUniqueQuoteLocation =

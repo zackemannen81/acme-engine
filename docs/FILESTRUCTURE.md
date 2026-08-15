@@ -558,6 +558,11 @@ acme-engine/
 │   │   ├── 0036-evidence-case-management-and-isolation.md
 │   │   ├── 0037-evidence-secure-artifact-foundation.md
 │   │   ├── 0038-bounded-text-ingestion-and-immutable-redaction.md
+│   │   ├── 0039-evidence-workbench-live-model-boundary.md
+│   │   ├── 0040-poc-1-live-product-applicability.md
+│   │   ├── 0041-bounded-observation-candidate-batches.md
+│   │   ├── 0042-runtime-derived-observation-locators.md
+│   │   ├── 0043-runtime-derived-observation-quotes.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -893,6 +898,8 @@ content remains intentionally omitted here.
   ACME-0117 records that strict one-line provider output is still not canonical
   source authority: five of eight candidates failed exact binding, so the next
   offline contract must make runtime-defined bounded segments authoritative.
+  ADR-0043/ACME-0118 implement that active `@1.5.0` output `/4` contract and
+  retain `@1.0.0`–`@1.4.0` for replay.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -957,8 +964,9 @@ first provider acceptance attempt failed closed. ADR-0042/ACME-0114 move
 canonical locator authority from model output into exact runtime derivation;
 ACME-0116 then bounds active quotes to one short source line and tightens the
 temporal generation rule. ACME-0117 proves that the provider can still compress
-or alter text inside that wire shape; a deterministic segment-selection/runtime-
-quote successor remains before fresh acceptance. Stage B remains closed.
+or alter text inside that wire shape. ADR-0043/ACME-0118 implement the
+deterministic successor: provider output selects one runtime-defined segment ID
+and runtime derives the immutable quote/locator. Stage B remains closed.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

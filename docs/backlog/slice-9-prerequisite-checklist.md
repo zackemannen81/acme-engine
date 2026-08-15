@@ -201,13 +201,15 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       otherwise require `unknown`. ACME-0115 exposed both multi-line whitespace
       normalization and a time-only range under the prior contract.
       ACME-0116 implements active `@1.4.0` output `/3` with these bounds.
-- [ ] Remove exact-quote authorship from active provider output. ACME-0117's
+- [x] Remove exact-quote authorship from active provider output. ACME-0117's
       sole `@1.4.0` call returned eight complete strict candidates and avoided
       invalid temporal normalization, but five one-line strings were not
       verbatim canonical source substrings. Decide a replay-compatible bounded
       segment-selection contract in which runtime derives the exact quote, or
       prove an equivalently strict source-authority design, before another
-      real-provider acceptance.
+      real-provider acceptance. ADR-0043/ACME-0118 implement active `@1.5.0`
+      output `/4`: provider output selects one deterministic segment identifier
+      and runtime derives its entire exact quote plus line locator.
 - [ ] Decide deterministic segmentation, segment identities, deduplication and
       reviewer-visible coverage before making any exhaustive full-source
       analysis claim. A successful ADR-0041 batch proves candidate validity,
