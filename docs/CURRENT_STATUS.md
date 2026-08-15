@@ -455,9 +455,16 @@ JSON parsing failed, and the fail-closed path left zero engine commits and zero
 product observations. ADR-0041/ACME-0112 now add active
 `evidence.observe-artifact@1.2.0`: one to eight explicitly non-exhaustive
 reviewer candidates, provider-wire `minItems`/`maxItems` and an 8,192-output-
-token request. Both earlier contracts remain exact replay registrations. A
-fresh real-provider acceptance is the next dependency; full-source coverage
-still needs a separate segmentation/coverage workflow.
+token request. Both earlier contracts remain exact replay registrations.
+ACME-0113 then made the separately frozen fresh call: OpenAI completed strict
+JSON with six candidates and did not hit the new output bound. Every exact
+quote occurred verbatim in the source, but all six model-authored line ranges
+were offset, so semantic quote/locator binding correctly refused the batch and
+left zero engine documents and zero product observations. The next dependency
+is an offline, replay-compatible boundary that deterministically derives line
+locators from uniquely occurring exact quotes instead of granting the model
+locator authority. Full-source coverage still needs a separate segmentation/
+coverage workflow.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -511,6 +518,13 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0112 / ACME-0113:** Versioned the active observation contract as a
+  bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
+  retaining historical replay. The subsequent sole real call returned
+  complete strict JSON with six verbatim source quotes, proving truncation was
+  removed, but every model-authored line range was offset. Runtime semantic
+  validation refused all six and committed nothing; ACME-0113 is superseded
+  and the locator derivation correction remains offline next work.
 - **ACME-0110:** Completed the Stage A engineering journey through reviewed
   reassessment. Additive source-complete assessment input, command/job/audit
   contracts and browser/API/worker execution preserve historical synthetic

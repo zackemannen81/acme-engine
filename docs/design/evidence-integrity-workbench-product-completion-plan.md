@@ -4,7 +4,7 @@ Status: Approved delivery direction
 
 Date: 2026-08-15
 
-Current checkpoint: ACME-0112 bounded observation contract. Stages 1–8 are
+Current checkpoint: superseded ACME-0113 real-provider acceptance. Stages 1–8 are
 delivered; ADR-0040 accepts
 bounded Stage A authority, ACME-0105 delivers its fail-closed composition
 capability, ACME-0106 delivers authenticated import/browser activation and
@@ -13,7 +13,10 @@ ACME-0110 completes live assessment plus reviewer/reassessment engineering.
 ACME-0111 reached the real provider once and proved fail-closed handling of an
 incomplete candidate. ADR-0041/ACME-0112 resolve the exposed output dependency
 with a replay-compatible one-to-eight candidate batch and 8,192-token active
-contract; a fresh real-provider acceptance remains.
+contract. ACME-0113's one fresh call completed strict JSON with six verbatim
+quotes but failed closed because every model-authored line locator was offset.
+Deterministic locator derivation is the next offline dependency before another
+separately frozen acceptance.
 
 ## Purpose and Authority
 
@@ -66,7 +69,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111's first provider call failed closed at 2,048 output tokens; ADR-0041/ACME-0112 add bounded active `@1.2.0` while retaining replay. Successful real-provider acceptance remains. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111's first call truncated; ADR-0041/ACME-0112 bounded the active contract. ACME-0113 completed strict JSON but refused six offset model-authored line locators. Deterministic locator derivation and successful real-provider acceptance remain. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.

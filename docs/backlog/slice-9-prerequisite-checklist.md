@@ -187,7 +187,13 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       provider stopped at 2,048 output tokens with incomplete JSON, and ACME
       correctly committed nothing. ADR-0041/ACME-0112 now add active `@1.2.0`
       with one-to-eight non-exhaustive candidates and 8,192 output tokens while
-      retaining both historical versions. A fresh acceptance call remains.
+      retaining both historical versions. ACME-0113's fresh call completed
+      strict JSON with six exact quotes, but each model-authored line locator
+      was offset; semantic validation correctly committed nothing.
+- [ ] Remove source-locator authority from the observation model output and
+      derive canonical start/end lines deterministically from a uniquely
+      occurring exact quote, preserving historical contract replay. Re-run the
+      separately budgeted real-provider gate only after offline proof.
 - [ ] Decide deterministic segmentation, segment identities, deduplication and
       reviewer-visible coverage before making any exhaustive full-source
       analysis claim. A successful ADR-0041 batch proves candidate validity,

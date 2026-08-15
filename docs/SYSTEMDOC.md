@@ -1473,7 +1473,12 @@ database access is the completion surface. The live profile is not complete
 until an explicitly budgeted real Stage A provider acceptance is proven end to
 end. ACME-0111's first call proved fail-closed handling of an incomplete
 2,048-token historical contract response; ADR-0041/ACME-0112 supply the bounded
-successor contract before a fresh acceptance. ACME-0107, ACME-0108 and
+successor. ACME-0113 proved that successor returns complete strict JSON, but it
+also exposed that model-authored line numbers are not canonical locators: all
+six verbatim quotes carried offset line ranges and semantic validation refused
+the entire batch with no commit. A later contract/runtime decision must derive
+locators deterministically from uniquely occurring exact quotes before a fresh
+acceptance. ACME-0107, ACME-0108 and
 ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected
 transports; ACME-0110 also proves primary review and late-evidence reassessment.

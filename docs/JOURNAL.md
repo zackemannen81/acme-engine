@@ -1,5 +1,45 @@
 # Journal
 
+## 2026-08-15 — ACME-0113 superseded after bounded provider call
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0113
+- Summary: Ran the separately frozen Stage A gate once against active
+  `evidence.observe-artifact@1.2.0` under the user-approved ACME key and 200 SEK
+  prepaid monetary ceiling. The first Vitest command used the default config,
+  found no live test and made no call; the corrected live config made exactly
+  one provider call.
+- Preflight: reverified the 106,907-byte, 52-page parent PDF SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`.
+  pypdf 6.10.0 LF/NFC extraction reproduced a 106,072-byte strict UTF-8
+  representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean loopback PostgreSQL/MinIO and random mounted keys passed health, empty
+  database and signed S3 create/stat/read/delete/removal checks.
+- Provider result: `gpt-5.6-luna` returned `finishReason = stop`, 36,900 input
+  plus 2,340 output = 39,240 total tokens. The encrypted response was complete
+  strict JSON with six candidates, so ACME-0112 resolved truncation.
+- Semantic result: every candidate quote occurred verbatim in the source, but
+  every model-authored line range was offset. Five starts were two lines late
+  and one was four lines late; end offsets were one to three. The bounded
+  pipeline emitted six `EVIDENCE_QUOTE_BINDING_FAILED` issues. One encrypted
+  model-call record succeeded, while the execution failed with zero engine
+  documents and zero product observations.
+- Safety/cleanup: no retry or repair ran. Both `--rm` containers, their Docker
+  network and the exact temporary directory containing source, credentials and
+  keys were removed. The original PDF and ignored `.env.local` remain
+  unchanged; no content, key or provider identifier entered the repo.
+- Disposition: this one-call charter is consumed and superseded. The next
+  offline task must preserve historical replay while deriving canonical line
+  locators from uniquely occurring exact quotes instead of trusting model-
+  authored line numbers. A successful batch will still not prove exhaustive
+  full-document coverage.
+- Verification: live gate reached the expected fail-closed semantic refusal;
+  content-free PostgreSQL assertions confirmed one call/zero commits;
+  `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0112 bounded observation candidate contract
 
 - Date: 2026-08-15
