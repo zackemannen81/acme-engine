@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-15 — ACME-0122 terminal-code assertion correction
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0122 (child of ACME-0121)
+- Change: replaced the stale live-gate expectation
+  `LIVE_OBSERVATION_COMMITTED` with the worker's established
+  `LIVE_OBSERVATION_COMPLETED` and pinned the same reason in the existing
+  successful offline PostgreSQL Stage A journey. Worker behavior is unchanged.
+- Verification: focused fresh PostgreSQL 2/2; typecheck, lint, boundaries,
+  build; 751 unit, 78 conformance, 62 integration and 26 scenario tests;
+  format, docs and diff. Two unrelated initial blackbox timeouts passed
+  isolated 6/6 and on the exact full rerun 751/751.
+- Safety: no credential, source or provider/network call was used. The child is
+  archived and ACME-0121 restored for honest disposition of its consumed
+  process-level gate.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0121 paused for terminal-code child
 
 - Date: 2026-08-15

@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0122
-Parent Task: ACME-0121
-Status: Ready
+Task ID: ACME-0121
+Parent Task: None
+Status: In Progress
 Owner: Codex
 Created: 2026-08-15
 Last updated: 2026-08-15
-Charter frozen at: 2026-08-15T17:58:34+02:00
+Charter frozen at: 2026-08-15T13:54:37+02:00
 
 ## Read First
 
@@ -18,12 +18,14 @@ Charter frozen at: 2026-08-15T17:58:34+02:00
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/paused/ACME-0121_stage-a-canonical-utc-provider-acceptance.md`
+- ADR-0040 through ADR-0043
+- ACME-0119 and ACME-0120
 
 ## Task Summary
 
-Correct the single stale terminal reason-code assertion exposed only after the
-ACME-0121 product job had completed and durably committed.
+Run one fresh Stage A real-provider acceptance against active
+`evidence.observe-artifact@1.6.0` after the canonical-UTC prompt correction
+passed every offline and PostgreSQL gate.
 
 ## Task Charter
 
@@ -31,61 +33,100 @@ The charter was frozen when this task became `Ready`.
 
 ### Goal
 
-Make the Stage A live acceptance assert the established successful worker
-contract, `LIVE_OBSERVATION_COMPLETED`.
+Prove one complete `gpt-5.6-luna` segment-selection batch can pass strict and
+semantic validation and commit runtime-derived source-bound observations
+through the hosted-equivalent POC #1 composition.
 
 ### Primary Deliverable
 
-The live acceptance and an offline product-path assertion both pin the same
-successful terminal reason code emitted by the worker.
+A recorded pass of `tests/live/evidence-stage-a-observation.test.ts` using the
+ACME-specific ignored credential, one provider call maximum and the existing
+20,000-minor-unit SEK (200 SEK) prepaid monetary ceiling.
 
 ### In Scope
 
-- Replace the obsolete live-test expected reason code.
-- Strengthen the existing offline PostgreSQL observation journey to assert the
-  successful reason code.
-- Run focused and canonical offline verification, document, archive and resume
-  ACME-0121.
+- Reuse the approved ignored `OPENAI_API_KEY` without revealing plaintext.
+- Reverify D1 and prepare the same strict UTF-8 LF/NFC representation outside
+  Git with exact provenance.
+- Compose/preflight clean disposable PostgreSQL, private S3 and random mounted
+  payload/artifact keys.
+- Run only the isolated Stage A gate with `gpt-5.6-luna`, one call maximum,
+  active output `/4`, cost ceiling `20000` and currency `SEK`.
+- Record only content-free evidence and clean every disposable resource.
 
 ### Out of Scope
 
-- Provider/network calls, replay/resume codes, worker behavior or refactoring.
-- Source/provider inspection beyond already recorded content-free evidence.
-- Relation/assessment, Stage B, deployment, push or release.
+- Retry/repair, more than one provider call, relation/assessment or D2.
+- Raising the 200 SEK ceiling or treating it as tokens; 8,192 output tokens
+  remain a separate technical bound.
+- Exhaustive coverage, code correction after a consumed call, source/provider
+  content in Git, Stage B, deployment, push or release.
 
 ### Definition of Done
 
-- Both assertions use `LIVE_OBSERVATION_COMPLETED` for a new successful job.
-- Focused PostgreSQL and canonical offline gates pass.
-- No provider call occurs; child is archived and ACME-0121 resumes unchanged.
+- Gate completes `LIVE_OBSERVATION_COMMITTED` with one to eight observations
+  whose quotes/locators are runtime-derived from selected supplied segments.
+- Exactly one call at most; durable PostgreSQL, private S3 and both encryption
+  boundaries are active.
+- Temporary source, credentials, keys and services are removed.
+- Content-free outcome and non-exhaustive boundary are documented, archived
+  and committed.
 
 ### Minimum Verification Gates
 
-- [x] Static live-gate expectation check
-- [ ] Focused fresh-PostgreSQL Stage A test
-- [ ] typecheck, lint, test, build, format, docs and diff
+- [x] Source digest/byte/page/extraction preflight
+- [x] Clean PostgreSQL/private S3 health and signed-adapter preflight
+- [ ] Exact Stage A one-call live gate — product completed and committed, but
+  the gate has a stale terminal reason-code assertion
+- [ ] Post-run call/commit/observation/locator assertions
+- [ ] Credential/source/key Git hygiene and complete cleanup
+- [ ] `pnpm docs:check`
+- [ ] `git diff --check`
 
 ## References
 
-- `apps/evidence-workbench-worker/src/index.ts`
+- `docs/adr/0043-runtime-derived-observation-quotes.md`
 - `tests/live/evidence-stage-a-observation.test.ts`
-- `tests/postgres/evidence-stage-a-import.test.ts`
+- `docs/finished/ACME-0119_stage-a-segment-provider-acceptance.md`
+- `docs/finished/ACME-0120_canonical-utc-observation-prompt.md`
+- `C:\Users\zakri\Downloads\Anonymiserad_d1.pdf` (operator source; never imported)
 
 ## Checklist
 
-- [x] Pause parent and freeze bounded child.
-- [x] Align the two success assertions.
-- [ ] Run focused/canonical offline verification.
-- [ ] Reality-sync docs, archive child and resume parent.
+- [x] Activate/freeze the one-call charter.
+- [x] Reverify/prepare external source representation.
+- [x] Start/preflight disposable infrastructure.
+- [x] Run exact isolated acceptance once; no retry remains.
+- [ ] Inspect content-free evidence and clean disposable state.
+- [ ] Reality-sync docs, archive and commit.
 
 ## Decisions and Notes
 
-- Worker behavior is authoritative and unchanged: a new successful job uses
-  `LIVE_OBSERVATION_COMPLETED`; replay uses `LIVE_OBSERVATION_RESUMED`.
-- No live opt-in or provider credential may be loaded in this task.
+- The approved ACME key and 200 SEK pot authorize this call. `20000` means
+  minor SEK units, never tokens.
+- `maxModelCalls = 1` includes repair; no retry exists.
+- Provider selects supplied `sourceSegmentId`; runtime owns quote and locator.
+- Success proves interoperability/source binding, not exhaustive coverage.
 - A checkpoint after every substep is required.
-- The live gate and existing successful PostgreSQL product journey now both
-  assert the worker's `LIVE_OBSERVATION_COMPLETED` terminal reason.
+- Parent PDF is unchanged: 106,907 bytes, 52 pages, SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`.
+  pypdf 6.10.0 reproduced 106,072 strict LF/NFC UTF-8 bytes SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`;
+  52/52 pages are non-empty, with no NUL, replacement character or CR.
+- Fresh loopback PostgreSQL 16 began with zero ACME/evidence tables. Private
+  MinIO and new random mounted keys are healthy; signed S3
+  create/stat/read/list/delete passed and removed its probe object.
+- The sole call returned stop, 66,819 input + 650 output = 67,469 total tokens
+  and eight output `/4` candidates. All eight selected segment IDs were valid,
+  supplied and unique. Runtime derived all eight exact quotes and one-line
+  locators, then wrote one committed execution, document and commit plus eight
+  observations. The product job completed with its implemented
+  `LIVE_OBSERVATION_COMPLETED` reason; the live test alone still expected the
+  obsolete `LIVE_OBSERVATION_COMMITTED`, so Vitest reported failure after the
+  durable commit.
+- Child ACME-0122 corrected the stale live assertion and added an offline
+  PostgreSQL success-code assertion. Focused 2/2 and all canonical offline
+  gates pass; no provider call occurred in the child.
 
 ## Charter Amendment Log
 
@@ -93,26 +134,34 @@ successful terminal reason code emitted by the worker.
 
 ## Verification
 
-- [ ] Record exact offline gates and results.
+- [x] Source/infrastructure preflight recorded without content.
+- [ ] Exact call/result and persistence counts recorded without content.
+- [ ] Complete cleanup and docs/hygiene recorded.
 
 ## Documentation Updates
 
+- [ ] `docs/CURRENT_STATUS.md`
+- [ ] `docs/SYSTEMDOC.md` if long-lived reality changes
 - [ ] `docs/JOURNAL.md`
-- [ ] Parent ACME-0121 child evidence
-- [ ] Long-lived docs only if behavior changes — not expected
+- [ ] completion plan and Slice 9 checklist
+- [ ] `docs/FILESTRUCTURE.md` only if structure changes
 
 ## Handoff and Follow-ups
 
-- Current state: assertions aligned and static/format checks passed; no provider
-  call occurred.
-- Next recommended step: run focused and canonical offline verification.
-- Blockers: none.
-- Child tasks: none.
-- Resume condition: archive this task after green gates, then restore ACME-0121.
+- Current state: child ACME-0122 is complete and parent resumed; the sole
+  provider call committed successfully but its Vitest process exited false on
+  the now-corrected post-commit assertion.
+- Next recommended step: disposition this consumed one-call charter without
+  rewriting its frozen primary deliverable, then clean disposable state.
+- Blockers: the charter requires a recorded green invocation, but its sole call
+  is consumed and the original invocation exited false after product commit.
+- Child tasks: ACME-0122 (complete).
+- Resume condition: met.
 - Open questions: none.
 
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0122_live-observation-terminal-code.md`.
-- Restore ACME-0121 from `docs/paused/` and set it `In Progress`.
+- Archive as `docs/finished/ACME-0121_stage-a-canonical-utc-provider-acceptance.md`.
+- Restore `docs/CURRENT_TASK.md` from the template.
 - Add a signed `docs/JOURNAL.md` entry.
+- Supersede rather than rewrite if the Goal becomes invalid.
