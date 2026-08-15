@@ -18,15 +18,18 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V1,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V2,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V3,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V4,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   EvidenceObserveArtifactOutputV1Schema,
+  EvidenceObserveArtifactOutputV2Schema,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
   type EvidenceObserveArtifactOutputV1,
+  type EvidenceObserveArtifactOutputV2,
 } from '../schemas.js';
 
 const PROHIBITED_CONCLUSION =
@@ -44,6 +47,13 @@ const EvidenceBoundedObserveArtifactOutputSchema =
 const EvidenceBoundedObserveArtifactOutputV1Schema =
   EvidenceObserveArtifactOutputV1Schema.extend({
     observations: EvidenceObserveArtifactOutputV1Schema.shape.observations
+      .min(1)
+      .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
+  });
+
+const EvidenceBoundedObserveArtifactOutputV2Schema =
+  EvidenceObserveArtifactOutputV2Schema.extend({
+    observations: EvidenceObserveArtifactOutputV2Schema.shape.observations
       .min(1)
       .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
   });
@@ -114,12 +124,15 @@ function validateTemporal(
 
 function createContract<
   TOutput extends
-    EvidenceObserveArtifactOutput | EvidenceObserveArtifactOutputV1,
+    | EvidenceObserveArtifactOutput
+    | EvidenceObserveArtifactOutputV1
+    | EvidenceObserveArtifactOutputV2,
 >(configuration: {
   readonly ref: ContractRef;
   readonly sourceDescription: string;
   readonly boundedCandidateBatch: boolean;
   readonly runtimeDerivedLocator: boolean;
+  readonly singleLineCandidate: boolean;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
   readonly outputSchema: z.ZodType<TOutput>;
@@ -145,9 +158,14 @@ function createContract<
                   (configuration.runtimeDerivedLocator
                     ? 'Copy every exactQuote verbatim; do not estimate or return line numbers because runtime derives the canonical line range. '
                     : 'Copy every exactQuote verbatim and use its exact one-based line range. ') +
+                  (configuration.singleLineCandidate
+                    ? 'Each exactQuote must be a short contiguous substring copied exactly from one canonical source line, with no line break and at most 500 characters. '
+                    : '') +
                   'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
                   'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
-                  'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ' +
+                  (configuration.singleLineCandidate
+                    ? 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in exactQuote; if exactQuote shows only a clock time or lacks the complete date, use unknown. '
+                    : 'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
                   (configuration.boundedCandidateBatch
                     ? `Return between one and ${String(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX)} materially distinct observations as a non-exhaustive reviewer candidate batch; do not claim full-source coverage. `
@@ -323,6 +341,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     sourceDescription: 'synthetic artifact',
     boundedCandidateBatch: false,
     runtimeDerivedLocator: false,
+    singleLineCandidate: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -335,6 +354,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     sourceDescription: 'artifact',
     boundedCandidateBatch: false,
     runtimeDerivedLocator: false,
+    singleLineCandidate: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -347,9 +367,23 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     sourceDescription: 'artifact',
     boundedCandidateBatch: true,
     runtimeDerivedLocator: false,
+    singleLineCandidate: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV1Schema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV4 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V4,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: false,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_3_0',
+    outputSchema: EvidenceBoundedObserveArtifactOutputV2Schema,
   }),
 );
 
@@ -359,8 +393,9 @@ export const evidenceObserveArtifactContract = Object.freeze(
     sourceDescription: 'artifact',
     boundedCandidateBatch: true,
     runtimeDerivedLocator: true,
+    singleLineCandidate: true,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_3_0',
+    schemaName: 'evidence_observe_artifact_1_4_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
   }),
 );

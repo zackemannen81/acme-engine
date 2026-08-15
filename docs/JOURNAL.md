@@ -1,5 +1,35 @@
 # Journal
 
+## 2026-08-15 — ACME-0116 single-line observation candidates
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0116
+- Summary: Corrected both bounded provider-shape defects exposed by ACME-0115.
+  Active `evidence.observe-artifact@1.4.0` now emits output
+  `evidence-observe-artifact-output/3`; each exact quote must be one canonical
+  source line and no more than 500 characters.
+- Temporal boundary: the active prompt permits exact, range or approximate
+  normalized time only when the same exact quote contains a complete calendar
+  date and clock. A clock without that date must be `unknown`; the existing
+  strict UTC ISO schema remains unchanged for normalized values.
+- Replay: historical contracts `@1.0.0` through `@1.3.0` and outputs `/1`
+  through `/2` remain registered and byte-exact. Their pinned request hashes
+  are unchanged. Active synthetic locators and observation identities also
+  remain unchanged because runtime exact-match locator derivation was not
+  altered.
+- Verification: focused contract/schema/wire/replay/fixture/engine/live-job
+  suite 34 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 751 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh disposable PostgreSQL 16
+  container; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 225
+  Markdown files; `git diff --check`. The container was removed.
+- Safety/follow-up: this task made no provider call and accessed neither the
+  real source nor credentials. Freeze a separate one-call acceptance against
+  active `@1.4.0` under the already approved 200 SEK monetary ceiling; token
+  usage remains a separate measured quantity.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0115 superseded after temporal schema refusal
 
 - Date: 2026-08-15

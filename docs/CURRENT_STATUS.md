@@ -471,10 +471,12 @@ refused one time-only range (two eight-character clock values rather than full
 UTC ISO timestamps). Four quotes were exact/unique; two long multi-line quotes
 matched source only after whitespace normalization and remained correctly
 unbound. Zero engine documents and product observations committed. The next
-offline dependency is a replay-compatible contract requiring short single-line
-verbatim quotes and `unknown` temporal bounds unless complete dates and clocks
-are visible in the quote. Full-source coverage still needs a separate
-segmentation/coverage workflow.
+offline dependency was ACME-0116. Active `evidence.observe-artifact@1.4.0`
+output `/3` limits exact quotes to one canonical source line and 500 characters
+and explicitly instructs `unknown` unless complete dates and clocks are visible
+in that quote. Historical `@1.0.0`–`@1.3.0` remain exact for replay. Full-source
+coverage still needs a separate segmentation/coverage workflow; a fresh
+real-provider acceptance remains.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -528,7 +530,7 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
-- **ACME-0112 through ACME-0115:** Versioned the observation contract as a
+- **ACME-0112 through ACME-0116:** Versioned the observation contract as a
   bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
   retaining historical replay. The subsequent sole real call returned
   complete strict JSON with six verbatim source quotes, proving truncation was
@@ -539,6 +541,8 @@ redaction and Slice 9 readiness.
   historical request/output contracts for replay. ACME-0115's subsequent sole
   call exposed time-only normalized ranges and two whitespace-normalized long
   multi-line quotes; strict schema/exact binding again committed nothing.
+  ACME-0116 adds active `@1.4.0` output `/3` with provider-wire single-line/
+  500-character quote constraints and an explicit full-date temporal rule.
 - **ACME-0110:** Completed the Stage A engineering journey through reviewed
   reassessment. Additive source-complete assessment input, command/job/audit
   contracts and browser/API/worker execution preserve historical synthetic

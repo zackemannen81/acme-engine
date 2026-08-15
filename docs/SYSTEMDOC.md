@@ -1092,7 +1092,7 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.3.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.4.0` task projects one immutable source plus an
 explicit actor roster, uses strict structured output and refuses invalid quote,
 kind, actor, temporal and prohibited-authority candidates before commit. Its
 active prompt returns one to eight materially distinct, explicitly non-
@@ -1100,8 +1100,11 @@ exhaustive reviewer candidates and allows at most 8,192 output tokens. Output
 `evidence-observe-artifact-output/2` gives the model no line fields: exact
 quotes must occur exactly once in canonical source text, then runtime derives
 the inclusive line range before locator/observation identity and projection.
-Absent or duplicate quotes refuse without fuzzy matching. Historical
-`@1.0.0`–`@1.2.0` output `/1` contracts remain registered unchanged for replay.
+Output `/3` additionally requires a quote from one canonical source line, at
+most 500 characters; its prompt requires temporal `unknown` when a complete
+date and clock are not both visible in that quote. Absent or duplicate quotes
+refuse without fuzzy matching. Historical `@1.0.0`–`@1.3.0` output `/1`–`/2`
+contracts remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing. The registered
 `evidence.relate-observations@1.0.0` task accepts current observations, proposes
@@ -1399,9 +1402,9 @@ fail before publishing a partial projection.
 `evidence-live-observation-command/1`, and `evidence-product-job/2` records a
 four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
 canonical text through the audited artifact service, executes
-`evidence.observe-artifact@1.3.0`, and writes product observations plus one
+`evidence.observe-artifact@1.4.0`, and writes product observations plus one
 evidence-revision advance only after the execution ledger reports committed.
-The historical `@1.0.0`–`@1.2.0` prompts/output remain registered for replay.
+The historical `@1.0.0`–`@1.3.0` prompts/output remain registered for replay.
 ADR-0041 makes the active result a one-to-eight
 candidate batch with `minItems`/`maxItems` preserved on the provider wire and
 an 8,192-output-token request. A successful batch is not evidence of exhaustive
@@ -1491,8 +1494,9 @@ failed closed before semantics: one range used time-only strings instead of
 full UTC timestamps, and content-free inspection showed two long multi-line
 quotes had normalized whitespace rather than exact source form. A new additive
 contract must bound quotes to a short single canonical line and withhold
-normalized temporal values unless their full date and clock are source-visible
-before another acceptance. ACME-0107,
+normalized temporal values unless their full date and clock are source-visible.
+ACME-0116 implements active `@1.4.0` output `/3` with those wire/prompt bounds
+while retaining historical replay; another acceptance remains. ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected
