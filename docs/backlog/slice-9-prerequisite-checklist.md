@@ -179,6 +179,10 @@ ACME-0126 passed real D1 review but exposed one concrete relation-contract gap:
 the provider must be told to return every set-like identifier array unique and
 lexicographically sorted. This bounded prompt version is now on the critical
 path; no runtime coercion is authorized.
+ACME-0127 satisfies that dependency with active relation `@1.1.0`, preserves
+historical `@1.0.0` byte-exact for replay and passes every canonical offline
+gate. No provider call occurred; the new live journey remains a separately
+frozen and budgeted task.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and

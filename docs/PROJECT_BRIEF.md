@@ -268,6 +268,12 @@ ACME-0126 then completed D1 observation and accept/reject/unresolved review but
 failed closed on relation output: two open-question trigger-ID arrays were
 unique yet unsorted, a strict schema rule absent from the `@1.0.0` prompt. A
 replay-compatible prompt version is required before another live journey.
+ACME-0127 supplies that version as active
+`evidence.relate-observations@1.1.0`: its prompt states lexical uniqueness and
+ordering for every set-like string array plus kind/id endpoint ordering.
+Historical `@1.0.0` stays byte-exact for replay, all canonical offline gates
+pass and no provider call occurred. The next live journey remains separately
+bounded and frozen.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

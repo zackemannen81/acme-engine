@@ -1109,10 +1109,13 @@ single-line segments of at most 500 Unicode code points; the provider selects
 Unknown segment IDs refuse without fuzzy matching. Historical `@1.0.0`–
 `@1.4.0` outputs `/1`–`/3` remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
-revision once; exact duplicates advance nothing. The registered
-`evidence.relate-observations@1.0.0` task accepts current observations, proposes
+revision once; exact duplicates advance nothing. Active registered
+`evidence.relate-observations@1.1.0` accepts current observations, proposes
 scoped relations and open questions, and contests only statement endpoints that
-scoped `contradicts` relations require.
+scoped `contradicts` relations require. Its prompt requires unique
+lexicographically sorted set-like identifier/rationale arrays and distinct
+relation endpoints sorted by kind then id. Historical `@1.0.0` remains
+registered byte-exact for replay; runtime never repairs unvalidated output.
 
 For an explicit adjacent `transcription-correction`, the observation task now
 pairs complete predecessor/successor occurrence sets through the ADR-0032 V1
@@ -1554,6 +1557,11 @@ models set-like ID arrays as sorted unique strings, but relation prompt
 but unsorted open-question trigger arrays; strict validation refused them
 before product projection. Version the prompt while preserving `@1.0.0`
 request/replay identity; runtime must not silently reorder unvalidated output.
+ACME-0127 implements that replay-compatible boundary. Active relation contract
+`@1.1.0` states every output `/1` set/endpoint ordering rule, while historical
+`@1.0.0` retains its exact prompt and request hash. Registry, composition,
+fixtures and replay resolve both versions; canonical offline verification is
+green and no provider call occurred.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

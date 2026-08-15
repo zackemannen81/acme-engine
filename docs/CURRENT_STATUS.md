@@ -227,8 +227,9 @@ There is currently:
   relate-contract schemas; named ADR-0030 content-derived identities;
   source-binding validation; compact pure state; reducer/invariants; domain
   memory policy; active bounded `evidence.observe-artifact@1.3.0` with runtime-
-  derived locators, historical replay-compatible `@1.0.0`–`@1.2.0`, and deterministic
-  `evidence.relate-observations@1.0.0`; ADR-0032 correction-occurrence pairing;
+  derived locators, historical replay-compatible `@1.0.0`–`@1.2.0`, and active
+  deterministic `evidence.relate-observations@1.1.0` with byte-exact historical
+  `@1.0.0` replay; ADR-0032 correction-occurrence pairing;
   and contest projection for scoped `contradicts` relations
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
   `rillford-annex-review-1` synthetic corpus, manifest, scratch/development
@@ -544,6 +545,12 @@ sets; the active `@1.0.0` prompt never states that wire rule. Schema validation
 failed closed, zero relations/questions/assessments wrote and four later calls
 never started. A replay-compatible relation prompt version is the next offline
 dependency.
+ACME-0127 completes that dependency without changing output `/1` or runtime
+semantics. Active `evidence.relate-observations@1.1.0` explicitly requires
+unique lexicographically sorted set-like string arrays and distinct relation
+endpoints sorted by kind then id. Historical `@1.0.0` remains byte-exact and
+registered for replay; both request hashes are pinned and all canonical gates
+pass without a provider call. A separately frozen live journey remains.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

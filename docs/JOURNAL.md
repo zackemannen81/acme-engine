@@ -1,5 +1,27 @@
 # Journal
 
+## 2026-08-15 — ACME-0127 sorted relation provider output
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0127
+- Change: activated `evidence.relate-observations@1.1.0` with explicit unique,
+  lexicographically sorted set-like identifier/rationale arrays and distinct
+  endpoints sorted by kind then id. Historical `@1.0.0` remains registered
+  byte-exact for replay; runtime coercion remains forbidden.
+- Identity: active request hash is
+  `1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f`;
+  historical `@1.0.0` remains
+  `9c4f7a883a6363d0a652f5d90e603e610d5969715069079ed1fdd5c3516815b0`.
+- Verification: focused contract/catalogue/hash/replay/composition tests 15/15;
+  typecheck, lint, boundaries and build passed; full default suites passed 752
+  unit, 78 conformance, 62 integration and 26 scenario tests; fresh PostgreSQL
+  passed 36/36; format, docs and diff checks passed.
+- Live/data handling: no credential was loaded and no provider call occurred.
+- Handoff: archive ACME-0127 and inspect the assessment prompt for the same
+  schema/prompt ordering dependency before freezing another bounded live run.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0126 superseded at relation schema boundary
 
 - Date: 2026-08-15

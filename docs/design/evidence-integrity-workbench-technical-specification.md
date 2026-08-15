@@ -416,7 +416,7 @@ The first contract catalogue is:
 | Capability | Task / contract | Role | Earliest slice |
 | --- | --- | --- | --- |
 | Observe one source artifact | `evidence.observe-artifact@1.0.0` | analyzer, model-backed | 1 |
-| Propose normalized meanings, relations and questions over accepted observations | `evidence.relate-observations@1.0.0` | analyzer, model-backed | 3 |
+| Propose normalized meanings, relations and questions over accepted observations | `evidence.relate-observations@1.1.0` (active; historical `@1.0.0` retained for replay) | analyzer, model-backed | 3 |
 | Build temporal entries | `evidence.build-timeline@1.0.0` | transformer, deterministic | 4 |
 | Propose an assessment document | `evidence.propose-assessment@1.0.0` | producer, model-backed | 5 |
 
@@ -469,11 +469,15 @@ Interpretation performs, in order:
 
 ### 6.3 Later task boundaries
 
-`evidence.relate-observations@1.0.0` accepts explicit current observation ids
+Active `evidence.relate-observations@1.1.0` accepts explicit current observation ids
 and their immutable source-bound values. It may propose `PropositionCandidate`,
 `EventOccurrence`, `EvidenceRelation` and `OpenQuestion` candidates. Every
 relation output contains all endpoints, an exact comparable scope, a rationale
 code and an abstention path. It cannot modify or forget an endpoint.
+All set-like identifier/rationale arrays must be unique and lexicographically
+sorted; relation endpoints must be distinct and sorted by kind then id. The
+historical `@1.0.0` prompt remains registered byte-exact for replay and runtime
+validation never repairs or reorders an unvalidated provider response.
 
 `evidence.build-timeline@1.0.0` is pure and model-free. It orders exact bounds,
 then non-overlapping ranges, and otherwise emits ambiguity bands. Approximate

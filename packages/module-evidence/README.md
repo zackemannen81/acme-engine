@@ -7,10 +7,13 @@ binding validation, compact state/delta contracts, reducer and invariants,
 memory policy, and the task catalogue. Slice 1 implements and registers
 `evidence.observe-artifact@1.0.0`; slice 2 adds the ADR-0032 pure V1 correction
 occurrence-pairing rule and projects correction standings through that same
-task without changing its closed model contract. Slice 3 implements
-`evidence.relate-observations@1.0.0`, which proposes scoped relations and open
+task without changing its closed model contract. Slice 3 implements the active
+`evidence.relate-observations@1.1.0`, which proposes scoped relations and open
 questions over accepted observations and contests only the endpoints that
-scoped `contradicts` relations require. Slice 4 adds pure timeline ordering
+scoped `contradicts` relations require. Its prompt requires every set-like
+identifier/rationale array to be unique and lexicographically sorted and every
+relation endpoint array to be distinct and sorted by kind then id. Historical
+`@1.0.0` remains registered byte-exact for replay. Slice 4 adds pure timeline ordering
 via `evidence.build-timeline@1.0.0` and `evidence-temporal-overlap-1`. Slice 5
 adds `evidence.propose-assessment@1.0.0`, immutable reviewed-evidence assessment
 versions, strict change-set records and pure tier-A/tier-B re-review attention

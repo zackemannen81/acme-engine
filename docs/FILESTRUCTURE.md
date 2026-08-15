@@ -975,6 +975,9 @@ temporal generation rule. ACME-0117 proves that the provider can still compress
 or alter text inside that wire shape. ADR-0043/ACME-0118 implement the
 deterministic successor: provider output selects one runtime-defined segment ID
 and runtime derives the immutable quote/locator. Stage B remains closed.
+ACME-0127 versions the active relation prompt to `@1.1.0` so strict sorted-set
+and endpoint-order rules are explicit, while the historical `@1.0.0` contract
+remains registered byte-exact for replay.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR
