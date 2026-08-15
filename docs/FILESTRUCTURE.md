@@ -229,6 +229,7 @@ acme-engine/
 │   │   │   ├── memory.ts
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
+│   │   │   ├── model-call-usage.ts
 │   │   │   ├── model-request-hash.ts
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts

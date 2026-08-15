@@ -546,7 +546,7 @@ export interface EvidenceLiveCompositionOptions {
   readonly apiKey?: string;
   readonly payloadKey?: Uint8Array;
   readonly payloadKeyId?: string;
-  readonly deploymentMaxModelCalls?: number;
+  readonly deploymentMaxModelCalls?: number | null;
   readonly deploymentCostCeilingMinor?: number | null;
   readonly deploymentCurrency?: string | null;
   readonly transport?: ProviderTransport;
@@ -639,10 +639,12 @@ export async function createLocalEvidenceWorkbench(
       payloadKey: livePayloadKey,
       payloadKeyId: livePayloadKeyId,
       deploymentBudget: {
+        // Absent means the deployment declines to cap the campaign, which
+        // ADR-0044 retired. It never means zero calls.
         maxModelCalls:
           options.live?.deploymentMaxModelCalls ??
           optionalNumber(process.env['ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS']) ??
-          0,
+          null,
         costCeilingMinor:
           options.live?.deploymentCostCeilingMinor ??
           optionalNumber(

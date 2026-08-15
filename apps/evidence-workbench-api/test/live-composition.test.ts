@@ -245,4 +245,41 @@ describe('Evidence live composition', () => {
     );
     expect(sends).toBe(1);
   });
+
+  it('resolves with no configured campaign ceiling and still bounds a run', () => {
+    // ADR-0044: an absent deployment ceiling is a valid live deployment.
+    const uncapped = capability({
+      deploymentBudget: { maxModelCalls: null, costCeilingMinor: null },
+      deploymentCurrency: null,
+    });
+    expect(uncapped?.deployment.budget.maxModelCalls).toBeNull();
+
+    const run = uncapped?.authorize({
+      confirmation: {
+        ...confirmation,
+        maxModelCalls: 9,
+        costCeilingMinor: null,
+        currency: null,
+      },
+      authorization,
+      source,
+      requestedBudget: { maxModelCalls: 9, costCeilingMinor: null },
+    });
+    expect(run?.confirmation.maxModelCalls).toBe(9);
+
+    // The execution bound still holds: a run may not exceed its confirmation.
+    expect(() =>
+      uncapped?.authorize({
+        confirmation: {
+          ...confirmation,
+          maxModelCalls: 1,
+          costCeilingMinor: null,
+          currency: null,
+        },
+        authorization,
+        source,
+        requestedBudget: { maxModelCalls: 2, costCeilingMinor: null },
+      }),
+    ).toThrow();
+  });
 });

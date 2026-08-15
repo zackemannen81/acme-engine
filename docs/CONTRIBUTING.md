@@ -112,6 +112,37 @@ Create an ADR when a decision affects:
 - compatibility or versioning
 - security or privacy
 
+## Verification Tiers
+
+ADR-0044 separates verification into three tiers. Each supports a different
+claim, and a claim from one tier may never be reported as a claim from
+another.
+
+| Tier | Commands | Substrate | Provider | Claim it supports |
+| --- | --- | --- | --- | --- |
+| Offline deterministic | `pnpm test` (`test:unit`, `test:conformance`, `test:integration`, `test:scenario`) | in-memory, file, SQLite | mock | the code behaves as specified |
+| Live integration | `pnpm test:postgres`, `pnpm test:supabase-auth` | real PostgreSQL, real object store | real where configured | the composition works against real infrastructure |
+| POC acceptance | `pnpm test:live` | real PostgreSQL, real object store, real case | real | the product performs a real evidence workflow |
+
+The offline tier is fast, free and reproducible. It gates CI and runs
+continuously. It is the only tier that may be assumed green.
+
+The live integration tier needs real infrastructure, so it cannot gate every
+commit. Run it before any acceptance attempt: it is what narrows the window in
+which a live regression reaches acceptance undetected.
+
+Only a POC acceptance run may state that POC #1 works. A green offline suite
+says nothing about transaction boundaries, persistence, reconnects, case
+isolation, migrations, partial failures or real projection state — the
+properties the product exists to provide. ACME-0131 is the standing example:
+the offline suite was green while the worker mutated product state before its
+own guard.
+
+Cost is measured, not capped. `summarizeModelCallUsage` reads recorded calls
+and reports counts, tokens and provider-supplied cost; an acceptance run
+reports what it actually consumed rather than stopping at an arbitrary
+threshold.
+
 ## External Effects
 
 Do not publish packages, deploy services, push branches, create releases or

@@ -71,19 +71,27 @@ describe('createAes256GcmPayloadEncryptor', () => {
 });
 
 describe('applyModelCallRetention', () => {
-  it('drops plaintext for hash-only and none', () => {
-    expect(
-      applyModelCallRetention({
-        retention: 'hash-only',
+  it('drops plaintext for hash-only and none but keeps content-free metadata', () => {
+    const expected = {
+      responseHash: 'rh',
+      callMetadata: {
+        provider: 'fixture',
+        model: 'fixture-model',
+        finishReason: 'stop',
+        usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 },
+      },
+    };
+    for (const retention of ['hash-only', 'none'] as const) {
+      const retained = applyModelCallRetention({
+        retention,
         completed: { response, responseHash: 'rh' },
-      }),
-    ).toEqual({ responseHash: 'rh' });
-    expect(
-      applyModelCallRetention({
-        retention: 'none',
-        completed: { response, responseHash: 'rh' },
-      }),
-    ).toEqual({ responseHash: 'rh' });
+      });
+      // No plaintext rests, but what the call cost stays measurable.
+      expect(retained).toEqual(expected);
+      expect(retained.response).toBeUndefined();
+      expect(retained.protectedResponse).toBeUndefined();
+      expect(JSON.stringify(retained)).not.toContain('"ok"');
+    }
   });
 
   it('requires an encryptor for encrypted-payload and seals cleartext', () => {

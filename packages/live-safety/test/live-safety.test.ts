@@ -4,6 +4,7 @@ import {
   LIVE_SAFETY_REFUSAL,
   LiveSafetyRefused,
   assertLiveBudget,
+  assertLiveDeploymentBudget,
   assertNoLiveCredentialFields,
   isLiveOptInValue,
   requireLiveCredential,
@@ -60,6 +61,66 @@ describe('live safety', () => {
       }),
     ).toThrowError(
       expect.objectContaining({ reason: LIVE_SAFETY_REFUSAL.callBudget }),
+    );
+  });
+
+  it('accepts a deployment that declines to cap the campaign', () => {
+    // ADR-0044 retired the campaign cap. An absent deployment ceiling is a
+    // valid deployment, not a refusal, and never means zero calls.
+    expect(() =>
+      assertLiveDeploymentBudget({
+        maxModelCalls: null,
+        costCeilingMinor: null,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      assertLiveBudget({
+        requested: { maxModelCalls: 4, costCeilingMinor: null },
+        confirmed: { maxModelCalls: 9, costCeilingMinor: null },
+        deployment: { maxModelCalls: null, costCeilingMinor: null },
+      }),
+    ).not.toThrow();
+  });
+
+  it('still bounds one execution when the campaign is uncapped', () => {
+    // Bounding an execution is runaway protection and survives the retirement.
+    expect(() =>
+      assertLiveBudget({
+        requested: { maxModelCalls: 2, costCeilingMinor: null },
+        confirmed: { maxModelCalls: 1, costCeilingMinor: null },
+        deployment: { maxModelCalls: null, costCeilingMinor: null },
+      }),
+    ).toThrowError(
+      expect.objectContaining({ reason: LIVE_SAFETY_REFUSAL.callBudget }),
+    );
+    expect(() =>
+      assertLiveBudget({
+        requested: { maxModelCalls: 0, costCeilingMinor: null },
+        confirmed: { maxModelCalls: 1, costCeilingMinor: null },
+        deployment: { maxModelCalls: null, costCeilingMinor: null },
+      }),
+    ).toThrowError(
+      expect.objectContaining({ reason: LIVE_SAFETY_REFUSAL.deploymentBudget }),
+    );
+  });
+
+  it('still enforces a deployment ceiling when one is configured', () => {
+    expect(() =>
+      assertLiveBudget({
+        requested: { maxModelCalls: 1, costCeilingMinor: null },
+        confirmed: { maxModelCalls: 4, costCeilingMinor: null },
+        deployment: { maxModelCalls: 3, costCeilingMinor: null },
+      }),
+    ).toThrowError(
+      expect.objectContaining({ reason: LIVE_SAFETY_REFUSAL.callBudget }),
+    );
+    expect(() =>
+      assertLiveDeploymentBudget({
+        maxModelCalls: 0,
+        costCeilingMinor: null,
+      }),
+    ).toThrowError(
+      expect.objectContaining({ reason: LIVE_SAFETY_REFUSAL.deploymentBudget }),
     );
   });
 });

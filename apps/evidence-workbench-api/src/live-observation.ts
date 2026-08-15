@@ -72,7 +72,8 @@ export class EvidenceLiveObservationRefused extends Error {
 export interface EvidenceLiveObservationService {
   readonly deployment: {
     readonly model: string;
-    readonly maxModelCalls: number;
+    /** `null` when the deployment declines to cap the campaign. */
+    readonly maxModelCalls: number | null;
     readonly costCeilingMinor: number | null;
     readonly currency: string | null;
   };

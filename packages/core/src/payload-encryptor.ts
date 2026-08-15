@@ -170,6 +170,34 @@ export interface ModelCallRetentionFields {
   readonly response?: NormalizedModelResponse;
   readonly responseHash: string;
   readonly protectedResponse?: string;
+  readonly callMetadata?: ModelCallMetadata;
+}
+
+/**
+ * Content-free evidence about a completed call, retained under every retention
+ * mode including `none` and `hash-only`.
+ *
+ * Provider, model id and token counts are operational metadata, not model
+ * output: they describe that a call happened and what it consumed, never what
+ * it said. Retaining them is what makes cost measurable from recorded evidence
+ * instead of inferred, which ADR-0044 requires now that no campaign ceiling
+ * stands in for measurement. Usage stays optional because a provider may not
+ * report it, and an absent count must read as absent rather than as zero.
+ */
+export interface ModelCallMetadata {
+  readonly provider: string;
+  readonly model: string;
+  readonly finishReason: NormalizedModelResponse['finishReason'];
+  readonly usage: NormalizedModelResponse['usage'];
+}
+
+function callMetadataOf(response: NormalizedModelResponse): ModelCallMetadata {
+  return {
+    provider: response.provider,
+    model: response.model,
+    finishReason: response.finishReason,
+    usage: { ...response.usage },
+  };
 }
 
 /**
@@ -185,8 +213,9 @@ export function applyModelCallRetention(options: {
   readonly payloadEncryptor?: PayloadEncryptor;
 }): ModelCallRetentionFields {
   const { retention, completed, payloadEncryptor } = options;
+  const callMetadata = callMetadataOf(completed.response);
   if (retention !== 'encrypted-payload') {
-    return { responseHash: completed.responseHash };
+    return { responseHash: completed.responseHash, callMetadata };
   }
   if (payloadEncryptor === undefined) {
     invalid(
@@ -200,6 +229,7 @@ export function applyModelCallRetention(options: {
   return {
     responseHash: completed.responseHash,
     protectedResponse: serializeProtectedPayloadEnvelope(envelope),
+    callMetadata,
   };
 }
 

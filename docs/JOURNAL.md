@@ -1,5 +1,53 @@
 # Journal
 
+## 2026-08-16 — ACME-0132 measured cost and optional campaign ceiling
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0132
+- Change: implemented ADR-0044's execution policy. The deployment call ceiling
+  is no longer a precondition for the live capability: absent now means the
+  deployment declines to cap the campaign, and `assertLiveDeploymentBudget`
+  validates it on its own. Per-execution bounding is untouched, so a run that
+  exceeds its confirmation is still refused and "this job made exactly one
+  call" stays auditable.
+- Discovery that shaped the task: `acme.model_calls` reserved `model`,
+  `provider` and `usage_json` columns and every row had all three `NULL`.
+  `applyModelCallRetention` returned only the response hash and, under
+  `encrypted-payload`, the sealed envelope, so provider, model and usage were
+  dropped in every retention mode. Measurement over that table was impossible,
+  and the token counts in earlier entries came from reading responses in
+  flight rather than from durable evidence. Removing the cap without landing
+  the measurement in the same change is refused by ADR-0044's own risk clause.
+- Retention now keeps `callMetadata` — provider, model, finish reason and usage
+  — under every mode including `none` and `hash-only`. It is operational
+  metadata, never output: gates assert the response text never appears in the
+  retained fields, and that `response_payload` stays `NULL` under `hash-only`
+  while the three columns become queryable.
+- Added `summarizeModelCallUsage`: a pure summary over recorded calls with
+  counts, token totals and provider-supplied cost. Absent usage reads as
+  `null`, never `0`, `callsReportingUsage` says how much of a set the totals
+  cover, and costs in differing currencies are refused rather than converted.
+  No pricing table: an estimate must not be reported as evidence.
+- Verification tiers are documented in `docs/CONTRIBUTING.md`. Only a POC
+  acceptance run may claim POC #1 works; ACME-0131 is the standing example of
+  a green offline suite over a product that mutated state in the wrong order.
+- Verification: unit 768/768 across 121 files, up from 759/120; conformance 78,
+  integration 62, scenario 26; typecheck, lint, boundaries, build, format, docs
+  and diff clean; `pnpm test:postgres` 37/37 on a disposable `postgres:15`
+  created and removed for this task. The shared execution-repository
+  conformance kit runs against PostgreSQL too, so all three adapters are proven
+  by one gate. A composition with no ceiling environment variables resolves and
+  reports `liveObservationMaxModelCalls: null`, where it previously refused.
+- Live/data handling: no provider call was made and no source content entered
+  Git. The seven calls already recorded predate this change and carry no
+  metadata; they cannot be measured retroactively.
+- Handoff: activate
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md) on
+  a fresh case. `summarizeModelCallUsage` has no operator surface yet; a CLI or
+  API report over it would make cost readable without a database client.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0131 live path projection, scoping and session
 
 - Date: 2026-08-16

@@ -9,10 +9,12 @@ import { EVIDENCE_STAGE_A_TEXT_DATA_CLASS } from '@acme/evidence-product-contrac
 import {
   LiveSafetyRefused,
   assertLiveBudget,
+  assertLiveDeploymentBudget,
   assertNoLiveCredentialFields,
   requireLiveCredential,
   requireLiveOptIn,
   type LiveBudget,
+  type LiveDeploymentBudget,
 } from '@acme/live-safety';
 
 export const EVIDENCE_LIVE_CONFIRMATION_VERSION =
@@ -74,7 +76,7 @@ export interface EvidenceLiveDeployment {
   readonly modelGateway: 'live-provider';
   readonly payloadKeyId: string;
   readonly model: string;
-  readonly budget: LiveBudget;
+  readonly budget: LiveDeploymentBudget;
   readonly currency: string | null;
 }
 
@@ -230,7 +232,7 @@ export function createEvidenceLiveCapability(input: {
   readonly apiKey: string | undefined;
   readonly payloadKey: Uint8Array | undefined;
   readonly payloadKeyId: string | undefined;
-  readonly deploymentBudget: LiveBudget;
+  readonly deploymentBudget: LiveDeploymentBudget;
   readonly deploymentCurrency: string | null;
   readonly clock: Clock;
   readonly transport?: ProviderTransport;
@@ -272,11 +274,10 @@ export function createEvidenceLiveCapability(input: {
       'POC #1 live composition requires a configured model id.',
     );
   const apiKey = requireLiveCredential(input.apiKey);
-  assertLiveBudget({
-    requested: input.deploymentBudget,
-    confirmed: input.deploymentBudget,
-    deployment: input.deploymentBudget,
-  });
+  // The deployment budget is validated on its own. An absent call ceiling is
+  // valid: ADR-0044 retired the campaign cap, and cost is measured from
+  // recorded calls instead. Per-execution bounding is asserted at authorize().
+  assertLiveDeploymentBudget(input.deploymentBudget);
   if (
     (input.deploymentBudget.costCeilingMinor === null &&
       input.deploymentCurrency !== null) ||

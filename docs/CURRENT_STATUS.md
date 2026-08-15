@@ -433,6 +433,22 @@ that were masking it. Every gate was proven load-bearing by reverting each fix
 individually. On the running instance every case view for a real case answers
 `200`, where four answered `409` and three answered `404` before.
 
+ACME-0132 then implemented that policy. The deployment call ceiling is no
+longer a precondition: absent means the deployment declines to cap the
+campaign, while per-execution bounding is untouched, so a run exceeding its
+confirmation is still refused. Cost became measurable in the same change,
+because it had not been: `acme.model_calls` reserved `model`, `provider` and
+`usage_json` columns and every row had all three `NULL`, since retention
+dropped that metadata in every mode. Completed calls now retain content-free
+`callMetadata` under `none`, `hash-only` and `encrypted-payload` alike, proven
+on all three adapters by the shared conformance kit, with gates asserting that
+no response text joins it. `summarizeModelCallUsage` summarizes recorded calls
+without inventing anything: absent usage reads as `null` rather than `0`, the
+summary says how much of a set its totals cover, and costs in differing
+currencies are refused rather than converted. The verification tiers are
+documented in `docs/CONTRIBUTING.md`, and only a POC acceptance run may claim
+POC #1 works.
+
 The `POC1-AUTO-UI` case remains wedged at product evidence revision 2 against
 engine revision 5. That divergence is recorded history; the fixes prevent new
 divergence rather than rewriting it, so the acceptance run needs a fresh case.

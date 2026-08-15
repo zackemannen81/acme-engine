@@ -86,6 +86,19 @@ export interface LiveBudget {
   readonly costCeilingMinor: number | null;
 }
 
+/**
+ * A deployment may decline to cap the campaign; an execution may not.
+ *
+ * Bounding one execution is runaway protection and stays mandatory. Capping
+ * how many calls a deployment may ever make is a phase control that ADR-0044
+ * retired: how many calls a case needs is measured from recorded evidence, not
+ * refused at a threshold. `null` means no campaign cap, never "zero calls".
+ */
+export interface LiveDeploymentBudget {
+  readonly maxModelCalls: number | null;
+  readonly costCeilingMinor: number | null;
+}
+
 function positiveInteger(value: number, label: string): void {
   if (!Number.isInteger(value) || value < 1)
     throw new LiveSafetyRefused(
@@ -102,21 +115,38 @@ function cost(value: number | null, label: string): void {
     );
 }
 
+/**
+ * Prove a deployment budget is well formed on its own.
+ *
+ * An absent call ceiling is valid and means the deployment declines to cap the
+ * campaign. A present one must still be a positive integer, and a cost ceiling
+ * must still be null or non-negative.
+ */
+export function assertLiveDeploymentBudget(
+  deployment: LiveDeploymentBudget,
+): void {
+  if (deployment.maxModelCalls !== null)
+    positiveInteger(deployment.maxModelCalls, 'deployment.maxModelCalls');
+  cost(deployment.costCeilingMinor, 'deployment.costCeilingMinor');
+}
+
 /** Prove a run/operation ceiling is inside both confirmation and deployment. */
 export function assertLiveBudget(input: {
   readonly requested: LiveBudget;
   readonly confirmed: LiveBudget;
-  readonly deployment: LiveBudget;
+  readonly deployment: LiveDeploymentBudget;
 }): void {
   positiveInteger(input.requested.maxModelCalls, 'requested.maxModelCalls');
   positiveInteger(input.confirmed.maxModelCalls, 'confirmed.maxModelCalls');
-  positiveInteger(input.deployment.maxModelCalls, 'deployment.maxModelCalls');
+  if (input.deployment.maxModelCalls !== null)
+    positiveInteger(input.deployment.maxModelCalls, 'deployment.maxModelCalls');
   cost(input.requested.costCeilingMinor, 'requested.costCeilingMinor');
   cost(input.confirmed.costCeilingMinor, 'confirmed.costCeilingMinor');
   cost(input.deployment.costCeilingMinor, 'deployment.costCeilingMinor');
 
   if (
-    input.confirmed.maxModelCalls > input.deployment.maxModelCalls ||
+    (input.deployment.maxModelCalls !== null &&
+      input.confirmed.maxModelCalls > input.deployment.maxModelCalls) ||
     input.requested.maxModelCalls > input.confirmed.maxModelCalls
   )
     throw new LiveSafetyRefused(

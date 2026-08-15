@@ -1,6 +1,7 @@
 import type { ExecutionId, IsoTimestamp, ModelCallId } from './common.js';
 import type { AcmeErrorData } from './errors.js';
 import type { ModelSelection, NormalizedModelResponse } from './model.js';
+import type { ModelCallMetadata } from './payload-encryptor.js';
 
 export interface ModelCallReservation {
   readonly modelCallId: ModelCallId;
@@ -21,6 +22,11 @@ export interface ModelCallRecord extends ModelCallReservation {
   readonly response?: NormalizedModelResponse;
   readonly responseHash?: string;
   readonly protectedResponse?: string;
+  /**
+   * Content-free provider, model and usage evidence, retained under every
+   * retention mode so cost is measurable without decrypting anything.
+   */
+  readonly callMetadata?: ModelCallMetadata;
   readonly error?: AcmeErrorData;
   readonly completedAt?: IsoTimestamp;
 }
