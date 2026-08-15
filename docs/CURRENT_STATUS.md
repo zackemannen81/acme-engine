@@ -490,6 +490,14 @@ and derives the entire exact quote plus locator from that immutable segment.
 Historical `@1.0.0`–`@1.4.0` and outputs `/1`–`/3` remain exact for replay.
 Full-source coverage still needs a separate segmentation/coverage workflow;
 successful real-provider acceptance remains.
+ACME-0119's sole fresh `@1.5.0` call returned eight output `/4` candidates;
+all selected segment IDs existed and were unique, so ADR-0043's quote boundary
+held. Strict schema validation refused candidate seven because `exact.at` was a
+16-character local date/time with `T` but no seconds, offset or terminal `Z`.
+The other seven temporal bounds were `unknown`. One encrypted call succeeded;
+zero engine documents, commits and product observations were written. The next
+offline dependency is a prompt version that states the exact canonical UTC
+seconds/`Z` grammar and requires `unknown` when it cannot be emitted.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

@@ -240,6 +240,8 @@ The next offline contract must move quote authority to runtime-defined bounded
 source segments while retaining historical replay. ADR-0043/ACME-0118 now do
 so in active `@1.5.0` output `/4`: the provider selects a deterministic segment
 identifier and runtime derives the full exact quote and one-line locator.
+ACME-0119 then proved eight real-provider segment selections valid, but failed
+closed on one local minute-precision timestamp lacking seconds and `Z`.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

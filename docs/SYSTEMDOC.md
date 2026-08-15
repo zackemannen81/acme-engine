@@ -1511,6 +1511,10 @@ with no commit. ADR-0043/ACME-0118 implement the additive successor as active
 segment identifier; runtime copies its complete exact text and derives its
 single-line locator. Unknown selectors refuse, and all historical request/
 output contracts remain exact. Another acceptance remains.
+ACME-0119 proved all eight provider-selected segment IDs existed and were
+unique, but strict validation refused one exact temporal value expressed at
+local minute precision without seconds or `Z`. A prompt-version successor must
+name the canonical UTC grammar explicitly and require `unknown` otherwise.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

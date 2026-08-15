@@ -1,5 +1,32 @@
 # Journal
 
+## 2026-08-15 — ACME-0119 superseded after temporal-format refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0119
+- Summary: Ran one separately frozen Stage A call against active
+  `evidence.observe-artifact@1.5.0` under the approved ACME credential and 200
+  SEK prepaid ceiling. Exactly one provider call occurred.
+- Preflight reproduced the unchanged parent/extraction hashes and passed clean
+  PostgreSQL, private MinIO, random mounted keys and signed S3 operations.
+- Provider result: stop, 66,775 input + 1,533 output = 68,308 total tokens;
+  eight output `/4` candidates. Every selected segment ID was valid, supplied,
+  existing and unique. Seven temporal bounds were `unknown`.
+- Refusal: candidate seven emitted `exact.at` as a 16-character local
+  date/time containing `T` but no seconds, UTC offset or terminal `Z`. Strict
+  schema validation emitted one `MODEL_RESPONSE_SCHEMA` issue. One encrypted
+  model call succeeded; zero engine documents, commits and observations wrote.
+- Safety: no retry/repair. Containers, network and exact temporary source,
+  credential and key state were removed; original PDF and ignored `.env.local`
+  are unchanged.
+- Disposition: segment quote authority held. This one-shot task is consumed;
+  version the prompt offline with literal canonical UTC seconds/`Z` grammar and
+  an `unknown` fallback before another acceptance.
+- Verification: content-free encrypted-response metadata and persistence
+  assertions; `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0118 runtime-derived observation quotes
 
 - Date: 2026-08-15
