@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID:
+Task ID: ACME-0125
 Parent Task: None
-Status: Draft
-Owner:
-Created:
-Last updated:
-Charter frozen at:
+Status: Ready
+Owner: Codex
+Created: 2026-08-15
+Last updated: 2026-08-15
+Charter frozen at: 2026-08-15T18:24:50+02:00
 
 ## Read First
 
@@ -18,91 +18,94 @@ Charter frozen at:
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- Relevant ADRs under `docs/adr/`
+- ACME-0123 and ACME-0124
 
 ## Task Summary
-A task is never considered done until:
-JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Describe the task, why it is being done now and the intended outcome.
+Correct the live journey's source-view field mismatch and make the compiler
+bind the harness to the public view contract.
 
 ## Task Charter
 
-The charter is editable while status is `Draft` and immutable once status is
-`Ready`.
+The charter was frozen when this task became `Ready`.
 
 ### Goal
 
-Define one primary outcome.
+Ensure reviewer commands use the public source view's
+`observationVersionId`, never a handwritten internal-record field name.
 
 ### Primary Deliverable
 
-Name the concrete artifact or behavior that completes the task.
+The live harness consumes `EvidencePrimarySourceReviewView` directly and uses
+its typed observation version identity for all review/history routes.
 
 ### In Scope
 
-- List work required for the primary deliverable.
+- Replace the handwritten source-view response type with the exported view type.
+- Replace three `observationId` references with `observationVersionId`.
+- Run focused/canonical offline gates and reality-sync/commit.
 
 ### Out of Scope
 
-- List adjacent work that must not be absorbed.
+- Provider/network calls, other harness behavior, product/view changes,
+  relation/assessment contracts, Stage B, deployment, push or release.
 
 ### Definition of Done
 
-- Define objective, verifiable completion conditions.
+- TypeScript enforces the public source view identity field.
+- No stale `observationId` reference remains in the live journey.
+- Canonical offline gates pass; no source, credential or provider call occurs.
 
 ### Minimum Verification Gates
 
-- [ ] Define checks that may be strengthened but not removed after `Ready`.
+- [ ] Focused type/lint/static live-gate checks
+- [ ] typecheck, lint, boundaries, test, build, format, docs and diff
 
 ## References
 
-- Add relevant documents, code, decisions and external contracts.
+- `packages/evidence-views/src/schemas.ts`
+- `tests/live/evidence-stage-a-reviewer-journey.test.ts`
+- `docs/finished/ACME-0124_stage-a-live-reviewer-acceptance.md`
 
 ## Checklist
 
-- [ ] Break work into concrete, ordered steps.
-- [ ] Keep this checklist aligned with actual progress.
-- [ ] Add verification and documentation steps.
+- [x] Freeze bounded offline correction.
+- [ ] Bind harness to public view type and correct identity field.
+- [ ] Run focused/canonical verification.
+- [ ] Reality-sync docs, archive and commit.
 
 ## Decisions and Notes
-- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
-- Record decisions and assumptions within the frozen charter.
-- Classify discoveries using `docs/TASK_WORKFLOW.md`.
+
+- This is a harness contract fix; product API and view schemas remain unchanged.
+- No live opt-in or credential may be loaded.
+- A checkpoint after every substep is required.
 
 ## Charter Amendment Log
 
-Only non-semantic corrections are allowed after `Ready`.
-
--none
+- None.
 
 ## Verification
 
-- [ ] Define task-appropriate technical checks.
-- [ ] Define manual or scenario validation when relevant.
-- [ ] Document skipped checks and reasons.
+- [ ] Record exact offline gates and results.
 
 ## Documentation Updates
 
 - [ ] `docs/CURRENT_STATUS.md`
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md` when structure changes
-- [ ] ADRs when long-lived decisions change
+- [ ] completion plan/Slice 9 notes
 
 ## Handoff and Follow-ups
 
-- Current state:
-- Next recommended step:
-- Blockers:
-- Child tasks:
-- Resume condition:
-- Open questions:
+- Current state: task frozen; no code change and no provider call.
+- Next recommended step: apply typed identity correction.
+- Blockers: none.
+- Child tasks: none.
+- Resume condition: not applicable.
+- Open questions: none.
 
 ## Finalize When Complete
 
-- Archive this file under `docs/finished/`.
-- Restore this template or populate the next approved task.
-- Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changed, supersede this task instead of
-  rewriting it.
+- Archive as `docs/finished/ACME-0125_source-view-observation-identity.md`.
+- Restore task template and add a signed Journal entry.
+- Supersede rather than rewrite if the Goal changes.
