@@ -418,7 +418,7 @@ The first contract catalogue is:
 | Observe one source artifact | `evidence.observe-artifact@1.0.0` | analyzer, model-backed | 1 |
 | Propose normalized meanings, relations and questions over accepted observations | `evidence.relate-observations@1.1.0` (active; historical `@1.0.0` retained for replay) | analyzer, model-backed | 3 |
 | Build temporal entries | `evidence.build-timeline@1.0.0` | transformer, deterministic | 4 |
-| Propose an assessment document | `evidence.propose-assessment@1.0.0` | producer, model-backed | 5 |
+| Propose an assessment document | `evidence.propose-assessment@1.2.0` (active; historical `@1.0.0` and `@1.1.0` retained for replay) | producer, model-backed | 5 |
 
 The last three identifiers are reserved by this specification but are not
 published until their own slice implements and verifies them. Artifact import,
@@ -484,11 +484,14 @@ then non-overlapping ranges, and otherwise emits ambiguity bands. Approximate
 and unknown items retain those labels. Equal sort keys fall back to stable
 evidence id. The task never creates a more precise bound.
 
-`evidence.propose-assessment@1.0.0` accepts only explicitly listed accepted
+Active `evidence.propose-assessment@1.2.0` accepts only explicitly listed accepted
 observation, proposition, event, relation and open-question ids. It produces a
 candidate `evidence-assessment/1` document with cited support, cited conflict,
 uncertainty rationale and basis evidence revision. Unknown citations, missing
 uncertainty or prohibited conclusions block the document.
+Every set-like string-ID array must be unique and lexicographically sorted.
+Historical `@1.0.0` and `@1.1.0` remain registered byte-exact for replay, and
+runtime validation never repairs or reorders an unvalidated response.
 
 ### 6.4 Memory policy
 

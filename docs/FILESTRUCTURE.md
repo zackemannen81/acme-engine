@@ -978,6 +978,9 @@ and runtime derives the immutable quote/locator. Stage B remains closed.
 ACME-0127 versions the active relation prompt to `@1.1.0` so strict sorted-set
 and endpoint-order rules are explicit, while the historical `@1.0.0` contract
 remains registered byte-exact for replay.
+ACME-0128 similarly versions active assessment to `@1.2.0` with explicit
+sorted-set output rules and retains both `@1.0.0` and `@1.1.0` byte-exact for
+replay.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

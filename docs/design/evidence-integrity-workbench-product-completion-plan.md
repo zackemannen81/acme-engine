@@ -58,6 +58,9 @@ retain historical replay before another gate.
 ACME-0127 completes that checkpoint: active relation `@1.1.0` explicitly states
 all set-like array and endpoint ordering requirements, historical `@1.0.0`
 remains byte-exact for replay, and the complete offline gate set is green.
+ACME-0128 then closes the same predictable assessment risk before spending:
+active assessment `@1.2.0` states every strict set-like string-ID ordering rule,
+while historical `@1.0.0` and `@1.1.0` remain byte-exact for replay.
 
 ## Purpose and Authority
 
@@ -110,7 +113,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed observations; ACME-0123 adds the two-source harness and ACME-0125 types its source view. ACME-0126 passed D1 observation/review, then relation `/1` refused two unique but unsorted trigger-ID arrays. ACME-0127 activates a replay-compatible `@1.1.0` prompt that states those wire rules. A separately frozen new live gate remains. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed observations; ACME-0123 adds the two-source harness and ACME-0125 types its source view. ACME-0126 passed D1 observation/review, then relation `/1` refused two unique but unsorted trigger-ID arrays. ACME-0127 activates relation `@1.1.0`; ACME-0128 proactively activates assessment `@1.2.0` with the same explicit sorted-set rule and historical replay. A separately frozen new live gate remains. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.

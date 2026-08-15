@@ -183,6 +183,10 @@ ACME-0127 satisfies that dependency with active relation `@1.1.0`, preserves
 historical `@1.0.0` byte-exact for replay and passes every canonical offline
 gate. No provider call occurred; the new live journey remains a separately
 frozen and budgeted task.
+ACME-0128 also inspects and closes the equivalent assessment schema/prompt gap
+before spending: active `@1.2.0` states unique lexicographic ordering for every
+strict set-like string-ID array, both historical versions retain byte-exact
+replay, and all canonical offline gates pass. The live journey remains separate.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and

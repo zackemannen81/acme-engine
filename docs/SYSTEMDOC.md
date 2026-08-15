@@ -1440,8 +1440,9 @@ available, then returns to the existing relation/open-question views; timeline
 continues to be the pure temporal projection of source-bound observations.
 
 ACME-0110 retains historical `evidence.propose-assessment@1.0.0` and its
-identifier-only synthetic input for replay, while active `@1.1.0` accepts the
-additive source-complete `evidence-propose-assessment-input/2`. The live API
+identifier-only synthetic input for replay. Active `@1.2.0` retains `@1.1.0`'s
+additive source-complete `evidence-propose-assessment-input/2` and adds only the
+explicit sorted-set prompt rule; both earlier versions remain replayable. The live API
 derives accepted current observations and relations, open questions, sequence,
 predecessor and basis revision from one authorized case. Typed observation
 objects carry exact artifact/locator/quote evidence into the provider request;
@@ -1562,6 +1563,11 @@ ACME-0127 implements that replay-compatible boundary. Active relation contract
 `@1.0.0` retains its exact prompt and request hash. Registry, composition,
 fixtures and replay resolve both versions; canonical offline verification is
 green and no provider call occurred.
+ACME-0128 applies the same fail-closed lesson to assessment before another paid
+journey. Active `evidence.propose-assessment@1.2.0` states the sorted/unique rule
+for every strict set-like output `/1` string-ID array. Historical `@1.0.0` and
+`@1.1.0` preserve their exact prompts, schema names and request hashes;
+registry/composition resolve all three and runtime coercion remains forbidden.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

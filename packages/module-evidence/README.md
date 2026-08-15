@@ -15,10 +15,12 @@ identifier/rationale array to be unique and lexicographically sorted and every
 relation endpoint array to be distinct and sorted by kind then id. Historical
 `@1.0.0` remains registered byte-exact for replay. Slice 4 adds pure timeline ordering
 via `evidence.build-timeline@1.0.0` and `evidence-temporal-overlap-1`. Slice 5
-adds `evidence.propose-assessment@1.0.0`, immutable reviewed-evidence assessment
-versions, strict change-set records and pure tier-A/tier-B re-review attention
-classification. Product review decisions, ZIP rendering and UI remain outside
-this domain package.
+adds active `evidence.propose-assessment@1.2.0`, immutable reviewed-evidence
+assessment versions, strict change-set records and pure tier-A/tier-B re-review
+attention classification. Its prompt requires unique lexicographically sorted
+set-like identifier arrays; historical `@1.0.0` and `@1.1.0` stay byte-exact
+for replay. Product review decisions, ZIP rendering and UI remain outside this
+domain package.
 
 The observation task accepts one immutable source artifact version and an
 explicit actor roster. Its prompt contract requires strict structured output;

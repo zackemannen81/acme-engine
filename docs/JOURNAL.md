@@ -1,5 +1,31 @@
 # Journal
 
+## 2026-08-15 — ACME-0128 sorted assessment provider output
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0128
+- Change: identified the assessment contract's analogous schema/prompt gap
+  before another paid run, then activated
+  `evidence.propose-assessment@1.2.0` with explicit unique lexicographically
+  sorted set-like string-ID arrays. Output `/1`, semantics and identities are
+  unchanged; runtime coercion remains forbidden.
+- Replay identity: historical `@1.0.0` request hash is
+  `2532333356e475a2caa405aaa5eda3867e9682049262f9156590891dd6fd49a0`;
+  historical `@1.1.0` remains
+  `a7504dcf2ff5d33578688e9f73d2b3b76e21a7007d22460e094526d047e51c90`;
+  active `@1.2.0` is
+  `c4e140c6742d06ab038f87fd323eccc81d96fa52bcde85d5f5bf37a2c342fb48`.
+- Verification: focused contract/hash/replay/registry/composition tests 17/17;
+  typecheck, lint, boundaries and build passed; full default suites passed 753
+  unit, 78 conformance, 62 integration and 26 scenario tests; a fresh
+  disposable PostgreSQL 16 passed 36/36 and was removed; format, docs and diff
+  checks passed.
+- Live/data handling: no credential was loaded and no provider call occurred.
+- Handoff: archive ACME-0128, then freeze a separately bounded two-source live
+  reviewer/reassessment journey.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0127 sorted relation provider output
 
 - Date: 2026-08-15

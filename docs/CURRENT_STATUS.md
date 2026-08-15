@@ -551,6 +551,12 @@ unique lexicographically sorted set-like string arrays and distinct relation
 endpoints sorted by kind then id. Historical `@1.0.0` remains byte-exact and
 registered for replay; both request hashes are pinned and all canonical gates
 pass without a provider call. A separately frozen live journey remains.
+ACME-0128 closes the adjacent assessment risk before spending. Active
+`evidence.propose-assessment@1.2.0` explicitly requires unique,
+lexicographically sorted set-like string-ID arrays. Historical `@1.0.0` and
+`@1.1.0` remain byte-exact and registered for replay; all three request hashes
+are pinned and canonical gates, including fresh PostgreSQL 36/36, pass without
+a provider call. A separately frozen live journey remains.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

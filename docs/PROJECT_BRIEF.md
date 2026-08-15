@@ -274,6 +274,10 @@ ordering for every set-like string array plus kind/id endpoint ordering.
 Historical `@1.0.0` stays byte-exact for replay, all canonical offline gates
 pass and no provider call occurred. The next live journey remains separately
 bounded and frozen.
+ACME-0128 proactively closes the identical assessment wire risk: active
+`evidence.propose-assessment@1.2.0` states unique lexicographic ordering for
+every strict set-like string-ID array, while historical `@1.0.0` and `@1.1.0`
+remain byte-exact for replay. Canonical gates pass without a provider call.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
