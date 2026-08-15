@@ -1189,7 +1189,10 @@ describe('Evidence Stage A PostgreSQL import', () => {
           )
         ).json()) as typeof job;
       }
-      expect(job.phase).toBe('completed');
+      expect(job).toMatchObject({
+        phase: 'completed',
+        reasonCode: 'LIVE_OBSERVATION_COMPLETED',
+      });
       snapshot = await assessmentReopened.productRepository.snapshot();
       for (const observation of snapshot.observations.filter(
         (item) => item.artifactVersionId === laterArtifactVersionId,

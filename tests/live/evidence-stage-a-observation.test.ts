@@ -234,7 +234,7 @@ describe.skipIf(!ENABLED)('Evidence Stage A live observation', () => {
       }
       expect(job).toMatchObject({
         phase: 'completed',
-        reasonCode: 'LIVE_OBSERVATION_COMMITTED',
+        reasonCode: 'LIVE_OBSERVATION_COMPLETED',
       });
       const sourceResponse = await request(
         `api/cases/${encodeURIComponent(caseId)}/sources/${encodeURIComponent(artifactVersionId)}`,

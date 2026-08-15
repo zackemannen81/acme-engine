@@ -61,7 +61,7 @@ successful terminal reason code emitted by the worker.
 
 ### Minimum Verification Gates
 
-- [ ] Static live-gate expectation check
+- [x] Static live-gate expectation check
 - [ ] Focused fresh-PostgreSQL Stage A test
 - [ ] typecheck, lint, test, build, format, docs and diff
 
@@ -74,7 +74,7 @@ successful terminal reason code emitted by the worker.
 ## Checklist
 
 - [x] Pause parent and freeze bounded child.
-- [ ] Align the two success assertions.
+- [x] Align the two success assertions.
 - [ ] Run focused/canonical offline verification.
 - [ ] Reality-sync docs, archive child and resume parent.
 
@@ -84,6 +84,8 @@ successful terminal reason code emitted by the worker.
   `LIVE_OBSERVATION_COMPLETED`; replay uses `LIVE_OBSERVATION_RESUMED`.
 - No live opt-in or provider credential may be loaded in this task.
 - A checkpoint after every substep is required.
+- The live gate and existing successful PostgreSQL product journey now both
+  assert the worker's `LIVE_OBSERVATION_COMPLETED` terminal reason.
 
 ## Charter Amendment Log
 
@@ -101,8 +103,9 @@ successful terminal reason code emitted by the worker.
 
 ## Handoff and Follow-ups
 
-- Current state: child frozen; no code changed and no provider call allowed.
-- Next recommended step: correct assertions and run offline verification.
+- Current state: assertions aligned and static/format checks passed; no provider
+  call occurred.
+- Next recommended step: run focused and canonical offline verification.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: archive this task after green gates, then restore ACME-0121.
