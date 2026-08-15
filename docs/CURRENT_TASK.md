@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID:
+Task ID: ACME-0127
 Parent Task: None
-Status: Draft
-Owner:
-Created:
-Last updated:
-Charter frozen at:
+Status: Ready
+Owner: Codex
+Created: 2026-08-15
+Last updated: 2026-08-15
+Charter frozen at: 2026-08-15T18:37:00+02:00
 
 ## Read First
 
@@ -18,91 +18,100 @@ Charter frozen at:
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- Relevant ADRs under `docs/adr/`
+- ACME-0126 and historical ACME-0080
 
 ## Task Summary
-A task is never considered done until:
-JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Describe the task, why it is being done now and the intended outcome.
+Version the relation prompt so the provider is explicitly told every strict
+set-like array ordering rule exposed by ACME-0126.
 
 ## Task Charter
 
-The charter is editable while status is `Draft` and immutable once status is
-`Ready`.
+The charter was frozen when this task became `Ready`.
 
 ### Goal
 
-Define one primary outcome.
+Make active relation candidates state lexical sort/uniqueness and endpoint
+ordering requirements without runtime coercion or historical replay drift.
 
 ### Primary Deliverable
 
-Name the concrete artifact or behavior that completes the task.
+Active `evidence.relate-observations@1.1.0`, still output `/1`, with historical
+`@1.0.0` registered byte-exact and prompt/hash/replay tests for both.
 
 ### In Scope
 
-- List work required for the primary deliverable.
+- Add active relation version/ref and historical `@1.0.0` contract export.
+- In active prompt only, require unique lexically sorted set-like string arrays
+  and distinct endpoints sorted by kind then id.
+- Preserve schemas, semantics, identities and historical request hash.
+- Register both versions in live composition and re-pin active fixtures.
+- Run canonical verification, reality-sync docs and commit.
 
 ### Out of Scope
 
-- List adjacent work that must not be absorbed.
+- Provider/network calls, runtime sorting/coercion, output schema changes,
+  relation policy changes, assessment prompt changes, Stage B or push.
 
 ### Definition of Done
 
-- Define objective, verifiable completion conditions.
+- Active prompt states every ordering rule that can fail schema/semantics.
+- Historical `@1.0.0` request remains byte-exact and resolvable for replay.
+- Active fixtures and all canonical gates pass with no live call.
+- Task is documented, archived and committed.
 
 ### Minimum Verification Gates
 
-- [ ] Define checks that may be strengthened but not removed after `Ready`.
+- [ ] Focused catalogue/prompt/hash/replay/composition tests
+- [ ] typecheck, lint, boundaries, test, PostgreSQL, build, format, docs, diff
 
 ## References
 
-- Add relevant documents, code, decisions and external contracts.
+- `packages/module-evidence/src/contracts/relate-observations.ts`
+- `packages/module-evidence/src/catalogue.ts`
+- `docs/finished/ACME-0126_stage-a-typed-reviewer-acceptance.md`
 
 ## Checklist
 
-- [ ] Break work into concrete, ordered steps.
-- [ ] Keep this checklist aligned with actual progress.
-- [ ] Add verification and documentation steps.
+- [x] Freeze offline relation-prompt successor.
+- [ ] Version contract and preserve historical replay.
+- [ ] Update registrations, fixtures and focused tests.
+- [ ] Run canonical verification.
+- [ ] Reality-sync docs, archive and commit.
 
 ## Decisions and Notes
-- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
-- Record decisions and assumptions within the frozen charter.
-- Classify discoveries using `docs/TASK_WORKFLOW.md`.
+
+- Runtime must not repair/reorder unvalidated provider output.
+- Output `/1`, domain semantics and identities remain unchanged.
+- The prompt covers propositions, events, comparable-scope arrays,
+  open-question triggers and relation endpoints.
+- No live opt-in or credential may be loaded.
+- A checkpoint after every substep is required.
 
 ## Charter Amendment Log
 
-Only non-semantic corrections are allowed after `Ready`.
-
--none
+- None.
 
 ## Verification
 
-- [ ] Define task-appropriate technical checks.
-- [ ] Define manual or scenario validation when relevant.
-- [ ] Document skipped checks and reasons.
+- [ ] Record old/new hashes and exact gates.
 
 ## Documentation Updates
 
-- [ ] `docs/CURRENT_STATUS.md`
-- [ ] `docs/SYSTEMDOC.md`
-- [ ] `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md` when structure changes
-- [ ] ADRs when long-lived decisions change
+- [ ] `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, `docs/PROJECT_BRIEF.md`
+- [ ] module README, technical spec, completion plan, Slice 9, Journal/structure
 
 ## Handoff and Follow-ups
 
-- Current state:
-- Next recommended step:
-- Blockers:
-- Child tasks:
-- Resume condition:
-- Open questions:
+- Current state: task frozen; no code change and no provider call.
+- Next recommended step: implement versioned contract factory/tests.
+- Blockers: none.
+- Child tasks: none.
+- Resume condition: not applicable.
+- Open questions: none.
 
 ## Finalize When Complete
 
-- Archive this file under `docs/finished/`.
-- Restore this template or populate the next approved task.
-- Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changed, supersede this task instead of
-  rewriting it.
+- Archive as `docs/finished/ACME-0127_sorted-relation-provider-output.md`.
+- Restore task template and add signed Journal entry.
+- Supersede rather than rewrite if Goal changes.
