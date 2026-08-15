@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-15 — ACME-0109 superseded before implementation
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0109
+- Summary: Superseded the newly frozen live-assessment charter before changing
+  code. Its Definition of Done incorrectly required assessment projection to
+  advance the product `evidenceRevision`.
+- Reason: the accepted assessment contract deliberately leaves evidence
+  revision unchanged. An assessment records `basisEvidenceRevision`; advancing
+  that revision merely because the assessment was proposed would make the new
+  assessment stale immediately and break the existing attention/re-review
+  semantics.
+- Follow-up: activate ACME-0110 with the same bounded outcome but require an
+  atomic assessment projection at unchanged product evidence revision. The
+  engine transaction still advances its internal state revision normally.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0108 Stage A live relation job
 
 - Date: 2026-08-15
