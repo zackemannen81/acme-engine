@@ -1,5 +1,42 @@
 # Journal
 
+## 2026-08-15 — ACME-0111 superseded after one fail-closed provider call
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0111
+- Summary: Activated the isolated Stage A real-provider gate after the user
+  approved reuse of an ACME-specific ignored `OPENAI_API_KEY`. The prepaid pot
+  is a 200 SEK monetary ceiling; the configured `20000` value means minor SEK
+  units (öre), not tokens. This task additionally limited its exact execution
+  to one provider call.
+- Preflight: reverified D1's 106,907-byte parent PDF and SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  prepared a fresh 106,072-byte LF/NFC UTF-8 representation with SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`;
+  verified 52 non-empty pages and no NUL/replacement character. The fresh
+  representation is not claimed byte-identical to ACME-0106's removed temp
+  representation.
+- Hosted-equivalent gate: clean loopback PostgreSQL and private MinIO were
+  composed with random task-local credential, artifact-KEK and durable payload
+  key files. The repository's signed S3 adapter passed create/stat/read/delete,
+  and PostgreSQL began with zero public tables.
+- Provider result: exactly one OpenAI `gpt-5.6-luna` call reached the provider.
+  It used 36,874 input and 2,048 output tokens (38,922 total), returned
+  `incomplete/max_output_tokens`, and retained an encrypted candidate that
+  began as JSON but ended before its closing delimiter. The bounded pipeline
+  reported `MODEL_INVALID_RESPONSE` at parse. No repair/retry ran.
+- Safety result: one source and one failed product job existed transiently,
+  but there were zero engine commits and zero observations. No source content,
+  credential, provider payload or provider response id entered Git/docs. Both
+  `--rm` containers and the exact temp directory were removed; the original
+  PDF and ignored `.env.local` remain untouched.
+- Disposition: the one-shot charter cannot rerun after consuming its only
+  allowed provider call, so ACME-0111 is superseded. Activate ACME-0112 to
+  version a bounded observation count and output budget offline; a later
+  frozen one-call acceptance remains within the same external prepaid ceiling.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0110 Stage A live assessment and reassessment
 
 - Date: 2026-08-15

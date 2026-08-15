@@ -153,7 +153,7 @@ flag.
 - [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. The live reviewer journey exists; real-provider acceptance remains
+### D2. The live reviewer journey exists; real-provider output bound remains
 
 The default workbench still composes `createScriptedModelGateway`. ACME-0105
 adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
@@ -183,9 +183,10 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       that with section A's provider handling.
 - [ ] Validate the `observe-artifact` strict structured-output contract with an
       explicitly budgeted real provider call on authorized material outside
-      the sealed corpus. ACME-0107 proves the product path with injected
-      transport and provides the opt-in acceptance entry, but no process
-      credential was available for the paid call.
+      the sealed corpus. ACME-0111 made one call with a 52-page source: the
+      provider stopped at 2,048 output tokens with incomplete JSON, and ACME
+      correctly committed nothing. Version and prove a bounded observation
+      count/output budget offline before a fresh acceptance call.
 
 ### D3. Consent withdrawal has no mechanism
 

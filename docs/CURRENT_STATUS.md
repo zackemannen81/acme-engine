@@ -446,9 +446,13 @@ retained response with the same relation/question identities and one cumulative
 call. ACME-0110 proves the assessment boundary plus review/reassessment across
 another imported and observed Stage A source. It also corrects Stage A revision
 alignment: import owns the source evidence revision, observation verifies and
-reuses it, and relation supplies the next shared engine/product revision. A
-separate opt-in real-call acceptance entry exists but was not run because this
-checkpoint had no process credential or approved spend ceiling.
+reuses it, and relation supplies the next shared engine/product revision.
+ACME-0111 reached OpenAI once under a one-call run and deployment gate plus the
+user's 200 SEK prepaid monetary ceiling. The 52-page source produced an
+incomplete candidate at the active contract's 2,048-output-token limit; strict
+JSON parsing failed, and the fail-closed path left zero engine commits and zero
+product observations. A versioned bounded observation count/output budget is
+the next dependency before a fresh real-provider acceptance.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
