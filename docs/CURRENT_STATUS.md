@@ -535,6 +535,15 @@ ACME-0125 completes that dependency: the harness now consumes the exported
 shape is gone, so this mismatch is compile-time visible. All canonical offline
 gates pass; no provider call occurred. A new separately frozen live journey is
 the next dependency.
+ACME-0126 then passed D1 observation plus all eight reviewer decisions (six
+accepted, one rejected, one unresolved) and reached the real relation model.
+That call returned eight propositions, four relation candidates and three open
+questions, but two otherwise valid unique triggering-observation ID arrays
+were not lexicographically sorted. Strict output `/1` requires sorted unique
+sets; the active `@1.0.0` prompt never states that wire rule. Schema validation
+failed closed, zero relations/questions/assessments wrote and four later calls
+never started. A replay-compatible relation prompt version is the next offline
+dependency.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

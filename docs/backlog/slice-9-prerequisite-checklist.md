@@ -175,6 +175,10 @@ an ACME-0123 source-view field-name mismatch. This is a concrete harness
 correction, not a new product prerequisite.
 ACME-0125 completes that correction offline and prevents recurrence through
 the exported source-view type. Another separately budgeted run remains.
+ACME-0126 passed real D1 review but exposed one concrete relation-contract gap:
+the provider must be told to return every set-like identifier array unique and
+lexicographically sorted. This bounded prompt version is now on the critical
+path; no runtime coercion is authorized.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and

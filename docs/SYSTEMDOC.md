@@ -1547,6 +1547,13 @@ ACME-0125 removes that harness ambiguity by importing the public source-review
 view type directly and using its version identity. Product/view behavior is
 unchanged; canonical offline verification is green and another live run still
 requires separate authority.
+ACME-0126 proves the typed review path and all three reviewer standings against
+real D1 observations, then exposes a relation wire dependency: output `/1`
+models set-like ID arrays as sorted unique strings, but relation prompt
+`@1.0.0` does not instruct lexical sorting. The provider returned two unique
+but unsorted open-question trigger arrays; strict validation refused them
+before product projection. Version the prompt while preserving `@1.0.0`
+request/replay identity; runtime must not silently reorder unvalidated output.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

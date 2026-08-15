@@ -1,5 +1,27 @@
 # Journal
 
+## 2026-08-15 — ACME-0126 superseded at relation schema boundary
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0126
+- Progress: D1 observation committed eight source-bound observations and the
+  authenticated reviewer wrote six accepts, one rejection and one unresolved
+  decision. The next real relation call returned complete output `/1` with
+  eight propositions, four relations and three open questions.
+- Refusal: two `triggeringObservationIds` arrays were unique but not lexical-
+  sorted. Strict schema validation emitted two `MODEL_RESPONSE_SCHEMA` issues;
+  zero relations/questions/assessments projected. Active relation prompt
+  `@1.0.0` does not state the schema's sorted-set wire requirement.
+- Usage: observation 66,819 + 708 = 67,527 tokens; relation 2,925 + 2,990 =
+  5,915. Two of six calls occurred; four never started and no retry occurred.
+- Safety: all containers/network/temp keys and D1/D2 text were removed. Both
+  PDFs and ignored `.env.local` are unchanged; no sensitive content entered Git.
+- Follow-up: version the relation prompt offline with explicit unique lexical
+  sorting for every set-like ID array, preserve historical replay, verify, then
+  freeze a separate live journey.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0125 typed source-view observation identity
 
 - Date: 2026-08-15

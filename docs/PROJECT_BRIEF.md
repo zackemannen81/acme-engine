@@ -264,6 +264,10 @@ before another separately frozen live journey.
 ACME-0125 applies that exact offline correction and makes TypeScript enforce
 the public source-review view identity; all canonical gates pass without a
 provider call.
+ACME-0126 then completed D1 observation and accept/reject/unresolved review but
+failed closed on relation output: two open-question trigger-ID arrays were
+unique yet unsorted, a strict schema rule absent from the `@1.0.0` prompt. A
+replay-compatible prompt version is required before another live journey.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
