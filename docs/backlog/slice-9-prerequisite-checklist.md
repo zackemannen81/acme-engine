@@ -190,10 +190,11 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       retaining both historical versions. ACME-0113's fresh call completed
       strict JSON with six exact quotes, but each model-authored line locator
       was offset; semantic validation correctly committed nothing.
-- [ ] Remove source-locator authority from the observation model output and
+- [x] Remove source-locator authority from the observation model output and
       derive canonical start/end lines deterministically from a uniquely
-      occurring exact quote, preserving historical contract replay. Re-run the
-      separately budgeted real-provider gate only after offline proof.
+      occurring exact quote, preserving historical contract replay.
+      ADR-0042/ACME-0114 implement active `@1.3.0` output `/2`; re-run the
+      separately budgeted real-provider gate only after the offline checkpoint.
 - [ ] Decide deterministic segmentation, segment identities, deduplication and
       reviewer-visible coverage before making any exhaustive full-source
       analysis claim. A successful ADR-0041 batch proves candidate validity,

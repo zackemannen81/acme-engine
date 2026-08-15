@@ -45,6 +45,39 @@ export function evidenceLineRange(
   return lines.slice(startLine - 1, endLine).join('\n');
 }
 
+export type EvidenceUniqueQuoteLocation =
+  | {
+      readonly status: 'unique';
+      readonly startLine: number;
+      readonly endLine: number;
+    }
+  | { readonly status: 'absent' }
+  | { readonly status: 'ambiguous'; readonly occurrenceCount: number };
+
+export function locateUniqueEvidenceQuote(
+  value: string,
+  quote: string,
+): EvidenceUniqueQuoteLocation {
+  const canonical = canonicalizeEvidenceText(value);
+  if (quote.length === 0) return { status: 'absent' };
+  const offsets: number[] = [];
+  let offset = 0;
+  while (offset <= canonical.length - quote.length) {
+    const found = canonical.indexOf(quote, offset);
+    if (found === -1) break;
+    offsets.push(found);
+    offset = found + quote.length;
+  }
+  if (offsets.length === 0) return { status: 'absent' };
+  if (offsets.length > 1) {
+    return { status: 'ambiguous', occurrenceCount: offsets.length };
+  }
+  const found = offsets[0] as number;
+  const startLine = 1 + canonical.slice(0, found).split('\n').length - 1;
+  const endLine = startLine + quote.split('\n').length - 1;
+  return { status: 'unique', startLine, endLine };
+}
+
 export function exactQuoteOccurrenceCount(
   value: string,
   startLine: number,

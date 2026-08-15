@@ -10,7 +10,7 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '12ee3b66c8e44244833b65c4f78b4f61853bdbd1980f6689c711b8ce40ff4512' as const;
+  '0e39e68461040d4b0964c55397b86175be92328ecae3ab9403fa14366f9761cd' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
   return EvidenceObserveArtifactInputSchema.parse({
@@ -31,8 +31,6 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
     observations: [
       {
         kind: 'statement-occurrence',
-        startLine: 4,
-        endLine: 4,
         exactQuote:
           'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
         actorReference: {
@@ -50,8 +48,6 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
       },
       {
         kind: 'statement-occurrence',
-        startLine: 6,
-        endLine: 6,
         exactQuote:
           'Nera Sol: The indicator showed amber while the hatch was open.',
         actorReference: {

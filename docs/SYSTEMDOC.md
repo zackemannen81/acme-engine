@@ -1080,8 +1080,10 @@ immutable versions: one prompt-scratch transcript, an open development
 transcript/exhibit pair and a sealed evaluation core of four logical artifacts
 in five versions. The sealed truth requires ten observations, eight scoped
 relations, three open questions and two assessment versions. Canonicalization
-is UTF-8, LF and NFC; locators are one-based inclusive line ranges and accepted
-quotes must match exactly once within their addressed range.
+is UTF-8, LF and NFC; locators are one-based inclusive line ranges. Active
+observation candidates must quote one passage that occurs exactly once in the
+artifact, and runtime derives its range. Historical output `/1` retains its
+model-authored range validation for replay.
 
 ACME-0077 delivered the Evidence contract/corpus foundation, ACME-0078
 delivered the first executable reviewer slice, ACME-0079 delivered account
@@ -1090,13 +1092,16 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.2.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.3.0` task projects one immutable source plus an
 explicit actor roster, uses strict structured output and refuses invalid quote,
 kind, actor, temporal and prohibited-authority candidates before commit. Its
 active prompt returns one to eight materially distinct, explicitly non-
-exhaustive reviewer candidates and allows at most 8,192 output tokens. The
-historical `@1.0.0` synthetic-worded and `@1.1.0` source-neutral unbounded
-contracts remain registered unchanged for replay.
+exhaustive reviewer candidates and allows at most 8,192 output tokens. Output
+`evidence-observe-artifact-output/2` gives the model no line fields: exact
+quotes must occur exactly once in canonical source text, then runtime derives
+the inclusive line range before locator/observation identity and projection.
+Absent or duplicate quotes refuse without fuzzy matching. Historical
+`@1.0.0`–`@1.2.0` output `/1` contracts remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing. The registered
 `evidence.relate-observations@1.0.0` task accepts current observations, proposes
@@ -1394,14 +1399,16 @@ fail before publishing a partial projection.
 `evidence-live-observation-command/1`, and `evidence-product-job/2` records a
 four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
 canonical text through the audited artifact service, executes
-`evidence.observe-artifact@1.2.0`, and writes product observations plus one
+`evidence.observe-artifact@1.3.0`, and writes product observations plus one
 evidence-revision advance only after the execution ledger reports committed.
-The historical `@1.0.0` synthetic and `@1.1.0` source-neutral prompts remain
-registered for replay. ADR-0041 makes the active result a one-to-eight
+The historical `@1.0.0`–`@1.2.0` prompts/output remain registered for replay.
+ADR-0041 makes the active result a one-to-eight
 candidate batch with `minItems`/`maxItems` preserved on the provider wire and
 an 8,192-output-token request. A successful batch is not evidence of exhaustive
 full-source coverage; deterministic segmentation and coverage projection need
-a separate workflow decision.
+a separate workflow decision. ADR-0042 removes model-authored line fields from
+active output `/2`; runtime accepts only a globally unique verbatim quote and
+derives its canonical line locator before the engine may commit.
 
 Provider responses use `encrypted-payload` retention. If product projection is
 interrupted after provider success, relaunching the same command uses the
@@ -1478,7 +1485,9 @@ also exposed that model-authored line numbers are not canonical locators: all
 six verbatim quotes carried offset line ranges and semantic validation refused
 the entire batch with no commit. A later contract/runtime decision must derive
 locators deterministically from uniquely occurring exact quotes before a fresh
-acceptance. ACME-0107, ACME-0108 and
+acceptance. ADR-0042/ACME-0114 implement that active `@1.3.0` boundary while
+preserving historical replay; fresh provider acceptance remains. ACME-0107,
+ACME-0108 and
 ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected
 transports; ACME-0110 also proves primary review and late-evidence reassessment.

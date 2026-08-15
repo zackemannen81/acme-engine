@@ -885,6 +885,9 @@ content remains intentionally omitted here.
   late-evidence/reassessment proof. ADR-0041/ACME-0112 version the active
   observation prompt to a one-to-eight non-exhaustive candidate batch with an
   8,192-token output bound while keeping both historical versions registered.
+  ADR-0042/ACME-0114 then activate `@1.3.0` output `/2`, remove provider line
+  fields, derive unique exact-quote locators in runtime and retain all three
+  historical contracts for replay.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -945,7 +948,9 @@ operation and ACME-0108 opens bounded relation/open-question analysis over its
 committed observations. ACME-0110 completes the Stage A engineering journey
 through reviewed assessment and reassessment. ADR-0041/ACME-0112 define the
 observation operation as one bounded non-exhaustive candidate batch after the
-first provider acceptance attempt failed closed; Stage B remains closed.
+first provider acceptance attempt failed closed. ADR-0042/ACME-0114 move
+canonical locator authority from model output into exact runtime derivation;
+Stage B remains closed.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

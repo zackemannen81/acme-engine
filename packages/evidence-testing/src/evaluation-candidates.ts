@@ -59,13 +59,11 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T01',
       versionOrdinal: 1,
       requestHash:
-        'e8599de781d49c38a430f504ec565fe79533f65a481fda7dcac2c133065483dd',
+        '5665e813f3d44fba64f3222101443da1e77eaa482f448165ba0a48af1799ae4c',
       input: input('EVAL-T01', 1),
       output: output([
         {
           kind: 'statement-occurrence',
-          startLine: 4,
-          endLine: 4,
           exactQuote: 'Iven Marr: I arrived at about 09:18.',
           actorReference: {
             status: 'resolved',
@@ -82,8 +80,6 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         },
         {
           kind: 'statement-occurrence',
-          startLine: 6,
-          endLine: 6,
           exactQuote: 'Iven Marr: The panel was open from 09:10 to 09:20.',
           actorReference: {
             status: 'resolved',
@@ -105,13 +101,11 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T01',
       versionOrdinal: 2,
       requestHash:
-        'abed2906a2f1ba2132aec1cf79ff2885880199929798bbeafadcca0c0ba4ba02',
+        'dd6f7a97c02abc5f968b3f4440651d9fed7a95b0cceb2a431a1c272e456d0f63',
       input: input('EVAL-T01', 2),
       output: output([
         {
           kind: 'statement-occurrence',
-          startLine: 4,
-          endLine: 4,
           exactQuote: 'Iven Marr: I arrived at about 09:08.',
           actorReference: {
             status: 'resolved',
@@ -128,8 +122,6 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         },
         {
           kind: 'statement-occurrence',
-          startLine: 6,
-          endLine: 6,
           exactQuote: 'Iven Marr: The panel was closed from 09:10 to 09:20.',
           actorReference: {
             status: 'resolved',
@@ -151,13 +143,11 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T02',
       versionOrdinal: 1,
       requestHash:
-        '91d4b76ed7b77f25e51eb2b697fcb0a32647ec6bb7d78ff42f87b839c8307311',
+        '79350e64821d10779483a2995833393b72f8aeea21031bd304296d9cd71462a4',
       input: input('EVAL-T02', 1),
       output: output([
         {
           kind: 'statement-occurrence',
-          startLine: 4,
-          endLine: 4,
           exactQuote:
             'Iven Marr: I arrived between 09:20 and 09:30, before the panel changed.',
           actorReference: {
@@ -175,8 +165,6 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         },
         {
           kind: 'statement-occurrence',
-          startLine: 6,
-          endLine: 6,
           exactQuote:
             'Iven Marr: The panel had been open before I arrived, but I cannot place when.',
           actorReference: {
@@ -199,13 +187,11 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-T03',
       versionOrdinal: 1,
       requestHash:
-        '2d4b511a443d15c0b312de4b50551deaea5daea9901a36d6067d74ae5a5a31c0',
+        '2afbd5a07abc6342ca21709e220e34b455c04a6b855030c2689f74555c23fcc1',
       input: input('EVAL-T03', 1),
       output: output([
         {
           kind: 'statement-occurrence',
-          startLine: 4,
-          endLine: 4,
           exactQuote:
             'Iva Marn: I saw the panel open at about 09:18, before it changed.',
           actorReference: {
@@ -223,8 +209,6 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         },
         {
           kind: 'statement-occurrence',
-          startLine: 6,
-          endLine: 6,
           exactQuote:
             'Iva Marn: The operator at the control wore a blue service badge.',
           actorReference: {
@@ -246,13 +230,11 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
       logicalArtifactId: 'EVAL-E01',
       versionOrdinal: 1,
       requestHash:
-        'be225b27fd3c40fb32b3dec2aeeb02c4f3822c6b71a6059d45bd393dd6916e02',
+        'fc0e6aa8b5bed148b49c7308c25d589be07ba3ed214981d1118637e1ca954fd9',
       input: input('EVAL-E01', 1),
       output: output([
         {
           kind: 'exhibit-assertion',
-          startLine: 3,
-          endLine: 3,
           exactQuote: '09:16:00 | SC-4 | panel_changed_to_closed | I. Mar',
           sourceActorReference: null,
           temporalBound: {
@@ -263,8 +245,6 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         },
         {
           kind: 'exhibit-assertion',
-          startLine: 3,
-          endLine: 3,
           exactQuote: '09:16:00 | SC-4 | panel_changed_to_closed | I. Mar',
           sourceActorReference: {
             status: 'unresolved',

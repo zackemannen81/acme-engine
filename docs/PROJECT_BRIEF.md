@@ -226,8 +226,11 @@ adds restart-safe relation/open-question analysis over those committed
 observations. ACME-0110 completes source-complete live assessment, review and
 late-evidence reassessment. ACME-0111's first provider call failed closed on an
 incomplete unbounded observation response; ADR-0041/ACME-0112 add a replay-
-compatible one-to-eight candidate batch and 8,192-token active contract before
-a fresh real-provider acceptance. The approved
+compatible one-to-eight candidate batch and 8,192-token contract. ACME-0113's
+fresh call completed strict JSON but exposed offset model-authored line
+locators; ADR-0042/ACME-0114 now remove those fields from active output and
+derive canonical ranges from uniquely occurring exact quotes before a fresh
+real-provider acceptance. The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product

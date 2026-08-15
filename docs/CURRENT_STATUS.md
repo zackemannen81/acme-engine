@@ -226,8 +226,8 @@ There is currently:
   event, relation, question, assessment, state, delta, observe-contract and
   relate-contract schemas; named ADR-0030 content-derived identities;
   source-binding validation; compact pure state; reducer/invariants; domain
-  memory policy; active bounded `evidence.observe-artifact@1.2.0`, historical
-  replay-compatible `@1.0.0`/`@1.1.0`, and deterministic
+  memory policy; active bounded `evidence.observe-artifact@1.3.0` with runtime-
+  derived locators, historical replay-compatible `@1.0.0`–`@1.2.0`, and deterministic
   `evidence.relate-observations@1.0.0`; ADR-0032 correction-occurrence pairing;
   and contest projection for scoped `contradicts` relations
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
@@ -461,10 +461,13 @@ JSON with six candidates and did not hit the new output bound. Every exact
 quote occurred verbatim in the source, but all six model-authored line ranges
 were offset, so semantic quote/locator binding correctly refused the batch and
 left zero engine documents and zero product observations. The next dependency
-is an offline, replay-compatible boundary that deterministically derives line
-locators from uniquely occurring exact quotes instead of granting the model
-locator authority. Full-source coverage still needs a separate segmentation/
-coverage workflow.
+was ADR-0042/ACME-0114. Active `evidence.observe-artifact@1.3.0` output `/2`
+removes line fields from the provider schema, validates that each exact quote
+occurs exactly once in the canonical artifact and derives inclusive line
+locators in runtime before identity or projection. Historical `@1.0.0`–
+`@1.2.0` output `/1` remains exact for replay. Full-source coverage still
+needs a separate segmentation/coverage workflow; a fresh real-provider
+acceptance remains.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -518,13 +521,15 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
-- **ACME-0112 / ACME-0113:** Versioned the active observation contract as a
+- **ACME-0112 / ACME-0113 / ACME-0114:** Versioned the observation contract as a
   bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
   retaining historical replay. The subsequent sole real call returned
   complete strict JSON with six verbatim source quotes, proving truncation was
   removed, but every model-authored line range was offset. Runtime semantic
-  validation refused all six and committed nothing; ACME-0113 is superseded
-  and the locator derivation correction remains offline next work.
+  validation refused all six and committed nothing. ADR-0042/ACME-0114 now
+  remove locator fields from active output `/2`, require one exact source
+  occurrence and derive canonical line ranges in runtime while retaining all
+  historical request/output contracts for replay.
 - **ACME-0110:** Completed the Stage A engineering journey through reviewed
   reassessment. Additive source-complete assessment input, command/job/audit
   contracts and browser/API/worker execution preserve historical synthetic

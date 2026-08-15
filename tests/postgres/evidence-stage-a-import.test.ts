@@ -382,12 +382,10 @@ describe('Evidence Stage A PostgreSQL import', () => {
                   {
                     type: 'output_text',
                     text: JSON.stringify({
-                      schemaVersion: 'evidence-observe-artifact-output/1',
+                      schemaVersion: 'evidence-observe-artifact-output/2',
                       observations: [
                         {
                           kind: 'exhibit-assertion',
-                          startLine: 2,
-                          endLine: 2,
                           exactQuote:
                             'The court records one source-bound fact.',
                           sourceActorReference: null,
@@ -400,8 +398,6 @@ describe('Evidence Stage A PostgreSQL import', () => {
                         },
                         {
                           kind: 'exhibit-assertion',
-                          startLine: 3,
-                          endLine: 3,
                           exactQuote:
                             'The record contains a second source-bound fact.',
                           sourceActorReference: null,

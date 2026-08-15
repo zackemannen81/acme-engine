@@ -1,5 +1,41 @@
 # Journal
 
+## 2026-08-15 — ACME-0114 runtime-derived observation locators
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0114
+- Summary: Implemented ADR-0042 after ACME-0113 proved that a model can select
+  verbatim quotes yet still miscount canonical source lines. Active
+  `evidence.observe-artifact@1.3.0` now uses output
+  `evidence-observe-artifact-output/2` with no locator fields.
+- Authority: runtime performs an ordinal search over canonical LF/NFC text,
+  accepts only one exact occurrence and derives inclusive start/end lines
+  before locator identity, observation identity, invariants or projection.
+  Absent and duplicate quotes refuse; no fuzzy repair exists.
+- Replay: historical `@1.0.0`, `@1.1.0` and bounded `@1.2.0` request builders,
+  hashes and output `/1` remain registered and interpretable. Their hashes are
+  respectively `743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004`,
+  `29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae`
+  and `50a18aa90d3f50ce82902642262731596bcf9eeb9e4e83ba1de65355be3e3db6`.
+- Active fixtures: provider schema retains one-to-eight bounds and 8,192 output
+  tokens while omitting `startLine`/`endLine`. Deterministic development and
+  evaluation request hashes were re-pinned; derived synthetic locators and
+  observation identities remain unchanged.
+- Verification: focused suite 33 tests; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; exact `pnpm test` — 750 unit, 78 conformance, 62
+  integration and 26 scenario; `pnpm build`; `pnpm test:postgres` — 36 tests
+  against a fresh PostgreSQL 15 container; `pnpm format:check`;
+  `pnpm docs:check`; `git diff --check`.
+- PostgreSQL correction: the first gate passed 35/36 and identified one stale
+  injected active-provider fixture still returning `/1`. After changing only
+  that fixture to active `/2`, its file passed 2/2 and the full fresh gate
+  passed 36/36. All temporary containers were removed.
+- Safety/follow-up: ACME-0114 made no network/provider call and used no source
+  or credential. A separately frozen real-provider acceptance remains, and a
+  successful batch still cannot imply exhaustive document coverage.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0113 superseded after bounded provider call
 
 - Date: 2026-08-15
