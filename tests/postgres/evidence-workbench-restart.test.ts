@@ -341,7 +341,11 @@ describe('Evidence workbench PostgreSQL restart', () => {
           (changeSet) => changeSet.commandKey === changeSetCommandKey,
         ),
       ).toBe(true);
-      expect(snapshotAfter.workspaces[0]?.dataPolicy).toBe('synthetic-only');
+      expect(
+        snapshotAfter.workspaces.find(
+          (workspace) => workspace.workspaceId === first.workspaceId,
+        )?.dataPolicy,
+      ).toBe('synthetic-only');
     } finally {
       await stopWorkbench(second);
     }

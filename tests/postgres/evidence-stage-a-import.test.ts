@@ -202,4 +202,353 @@ describe('Evidence Stage A PostgreSQL import', () => {
       await stop(reopened);
     }
   });
+
+  it('resumes a live observation after provider success without a second call', async () => {
+    const suffix = randomUUID();
+    const sourceText =
+      'AUTHORIZED ANONYMIZED TEXT\nThe court records one source-bound fact.\n';
+    let providerCalls = 0;
+    const observationTransport: ProviderTransport = {
+      async send(request) {
+        providerCalls += 1;
+        expect(request.body).toContain(
+          'The court records one source-bound fact.',
+        );
+        return {
+          kind: 'response',
+          status: 200,
+          headers: {},
+          body: JSON.stringify({
+            id: `stage-a-response-${suffix}`,
+            model: 'gpt-stage-a-test',
+            status: 'completed',
+            output: [
+              {
+                type: 'message',
+                content: [
+                  {
+                    type: 'output_text',
+                    text: JSON.stringify({
+                      schemaVersion: 'evidence-observe-artifact-output/1',
+                      observations: [
+                        {
+                          kind: 'exhibit-assertion',
+                          startLine: 2,
+                          endLine: 2,
+                          exactQuote:
+                            'The court records one source-bound fact.',
+                          sourceActorReference: null,
+                          temporalBound: {
+                            kind: 'unknown',
+                            role: 'document-time',
+                            reason:
+                              'The cited source line supplies no exact time.',
+                          },
+                        },
+                      ],
+                    }),
+                  },
+                ],
+              },
+            ],
+            usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 },
+          }),
+        };
+      },
+    };
+    let interruptOnce = true;
+    const first = await createLocalEvidenceWorkbench({
+      persistence: 'postgres',
+      seedMode: 'none',
+      live: {
+        ...live,
+        transport: observationTransport,
+        afterObservationEngineCommit() {
+          if (interruptOnce) {
+            interruptOnce = false;
+            throw new Error('injected post-provider interruption');
+          }
+        },
+      },
+    });
+    let caseId: string;
+    let artifactVersionId: string;
+    const commandKey = `postgres-live-observe-${suffix}`;
+    const liveCommand = () => ({
+      schemaVersion: 'evidence-case-live-observation-command/1',
+      commandKey,
+      artifactVersionId,
+      actorRoster: [],
+      requestedBudget: { maxModelCalls: 1, costCeilingMinor: 50 },
+      confirmation: {
+        version: 'evidence-live-confirmation/1',
+        optIn: true,
+        provider: 'openai',
+        model: 'gpt-stage-a-test',
+        caseId,
+        maxModelCalls: 1,
+        costCeilingMinor: 50,
+        currency: 'SEK',
+        rationale: 'Bounded PostgreSQL restart proof.',
+      },
+    });
+    try {
+      const address = await listenEvidenceWorkbenchApi(first.server, {
+        port: 0,
+      });
+      const request = await authenticatedRequest(
+        address.url,
+        first.authCredentials,
+      );
+      const identity = await first.identityRepository.snapshot();
+      const organizationId = identity.organizations[0]?.organizationId;
+      if (organizationId === undefined)
+        throw new Error('Missing organization.');
+      const created = await request(
+        `api/organizations/${organizationId}/cases`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-create-case-command/2',
+            commandKey: `postgres-live-case-${suffix}`,
+            title: 'Stage A live observation restart',
+            caseReference: suffix,
+            metadata: {},
+            dataPolicy: 'stage-a-authorized-judicial-text',
+          }),
+        },
+      );
+      expect(created.status, await created.clone().text()).toBe(201);
+      caseId = ((await created.json()) as { caseId: string }).caseId;
+      const imported = await request(
+        `api/cases/${encodeURIComponent(caseId)}/text-imports`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              schemaVersion: 'evidence-text-import-metadata/2',
+              commandKey: `postgres-live-import-${suffix}`,
+              intent: { kind: 'create' },
+              title: 'Live observation source',
+              artifactKind: 'structured-exhibit-text',
+              declaredMediaType: 'text/plain; charset=utf-8',
+              dataClass: 'stage-a-anonymized-judicial-text/1',
+              attestationVersion: 'evidence-stage-a-source-attestation/1',
+              anonymizationAttested: true,
+              operatorAuthorityAttested: true,
+              providerTransmissionAuthorized: true,
+              sourceProvenance: {
+                schemaVersion: 'evidence-external-source-provenance/1',
+                sourceKind: 'judicial-document',
+                externalSourceRef: `postgres-live:${suffix}`,
+                acquiredAt: '2026-08-15T10:00:00.000Z',
+                parentContainer: {
+                  kind: 'pdf',
+                  sha256: 'c'.repeat(64),
+                  byteLength: 9_876,
+                },
+                extraction: {
+                  method: 'pypdf-text-extraction',
+                  version: 'test-version',
+                  extractedAt: '2026-08-15T10:01:00.000Z',
+                  pageCount: 2,
+                },
+              },
+            },
+            text: sourceText,
+          }),
+        },
+      );
+      expect(imported.status, await imported.clone().text()).toBe(201);
+      artifactVersionId = (
+        (await imported.json()) as { artifactVersionId: string }
+      ).artifactVersionId;
+      const overBudget = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...liveCommand(),
+            commandKey: `postgres-live-over-budget-${suffix}`,
+            requestedBudget: {
+              maxModelCalls: 1,
+              costCeilingMinor: 101,
+            },
+            confirmation: {
+              ...liveCommand().confirmation,
+              costCeilingMinor: 101,
+            },
+          }),
+        },
+      );
+      expect(overBudget.status, await overBudget.clone().text()).toBe(403);
+      expect(providerCalls).toBe(0);
+
+      const credentialValue = 'must-not-echo-stage-a-secret';
+      const credentialShaped = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...liveCommand(),
+            commandKey: `postgres-live-credential-${suffix}`,
+            provider: { apiKey: credentialValue },
+          }),
+        },
+      );
+      expect(
+        credentialShaped.status,
+        await credentialShaped.clone().text(),
+      ).toBe(400);
+      expect(await credentialShaped.text()).not.toContain(credentialValue);
+      expect(providerCalls).toBe(0);
+
+      const foreignCreated = await request(
+        `api/organizations/${organizationId}/cases`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-create-case-command/2',
+            commandKey: `postgres-live-foreign-case-${suffix}`,
+            title: 'Stage A foreign case',
+            caseReference: `foreign-${suffix}`,
+            metadata: {},
+            dataPolicy: 'stage-a-authorized-judicial-text',
+          }),
+        },
+      );
+      expect(foreignCreated.status, await foreignCreated.clone().text()).toBe(
+        201,
+      );
+      const foreignCaseId = (
+        (await foreignCreated.json()) as { caseId: string }
+      ).caseId;
+      const foreignSource = await request(
+        `api/cases/${encodeURIComponent(foreignCaseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...liveCommand(),
+            commandKey: `postgres-live-foreign-source-${suffix}`,
+            confirmation: {
+              ...liveCommand().confirmation,
+              caseId: foreignCaseId,
+            },
+          }),
+        },
+      );
+      expect(foreignSource.status, await foreignSource.clone().text()).toBe(
+        404,
+      );
+      expect(providerCalls).toBe(0);
+
+      const launch = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(liveCommand()),
+        },
+      );
+      expect(launch.status, await launch.clone().text()).toBe(202);
+      let job = (await launch.json()) as { jobId: string; phase: string };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        const response = await request(
+          `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+        );
+        job = (await response.json()) as typeof job;
+      }
+      expect(job).toMatchObject({
+        phase: 'failed',
+        reasonCode: 'LIVE_PRODUCT_PROJECTION_INTERRUPTED',
+        actualModelCalls: 1,
+      });
+      expect(providerCalls).toBe(1);
+      const beforeRestart = await first.productRepository.snapshot();
+      expect(
+        beforeRestart.observations.filter(
+          (item) => item.artifactVersionId === artifactVersionId,
+        ),
+      ).toEqual([]);
+    } finally {
+      await stop(first);
+    }
+
+    const reopened = await createLocalEvidenceWorkbench({
+      persistence: 'postgres',
+      seedMode: 'none',
+      live: { ...live, transport: observationTransport },
+    });
+    try {
+      const address = await listenEvidenceWorkbenchApi(reopened.server, {
+        port: 0,
+      });
+      const request = await authenticatedRequest(
+        address.url,
+        reopened.authCredentials,
+      );
+      const resumed = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(liveCommand()),
+        },
+      );
+      expect(resumed.status, await resumed.clone().text()).toBe(202);
+      let job = (await resumed.json()) as { jobId: string; phase: string };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        const response = await request(
+          `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+        );
+        job = (await response.json()) as typeof job;
+      }
+      expect(job).toMatchObject({
+        phase: 'completed',
+        reasonCode: 'LIVE_OBSERVATION_RESUMED',
+        actualModelCalls: 1,
+      });
+      expect(providerCalls).toBe(1);
+      const snapshot = await reopened.productRepository.snapshot();
+      const observations = snapshot.observations.filter(
+        (item) => item.artifactVersionId === artifactVersionId,
+      );
+      expect(observations).toHaveLength(1);
+      expect(observations[0]).toMatchObject({
+        exactQuote: 'The court records one source-bound fact.',
+        locator: { startLine: 2, endLine: 2 },
+      });
+      const liveAudit = snapshot.securityAudit.filter(
+        (item) => item.schemaVersion === 'evidence-security-audit-event/2',
+      );
+      expect(liveAudit.map((item) => item.action)).toEqual(
+        expect.arrayContaining([
+          'live.started',
+          'live.failed',
+          'live.completed',
+        ]),
+      );
+      expect(
+        liveAudit.filter((item) => item.action === 'live.refused'),
+      ).toHaveLength(3);
+      expect(JSON.stringify(liveAudit)).not.toContain(sourceText.trim());
+      expect(JSON.stringify(liveAudit)).not.toContain(
+        'postgres-stage-a-test-key',
+      );
+    } finally {
+      await stop(reopened);
+    }
+  });
 });

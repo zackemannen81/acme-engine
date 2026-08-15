@@ -358,6 +358,7 @@ export function assertEvidenceCaseScopedReferences(
   const assessmentIds = new Set(
     scoped.assessments.map((item) => item.assessmentVersionId),
   );
+  const jobIds = new Set(scoped.jobs.map((item) => item.jobId));
   const anyEvidenceId = (id: string) =>
     sourceIds.has(id) || observationIds.has(id) || relationIds.has(id);
   for (const observation of scoped.observations) {
@@ -492,7 +493,8 @@ export function assertEvidenceCaseScopedReferences(
       (audit.resourceKind === 'case' && audit.resourceId !== caseId) ||
       (audit.resourceKind === 'artifact-representation' &&
         !representationIds.has(audit.resourceId) &&
-        !stagedRepresentationIds.has(audit.resourceId))
+        !stagedRepresentationIds.has(audit.resourceId)) ||
+      (audit.resourceKind === 'live-execution' && !jobIds.has(audit.resourceId))
     )
       throw new Error('Security audit event belongs to another case.');
   }

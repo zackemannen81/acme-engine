@@ -1159,8 +1159,9 @@ in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0040 accepts the first bounded Slice 9 class and live-profile applicability
 boundary. ACME-0105 implements the closed capability and ACME-0106 implements
-capability-gated Stage A text import; the offline/default profile remains
-synthetic-only and provider execution remains closed.
+capability-gated Stage A text import. ACME-0107 implements one bounded live
+`observe-artifact` product job; the offline/default profile remains
+synthetic-only, while live relation and assessment jobs remain closed.
 SQLite and the file product store remain the local/hermetic CI defaults;
 PostgreSQL is opt-in via composition (`--adapter postgres` /
 `ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
@@ -1328,7 +1329,8 @@ data authority; every output remains synthetic-only.
 ADR-0039 decides the workbench live model boundary. ACME-0105 implements its
 confirmation/composition foundation while the default execution engine remains
 the scripted mock. ACME-0106 consumes capability presence for Stage A import,
-but no product route invokes the provider yet.
+and ACME-0107 adds the first provider-capable product route for
+`observe-artifact` only.
 ADR-0040 adds the product applicability boundary and accepts exactly one Stage
 A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
 source text, already anonymized/redacted before import, operator-authorized for
@@ -1363,8 +1365,29 @@ local-session key. The capability closes over the provider credential but does
 not construct/release its OpenAI gateway until an operation supplies the exact
 case authorization, matching confirmation and authorized Stage A source. No
 call occurs at startup. ACME-0106 uses capability presence only to admit Stage
-A case creation and source import; it adds no provider route or job command,
-so the browser still cannot reach the provider.
+A case creation and source import. ACME-0107's case-first observation route
+resolves authenticated authorization, the activated `/2` import and immutable
+source in one case before the capability releases its gateway. The browser
+supplies only source identity, actor roster and non-secret confirmation/budget;
+source text, workspace and principal are server-derived.
+
+`evidence-case-live-observation-command/1` becomes the internal
+`evidence-live-observation-command/1`, and `evidence-product-job/2` records a
+four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
+canonical text through the audited artifact service, executes
+`evidence.observe-artifact@1.1.0`, and writes product observations plus one
+evidence-revision advance only after the execution ledger reports committed.
+The historical `@1.0.0` synthetic prompt remains registered for replay; the
+active `@1.1.0` prompt changes source applicability, not semantics.
+
+Provider responses use `encrypted-payload` retention. If product projection is
+interrupted after provider success, relaunching the same command uses the
+original execution request revision and retained response, so the engine
+finishes without another transport call. Live audit `/2` records started,
+completed, failed and refused outcomes with model/call/budget metadata but no
+source, quote, prompt, response, rationale or credential. A source unavailable
+inside the requested case returns non-disclosing 404; malformed credentials,
+authorization and excess budget refuse before transport.
 
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose
@@ -1396,8 +1419,10 @@ human decisions, typed relations and temporal uncertainty, case isolation,
 source-complete persistent assessments and visible attention after new
 evidence. A primary browser path rather than technical audit, CLI, JSON or
 database access is the completion surface. The live profile is not complete
-until the real Stage A journey, PostgreSQL restart and late-evidence
-reassessment are proven end to end.
+until an explicitly budgeted real Stage A provider acceptance, live
+relation/assessment jobs and the primary review/late-evidence reassessment
+journey are proven end to end. ACME-0107 has already proven the observation
+job's PostgreSQL restart/no-second-call part with an injected transport.
 
 ## Remaining Implementation Baseline
 

@@ -875,7 +875,10 @@ content remains intentionally omitted here.
   authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
   key are required before an OpenAI gateway can be released. ACME-0106 adds
   capability-gated Stage A case creation and authenticated text import with
-  parent-PDF/extraction provenance; no product route invokes the provider yet.
+  parent-PDF/extraction provenance. ACME-0107 adds
+  `src/live-observation.ts`, additive live command/job/audit contracts and one
+  authenticated browser/API `observe-artifact` job with durable resume;
+  relations and assessments remain on the later live path.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -931,7 +934,8 @@ ADR-0040 distinguishes permanent Evidence Workbench invariants from the
 synthetic/test phase controls. It authorizes one bounded Stage A anonymized
 judicial text class. ACME-0105 implements its fail-closed PostgreSQL/live-
 provider/external-source/authorized-execution capability and ACME-0106 adds the
-case/import/browser data path; Stage B and provider execution remain closed.
+case/import/browser data path. ACME-0107 opens only the bounded observation
+operation; Stage B plus live relation and assessment execution remain closed.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

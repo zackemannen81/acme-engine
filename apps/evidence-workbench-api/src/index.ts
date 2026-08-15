@@ -34,6 +34,8 @@ import {
   type EvidenceArtifactReadAuditContext,
   type EvidenceArtifactService,
   EvidenceTextImportMetadataSchema,
+  EvidenceCaseLiveObservationCommandSchema,
+  type EvidenceCaseLiveObservationCommand,
   EvidenceRedactionOperationSchema,
   type EvidenceIngestionService,
   EvidenceBulkReviewCommandSchema,
@@ -83,6 +85,12 @@ import {
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
 import type { EvidenceState } from '@acme/module-evidence';
+import { assertNoLiveCredentialFields } from '@acme/live-safety';
+
+import {
+  EvidenceLiveObservationRefused,
+  type EvidenceLiveObservationService,
+} from './live-observation.js';
 
 export * from './live.js';
 
@@ -187,6 +195,7 @@ export function createEvidenceWorkbenchApi(options: {
   >;
   readonly ingestion?: EvidenceIngestionService;
   readonly stageA?: { readonly enabled: boolean };
+  readonly liveObservation?: EvidenceLiveObservationService;
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
@@ -499,6 +508,15 @@ export function createEvidenceWorkbenchApi(options: {
         send(response, 200, {
           schemaVersion: 'evidence-product-capabilities/1',
           stageAImport: options.stageA?.enabled === true,
+          liveObservation: options.liveObservation !== undefined,
+          liveObservationModel:
+            options.liveObservation?.deployment.model ?? null,
+          liveObservationMaxModelCalls:
+            options.liveObservation?.deployment.maxModelCalls ?? null,
+          liveObservationCostCeilingMinor:
+            options.liveObservation?.deployment.costCeilingMinor ?? null,
+          liveObservationCurrency:
+            options.liveObservation?.deployment.currency ?? null,
         });
         return;
       }
@@ -729,6 +747,7 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/assessments',
           '/api/reviews',
           '/api/imports',
+          '/api/live-observations',
           '/api/jobs',
           '/api/technical',
           '/api/export-policy',
@@ -1852,6 +1871,64 @@ export function createEvidenceWorkbenchApi(options: {
       }
       if (
         request.method === 'POST' &&
+        url.pathname === '/api/live-observations'
+      ) {
+        if (requestCaseId === null || options.liveObservation === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveObservationCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveObservationCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveObservation.refuse({
+            reasonCode: 'LIVE_OBSERVATION_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live observation command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveObservation.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveObservationRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
+        return;
+      }
+      if (
+        request.method === 'POST' &&
         url.pathname === '/api/imports/late-evidence'
       ) {
         if (options.lateEvidenceCommand === undefined)
@@ -2010,7 +2087,9 @@ export function createEvidenceWorkbenchApi(options: {
             response.write(`data: ${encoded}\n\n`);
             last = encoded;
           }
-          if (['completed', 'failed', 'cancelled'].includes(job.phase))
+          if (
+            ['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+          )
             response.end();
           else
             setTimeout(() => {

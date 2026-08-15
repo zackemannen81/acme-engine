@@ -9,9 +9,10 @@ completion plan and the technical specification, and add the engineering
 prerequisites discovered since those documents were written.
 
 This file grants nothing. ADR-0040 separately authorizes only
-`stage-a-anonymized-judicial-text/1`; ACME-0105 and ACME-0106 implement its
-closed composition and import half. Provider execution, Stage B and every
-other class remain closed and cannot activate by implication. Unchecked legal,
+`stage-a-anonymized-judicial-text/1`; ACME-0105 through ACME-0107 implement its
+closed composition, import and bounded observation job. Live relations,
+assessment, Stage B and every other class remain closed and cannot activate by
+implication. Unchecked legal,
 security and operational rows remain real programme prerequisites.
 
 ## How to read this
@@ -152,28 +153,32 @@ flag.
 - [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. Live composition exists; the callable product job does not
+### D2. Live observation exists; the complete reviewer journey does not
 
 The default workbench still composes `createScriptedModelGateway`. ACME-0105
 adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
 payload key, explicit opt-in and nested budgets. ACME-0106 permits Stage A
-storage only when that capability exists. `POST /api/text-imports` remains pure
-storage and makes no model call.
+storage only when that capability exists. ACME-0107 adds one case-first
+observation job; import itself remains pure storage and makes no model call.
 
-Consequence: an imported real document today becomes an encrypted, readable,
-redactable source with **zero observations** — and therefore no relations, no
-timeline, no contradictions and no assessment.
+Consequence: an imported real document can now produce validated source-bound
+observations, but still has no live relations, timeline/open questions or
+assessment until the remaining task-specific jobs are added.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
-- [ ] Add the bounded case-first live evidence job, audit and primary reviewer
-      flow. Without it, authorized real data yields nothing analysable.
+- [x] Add the bounded case-first live observation job, content-free audit and
+      primary source-review navigation.
+- [ ] Add live relation/timeline/open-question and assessment jobs, then prove
+      the primary review and late-evidence reassessment journey.
 - [x] Decide the Stage A live-call retention policy: ADR-0040 requires
       `encrypted-payload` with a durable mounted key.
 - [ ] Establish what the provider receives, retains and logs, and reconcile
       that with section A's provider handling.
-- [ ] Validate the `observe-artifact` strict structured-output contract against
-      material outside the sealed corpus. It has only ever run on seven fixed
-      artifacts.
+- [ ] Validate the `observe-artifact` strict structured-output contract with an
+      explicitly budgeted real provider call on authorized material outside
+      the sealed corpus. ACME-0107 proves the product path with injected
+      transport and provides the opt-in acceptance entry, but no process
+      credential was available for the paid call.
 
 ### D3. Consent withdrawal has no mechanism
 
@@ -206,8 +211,9 @@ observation and assessment citing the unredacted version.
 ### D5. Operational debt that must clear first
 
 - [x] `pnpm test:postgres` executed against a real server. Re-proved 2026-08-15
-      under ACME-0106 against a clean `postgres:15`: 35 tests, including Stage
-      A import/full-composition restart, migration v7 and export-policy/audit.
+      under ACME-0107 against a clean `postgres:15`: 36 tests, including Stage
+      A import, live observation full-composition/no-second-call restart,
+      migration v7 and export-policy/audit.
       A separate two-document real-source acceptance also reopened identical
       PostgreSQL records/source hashes with zero provider calls. Hosted
       mode *is* PostgreSQL, so this stays a standing gate rather than a

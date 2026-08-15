@@ -100,6 +100,11 @@ describe('Stage A HTTP boundary', () => {
       expect(await (await request('api/capabilities')).json()).toEqual({
         schemaVersion: 'evidence-product-capabilities/1',
         stageAImport: false,
+        liveObservation: false,
+        liveObservationModel: null,
+        liveObservationMaxModelCalls: null,
+        liveObservationCostCeilingMinor: null,
+        liveObservationCurrency: null,
       });
       const identity = await local.identityRepository.snapshot();
       const organizationId = identity.organizations[0]?.organizationId;

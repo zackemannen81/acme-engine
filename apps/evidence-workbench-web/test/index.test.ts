@@ -69,5 +69,12 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain("schemaVersion:'evidence-text-import-metadata/2'");
     expect(html).toContain('Parent PDF SHA-256');
     expect(html).toContain('providerTransmissionAuthorized');
+    expect(html).toContain('Analyze source');
+    expect(html).toContain('Start source analysis');
+    expect(html).toContain(
+      "schemaVersion:'evidence-case-live-observation-command/1'",
+    );
+    expect(html).toContain('No credential or source text belongs');
+    expect(html).not.toContain('apiKey');
   });
 });

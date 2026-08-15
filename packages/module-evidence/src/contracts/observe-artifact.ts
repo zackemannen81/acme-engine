@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   canonicalJson,
+  type ContractRef,
   type JsonValue,
   type ModelRequest,
   type PromptContract,
@@ -9,7 +10,10 @@ import {
 } from '@acme/core';
 
 import { exactQuoteOccurrenceCount } from '../canonical-text.js';
-import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
+import {
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V1,
+} from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
   EvidenceObserveArtifactInputSchema,
@@ -85,166 +89,183 @@ function validateTemporal(
   return [];
 }
 
-const contract: PromptContract<
+function createContract(configuration: {
+  readonly ref: ContractRef;
+  readonly sourceDescription: string;
+}): PromptContract<
   EvidenceObserveArtifactInput,
   EvidenceObserveArtifactOutput
-> = {
-  ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
-  inputSchema: EvidenceObserveArtifactInputSchema,
-  outputSchema: EvidenceObserveArtifactOutputSchema,
-  requiredCapabilities: Object.freeze({ structuredOutput: true }),
-  retention: 'encrypted-payload',
+> {
+  return {
+    ref: configuration.ref,
+    inputSchema: EvidenceObserveArtifactInputSchema,
+    outputSchema: EvidenceObserveArtifactOutputSchema,
+    requiredCapabilities: Object.freeze({ structuredOutput: true }),
+    retention: 'encrypted-payload',
 
-  buildRequest(input) {
-    const validated = EvidenceObserveArtifactInputSchema.parse(input);
-    const request = {
-      messages: [
-        {
-          role: 'system',
-          content: [
-            {
-              type: 'text',
-              text:
-                'Extract only source-bound observations from the supplied synthetic artifact. ' +
-                'Copy every exactQuote verbatim and use its exact one-based line range. ' +
-                'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
-                'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
-                'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ' +
-                'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. Return only the requested JSON.',
-            },
-          ],
+    buildRequest(input) {
+      const validated = EvidenceObserveArtifactInputSchema.parse(input);
+      const request = {
+        messages: [
+          {
+            role: 'system',
+            content: [
+              {
+                type: 'text',
+                text:
+                  `Extract only source-bound observations from the supplied ${configuration.sourceDescription}. ` +
+                  'Copy every exactQuote verbatim and use its exact one-based line range. ' +
+                  'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
+                  'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
+                  'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ' +
+                  'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. Return only the requested JSON.',
+              },
+            ],
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: canonicalJson(validated as unknown as JsonValue),
+              },
+            ],
+          },
+        ],
+        output: {
+          mode: 'json',
+          schemaName: 'evidence_observe_artifact_1_0_0',
+          jsonSchema: z.toJSONSchema(
+            EvidenceObserveArtifactOutputSchema,
+          ) as JsonValue,
         },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: canonicalJson(validated as unknown as JsonValue),
-            },
-          ],
-        },
-      ],
-      output: {
-        mode: 'json',
-        schemaName: 'evidence_observe_artifact_1_0_0',
-        jsonSchema: z.toJSONSchema(
-          EvidenceObserveArtifactOutputSchema,
-        ) as JsonValue,
-      },
-      maxOutputTokens: 2048,
-    } satisfies ModelRequest;
-    return immutableEvidence(request);
-  },
+        maxOutputTokens: 2048,
+      } satisfies ModelRequest;
+      return immutableEvidence(request);
+    },
 
-  validateSemantics(output, input) {
-    const issues: SemanticIssue[] = [];
-    const seen = new Map<string, number>();
-    output.observations.forEach((observation, index) => {
-      const path = ['observations', index] as const;
-      if (
-        (input.artifactVersion.kind === 'interview-transcript') !==
-        (observation.kind === 'statement-occurrence')
-      ) {
-        issues.push(
-          issue(
-            'EVIDENCE_OBSERVATION_KIND_MISMATCH',
-            [...path, 'kind'],
-            'Observation kind must match the supplied artifact kind.',
-          ),
-        );
-      }
-
-      const key = canonicalJson(observation as unknown as JsonValue);
-      const previous = seen.get(key);
-      if (previous !== undefined) {
-        issues.push(
-          issue(
-            'EVIDENCE_DUPLICATE_OBSERVATION',
-            path,
-            `Observation duplicates observations[${String(previous)}].`,
-          ),
-        );
-      } else {
-        seen.set(key, index);
-      }
-
-      try {
+    validateSemantics(output, input) {
+      const issues: SemanticIssue[] = [];
+      const seen = new Map<string, number>();
+      output.observations.forEach((observation, index) => {
+        const path = ['observations', index] as const;
         if (
-          exactQuoteOccurrenceCount(
-            input.artifactVersion.text,
-            observation.startLine,
-            observation.endLine,
-            observation.exactQuote,
-          ) !== 1
+          (input.artifactVersion.kind === 'interview-transcript') !==
+          (observation.kind === 'statement-occurrence')
         ) {
           issues.push(
             issue(
-              'EVIDENCE_QUOTE_BINDING_FAILED',
-              [...path, 'exactQuote'],
-              'Exact quote must occur exactly once inside the addressed source lines.',
+              'EVIDENCE_OBSERVATION_KIND_MISMATCH',
+              [...path, 'kind'],
+              'Observation kind must match the supplied artifact kind.',
             ),
           );
         }
-      } catch {
-        issues.push(
-          issue(
-            'EVIDENCE_LOCATOR_OUT_OF_BOUNDS',
-            [...path, 'startLine'],
-            'Observation line range must be inside the supplied source.',
-          ),
-        );
-      }
 
-      const actor =
-        observation.kind === 'statement-occurrence'
-          ? observation.actorReference
-          : observation.sourceActorReference;
-      if (actor !== null) {
-        const matching = matchingActorKeys(input, actor.sourceLabel);
-        if (!observation.exactQuote.includes(actor.sourceLabel)) {
+        const key = canonicalJson(observation as unknown as JsonValue);
+        const previous = seen.get(key);
+        if (previous !== undefined) {
           issues.push(
             issue(
-              'EVIDENCE_ACTOR_LABEL_NOT_SOURCE_BOUND',
-              [...path, 'actorReference', 'sourceLabel'],
-              'Actor source label must occur verbatim in the exact quote.',
+              'EVIDENCE_DUPLICATE_OBSERVATION',
+              path,
+              `Observation duplicates observations[${String(previous)}].`,
             ),
           );
+        } else {
+          seen.set(key, index);
         }
-        if (actor.status === 'resolved') {
-          if (matching.length !== 1 || matching[0] !== actor.actorKey) {
+
+        try {
+          if (
+            exactQuoteOccurrenceCount(
+              input.artifactVersion.text,
+              observation.startLine,
+              observation.endLine,
+              observation.exactQuote,
+            ) !== 1
+          ) {
             issues.push(
               issue(
-                matching.length > 1
-                  ? 'EVIDENCE_ACTOR_AMBIGUITY_MUST_REMAIN_UNRESOLVED'
-                  : 'EVIDENCE_ACTOR_RESOLUTION_NOT_ALLOWED',
-                [...path, 'actorReference', 'actorKey'],
-                'A resolved actor requires exactly one matching roster identity.',
+                'EVIDENCE_QUOTE_BINDING_FAILED',
+                [...path, 'exactQuote'],
+                'Exact quote must occur exactly once inside the addressed source lines.',
               ),
             );
           }
-        } else if (
-          matching.length === 0 ||
-          matching.join('\u0000') !== actor.candidateActorKeys.join('\u0000')
-        ) {
+        } catch {
           issues.push(
             issue(
-              'EVIDENCE_ACTOR_CANDIDATES_MISMATCH',
-              [...path, 'actorReference', 'candidateActorKeys'],
-              'Unresolved actor candidates must equal the sorted matching roster identities.',
+              'EVIDENCE_LOCATOR_OUT_OF_BOUNDS',
+              [...path, 'startLine'],
+              'Observation line range must be inside the supplied source.',
             ),
           );
         }
-      }
-      issues.push(
-        ...validateTemporal(
-          observation.temporalBound,
-          observation.exactQuote,
-          index,
-        ),
-      );
-    });
-    return immutableEvidence(issues);
-  },
-};
 
-export const evidenceObserveArtifactContract = Object.freeze(contract);
+        const actor =
+          observation.kind === 'statement-occurrence'
+            ? observation.actorReference
+            : observation.sourceActorReference;
+        if (actor !== null) {
+          const matching = matchingActorKeys(input, actor.sourceLabel);
+          if (!observation.exactQuote.includes(actor.sourceLabel)) {
+            issues.push(
+              issue(
+                'EVIDENCE_ACTOR_LABEL_NOT_SOURCE_BOUND',
+                [...path, 'actorReference', 'sourceLabel'],
+                'Actor source label must occur verbatim in the exact quote.',
+              ),
+            );
+          }
+          if (actor.status === 'resolved') {
+            if (matching.length !== 1 || matching[0] !== actor.actorKey) {
+              issues.push(
+                issue(
+                  matching.length > 1
+                    ? 'EVIDENCE_ACTOR_AMBIGUITY_MUST_REMAIN_UNRESOLVED'
+                    : 'EVIDENCE_ACTOR_RESOLUTION_NOT_ALLOWED',
+                  [...path, 'actorReference', 'actorKey'],
+                  'A resolved actor requires exactly one matching roster identity.',
+                ),
+              );
+            }
+          } else if (
+            matching.length === 0 ||
+            matching.join('\u0000') !== actor.candidateActorKeys.join('\u0000')
+          ) {
+            issues.push(
+              issue(
+                'EVIDENCE_ACTOR_CANDIDATES_MISMATCH',
+                [...path, 'actorReference', 'candidateActorKeys'],
+                'Unresolved actor candidates must equal the sorted matching roster identities.',
+              ),
+            );
+          }
+        }
+        issues.push(
+          ...validateTemporal(
+            observation.temporalBound,
+            observation.exactQuote,
+            index,
+          ),
+        );
+      });
+      return immutableEvidence(issues);
+    },
+  };
+}
+
+export const evidenceObserveArtifactContractV1 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V1,
+    sourceDescription: 'synthetic artifact',
+  }),
+);
+
+export const evidenceObserveArtifactContract = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
+    sourceDescription: 'artifact',
+  }),
+);

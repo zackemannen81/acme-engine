@@ -45,7 +45,7 @@ export interface EvidenceProductClock {
 }
 
 export interface EvidenceProductIds {
-  next(kind: 'review-decision' | 'export-audit'): string;
+  next(kind: 'review-decision' | 'export-audit' | 'security-audit'): string;
 }
 
 export interface EvidenceArtifactReadAuditContext {

@@ -91,6 +91,7 @@ import {
   EvidenceStateSchema,
   evidenceModule,
   evidenceObserveArtifactContract,
+  evidenceObserveArtifactContractV1,
   evidenceProposeAssessmentContract,
   evidenceRelateObservationsContract,
   initialEvidenceState,
@@ -110,6 +111,7 @@ import {
   createEvidenceLiveCapability,
   type EvidenceLiveCapability,
 } from './live.js';
+import { createEvidenceLiveObservationService } from './live-observation.js';
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const CASE_ID = 'rillford-annex-synthetic-case';
@@ -533,6 +535,8 @@ export interface EvidenceLiveCompositionOptions {
   readonly deploymentCostCeilingMinor?: number | null;
   readonly deploymentCurrency?: string | null;
   readonly transport?: ProviderTransport;
+  /** Fault-injection seam used to prove post-provider restart recovery. */
+  readonly afterObservationEngineCommit?: () => void | Promise<void>;
 }
 
 function optionalNumber(value: string | undefined): number | undefined {
@@ -994,6 +998,7 @@ export async function createLocalEvidenceWorkbench(
     ids,
     modules: createModuleRegistry([evidenceModule]),
     contracts: createContractRegistry([
+      evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContract,
       evidenceProposeAssessmentContract,
@@ -1275,6 +1280,25 @@ export async function createLocalEvidenceWorkbench(
     );
   }
 
+  const liveObservation =
+    liveCapability === null
+      ? undefined
+      : createEvidenceLiveObservationService({
+          capability: liveCapability,
+          repository: productRepository,
+          artifacts: artifactService,
+          worker,
+          ledger,
+          clock,
+          engineIds: ids,
+          productIds: reviewIds,
+          ...(options.live?.afterObservationEngineCommit === undefined
+            ? {}
+            : {
+                afterEngineCommit: options.live.afterObservationEngineCommit,
+              }),
+        });
+
   const server = createEvidenceWorkbenchApi({
     repository: productRepository,
     worker,
@@ -1295,6 +1319,7 @@ export async function createLocalEvidenceWorkbench(
     artifactSecurity: artifactService,
     ingestion: ingestionService,
     stageA: { enabled: liveCapability !== null },
+    ...(liveObservation === undefined ? {} : { liveObservation }),
     ...(lateFixture === null
       ? {}
       : {

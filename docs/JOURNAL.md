@@ -1,5 +1,54 @@
 # Journal
 
+## 2026-08-15 — ACME-0107 Stage A live observation job
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0107
+- Summary: Implemented the first callable Stage A provider operation. Additive
+  case/internal command contracts and `evidence-product-job/2` bind one
+  activated source, one model and a literal one-call budget. Live security
+  audit `/2` records start, completion, failure and refusal without content.
+- Compatibility: `evidence.observe-artifact@1.1.0` replaces the synthetic-only
+  wording with source-neutral wording while preserving semantics. Historical
+  `@1.0.0` remains registered for replay, and deterministic fixture request
+  hashes were intentionally re-pinned for the active contract.
+- Product path: the authenticated case-first API requires server-derived
+  `case-admin` / `live-model.run`, scans credential-shaped payloads and passes
+  exact confirmation/source authority into the closed capability. Canonical
+  source text is hydrated through the audited artifact service; neither source,
+  workspace nor principal may come from the browser. The primary source card
+  exposes analysis only when the complete live capability exists.
+- Commit boundary and recovery: the worker projects validated observations and
+  advances evidence revision only after the durable engine commit. An injected
+  interruption after provider success left zero product observations; a full
+  PostgreSQL composition restart reused encrypted retained response evidence,
+  completed the same job with identical observation identity and made no
+  second transport call.
+- Refusal/isolation: excess budget, credential-shaped command and a known
+  source id under a sibling case all refused before transport; the sibling case
+  returned non-disclosing 404. Three refusal audits plus started/failed/
+  completed audits contained no source text, quote, provider body or
+  credential.
+- Live acceptance entry: added an isolated `tests/live` Stage A product gate
+  requiring exact live opt-in, hosted PostgreSQL/S3/key configuration,
+  operator-supplied source provenance and an explicit one-call cost ceiling.
+  It skipped in this checkpoint because no `OPENAI_API_KEY` was present; spend
+  was zero.
+- Verification: focused observation/module/API/auth/browser tests 24 passed;
+  PostgreSQL Stage A tests 2 passed; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; `pnpm test` — 745 unit, 78 conformance, 62 integration,
+  26 scenario; `pnpm test:postgres` — 36 tests against a fresh database;
+  `pnpm build`; `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+  An initial full PostgreSQL run reused targeted-test data and was invalidated;
+  it exposed and corrected a pre-existing first-workspace ordering assumption
+  before the clean run passed.
+- Follow-up: implement live relation/timeline/open-question and assessment jobs,
+  then execute the primary review and late-evidence reassessment journey. The
+  real paid observation acceptance needs a process credential and explicit
+  run ceiling. Stage B and all broader data classes remain closed.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0106 Stage A judicial text import
 
 - Date: 2026-08-15

@@ -15,6 +15,7 @@ import {
   evidenceLineCount,
   evidenceModule,
   evidenceObserveArtifactContract,
+  evidenceObserveArtifactContractV1,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -151,7 +152,7 @@ function projection(
   };
 }
 
-describe('evidence.observe-artifact@1.0.0', () => {
+describe('evidence.observe-artifact', () => {
   it('builds a deterministic strict request with a frozen request hash', async () => {
     const projected = await evidenceObserveArtifactTask.project(
       input,
@@ -162,8 +163,16 @@ describe('evidence.observe-artifact@1.0.0', () => {
       now: '2026-08-11T11:00:00.000Z',
     });
     expect(computeModelRequestHash(request)).toBe(
-      '743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004',
+      '29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae',
     );
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV1.buildRequest(projected, {
+          executionId: 'execution-evidence-observe-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004');
     expect(request.output.mode).toBe('json');
     expect(Object.isFrozen(request)).toBe(true);
   });

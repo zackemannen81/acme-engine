@@ -1,14 +1,21 @@
 import { sha256 } from '@acme/core';
 import {
   EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION,
+  EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION,
   EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+  EvidenceAnyProductJobSchema,
   EvidenceAssessmentCommandSchema,
   EvidenceImportCommandSchema,
+  EvidenceLiveObservationCommandSchema,
+  EvidenceLiveObservationJobSchema,
+  deriveEvidenceLiveObservationJobId,
   EvidenceProductCommandCollisionError,
   EvidenceProductJobSchema,
   EvidenceProductChangeSetSchema,
   type EvidenceAssessmentCommand,
   type EvidenceImportCommand,
+  type EvidenceLiveObservationCommand,
+  type EvidenceLiveObservationJob,
   type EvidenceProductClock,
   type EvidenceCaseObjectScope,
   type EvidenceProductJob,
@@ -59,6 +66,24 @@ export interface EvidencePostImportExecutor {
   } | null>;
 }
 
+export interface EvidenceLiveObservationExecutor {
+  observe(input: {
+    readonly command: EvidenceLiveObservationCommand;
+    readonly signal: AbortSignal;
+  }): Promise<{
+    readonly executionId: string;
+    readonly observations: readonly EvidenceObservation[];
+    readonly replayed: boolean;
+    readonly actualModelCalls: 0 | 1;
+  }>;
+  settle?(input: {
+    readonly jobId: string;
+    readonly phase: 'completed' | 'failed';
+    readonly reasonCode: string;
+    readonly actualModelCalls: 0 | 1;
+  }): Promise<void>;
+}
+
 export interface EvidenceWorkbenchWorker {
   start(
     command: EvidenceImportCommand,
@@ -72,6 +97,11 @@ export interface EvidenceWorkbenchWorker {
     jobId: string,
     scope?: EvidenceCaseObjectScope,
   ): Promise<EvidenceProductJob>;
+  startLiveObservation(
+    command: EvidenceLiveObservationCommand,
+    executor: EvidenceLiveObservationExecutor,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceLiveObservationJob>;
   proposeAssessment(
     command: EvidenceAssessmentCommand,
     scope?: EvidenceCaseObjectScope,
@@ -92,19 +122,198 @@ export function createEvidenceWorkbenchWorker(options: {
   const running = new Map<string, Promise<EvidenceProductJob>>();
   const controllers = new Map<string, AbortController>();
 
-  async function update(
-    job: EvidenceProductJob,
-    patch: Partial<EvidenceProductJob>,
+  async function update<TJob extends EvidenceProductJob>(
+    job: TJob,
+    patch: Partial<TJob>,
     scope?: EvidenceCaseObjectScope,
-  ): Promise<EvidenceProductJob> {
-    return options.repository.putJob(
-      EvidenceProductJobSchema.parse({
+  ): Promise<TJob> {
+    return (await options.repository.putJob(
+      EvidenceAnyProductJobSchema.parse({
         ...job,
         ...patch,
         updatedAt: options.clock.now(),
       }),
       scope,
-    );
+    )) as TJob;
+  }
+
+  async function runLiveObservation(
+    command: EvidenceLiveObservationCommand,
+    queued: EvidenceLiveObservationJob,
+    controller: AbortController,
+    executor: EvidenceLiveObservationExecutor,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceLiveObservationJob> {
+    let job = queued;
+    try {
+      if (controller.signal.aborted)
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Live observation cancelled before source hydration.',
+            reasonCode: 'LIVE_CANCELLED',
+          },
+          scope,
+        );
+      job = await update(
+        job,
+        {
+          phase: 'hydrating',
+          completedUnits: 1,
+          message: 'Preparing the authorized source.',
+        },
+        scope,
+      );
+      const executed = await executor.observe({
+        command,
+        signal: controller.signal,
+      });
+      const cumulativeModelCalls: 0 | 1 =
+        job.actualModelCalls === 1 || executed.actualModelCalls === 1 ? 1 : 0;
+      if (controller.signal.aborted)
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Live observation cancelled before product projection.',
+            reasonCode: 'LIVE_CANCELLED',
+            actualModelCalls: cumulativeModelCalls,
+            executionId: executed.executionId,
+          },
+          scope,
+        );
+      job = await update(
+        job,
+        {
+          phase: 'projecting',
+          completedUnits: 3,
+          message: 'Saving validated source-bound observations.',
+          actualModelCalls: cumulativeModelCalls,
+          executionId: executed.executionId,
+        },
+        scope,
+      );
+      const snapshot = await options.repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      const workspace = snapshot.workspaces.find(
+        ({ workspaceId }) => workspaceId === command.workspaceId,
+      );
+      if (workspace === undefined)
+        throw new RangeError(`Unknown workspace ${command.workspaceId}.`);
+      await options.repository.putObservations(executed.observations, scope);
+      const nextRevision = workspace.evidenceRevision + 1;
+      await options.repository.advanceEvidenceRevision(
+        command.workspaceId,
+        workspace.evidenceRevision,
+        nextRevision,
+      );
+      await options.repository.putChangeSet(
+        EvidenceProductChangeSetSchema.parse({
+          schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
+          workspaceId: command.workspaceId,
+          commandKey: command.commandKey,
+          recordedAt: queued.createdAt,
+          changeSet: createEvidenceChangeSet({
+            fromEvidenceRevision: workspace.evidenceRevision,
+            toEvidenceRevision: nextRevision,
+            addedArtifactVersionIds: [],
+            addedObservationIds: executed.observations.map(
+              ({ observationId }) => observationId,
+            ),
+            addedRelationIds: [],
+            addedOpenQuestionIds: [],
+            standingChanges: executed.observations.map(({ observationId }) => ({
+              objectId: observationId,
+              from: null,
+              to: 'current',
+            })),
+            actorReferenceKeys: [
+              ...new Set(
+                executed.observations.flatMap((observation) => {
+                  const actor =
+                    observation.kind === 'statement-occurrence'
+                      ? observation.actorReference
+                      : observation.sourceActorReference;
+                  return actor === null ? [] : [actor.actorReferenceKey];
+                }),
+              ),
+            ],
+            relationEndpointIds: [],
+            temporalBounds: executed.observations.flatMap(
+              ({ temporalBound }) =>
+                temporalBound === null ? [] : [temporalBound],
+            ),
+          }),
+        }),
+        scope,
+      );
+      const completedReason = executed.replayed
+        ? 'LIVE_OBSERVATION_RESUMED'
+        : 'LIVE_OBSERVATION_COMPLETED';
+      await executor.settle?.({
+        jobId: job.jobId,
+        phase: 'completed',
+        reasonCode: completedReason,
+        actualModelCalls: cumulativeModelCalls,
+      });
+      return update(
+        job,
+        {
+          phase: 'completed',
+          completedUnits: 4,
+          message: 'Source observations are ready for review.',
+          reasonCode: completedReason,
+        },
+        scope,
+      );
+    } catch (error) {
+      if (controller.signal.aborted)
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Live observation cancelled.',
+            reasonCode: 'LIVE_CANCELLED',
+          },
+          scope,
+        );
+      const value = error as {
+        readonly reason?: unknown;
+        readonly code?: unknown;
+        readonly actualModelCalls?: unknown;
+      };
+      const reasonCode =
+        typeof value.reason === 'string'
+          ? value.reason
+          : typeof value.code === 'string'
+            ? value.code
+            : 'LIVE_OBSERVATION_FAILED';
+      const actualModelCalls: 0 | 1 =
+        job.actualModelCalls === 1 || value.actualModelCalls === 1 ? 1 : 0;
+      await executor
+        .settle?.({
+          jobId: job.jobId,
+          phase: 'failed',
+          reasonCode,
+          actualModelCalls,
+        })
+        .catch(() => undefined);
+      return update(
+        job,
+        {
+          phase: 'failed',
+          message: 'Live observation failed before product projection.',
+          reasonCode,
+          actualModelCalls,
+        },
+        scope,
+      );
+    } finally {
+      controllers.delete(queued.jobId);
+    }
   }
 
   async function run(
@@ -329,6 +538,101 @@ export function createEvidenceWorkbenchWorker(options: {
       ).jobs.find((value) => value.jobId === jobId);
       if (job === undefined) throw new RangeError(`Unknown job ${jobId}.`);
       return job;
+    },
+    async startLiveObservation(commandValue, executor, scope) {
+      const command = EvidenceLiveObservationCommandSchema.parse(commandValue);
+      if (scope.workspaceId !== command.workspaceId)
+        throw new Error('Worker case scope does not match live command.');
+      const snapshot = await options.repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      if (
+        !snapshot.sources.some(
+          ({ artifactVersionId }) =>
+            artifactVersionId === command.artifactVersionId,
+        )
+      )
+        throw new RangeError('Live observation source is unavailable.');
+      const existing = snapshot.jobs.find(
+        ({ workspaceId, commandKey }) =>
+          workspaceId === command.workspaceId &&
+          commandKey === command.commandKey,
+      );
+      let existingLive: EvidenceLiveObservationJob | undefined;
+      if (existing !== undefined) {
+        if (
+          existing.schemaVersion !==
+            EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION ||
+          existing.artifactVersionId !== command.artifactVersionId ||
+          existing.modelId !== command.modelId ||
+          existing.maxModelCalls !== command.requestedBudget.maxModelCalls ||
+          existing.costCeilingMinor !==
+            command.requestedBudget.costCeilingMinor ||
+          existing.currency !== command.currency
+        )
+          throw new EvidenceProductCommandCollisionError(command.commandKey);
+        existingLive = EvidenceLiveObservationJobSchema.parse(existing);
+        if (
+          ['completed', 'cancelled', 'refused'].includes(existingLive.phase) ||
+          (existingLive.phase === 'failed' &&
+            existingLive.reasonCode !== 'LIVE_PRODUCT_PROJECTION_INTERRUPTED')
+        )
+          return existingLive;
+      }
+      const now = options.clock.now();
+      const queued =
+        existingLive !== undefined
+          ? await update(
+              existingLive,
+              {
+                phase: 'queued',
+                message: 'Resuming live observation.',
+                cancelRequested: false,
+                reasonCode: null,
+              },
+              scope,
+            )
+          : EvidenceLiveObservationJobSchema.parse(
+              await options.repository.putJob(
+                EvidenceLiveObservationJobSchema.parse({
+                  schemaVersion: EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION,
+                  jobKind: 'live-observation',
+                  jobId: deriveEvidenceLiveObservationJobId(command),
+                  workspaceId: command.workspaceId,
+                  commandKey: command.commandKey,
+                  artifactVersionId: command.artifactVersionId,
+                  task: 'observe-artifact',
+                  modelId: command.modelId,
+                  phase: 'queued',
+                  completedUnits: 0,
+                  totalUnits: 4,
+                  message: 'Live observation queued.',
+                  cancelRequested: false,
+                  maxModelCalls: command.requestedBudget.maxModelCalls,
+                  actualModelCalls: 0,
+                  costCeilingMinor: command.requestedBudget.costCeilingMinor,
+                  currency: command.currency,
+                  reasonCode: null,
+                  executionId: null,
+                  createdAt: now,
+                  updatedAt: now,
+                }),
+                scope,
+              ),
+            );
+      const controller = new AbortController();
+      controllers.set(queued.jobId, controller);
+      const promise = runLiveObservation(
+        command,
+        queued,
+        controller,
+        executor,
+        scope,
+      );
+      running.set(queued.jobId, promise);
+      void promise.finally(() => running.delete(queued.jobId));
+      return queued;
     },
     async cancel(jobId, scope) {
       const snapshot =
