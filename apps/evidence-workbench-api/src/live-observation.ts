@@ -38,6 +38,7 @@ import {
   evidenceModule,
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
+  evidenceObserveArtifactContractV2,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -233,6 +234,7 @@ export function createEvidenceLiveObservationService(options: {
         modules: createModuleRegistry([evidenceModule]),
         contracts: createContractRegistry([
           evidenceObserveArtifactContractV1,
+          evidenceObserveArtifactContractV2,
           evidenceObserveArtifactContract,
           evidenceRelateObservationsContract,
           evidenceProposeAssessmentContractV1,

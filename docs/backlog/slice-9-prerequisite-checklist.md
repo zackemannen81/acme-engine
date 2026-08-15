@@ -153,7 +153,7 @@ flag.
 - [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. The live reviewer journey exists; real-provider output bound remains
+### D2. The live reviewer journey exists; fresh provider acceptance remains
 
 The default workbench still composes `createScriptedModelGateway`. ACME-0105
 adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
@@ -185,8 +185,13 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       explicitly budgeted real provider call on authorized material outside
       the sealed corpus. ACME-0111 made one call with a 52-page source: the
       provider stopped at 2,048 output tokens with incomplete JSON, and ACME
-      correctly committed nothing. Version and prove a bounded observation
-      count/output budget offline before a fresh acceptance call.
+      correctly committed nothing. ADR-0041/ACME-0112 now add active `@1.2.0`
+      with one-to-eight non-exhaustive candidates and 8,192 output tokens while
+      retaining both historical versions. A fresh acceptance call remains.
+- [ ] Decide deterministic segmentation, segment identities, deduplication and
+      reviewer-visible coverage before making any exhaustive full-source
+      analysis claim. A successful ADR-0041 batch proves candidate validity,
+      not complete source coverage.
 
 ### D3. Consent withdrawal has no mechanism
 

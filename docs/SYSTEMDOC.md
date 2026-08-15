@@ -1090,9 +1090,13 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.0.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.2.0` task projects one immutable source plus an
 explicit actor roster, uses strict structured output and refuses invalid quote,
-kind, actor, temporal and prohibited-authority candidates before commit.
+kind, actor, temporal and prohibited-authority candidates before commit. Its
+active prompt returns one to eight materially distinct, explicitly non-
+exhaustive reviewer candidates and allows at most 8,192 output tokens. The
+historical `@1.0.0` synthetic-worded and `@1.1.0` source-neutral unbounded
+contracts remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing. The registered
 `evidence.relate-observations@1.0.0` task accepts current observations, proposes
@@ -1390,10 +1394,14 @@ fail before publishing a partial projection.
 `evidence-live-observation-command/1`, and `evidence-product-job/2` records a
 four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
 canonical text through the audited artifact service, executes
-`evidence.observe-artifact@1.1.0`, and writes product observations plus one
+`evidence.observe-artifact@1.2.0`, and writes product observations plus one
 evidence-revision advance only after the execution ledger reports committed.
-The historical `@1.0.0` synthetic prompt remains registered for replay; the
-active `@1.1.0` prompt changes source applicability, not semantics.
+The historical `@1.0.0` synthetic and `@1.1.0` source-neutral prompts remain
+registered for replay. ADR-0041 makes the active result a one-to-eight
+candidate batch with `minItems`/`maxItems` preserved on the provider wire and
+an 8,192-output-token request. A successful batch is not evidence of exhaustive
+full-source coverage; deterministic segmentation and coverage projection need
+a separate workflow decision.
 
 Provider responses use `encrypted-payload` retention. If product projection is
 interrupted after provider success, relaunching the same command uses the
@@ -1463,7 +1471,10 @@ source-complete persistent assessments and visible attention after new
 evidence. A primary browser path rather than technical audit, CLI, JSON or
 database access is the completion surface. The live profile is not complete
 until an explicitly budgeted real Stage A provider acceptance is proven end to
-end. ACME-0107, ACME-0108 and ACME-0110 prove observation, relation and
+end. ACME-0111's first call proved fail-closed handling of an incomplete
+2,048-token historical contract response; ADR-0041/ACME-0112 supply the bounded
+successor contract before a fresh acceptance. ACME-0107, ACME-0108 and
+ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected
 transports; ACME-0110 also proves primary review and late-evidence reassessment.
 

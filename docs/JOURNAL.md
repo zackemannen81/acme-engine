@@ -1,5 +1,39 @@
 # Journal
 
+## 2026-08-15 — ACME-0112 bounded observation candidate contract
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0112
+- Summary: Corrected the exact offline contract defect exposed by ACME-0111.
+  Active `evidence.observe-artifact@1.2.0` now requests a deliberately
+  non-exhaustive reviewer batch of one to eight observation candidates and
+  rejects a ninth candidate at runtime and on the lowered wire schema.
+- Replay: historical synthetic `@1.0.0` and source-neutral `@1.1.0` builders
+  and request hashes remain unchanged and are registered alongside the active
+  contract at every composition root that can resume retained evidence.
+- Budget boundary: the active request uses the gateway's existing bounded
+  8,192-output-token capability. That per-call output limit remains distinct
+  from the externally enforced 200 SEK prepaid monetary ceiling.
+- Architecture: ADR-0041 records that a successful batch is not a completeness
+  claim. Full-source coverage requires a separately designed deterministic
+  segmentation/coverage workflow; no hidden retry, pagination or multi-call
+  behavior was introduced.
+- Verification: focused contract/lowering/fixture/engine/live-composition suite
+  31 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 748 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh PostgreSQL 15 container;
+  `pnpm build`; `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+  An initial full-suite teardown rejection was isolated to the existing
+  asynchronous workbench cleanup; that file passed 9/9 alone and the exact
+  full gate then passed cleanly.
+- Safety: ACME-0112 made no provider or network model call and did not access
+  credentials or source documents. No live/source artifact entered the repo.
+- Follow-up: freeze a separate one-call real-provider acceptance under the
+  existing approved monetary pot; a successful bounded batch still will not
+  prove exhaustive document coverage.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0111 superseded after one fail-closed provider call
 
 - Date: 2026-08-15

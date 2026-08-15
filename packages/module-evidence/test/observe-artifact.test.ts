@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalJson,
   computeModelRequestHash,
+  createContractRegistry,
   sha256,
   type ExecutionReadContext,
   type StateProjectionInput,
@@ -16,6 +17,7 @@ import {
   evidenceModule,
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
+  evidenceObserveArtifactContractV2,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -163,8 +165,16 @@ describe('evidence.observe-artifact', () => {
       now: '2026-08-11T11:00:00.000Z',
     });
     expect(computeModelRequestHash(request)).toBe(
-      '29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae',
+      '50a18aa90d3f50ce82902642262731596bcf9eeb9e4e83ba1de65355be3e3db6',
     );
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV2.buildRequest(projected, {
+          executionId: 'execution-evidence-observe-source-neutral-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae');
     expect(
       computeModelRequestHash(
         evidenceObserveArtifactContractV1.buildRequest(projected, {
@@ -174,7 +184,70 @@ describe('evidence.observe-artifact', () => {
       ),
     ).toBe('743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004');
     expect(request.output.mode).toBe('json');
+    expect(request.maxOutputTokens).toBe(8192);
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('non-exhaustive reviewer candidate batch'),
+    });
+    const jsonSchema = request.output.jsonSchema as {
+      readonly properties?: {
+        readonly observations?: {
+          readonly minItems?: number;
+          readonly maxItems?: number;
+        };
+      };
+    };
+    expect(jsonSchema.properties?.observations).toMatchObject({
+      minItems: 1,
+      maxItems: 8,
+    });
     expect(Object.isFrozen(request)).toBe(true);
+  });
+
+  it('accepts one through eight candidates and refuses a ninth', () => {
+    const candidate = output.observations[0];
+    if (candidate === undefined) throw new Error('Missing fixture candidate.');
+    for (const count of [1, 8]) {
+      expect(
+        evidenceObserveArtifactContract.outputSchema.safeParse({
+          schemaVersion: 'evidence-observe-artifact-output/1',
+          observations: Array.from({ length: count }, () => candidate),
+        }).success,
+      ).toBe(true);
+    }
+    expect(
+      evidenceObserveArtifactContract.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/1',
+        observations: Array.from({ length: 9 }, () => candidate),
+      }).success,
+    ).toBe(false);
+    expect(
+      evidenceObserveArtifactContractV2.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/1',
+        observations: Array.from({ length: 9 }, () => candidate),
+      }).success,
+    ).toBe(true);
+  });
+
+  it('keeps all three observation contract versions resolvable for replay', () => {
+    const registry = createContractRegistry([
+      evidenceObserveArtifactContractV1,
+      evidenceObserveArtifactContractV2,
+      evidenceObserveArtifactContract,
+    ]);
+    expect(
+      registry
+        .list()
+        .filter(({ id }) => id === 'evidence.observe-artifact')
+        .map(({ version }) => version),
+    ).toEqual(['1.0.0', '1.1.0', '1.2.0']);
+    for (const contract of [
+      evidenceObserveArtifactContractV1,
+      evidenceObserveArtifactContractV2,
+      evidenceObserveArtifactContract,
+    ]) {
+      expect(registry.get(contract.ref)).toBe(contract);
+    }
   });
 
   it('accepts the two source-bound development observations', () => {

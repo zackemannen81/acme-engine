@@ -226,7 +226,8 @@ There is currently:
   event, relation, question, assessment, state, delta, observe-contract and
   relate-contract schemas; named ADR-0030 content-derived identities;
   source-binding validation; compact pure state; reducer/invariants; domain
-  memory policy; deterministic `evidence.observe-artifact@1.0.0` and
+  memory policy; active bounded `evidence.observe-artifact@1.2.0`, historical
+  replay-compatible `@1.0.0`/`@1.1.0`, and deterministic
   `evidence.relate-observations@1.0.0`; ADR-0032 correction-occurrence pairing;
   and contest projection for scoped `contradicts` relations
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
@@ -451,8 +452,12 @@ ACME-0111 reached OpenAI once under a one-call run and deployment gate plus the
 user's 200 SEK prepaid monetary ceiling. The 52-page source produced an
 incomplete candidate at the active contract's 2,048-output-token limit; strict
 JSON parsing failed, and the fail-closed path left zero engine commits and zero
-product observations. A versioned bounded observation count/output budget is
-the next dependency before a fresh real-provider acceptance.
+product observations. ADR-0041/ACME-0112 now add active
+`evidence.observe-artifact@1.2.0`: one to eight explicitly non-exhaustive
+reviewer candidates, provider-wire `minItems`/`maxItems` and an 8,192-output-
+token request. Both earlier contracts remain exact replay registrations. A
+fresh real-provider acceptance is the next dependency; full-source coverage
+still needs a separate segmentation/coverage workflow.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

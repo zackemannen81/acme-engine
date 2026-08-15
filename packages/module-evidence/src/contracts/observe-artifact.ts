@@ -13,6 +13,7 @@ import { exactQuoteOccurrenceCount } from '../canonical-text.js';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V1,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V2,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -24,6 +25,15 @@ import {
 
 const PROHIBITED_CONCLUSION =
   /\b(?:credible|credibility|truthful|lying|guilty|innocent|liable|liability|admissible|inadmissible|privileged|culpable)\b/iu;
+
+export const EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX = 8 as const;
+
+const EvidenceBoundedObserveArtifactOutputSchema =
+  EvidenceObserveArtifactOutputSchema.extend({
+    observations: EvidenceObserveArtifactOutputSchema.shape.observations
+      .min(1)
+      .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
+  });
 
 function issue(
   code: string,
@@ -92,6 +102,9 @@ function validateTemporal(
 function createContract(configuration: {
   readonly ref: ContractRef;
   readonly sourceDescription: string;
+  readonly boundedCandidateBatch: boolean;
+  readonly maxOutputTokens: number;
+  readonly schemaName: string;
 }): PromptContract<
   EvidenceObserveArtifactInput,
   EvidenceObserveArtifactOutput
@@ -99,7 +112,9 @@ function createContract(configuration: {
   return {
     ref: configuration.ref,
     inputSchema: EvidenceObserveArtifactInputSchema,
-    outputSchema: EvidenceObserveArtifactOutputSchema,
+    outputSchema: configuration.boundedCandidateBatch
+      ? EvidenceBoundedObserveArtifactOutputSchema
+      : EvidenceObserveArtifactOutputSchema,
     requiredCapabilities: Object.freeze({ structuredOutput: true }),
     retention: 'encrypted-payload',
 
@@ -118,7 +133,11 @@ function createContract(configuration: {
                   'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
                   'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
                   'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ' +
-                  'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. Return only the requested JSON.',
+                  'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
+                  (configuration.boundedCandidateBatch
+                    ? `Return between one and ${String(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX)} materially distinct observations as a non-exhaustive reviewer candidate batch; do not claim full-source coverage. `
+                    : '') +
+                  'Return only the requested JSON.',
               },
             ],
           },
@@ -134,12 +153,14 @@ function createContract(configuration: {
         ],
         output: {
           mode: 'json',
-          schemaName: 'evidence_observe_artifact_1_0_0',
+          schemaName: configuration.schemaName,
           jsonSchema: z.toJSONSchema(
-            EvidenceObserveArtifactOutputSchema,
+            configuration.boundedCandidateBatch
+              ? EvidenceBoundedObserveArtifactOutputSchema
+              : EvidenceObserveArtifactOutputSchema,
           ) as JsonValue,
         },
-        maxOutputTokens: 2048,
+        maxOutputTokens: configuration.maxOutputTokens,
       } satisfies ModelRequest;
       return immutableEvidence(request);
     },
@@ -260,6 +281,19 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
   createContract({
     ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V1,
     sourceDescription: 'synthetic artifact',
+    boundedCandidateBatch: false,
+    maxOutputTokens: 2048,
+    schemaName: 'evidence_observe_artifact_1_0_0',
+  }),
+);
+
+export const evidenceObserveArtifactContractV2 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V2,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: false,
+    maxOutputTokens: 2048,
+    schemaName: 'evidence_observe_artifact_1_0_0',
   }),
 );
 
@@ -267,5 +301,8 @@ export const evidenceObserveArtifactContract = Object.freeze(
   createContract({
     ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
     sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_2_0',
   }),
 );

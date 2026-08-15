@@ -92,6 +92,7 @@ import {
   evidenceModule,
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
+  evidenceObserveArtifactContractV2,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -1004,6 +1005,7 @@ export async function createLocalEvidenceWorkbench(
     modules: createModuleRegistry([evidenceModule]),
     contracts: createContractRegistry([
       evidenceObserveArtifactContractV1,
+      evidenceObserveArtifactContractV2,
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContract,
       evidenceProposeAssessmentContractV1,
