@@ -400,7 +400,8 @@ versioned review contracts. New decisions use authenticated server-derived
 principals while temporary `unauthenticated-local` history remains immutable.
 The approved completion and later-product sequence is recorded in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
-Non-synthetic paths remain unimplemented (slice 9 governance).
+Only ADR-0040's bounded Stage A judicial-text path is implemented; all other
+non-synthetic classes remain unauthorized.
 
 ## Active Work
 
@@ -412,12 +413,17 @@ primitives, Evidence confirmation parser, case-admin-only `live-model.run` and
 the closed hosted capability. It requires durable PostgreSQL, hosted mode, a
 live provider, a mounted durable payload key and deployment ceilings before it
 exists; it releases a gateway only after case-bound authorization and Stage A
-source authority. The default engine remains the scripted mock and no new
-product route invokes the capability, so no live call or real-source import is
-possible through the product today.
+source authority. ACME-0106 adds `evidence-create-case-command/2`,
+`evidence-text-import-metadata/2` and `evidence-text-import-record/2`, with
+case-admin-only `source.import`, exact parent-PDF/extraction provenance and
+encrypted authenticated API/browser import. Stage A case creation/import is
+visible only when that capability exists. The default engine remains the
+scripted mock and no product route invokes the provider.
 
-Stage A activation must prove the complete ADR-0040 tuple: durable PostgreSQL,
-live provider, authorized-external source origin and authorized-live execution.
+Stage A import activation proves the complete ADR-0040 composition tuple:
+durable PostgreSQL, configured live provider, authorized-external source origin
+and authorized-live execution. ACME-0106 proved two operator-supplied documents
+through encrypted PostgreSQL import and full restart with zero provider calls.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -471,6 +477,14 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0106:** Implemented bounded Stage A judicial-text import. Added
+  additive case/import/provenance contracts, case-policy matching,
+  case-admin-only source import, capability-gated API/browser controls and
+  file/PostgreSQL restart/isolation proofs. A disposable PostgreSQL acceptance
+  imported two fully inspected operator-supplied PDFs as prepared UTF-8 text,
+  retained their parent and extracted hashes, reopened identical records and
+  sources, and made zero provider calls. PDF bytes and extracted text never
+  entered Git.
 - **ACME-0105:** Implemented the fail-closed POC #1 live composition boundary.
   `@acme/live-safety` now supplies credential, opt-in and nested-budget
   primitives shared with the Domain Test UI. The Evidence API adds strict

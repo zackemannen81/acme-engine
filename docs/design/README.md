@@ -21,8 +21,9 @@ Application surfaces:
   authorization architecture, and ACME-0091 implements it. Stages 3–8 are
   delivered through ACME-0093/0095/0097/0098/0099/0100. ADR-0040 now
   authorizes only the Stage A anonymized judicial text class. ACME-0105
-  implements its closed composition capability; import/job/browser activation
-  stays gated and later classes remain closed.
+  implements its closed composition capability and ACME-0106 implements
+  capability-gated import/browser activation; the live job and later classes
+  remain closed.
 
 - [`evidence-integrity-workbench-technical-specification.md`](evidence-integrity-workbench-technical-specification.md)
   — normative implementation plan for POC #1. It freezes the seven-artifact,
@@ -31,8 +32,9 @@ Application surfaces:
   proof matrix and separately activatable slices 0–9 under ADR-0030 and
   ADR-0031. ACME-0077–0087 plus corrective child ACME-0089 delivered slices
   0–8, including the full source-bound assessment/re-review product journey;
-  ADR-0040 supplies separate authority for one unimplemented Stage A class;
-  Stage B and every broader path still require their own decision.
+  ADR-0040 supplies separate authority for one Stage A class and ACME-0106
+  implements its import half; Stage B and every broader path still require
+  their own decision.
 
 - [`evidence-integrity-workbench-product-definition.md`](evidence-integrity-workbench-product-definition.md)
   — accepted normative product definition for ACME's first real POC under

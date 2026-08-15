@@ -70,6 +70,7 @@ const CASE_ALLOWED: Readonly<
     'review.decide',
     'assessment.propose',
     'synthetic-fixture.run',
+    'source.import',
     'live-model.run',
     'job.cancel',
     'technical-audit.read',

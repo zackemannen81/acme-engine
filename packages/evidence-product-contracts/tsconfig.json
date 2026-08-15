@@ -9,6 +9,7 @@
   "references": [
     { "path": "../evidence-artifacts" },
     { "path": "../module-evidence" },
-    { "path": "../evidence-auth" }
+    { "path": "../evidence-auth" },
+    { "path": "../live-safety" }
   ]
 }

@@ -20,6 +20,7 @@
     "@acme/core": "workspace:*",
     "@acme/evidence-auth": "workspace:*",
     "@acme/evidence-artifacts": "workspace:*",
+    "@acme/live-safety": "workspace:*",
     "@acme/module-evidence": "workspace:*",
     "zod": "4.4.3"
   }

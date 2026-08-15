@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { canonicalJson, sha256 } from '@acme/core';
 import {
+  EvidenceCaseDataPolicySchema,
   EvidenceCaseMembershipSchema,
   EvidenceCaseSchema,
   type EvidenceCase,
@@ -29,7 +30,7 @@ import {
 
 const NonBlank = z.string().trim().min(1);
 
-export const EvidenceCreateCaseCommandSchema = z
+const EvidenceCreateSyntheticCaseCommandSchema = z
   .object({
     schemaVersion: z.literal('evidence-create-case-command/1'),
     commandKey: NonBlank.max(200),
@@ -38,6 +39,25 @@ export const EvidenceCreateCaseCommandSchema = z
     metadata: z.record(NonBlank.max(64), z.string().max(500)).default({}),
   })
   .strict();
+
+const EvidenceCreatePolicyCaseCommandSchema = z
+  .object({
+    schemaVersion: z.literal('evidence-create-case-command/2'),
+    commandKey: NonBlank.max(200),
+    title: NonBlank.max(200),
+    caseReference: NonBlank.max(100).nullable(),
+    metadata: z.record(NonBlank.max(64), z.string().max(500)).default({}),
+    dataPolicy: EvidenceCaseDataPolicySchema,
+  })
+  .strict();
+
+export const EvidenceCreateCaseCommandSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceCreateSyntheticCaseCommandSchema,
+    EvidenceCreatePolicyCaseCommandSchema,
+  ],
+);
 
 export const EvidenceUpdateCaseCommandSchema = z
   .object({
@@ -109,6 +129,10 @@ export async function createEvidenceCase(input: {
   if (input.authorization.organizationId !== input.organizationId)
     throw new Error('Case organization does not match authorization.');
   const command = EvidenceCreateCaseCommandSchema.parse(input.command);
+  const dataPolicy =
+    command.schemaVersion === 'evidence-create-case-command/1'
+      ? 'synthetic-only'
+      : command.dataPolicy;
   const now = input.clock.now();
   const caseId = derivedId(
     'evidence-case',
@@ -128,7 +152,8 @@ export async function createEvidenceCase(input: {
       existing.organizationId !== input.organizationId ||
       existing.title !== command.title ||
       existing.caseReference !== command.caseReference ||
-      canonicalJson(existing.metadata) !== canonicalJson(command.metadata)
+      canonicalJson(existing.metadata) !== canonicalJson(command.metadata) ||
+      existing.dataPolicy !== dataPolicy
     )
       throw new Error('Case command key was reused with different content.');
     if (existing.status !== 'provisioning') return existing;
@@ -143,7 +168,7 @@ export async function createEvidenceCase(input: {
       title: command.title,
       caseReference: command.caseReference,
       metadata: command.metadata,
-      dataPolicy: 'synthetic-only',
+      dataPolicy,
       status: 'provisioning',
       revision: 0,
       createdAt: now,
@@ -187,7 +212,7 @@ export async function createEvidenceCase(input: {
       schemaVersion: 'evidence-workspace/1',
       workspaceId,
       label: command.title,
-      dataPolicy: 'synthetic-only',
+      dataPolicy,
       evidenceRevision: 0,
       createdAt: now,
     }),

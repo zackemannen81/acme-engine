@@ -1157,9 +1157,10 @@ source-bound without changing its import order.
 The later product/security sequence is recorded
 in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
-ADR-0040 now accepts the first bounded Slice 9 class and live-profile
-applicability boundary. The runtime remains synthetic-only until that profile
-is implemented and its executable gates pass.
+ADR-0040 accepts the first bounded Slice 9 class and live-profile applicability
+boundary. ACME-0105 implements the closed capability and ACME-0106 implements
+capability-gated Stage A text import; the offline/default profile remains
+synthetic-only and provider execution remains closed.
 SQLite and the file product store remain the local/hermetic CI defaults;
 PostgreSQL is opt-in via composition (`--adapter postgres` /
 `ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
@@ -1182,9 +1183,9 @@ pure deny-by-default viewer/reviewer/organization-admin action policy. The API,
 not a browser payload, supplies actor identity and authorization context to
 versioned `/2` review commands and decisions. Historical `unauthenticated-local`
 review decisions remain immutable and explicitly labelled. Case-role isolation
-is implemented by ADR-0036, and ADR-0037/ACME-0095 now implements content-free
-product audit plus secure artifacts for fixed synthetic sources. Every
-arbitrary and non-synthetic path remains a later gate.
+is implemented by ADR-0036, and ADR-0037/ACME-0095 implements content-free
+product audit plus secure artifacts. ACME-0106 admits only ADR-0040's Stage A
+class; every arbitrary and later non-synthetic class remains closed.
 
 ADR-0036's case boundary is implemented. The product-visible `caseId` owns a
 unique internal workspace; explicit active case membership supplies
@@ -1215,7 +1216,9 @@ before releasing verified plaintext, and case-admin re-wrap/deletion remain
 revisioned and auditable. Hosted composition requires mounted key and S3
 secrets. It does not authorize arbitrary or non-synthetic ingestion.
 
-ADR-0038 is implemented by ACME-0097 for one synthetic-only class. The API
+ADR-0038 is implemented by ACME-0097 for one synthetic-only class, and
+ACME-0106 reuses its strict text mechanics for ADR-0040's separately authorized
+Stage A class. The API
 bounds the JSON request before parsing, validates strict UTF-8/media/signature/
 control/line/size rules and derives a deterministic server-side logical id.
 The artifact service stages separately encrypted exact-original and LF/NFC
@@ -1233,8 +1236,18 @@ encrypted `redacted-text` representation and a new
 `SourceArtifactVersion` with `redaction-derivative` lineage. Existing locators,
 observations, reviews and assessments remain bound to the predecessor. The
 browser exposes case-first import, source navigation, draft and admin apply;
-security audit never stores input or removed text. This gives no
-non-synthetic authority.
+security audit never stores input or removed text.
+
+ACME-0106 adds the Stage A branches without changing the `/1` synthetic
+contracts. `evidence-create-case-command/2` chooses exactly `synthetic-only` or
+`stage-a-authorized-judicial-text`; `evidence-text-import-metadata/2` and
+`evidence-text-import-record/2` bind the Stage A data class, three affirmative
+attestations and `evidence-external-source-provenance/1`. Provenance records an
+outside PDF's digest/byte length plus `pypdf-text-extraction` version and page
+count; ACME stores only the prepared strict UTF-8 bytes. Case policy and import
+class must match. `source.import` belongs only to case-admin, and API/browser
+Stage A controls exist only when the ACME-0105 capability was constructed.
+File and PostgreSQL repositories parse/persist both record versions unchanged.
 
 Stage 7 adds two pure read models over one authorized case snapshot.
 `evidence-case-overview/1` reports entry counts — sources, observations and
@@ -1314,7 +1327,8 @@ data authority; every output remains synthetic-only.
 
 ADR-0039 decides the workbench live model boundary. ACME-0105 implements its
 confirmation/composition foundation while the default execution engine remains
-the scripted mock and no product route can invoke live yet.
+the scripted mock. ACME-0106 consumes capability presence for Stage A import,
+but no product route invokes the provider yet.
 ADR-0040 adds the product applicability boundary and accepts exactly one Stage
 A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
 source text, already anonymized/redacted before import, operator-authorized for
@@ -1348,8 +1362,9 @@ execution repository then uses that durable key rather than the ephemeral
 local-session key. The capability closes over the provider credential but does
 not construct/release its OpenAI gateway until an operation supplies the exact
 case authorization, matching confirmation and authorized Stage A source. No
-call occurs at startup. ACME-0105 deliberately adds no route or job command, so
-the current browser workflow cannot yet reach the provider.
+call occurs at startup. ACME-0106 uses capability presence only to admit Stage
+A case creation and source import; it adds no provider route or job command,
+so the browser still cannot reach the provider.
 
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose

@@ -58,7 +58,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   organization-membership and deny-by-default role architecture is
   implemented. New review decisions use authenticated server-derived
   principals; legacy `unauthenticated-local` records remain immutable.
-  Every non-synthetic data path remains unimplemented and gated by Slice 9.
+  Stage A is the sole implemented non-synthetic data path; every other class
+  remains unimplemented and gated by later authority.
   ADR-0037's secure artifact foundation is implemented for the fixed synthetic
   corpus: immutable canonical representations are application-encrypted behind
   filesystem/S3-compatible ports, keys stay in versioned mounted secret files,
@@ -71,10 +72,11 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   ACME-0097 implements that boundary through case-first authenticated API and
   browser flows, encrypted staged representations, durable import/redaction
   records, deterministic retry identities and file/PostgreSQL persistence.
-  PDF/DOCX/OCR/media remain refused. ADR-0040 now authorizes one distinct POC
-  #1 Stage A class, `stage-a-anonymized-judicial-text/1`, behind an unimplemented
-  fail-closed live profile; the existing import/runtime remains synthetic-only
-  until that profile is delivered.
+  PDF/DOCX/OCR/media remain refused. ADR-0040 authorizes one distinct POC #1
+  Stage A class, `stage-a-anonymized-judicial-text/1`; ACME-0105 implements its
+  fail-closed live capability and ACME-0106 implements case/API/browser import
+  of operator-prepared text with exact outside-PDF provenance. The product
+  never ingests the PDF container.
   ADR-0036's case boundary is implemented: opaque public cases own unique
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
@@ -93,7 +95,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   A Slice 9 authority without authorizing Stage B FUP material, arbitrary
   ingestion or activation by implication. ACME-0105 implements the typed
   fail-closed live composition capability and durable payload-key boundary;
-  no product route can invoke it until the next vertical increment.
+  Stage A case creation and import require that capability, but no product
+  route invokes the provider yet; live evidence execution is the next vertical
+  increment.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

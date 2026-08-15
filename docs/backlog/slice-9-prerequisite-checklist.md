@@ -1,15 +1,18 @@
 # Slice 9 prerequisite checklist
 
-Status: Proposed working checklist; not an activation and not an authorization
+Status: Stage A engineering boundary partially resolved; retained as the
+working checklist for live execution, operations and every later data class
 
 Purpose: gather every Slice 9 prerequisite that is currently scattered across
 ADR-0028, ADR-0035, ADR-0036, ADR-0037, ADR-0038, the product definition, the
 completion plan and the technical specification, and add the engineering
 prerequisites discovered since those documents were written.
 
-This file grants nothing. Slice 9 remains closed and, per ADR-0038, "cannot
-activate by implication". Ticking every box here produces the *input* to a
-Slice 9 ADR and a qualified legal/security review — not their conclusion.
+This file grants nothing. ADR-0040 separately authorizes only
+`stage-a-anonymized-judicial-text/1`; ACME-0105 and ACME-0106 implement its
+closed composition and import half. Provider execution, Stage B and every
+other class remain closed and cannot activate by implication. Unchecked legal,
+security and operational rows remain real programme prerequisites.
 
 ## How to read this
 
@@ -129,39 +132,43 @@ expand later.
 
 ### D1. `synthetic-only` is a contract, not a setting
 
-`dataPolicy: z.literal('synthetic-only')` appears in `evidence-case/1`,
-`evidence-workspace/1`, `evidence-assessment-output/1` and the module export
-guard. Ingestion additionally pins `dataClass: z.literal(
-'synthetic-utf8-plain-text/1')` and `syntheticAuthorityAttested: z.literal(true)`.
-Export and assessment output both refuse any other value at runtime.
+ACME-0106 makes case/workspace data policy an exact two-value enum while
+leaving assessment output/export synthetic-only. Ingestion is an additive
+discriminated union: synthetic `/1` records are unchanged and Stage A uses
+metadata/record `/2`. Every other policy/class still fails schema/runtime
+validation.
 
 This is deny-by-default at the type level, which is the right design — and it
 means authorizing a class is a versioned contract change with migration, not a
 flag.
 
-- [ ] Decide the schema versioning strategy for a second data class across
-      case, workspace, ingestion, export and assessment-output contracts.
-- [ ] Decide whether existing synthetic records migrate or stay on `/1`.
+- [x] Decide and implement the Stage A schema strategy across case, workspace
+      and ingestion while leaving export/assessment closed.
+- [x] Existing synthetic import commands and records stay on `/1` unchanged.
+- [x] Add the Stage A authority/provider/provenance attestation without a
+      client credential or actor field.
 - [ ] Replace the synthetic attestation with a class-appropriate attestation
       that records consent reference, exclusion list and lawful basis.
-- [ ] Keep every non-authorized class failing closed after the change, and
+- [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. There is no live model path in the product
+### D2. Live composition exists; the callable product job does not
 
-The workbench composes `createScriptedModelGateway` only, with responses pinned
-to exact request hashes of the fixed corpus. `POST /api/text-imports` is pure
-storage: it calls `ingestion.importText` and runs no model.
+The default workbench still composes `createScriptedModelGateway`. ACME-0105
+adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
+payload key, explicit opt-in and nested budgets. ACME-0106 permits Stage A
+storage only when that capability exists. `POST /api/text-imports` remains pure
+storage and makes no model call.
 
 Consequence: an imported real document today becomes an encrypted, readable,
 redactable source with **zero observations** — and therefore no relations, no
 timeline, no contradictions and no assessment.
 
-- [ ] Live model in the workbench, gated and budgeted, as its own charter.
-      Without it, authorized real data yields nothing analysable.
-- [ ] Decide the retention policy for live calls on this class (ADR-0016
-      `hash-only` versus `encrypted-payload`), knowing the payload is now
-      personal data.
+- [x] Implement the gated/budgeted live-provider capability in the workbench.
+- [ ] Add the bounded case-first live evidence job, audit and primary reviewer
+      flow. Without it, authorized real data yields nothing analysable.
+- [x] Decide the Stage A live-call retention policy: ADR-0040 requires
+      `encrypted-payload` with a durable mounted key.
 - [ ] Establish what the provider receives, retains and logs, and reconcile
       that with section A's provider handling.
 - [ ] Validate the `observe-artifact` strict structured-output contract against
@@ -198,9 +205,11 @@ observation and assessment citing the unredacted version.
 
 ### D5. Operational debt that must clear first
 
-- [x] `pnpm test:postgres` executed against a real server. Done 2026-08-14
-      under ACME-0103 against `postgres:15`: 34 tests, including migration v7
-      and the PostgreSQL export-policy and export-audit write paths. Hosted
+- [x] `pnpm test:postgres` executed against a real server. Re-proved 2026-08-15
+      under ACME-0106 against a clean `postgres:15`: 35 tests, including Stage
+      A import/full-composition restart, migration v7 and export-policy/audit.
+      A separate two-document real-source acceptance also reopened identical
+      PostgreSQL records/source hashes with zero provider calls. Hosted
       mode *is* PostgreSQL, so this stays a standing gate rather than a
       one-time tick — run it before any pilot.
 - [ ] Local workbench single-session defect resolved or explicitly accepted —
@@ -214,34 +223,34 @@ sourcing. That is the right instinct, and it is easiest to guarantee if it is
 designed in *before* real material is ever imported rather than cleaned up
 afterwards.
 
-- [ ] Real material never becomes a repository fixture. The sealed corpus lives
+- [x] Real material never becomes a repository fixture. The sealed corpus lives
       in `packages/evidence-testing/fixtures/`; anything placed there is in git
       history permanently.
-- [ ] Real material never enters test snapshots, golden files, journal entries,
+- [x] Real material never enters test snapshots, golden files, journal entries,
       screenshots or documentation examples.
-- [ ] Working data stays under gitignored paths only, and `.local/` remains
+- [x] Working data stays outside Git only, and `.local/` remains
       gitignored.
-- [ ] A build or composition mode that *cannot* reach a non-synthetic path,
+- [x] A default build/composition mode that cannot reach Stage A,
       verified by a refusal test rather than by convention.
 - [ ] Scrub procedure for logs, backups, object storage and key material at
       programme end, with the deletion evidenced.
 - [ ] History review before publication, including the existing secret scan
       extended to the new class.
-- [ ] The published default composition is the synthetic one, and the
+- [x] The published default composition is the synthetic one, and the
       demonstration corpus shipped publicly is the synthetic corpus.
 
 ## F. What the Slice 9 ADR itself must contain
 
 Drafting can begin once A, B and C are answerable. The ADR must state:
 
-- [ ] The single bounded class, purpose, organization, region, provider path
+- [x] ADR-0040 names the single bounded Stage A class, purpose and provider path
       and retention period it authorizes — and nothing else.
 - [ ] That it authorizes rung 2 or 3, or, if it purports to authorize rung 4,
       why the stricter review the completion plan requires has been satisfied.
-- [ ] Every gate that must pass before ingestion, expressed executably.
-- [ ] The refusal behaviour for every class it does not authorize.
+- [x] Every Stage A engineering gate before ingestion is expressed executably.
+- [x] The refusal behaviour for every class it does not authorize.
 - [ ] Residual risks, named and accepted by a named owner.
-- [ ] That the Primary Product Rule, source-binding invariants and the L5
+- [x] That the Primary Product Rule, source-binding invariants and the L5
       prohibition are unchanged. No Slice 9 decision may weaken them without
       superseding ADR-0028.
 

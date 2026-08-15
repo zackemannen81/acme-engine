@@ -1294,6 +1294,7 @@ export async function createLocalEvidenceWorkbench(
     },
     artifactSecurity: artifactService,
     ingestion: ingestionService,
+    stageA: { enabled: liveCapability !== null },
     ...(lateFixture === null
       ? {}
       : {
@@ -1319,6 +1320,7 @@ export async function createLocalEvidenceWorkbench(
     worker,
     productRepository,
     artifactService,
+    ingestionService,
     artifactObjectStore: artifacts.objectStore,
     ledger,
     gateway,

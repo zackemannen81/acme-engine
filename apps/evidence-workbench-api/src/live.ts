@@ -5,6 +5,7 @@ import {
 import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
 import type { Clock, ModelGateway, ModelSelection } from '@acme/core';
 import type { EvidenceCaseAuthorizationContext } from '@acme/evidence-auth';
+import { EVIDENCE_STAGE_A_TEXT_DATA_CLASS } from '@acme/evidence-product-contracts';
 import {
   LiveSafetyRefused,
   assertLiveBudget,
@@ -18,8 +19,7 @@ export const EVIDENCE_LIVE_CONFIRMATION_VERSION =
   'evidence-live-confirmation/1' as const;
 export const EVIDENCE_POC1_LIVE_PROFILE_VERSION =
   'evidence-poc1-live/1' as const;
-export const EVIDENCE_STAGE_A_DATA_CLASS =
-  'stage-a-anonymized-judicial-text/1' as const;
+export const EVIDENCE_STAGE_A_DATA_CLASS = EVIDENCE_STAGE_A_TEXT_DATA_CLASS;
 
 export const EVIDENCE_LIVE_REFUSAL = {
   confirmation: 'EVIDENCE_LIVE_CONFIRMATION_INVALID',

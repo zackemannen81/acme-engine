@@ -186,6 +186,7 @@ export function createEvidenceWorkbenchApi(options: {
     'recordDeniedRead' | 'recordExport' | 'rewrap' | 'delete'
   >;
   readonly ingestion?: EvidenceIngestionService;
+  readonly stageA?: { readonly enabled: boolean };
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
@@ -387,6 +388,15 @@ export function createEvidenceWorkbenchApi(options: {
               workspaceId,
               artifactReadAudit,
             );
+      const defaultWorkspaceId = async (): Promise<string> => {
+        if (requestCaseId === null) return options.workspaceId;
+        const evidenceCase = (
+          await options.auth.repository.snapshot()
+        ).cases.find((item) => item.caseId === requestCaseId);
+        if (evidenceCase === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        return evidenceCase.workspaceId;
+      };
       if (request.method === 'GET' && url.pathname === '/health') {
         send(response, 200, {
           status: 'ok',
@@ -482,6 +492,16 @@ export function createEvidenceWorkbenchApi(options: {
         });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/api/capabilities') {
+        const rawToken = cookie(request, options.auth.cookieName);
+        if (rawToken === null) throw new EvidenceAuthenticationError();
+        await options.auth.sessions.resolve(rawToken);
+        send(response, 200, {
+          schemaVersion: 'evidence-product-capabilities/1',
+          stageAImport: options.stageA?.enabled === true,
+        });
+        return;
+      }
       if (request.method === 'DELETE' && url.pathname === '/auth/session') {
         requireSameOrigin();
         const rawToken = cookie(request, options.auth.cookieName);
@@ -538,6 +558,18 @@ export function createEvidenceWorkbenchApi(options: {
         organizationCasesMatch?.[1] !== undefined
       ) {
         const organizationId = decodeURIComponent(organizationCasesMatch[1]);
+        const command = EvidenceCreateCaseCommandSchema.parse(
+          await body(request),
+        );
+        if (
+          command.schemaVersion === 'evidence-create-case-command/2' &&
+          command.dataPolicy === 'stage-a-authorized-judicial-text' &&
+          options.stageA?.enabled !== true
+        )
+          throw new EvidenceAuthorizationError(
+            403,
+            'STAGE_A_IMPORT_CAPABILITY_REQUIRED',
+          );
         const authorization = await requireOrganizationAuthorized(
           organizationId,
           'case.create',
@@ -551,7 +583,7 @@ export function createEvidenceWorkbenchApi(options: {
             productRepository: options.repository,
             authorization,
             organizationId,
-            command: EvidenceCreateCaseCommandSchema.parse(await body(request)),
+            command,
             clock: options.clock,
           }),
         );
@@ -877,7 +909,7 @@ export function createEvidenceWorkbenchApi(options: {
       }
       if (request.method === 'GET' && url.pathname === '/api/work-queue') {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
@@ -1227,7 +1259,7 @@ export function createEvidenceWorkbenchApi(options: {
       }
       if (request.method === 'GET' && url.pathname === '/api/text-imports') {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         const snapshot = await scopedSnapshot(workspaceId);
         send(response, 200, {
@@ -1248,20 +1280,33 @@ export function createEvidenceWorkbenchApi(options: {
         const metadata = EvidenceTextImportMetadataSchema.parse(
           payload.metadata,
         );
+        if (
+          metadata.schemaVersion === 'evidence-text-import-metadata/2' &&
+          options.stageA?.enabled !== true
+        )
+          throw new EvidenceAuthorizationError(
+            403,
+            'STAGE_A_IMPORT_CAPABILITY_REQUIRED',
+          );
         if (typeof payload.text !== 'string')
           throw new SyntaxError('text is required.');
-        const authorization = await requireAuthorized(
-          'synthetic-fixture.run',
-          options.workspaceId,
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          metadata.schemaVersion === 'evidence-text-import-metadata/2'
+            ? 'source.import'
+            : 'synthetic-fixture.run',
           true,
         );
-        if (!('caseId' in authorization) || artifactReadAudit === undefined)
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const record = await options.ingestion.importText({
           organizationId: authorization.organizationId,
           scope: {
             caseId: requestCaseId,
-            workspaceId: authorization.workspaceId as string,
+            workspaceId: authorization.workspaceId,
             boundAt: options.clock.now(),
           },
           metadata,
@@ -1766,7 +1811,7 @@ export function createEvidenceWorkbenchApi(options: {
       const sourceMatch = /^\/api\/sources\/([^/]+)$/u.exec(url.pathname);
       if (request.method === 'GET' && sourceMatch?.[1] !== undefined) {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         const snapshot = await scopedSnapshot(workspaceId);
         const artifactVersionId = decodeURIComponent(sourceMatch[1]);

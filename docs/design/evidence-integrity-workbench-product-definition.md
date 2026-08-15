@@ -546,13 +546,15 @@ membership, durable ownership and same-organization cross-case
 non-disclosure. ADR-0037/ACME-0095 implement immutable, application-encrypted
 filesystem/S3-compatible artifact storage for the fixed synthetic corpus,
 including key lifecycle, product audit and restore verification. Arbitrary
-ingestion and every non-synthetic use remain unactivated.
+ingestion remains unactivated.
 ADR-0038 further accepts an implementation architecture for bounded synthetic
 UTF-8 plain text and immutable redacted derivatives. ADR-0040 subsequently
 accepts one separate POC #1 Stage A class,
 `stage-a-anonymized-judicial-text/1`, and a fail-closed live profile. This does
 not relabel the synthetic contract or authorize Stage B FUP material,
-arbitrary ingestion or excluded formats.
+arbitrary ingestion or excluded formats. ACME-0105 implements that capability
+and ACME-0106 implements its operator-prepared-text import/browser half; live
+evidence execution remains separate.
 
 ## Official Risk and Evaluation Sources
 

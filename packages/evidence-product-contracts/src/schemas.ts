@@ -13,6 +13,7 @@ import {
 } from '@acme/module-evidence';
 import {
   EvidenceAuthorizationContextSchema,
+  EvidenceCaseDataPolicySchema,
   EvidenceCaseAuthorizationContextSchema,
 } from '@acme/evidence-auth';
 import {
@@ -116,7 +117,7 @@ export const EvidenceWorkspaceSchema = z
     schemaVersion: z.literal(EVIDENCE_WORKSPACE_SCHEMA_VERSION),
     workspaceId: EvidenceNonBlankStringSchema,
     label: EvidenceNonBlankStringSchema,
-    dataPolicy: z.literal('synthetic-only'),
+    dataPolicy: EvidenceCaseDataPolicySchema,
     evidenceRevision: z.number().int().nonnegative(),
     createdAt: EvidenceIsoTimestampSchema,
   })

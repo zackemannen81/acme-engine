@@ -406,6 +406,9 @@ importers:
       '@acme/evidence-auth':
         specifier: workspace:*
         version: link:../evidence-auth
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../live-safety
       '@acme/module-evidence':
         specifier: workspace:*
         version: link:../module-evidence

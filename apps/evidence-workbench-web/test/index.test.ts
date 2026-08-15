@@ -64,5 +64,10 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).not.toContain('prompt(');
     expect(html).not.toContain('workspaceId');
     expect(html).toContain('/api/cases/');
+    expect(html).toContain("await json('/api/capabilities')");
+    expect(html).toContain('stage-a-authorized-judicial-text');
+    expect(html).toContain("schemaVersion:'evidence-text-import-metadata/2'");
+    expect(html).toContain('Parent PDF SHA-256');
+    expect(html).toContain('providerTransmissionAuthorized');
   });
 });

@@ -1,5 +1,59 @@
 # Journal
 
+## 2026-08-15 — ACME-0106 Stage A judicial text import
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0106
+- Summary: Implemented the first real-source product path authorized by
+  ADR-0040. `evidence-create-case-command/2` adds an explicit immutable case
+  data policy, while `evidence-text-import-metadata/2` and
+  `evidence-text-import-record/2` bind only
+  `stage-a-anonymized-judicial-text/1` to operator/provider attestations and
+  exact external-source provenance. Existing synthetic `/1` commands and
+  records remain unchanged.
+- Trust boundary: case policy and import class must match. `source.import` is
+  case-admin-only. Stage A case creation and import refuse unless the API was
+  composed with ACME-0105's complete `evidence-poc1-live/1` capability;
+  credentials, client flags and organization roles cannot activate it. The
+  default composition remains synthetic/scripted.
+- Product path: authenticated API/browser controls create Stage A cases, paste
+  operator-prepared strict UTF-8 text and collect parent PDF digest/byte length,
+  acquisition reference and pypdf extraction version/page count. Imported
+  exact and LF/NFC canonical bytes remain separately encrypted immutable
+  representations. The parent PDF is never ingested.
+- Persistence/isolation: file reopening preserves the additive Stage A product
+  record/provenance; PostgreSQL preserves product plus identity through a full
+  composition restart. Adversarial tests refuse both policy/class directions,
+  credential-shaped metadata and capability-free activation, while a sibling
+  case reveals no imports.
+- Real-source acceptance: fully rendered and visually inspected every page of
+  the two operator-supplied PDFs (52 + 23 pages), then extracted outside Git
+  with `pypdf 6.10.0; default; LF-page-separator/1`. D1 parent SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`
+  produced extracted SHA-256
+  `4771c61b3b7080ae6b82de8e3dab0c74d82b8d22ba387787e9c0658bf698364a`;
+  D2 parent SHA-256
+  `7a7188fb8ce18d0d952e6d4a342753817b3c57fdb788290c9f142df4dfac3633`
+  produced extracted SHA-256
+  `9a12bcf574a42cc07d89dc82b8443de52d6f9efbf78fc14d53d41668480607c7`.
+  Both imported through the authenticated Stage A API into disposable
+  PostgreSQL and reopened with byte-identical records and source hashes.
+  Provider calls: zero. The disposable database was removed; temporary
+  renders/extracts were sent to the recycle bin; original PDFs remain intact.
+- Verification: focused Stage A/auth/browser suite 20 tests; `pnpm typecheck`;
+  `pnpm lint`; `pnpm boundaries`; `pnpm test` — 745 unit, 78 conformance, 62
+  integration, 26 scenario; `pnpm test:postgres` — 35 tests on a clean
+  disposable `postgres:15`; `pnpm build`; `pnpm format:check`;
+  `pnpm docs:check`; `git diff --check`. One auth blackbox timed out only while
+  the build ran concurrently; it passed alone and the full serial rerun passed.
+- Spend: none. No live provider call was made.
+- Follow-up: add the bounded case-first live evidence job, confirmation/audit,
+  restart-safe provider execution and primary observation→relation→assessment
+  reviewer/reassessment journey over these imported Stage A sources. Stage B
+  FUP and all other source classes remain independently closed.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0105 Evidence live composition boundary
 
 - Date: 2026-08-15

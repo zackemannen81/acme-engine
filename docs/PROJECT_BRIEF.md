@@ -217,9 +217,11 @@ authenticated-principal and organization-authorization architecture:
 self-hosted Supabase Auth behind a product-API BFF, opaque server-side sessions
 and deny-by-default product roles. ACME-0091 implements this boundary across
 the hosted composition, browser and durable identity/session store. The
-callable product remains synthetic-only. ADR-0040 authorizes a distinct Stage A
-live profile, and ACME-0105 implements its closed composition capability. The
-data contract and product job/browser path are not implemented. The approved
+default callable product remains synthetic-only. ADR-0040 authorizes a
+distinct Stage A live profile, ACME-0105 implements its closed composition
+capability and ACME-0106 implements the versioned case/import contract plus
+authenticated browser path for operator-prepared anonymized judicial text.
+The live evidence job is not implemented. The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
@@ -235,9 +237,10 @@ append-only export audit and product backup/restore verification. Stages 1–8 a
 delivered. ADR-0040 accepts the first Slice 9 class:
 `stage-a-anonymized-judicial-text/1`. ACME-0105 now enforces the fail-closed
 versioned live-profile tuple: durable PostgreSQL, live provider,
-authorized-external source origin and authorized-live execution. No product
-route invokes it yet. Stage B FUP material and every broader data path remain
-unauthorized.
+authorized-external source origin and authorized-live execution. Stage A case
+creation/import now requires that capability and stores exact external PDF
+provenance without ingesting the PDF. No product route invokes the provider
+yet. Stage B FUP material and every broader data path remain unauthorized.
 
 ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
 and ACME-0097 implements it end to end.

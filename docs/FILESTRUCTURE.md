@@ -873,8 +873,9 @@ content remains intentionally omitted here.
   restart-safe case-first records. ACME-0105 adds the closed
   `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
   authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
-  key are required before an OpenAI gateway can be released. No product route
-  invokes it yet.
+  key are required before an OpenAI gateway can be released. ACME-0106 adds
+  capability-gated Stage A case creation and authenticated text import with
+  parent-PDF/extraction provenance; no product route invokes the provider yet.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -916,20 +917,21 @@ organization-membership and deny-by-default role architecture; ACME-0091
 implements it in the new auth packages and Evidence workbench apps. The
 approved later sequence is
 recorded in
-`docs/design/evidence-integrity-workbench-product-completion-plan.md`; it does
-not authorize any non-synthetic data path.
+`docs/design/evidence-integrity-workbench-product-completion-plan.md`; ADR-0040
+is the separate authority for the sole Stage A class.
 
 ADR-0036 decides the Stage 3 case/workspace management and isolation boundary:
 case-first product routes, explicit case roles, immutable case-object ownership
 and same-organization isolation proofs over uniquely bound internal workspaces.
 ACME-0093 implements it and remains synthetic-only. ADR-0037/ACME-0095 add the
-secure artifact foundation for existing synthetic sources; bounded ingestion,
-redaction and non-synthetic authority remain later tasks.
+secure artifact foundation, ACME-0097 adds bounded synthetic ingestion and
+redaction, and ACME-0106 adds only ADR-0040's Stage A import class.
 
 ADR-0040 distinguishes permanent Evidence Workbench invariants from the
 synthetic/test phase controls. It authorizes one bounded Stage A anonymized
-judicial text class behind an unimplemented, fail-closed PostgreSQL/live-
-provider/external-source/authorized-execution profile; Stage B remains closed.
+judicial text class. ACME-0105 implements its fail-closed PostgreSQL/live-
+provider/external-source/authorized-execution capability and ACME-0106 adds the
+case/import/browser data path; Stage B and provider execution remain closed.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

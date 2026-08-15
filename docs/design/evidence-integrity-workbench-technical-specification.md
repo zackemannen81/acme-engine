@@ -1229,7 +1229,7 @@ Documentation: all new authority and residual risks before ingestion.
 | Live model and budget | **Decided by [ADR-0039](../adr/0039-evidence-workbench-live-model-boundary.md); composition foundation implemented by ACME-0105.** A versioned case-bound confirmation, environment-only credentials, a run ceiling capped by a deployment ceiling and durable `encrypted-payload` key are enforced before a closed OpenAI capability exists. Mocks remain default; job/API audit and callable execution are the next increment. |
 | Bounded synthetic text ingestion and immutable redaction | **Implemented by ACME-0097 under [ADR-0038](../adr/0038-bounded-text-ingestion-and-immutable-redaction.md).** Strict UTF-8 browser import, encrypted original/canonical objects, durable file/PostgreSQL records and immutable redacted derivatives are synthetic-only. |
 | PDF/OCR/audio/video/media locators | Outside V1; new schemas, validation and threat analysis required. |
-| Stage A anonymized real judicial UTF-8 text | **Accepted by [ADR-0040](../adr/0040-poc-1-live-product-applicability.md); composition guard implemented by ACME-0105.** The `evidence-poc1-live/1` resolver requires external-source authority, but the versioned import contract and callable product flow are not implemented yet. |
+| Stage A anonymized real judicial UTF-8 text | **Accepted by [ADR-0040](../adr/0040-poc-1-live-product-applicability.md); composition guard implemented by ACME-0105; import path implemented by ACME-0106.** Versioned case/import records preserve exact outside-PDF provenance, encrypted original/canonical text and case ownership. API/browser activation requires the live capability. Provider execution remains the next increment. |
 | Stage B FUP or any other non-synthetic data path | Blocked until a later data-class ADR supplies explicit authority. |
 | Dynamic discovery, workflow runtime and vector retrieval | Deferred until measured need; not part of this product plan. |
 
@@ -1241,7 +1241,7 @@ security and validation review.
 
 | Specification invariant | Authority |
 | --- | --- |
-| Synthetic text only; no real/criminal-offence data | ADR-0028 and product definition |
+| Synthetic default plus only the bounded Stage A judicial-text class; no Stage B or arbitrary real data | ADR-0028, ADR-0040 and product definition |
 | Seven logical artifacts in eight versions and partition separation | ACME-0076 accepted charter and this specification |
 | UTF-8/LF/NFC, line locators and exact substring binding | ACME-0076 accepted charter; ADR-0030 identity decision |
 | Model is candidate generator only | Project brief, ADR-0010, ADR-0028 |
