@@ -265,11 +265,14 @@ export function createEvidenceWorkbenchWorker(options: {
       );
       if (workspace === undefined)
         throw new RangeError(`Unknown workspace ${command.workspaceId}.`);
-      await options.repository.putObservations(executed.observations, scope);
+      // The guard runs before any product write. Observing first left refused
+      // projections with their observations already persisted under a
+      // workspace revision that never advanced, which is what wedges a case.
       if (executed.evidenceRevision !== workspace.evidenceRevision)
         throw new EvidenceProductCommandCollisionError(
           `revision:${command.workspaceId}`,
         );
+      await options.repository.putObservations(executed.observations, scope);
       const nextRevision = workspace.evidenceRevision;
       await options.repository.putChangeSet(
         EvidenceProductChangeSetSchema.parse({

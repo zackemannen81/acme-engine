@@ -33,7 +33,7 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/{index.ts,live.ts,local.ts,local-main.ts}
-│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,live-composition.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-path-regressions.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json

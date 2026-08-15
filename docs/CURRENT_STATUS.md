@@ -407,6 +407,39 @@ non-synthetic classes remain unauthorized.
 
 ## Active Work
 
+POC #1 has entered its live product acceptance phase. ACME-0129 is superseded
+before its acceptance run: it was frozen to prove live execution could happen
+safely without uncontrolled spend, and that question is answered. ADR-0044
+(Proposed) records the change. It keeps schema validation, fail-closed refusal,
+revision and integrity guards, transactional mutation, idempotency, case
+isolation, audit trail, provider-call logging and cost measurement, and retires
+the deployment call ceiling and cost ceiling as preconditions, campaign-level
+call caps, and mock or in-memory substrate as a basis for a POC claim. Bounding
+one execution remains; capping a campaign does not. Cost is governed by
+measurement over `acme.model_calls`. Verification separates into an offline
+deterministic suite, a live integration suite and a POC acceptance run, and
+only the last may claim POC #1 works.
+
+ACME-0131 repaired the five defects that first sustained real browser session
+exposed, none of which the offline suite could reach. The worker now runs the
+revision guard before any product write; the live observation job selects only
+the executing run's records; the evidence projection, case overview, integrity
+report and export policy all resolve the requested case instead of the
+composition default; and the development authenticator grants an upstream
+lifetime per sign-in rather than one fixed expiry per process. Three of the
+five were case-scoped reads resolving the default workspace, so ADR-0036
+isolation is now enforced by the read path itself rather than by the guards
+that were masking it. Every gate was proven load-bearing by reverting each fix
+individually. On the running instance every case view for a real case answers
+`200`, where four answered `409` and three answered `404` before.
+
+The `POC1-AUTO-UI` case remains wedged at product evidence revision 2 against
+engine revision 5. That divergence is recorded history; the fixes prevent new
+divergence rather than rewriting it, so the acceptance run needs a fresh case.
+Next is ADR-0044's retirement of the deployment call ceiling and cost ceiling
+plus the three-tier suite separation, then the acceptance run proposed in
+`docs/backlog/poc1-live-product-acceptance.md`.
+
 Stages 1–8 of the product completion plan are delivered. ACME-0102 accepted
 ADR-0039, the workbench live model boundary. ADR-0040 now accepts one bounded
 Stage A class, `stage-a-anonymized-judicial-text/1`, and the fail-closed

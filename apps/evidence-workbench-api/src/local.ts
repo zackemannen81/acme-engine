@@ -130,6 +130,11 @@ const DEVELOPMENT_AUTH_ISSUER = 'https://local.auth.invalid/';
 const DEVELOPMENT_AUTH_SUBJECT = 'synthetic-reviewer-1';
 const DEVELOPMENT_AUTH_EMAIL = 'reviewer@acme.local';
 const DEVELOPMENT_AUTH_PASSWORD = 'acme-synthetic-reviewer';
+/**
+ * Upstream lifetime granted per sign-in and per refresh, never per process.
+ * The product session's own idle and absolute bounds still govern the session.
+ */
+const DEVELOPMENT_UPSTREAM_LIFETIME_MS = 15 * 60 * 1_000;
 const DEVELOPMENT_COMMAND_KEY = 'development-observe-dev-t01-v1';
 const PRE_LATE_RELATE_COMMAND_KEY = 'evaluation-relate-pre-log-1';
 const OBSERVE_SELECTION: ModelSelection = {
@@ -851,9 +856,10 @@ export async function createLocalEvidenceWorkbench(
           displayLabel: authIdentity.displayLabel,
         },
       ],
-      expiresAt: new Date(
-        Date.parse(clock.now()) + 15 * 60 * 1_000,
-      ).toISOString(),
+      expiresAt: () =>
+        new Date(
+          Date.parse(clock.now()) + DEVELOPMENT_UPSTREAM_LIFETIME_MS,
+        ).toISOString(),
     });
   const sessionProtector = createAes256GcmPayloadEncryptor({
     key: options.sessionKey ?? new Uint8Array(randomBytes(32)),
@@ -1388,9 +1394,19 @@ export async function createLocalEvidenceWorkbench(
           },
         }),
     technicalAudit: { enabled: false },
-    async evidenceProjection() {
+    async evidenceProjection(requestedWorkspaceId: string) {
       const evidence = await ledger.snapshot();
-      const latest = evidence.state.snapshots.at(-1);
+      // Scoped to the requested workspace: the globally latest snapshot
+      // belongs to whichever case committed last, which is not necessarily
+      // the case being read.
+      const latest = evidence.state.snapshots
+        .filter(
+          (item) =>
+            item.namespace === 'evidence' &&
+            item.entityId === requestedWorkspaceId,
+        )
+        .sort((left, right) => left.revision - right.revision)
+        .at(-1);
       return latest === undefined
         ? initialEvidenceState()
         : EvidenceStateSchema.parse(latest.value);

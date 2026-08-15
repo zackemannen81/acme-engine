@@ -212,7 +212,9 @@ export function createEvidenceWorkbenchApi(options: {
   readonly liveAssessment?: EvidenceLiveAssessmentService;
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
-  readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
+  readonly evidenceProjection?: (
+    workspaceId: string,
+  ) => EvidenceState | Promise<EvidenceState>;
   readonly technicalAuditSource?: (caseId: string) => {
     readonly caseId: string;
     readonly domainObjectId: string;
@@ -979,11 +981,13 @@ export function createEvidenceWorkbenchApi(options: {
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/overview') {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
           200,
-          buildEvidenceCaseOverview(await scopedSnapshot(options.workspaceId)),
+          buildEvidenceCaseOverview(await scopedSnapshot(workspaceId)),
         );
         return;
       }
@@ -991,13 +995,13 @@ export function createEvidenceWorkbenchApi(options: {
         request.method === 'GET' &&
         url.pathname === '/api/integrity-report'
       ) {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
           200,
-          buildEvidenceCaseIntegrityReport(
-            await scopedSnapshot(options.workspaceId),
-          ),
+          buildEvidenceCaseIntegrityReport(await scopedSnapshot(workspaceId)),
         );
         return;
       }
@@ -1289,7 +1293,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryObservationLedgerView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1473,7 +1477,7 @@ export function createEvidenceWorkbenchApi(options: {
             changedAccountLogicalArtifactIds:
               changed.length === 0 ? ['EVAL-T02'] : changed,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1490,7 +1494,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryRelationReviewView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1521,7 +1525,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryOpenQuestionsView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1664,11 +1668,13 @@ export function createEvidenceWorkbenchApi(options: {
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/export-policy') {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         if (requestCaseId === null)
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const policy = resolveEvidenceExportPolicy(
-          await scopedSnapshot(options.workspaceId),
+          await scopedSnapshot(workspaceId),
           requestCaseId,
         );
         send(response, 200, {

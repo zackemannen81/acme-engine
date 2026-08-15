@@ -33,6 +33,7 @@ import type {
   EvidenceWorkbenchWorker,
 } from '@acme/evidence-workbench-worker';
 import {
+  type EvidenceObservation,
   EvidenceObservationSchema,
   EvidenceStateSchema,
   evidenceModule,
@@ -87,6 +88,33 @@ export interface EvidenceLiveObservationService {
     readonly audit: EvidenceArtifactReadAuditContext;
     readonly scope: EvidenceCaseObjectScope;
   }): Promise<EvidenceLiveObservationJob>;
+}
+
+/**
+ * The observations one execution produced for one source.
+ *
+ * Selecting on the artifact alone re-collects every observation any earlier
+ * run produced for the same source, so a repeated analysis re-projects
+ * historical records as if they were this run's output. Resume is unaffected:
+ * a resumed execution keeps its original identity, so its own records still
+ * match.
+ */
+export function selectExecutionObservations(input: {
+  readonly records: RepositoryEvidence['memoryRecords'];
+  readonly executionId: string;
+  readonly artifactVersionId: string;
+}): readonly EvidenceObservation[] {
+  return input.records.flatMap((record) => {
+    if (
+      !record.provenance.some((item) => item.executionId === input.executionId)
+    )
+      return [];
+    const parsed = EvidenceObservationSchema.safeParse(record.value);
+    return parsed.success &&
+      parsed.data.artifactVersionId === input.artifactVersionId
+      ? [parsed.data]
+      : [];
+  });
 }
 
 function reasonFor(error: unknown): string {
@@ -312,12 +340,10 @@ export function createEvidenceLiveObservationService(options: {
         throw error;
       }
       const committed = await options.ledger.snapshot();
-      const observations = committed.memoryRecords.flatMap((record) => {
-        const parsed = EvidenceObservationSchema.safeParse(record.value);
-        return parsed.success &&
-          parsed.data.artifactVersionId === command.artifactVersionId
-          ? [parsed.data]
-          : [];
+      const observations = selectExecutionObservations({
+        records: committed.memoryRecords,
+        executionId,
+        artifactVersionId: command.artifactVersionId,
       });
       if (observations.length === 0)
         throw new EvidenceLiveObservationRefused(

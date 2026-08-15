@@ -1,5 +1,93 @@
 # Journal
 
+## 2026-08-16 — ACME-0131 live path projection, scoping and session
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0131
+- Change: repaired the five defects the first sustained real browser session
+  exposed, all of them invisible to the offline suite. The worker now runs the
+  revision guard before any product write, so a refused projection leaves no
+  observations behind. The live observation job selects only the executing
+  run's records through `selectExecutionObservations`, instead of every ledger
+  record matching the artifact. The evidence projection resolves the requested
+  workspace instead of the globally latest snapshot. `/api/overview`,
+  `/api/integrity-report` and `GET /api/export-policy` resolve the requested
+  case instead of the composition default. The development authenticator
+  grants an upstream lifetime per sign-in and per refresh instead of one fixed
+  expiry for the whole process.
+- Isolation: three of the five were case-scoped reads resolving the
+  composition default. The revision guard and the `404` were masking them; had
+  either passed, one case's content would have rendered under another case's
+  heading. ADR-0036 isolation is now enforced by the read path itself.
+- Amendment: the overview/integrity-report/export-policy defect was added to
+  the frozen charter after discovery, recorded in its Charter Amendment Log as
+  in-goal rather than opened as a separate task.
+- Gates: every gate is load-bearing. Each fix was reverted individually,
+  rebuilt and re-run, and exactly its own gate failed with the original
+  symptom before being restored to green.
+- Verification: unit 759/759 across 120 files, up from 753/118; conformance 78,
+  integration 62, scenario 26; typecheck, lint, boundaries, build, format, docs
+  and diff clean; `pnpm test:postgres` 36/36 on a disposable `postgres:15`
+  created and removed for this task. On the running instance against real
+  PostgreSQL and MinIO, every case view for a real case answers `200`, where
+  four answered `409` and three answered `404` before.
+- Live/data handling: no provider call was made and no source content entered
+  Git. The `POC1-AUTO-UI` case stays wedged: its engine and product revisions
+  genuinely diverged, and these fixes stop new divergence rather than
+  rewriting recorded history. The acceptance run needs a fresh case.
+- Handoff: implement ADR-0044's retirement of the deployment call ceiling and
+  cost ceiling plus the three-tier suite separation, then activate
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md).
+  `GET /api/assessments` does not exist and the browser requests it; it should
+  either exist or stop being requested.
+- Signature: Claude
+
+## 2026-08-15 — ACME-0129 superseded; POC #1 enters live product acceptance
+
+- Date: 2026-08-15
+- Author: Claude
+- Task: ACME-0129 (Superseded) → ACME-0131 (Ready)
+- Decision: the premise of ACME-0129 is spent. It was frozen to prove live
+  execution could happen safely without uncontrolled spend; ACME-0111 through
+  ACME-0122 answered that, and ACME-0121 committed real source-bound
+  observations from a real call. What remained — six calls total, one shot,
+  never retry, no correction after a consumed call — was phase apparatus, and
+  keeping it meant testing an artificially handicapped variant of the product
+  rather than the product.
+- Phase change: [ADR-0044](adr/0044-poc1-live-product-acceptance-phase.md)
+  (Proposed) separates permanent guardrails from retired phase controls.
+  Retained: schema validation, fail-closed refusal, revision/integrity guards,
+  transactional mutation, idempotency, case isolation, audit trail,
+  provider-call logging and cost measurement, plus ADR-0040's invariants and
+  its conjunctive live tuple. Retired: the deployment call ceiling and cost
+  ceiling as preconditions, campaign-level call caps, and mock/in-memory
+  substrate as acceptable basis for a POC claim. Bounding one execution stays;
+  capping a campaign goes. Cost is governed by measurement over
+  `acme.model_calls`, not by refusal at a threshold.
+- Verification tiers: offline deterministic (mock, continuous, gates CI), live
+  integration (real PostgreSQL and object store, real provider), and POC
+  acceptance (real document through the whole product path). Only the third
+  may claim POC #1 works.
+- Findings that forced the change: the first sustained real browser session
+  wedged the product at evidence revision 2 against engine revision 5, and
+  exposed the worker writing observations before the guard that rejects the
+  projection, the observation job collecting by artifact rather than by
+  execution, and every session expiring fifteen minutes after process start
+  rather than after sign-in. Product state at discovery: 35 observations, one
+  `LIVE_OBSERVATION_COMPLETED`, two `MODEL_INVALID_RESPONSE`, four
+  `EVIDENCE_PRODUCT_COMMAND_COLLISION`.
+- Live/data handling: seven provider calls are recorded in `acme.model_calls`,
+  all made through the browser outside any charter. No call was made under
+  ACME-0129 and none was made by this documentation change. No source content
+  entered Git.
+- Handoff: ACME-0131 repairs the four defects offline. ADR-0044 needs explicit
+  acceptance before its retirement clauses are implemented. The acceptance run
+  is proposed in
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md)
+  and needs a fresh case; `POC1-AUTO-UI` is wedged and is not valid substrate.
+- Signature: Claude
+
 ## 2026-08-15 — ACME-0130 case catalog request scoping
 
 - Date: 2026-08-15
