@@ -76,8 +76,8 @@ Active `evidence.propose-assessment@1.2.0`, still output `/1`, with historical
 ## Checklist
 
 - [x] Inspect assessment schema/prompt mismatch and freeze bounded successor.
-- [ ] Version contract and preserve both historical request identities.
-- [ ] Update registrations, fixtures and focused tests.
+- [x] Version contract and preserve both historical request identities.
+- [x] Update registrations, fixtures and focused tests.
 - [ ] Run canonical verification.
 - [ ] Reality-sync docs, archive and commit.
 
@@ -89,6 +89,13 @@ Active `evidence.propose-assessment@1.2.0`, still output `/1`, with historical
   open-question IDs; citations have no strict ordering rule in output `/1`.
 - No live opt-in or credential may be loaded.
 - A checkpoint after every substep is required.
+- Historical `@1.0.0` request hash is
+  `2532333356e475a2caa405aaa5eda3867e9682049262f9156590891dd6fd49a0`.
+- Historical `@1.1.0` request hash remains
+  `a7504dcf2ff5d33578688e9f73d2b3b76e21a7007d22460e094526d047e51c90`.
+- Active `@1.2.0` request hash is
+  `c4e140c6742d06ab038f87fd323eccc81d96fa52bcde85d5f5bf37a2c342fb48`.
+- Focused contract/hash/replay/registry/composition tests pass 17/17.
 
 ## Charter Amendment Log
 
@@ -105,9 +112,9 @@ Active `evidence.propose-assessment@1.2.0`, still output `/1`, with historical
 
 ## Handoff and Follow-ups
 
-- Current state: schema/prompt risk is identified; no implementation or
-  provider call has occurred.
-- Next recommended step: version the assessment prompt and pin replay hashes.
+- Current state: active/historical contracts are implemented and focused gates
+  pass; no provider call occurred.
+- Next recommended step: run fresh PostgreSQL and canonical verification.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.

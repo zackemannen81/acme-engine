@@ -1,13 +1,70 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeModelRequestHash } from '@acme/core';
-import { evidenceProposeAssessmentContract } from '@acme/module-evidence';
+import { computeModelRequestHash, createContractRegistry } from '@acme/core';
+import {
+  evidenceProposeAssessmentContract,
+  evidenceProposeAssessmentContractV1,
+  evidenceProposeAssessmentContractV2,
+} from '@acme/module-evidence';
 
 import { evaluationAssessmentCases } from '../src/evaluation-assessment.js';
 import { loadIdentityVectors } from '../src/corpus.js';
 import { loadSealedEvaluationTruth } from '../src/evaluation.js';
 
 describe('evaluation assessment candidates', () => {
+  it('versions explicit sorted-set instructions without historical drift', () => {
+    const first = evaluationAssessmentCases()[0];
+    if (first === undefined) throw new Error('Missing E-A01 assessment case.');
+    const context = {
+      executionId: 'hash-only',
+      now: '2026-08-11T00:00:00.000Z',
+    };
+    const historicalV1 = evidenceProposeAssessmentContractV1.buildRequest(
+      first.input,
+      context,
+    );
+    const historicalV2 = evidenceProposeAssessmentContractV2.buildRequest(
+      first.input,
+      context,
+    );
+    const active = evidenceProposeAssessmentContract.buildRequest(
+      first.input,
+      context,
+    );
+
+    expect(computeModelRequestHash(historicalV1)).toBe(
+      '2532333356e475a2caa405aaa5eda3867e9682049262f9156590891dd6fd49a0',
+    );
+    expect(computeModelRequestHash(historicalV2)).toBe(
+      'a7504dcf2ff5d33578688e9f73d2b3b76e21a7007d22460e094526d047e51c90',
+    );
+    expect(computeModelRequestHash(active)).toBe(
+      'c4e140c6742d06ab038f87fd323eccc81d96fa52bcde85d5f5bf37a2c342fb48',
+    );
+    expect(JSON.stringify(historicalV1)).not.toContain(
+      'ascending lexicographic order',
+    );
+    expect(JSON.stringify(historicalV2)).not.toContain(
+      'ascending lexicographic order',
+    );
+    expect(JSON.stringify(active)).toContain('ascending lexicographic order');
+    expect(historicalV1.output.schemaName).toBe(
+      'evidence_propose_assessment_1_0_0',
+    );
+    expect(historicalV2.output.schemaName).toBe(
+      'evidence_propose_assessment_1_1_0',
+    );
+    expect(active.output.schemaName).toBe('evidence_propose_assessment_1_2_0');
+    const registry = createContractRegistry([
+      evidenceProposeAssessmentContractV1,
+      evidenceProposeAssessmentContractV2,
+      evidenceProposeAssessmentContract,
+    ]);
+    expect(registry.has(evidenceProposeAssessmentContractV1.ref)).toBe(true);
+    expect(registry.has(evidenceProposeAssessmentContractV2.ref)).toBe(true);
+    expect(registry.has(evidenceProposeAssessmentContract.ref)).toBe(true);
+  });
+
   it('pins E-A01 and E-A02 identities and request hashes', () => {
     const cases = evaluationAssessmentCases();
     const vectors = loadIdentityVectors();

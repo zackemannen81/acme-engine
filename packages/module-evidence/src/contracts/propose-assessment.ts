@@ -12,6 +12,7 @@ import {
 import {
   EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF,
   EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF_V1,
+  EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF_V2,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -62,6 +63,7 @@ function createContract(configuration: {
     | typeof EvidenceProposeAssessmentInputV1Schema;
   readonly sourceDescription: string;
   readonly schemaName: string;
+  readonly explicitSortedSets: boolean;
 }): PromptContract<
   EvidenceProposeAssessmentInput,
   EvidenceProposeAssessmentOutput
@@ -85,6 +87,9 @@ function createContract(configuration: {
                 text:
                   `Propose one assessment that cites only the accepted ${configuration.sourceDescription} supplied in the input. ` +
                   'Every claim needs support or an explicit unresolved marker and an uncertainty rationale. ' +
+                  (configuration.explicitSortedSets
+                    ? 'For every set-like array of string identifiers, remove duplicates and sort strings in ascending lexicographic order. '
+                    : '') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege.',
               },
             ],
@@ -199,6 +204,17 @@ export const evidenceProposeAssessmentContractV1 = Object.freeze(
     inputSchema: EvidenceProposeAssessmentInputV1Schema,
     sourceDescription: 'synthetic evidence ids',
     schemaName: 'evidence_propose_assessment_1_0_0',
+    explicitSortedSets: false,
+  }),
+);
+
+export const evidenceProposeAssessmentContractV2 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF_V2,
+    inputSchema: EvidenceProposeAssessmentInputSchema,
+    sourceDescription: 'typed evidence',
+    schemaName: 'evidence_propose_assessment_1_1_0',
+    explicitSortedSets: false,
   }),
 );
 
@@ -207,6 +223,7 @@ export const evidenceProposeAssessmentContract = Object.freeze(
     ref: EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF,
     inputSchema: EvidenceProposeAssessmentInputSchema,
     sourceDescription: 'typed evidence',
-    schemaName: 'evidence_propose_assessment_1_1_0',
+    schemaName: 'evidence_propose_assessment_1_2_0',
+    explicitSortedSets: true,
   }),
 );
