@@ -1496,7 +1496,16 @@ quotes had normalized whitespace rather than exact source form. A new additive
 contract must bound quotes to a short single canonical line and withhold
 normalized temporal values unless their full date and clock are source-visible.
 ACME-0116 implements active `@1.4.0` output `/3` with those wire/prompt bounds
-while retaining historical replay; another acceptance remains. ACME-0107,
+while retaining historical replay. ACME-0117's sole fresh call returned eight
+complete strict candidates and no invalid temporal normalization, but five
+one-line strings were not verbatim canonical source substrings. Four compressed
+content across line boundaries with whitespace and/or punctuation changes; one
+also changed alphanumeric content. Exact runtime validation refused the batch
+with no commit. The next additive offline contract must make exact quote text
+runtime-derived from a deterministic bounded source segment selected by the
+provider, or prove an equivalently strict source-authority design, while all
+historical request/output contracts remain exact. Another acceptance remains.
+ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and
 assessment PostgreSQL restart/no-second-call boundaries with injected

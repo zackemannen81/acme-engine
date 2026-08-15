@@ -233,6 +233,11 @@ derive canonical ranges from uniquely occurring exact quotes before a fresh
 real-provider acceptance. ACME-0115 then exposed long multi-line whitespace
 normalization and time-only ranges; ACME-0116 adds active `@1.4.0` output `/3`
 with one-line/500-character quote bounds and a full-date temporal prompt rule.
+ACME-0117's sole fresh call passed strict output and avoided the temporal
+schema defect, but exact runtime binding refused five of eight provider-authored
+one-line quotes because they were not verbatim canonical source substrings.
+The next offline contract must move quote authority to runtime-defined bounded
+source segments while retaining historical replay.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

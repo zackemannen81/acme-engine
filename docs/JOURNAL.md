@@ -1,5 +1,40 @@
 # Journal
 
+## 2026-08-15 — ACME-0117 superseded after exact-quote refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0117
+- Summary: Ran one separately frozen Stage A provider gate against active
+  `evidence.observe-artifact@1.4.0` under the user-approved ACME credential and
+  200 SEK prepaid monetary ceiling. Exactly one provider call occurred.
+- Preflight: the unchanged 106,907-byte, 52-page parent PDF retained SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  pypdf 6.10.0 reproduced the 106,072-byte LF/NFC UTF-8 representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean PostgreSQL/MinIO and random mounted keys passed empty-database and
+  signed S3 create/stat/read/list/delete checks.
+- Provider result: `gpt-5.6-luna` returned stop, 36,920 input + 1,633 output =
+  38,553 total tokens and eight complete strict output `/3` candidates. Two
+  temporal bounds were `unknown`; no invalid normalized temporal value recurred.
+- Refusal: only three quotes occurred exactly once. Four other candidates
+  compressed content across canonical line boundaries while changing
+  whitespace and/or punctuation, and one also changed alphanumeric content.
+  Semantic validation emitted five `EVIDENCE_QUOTE_NOT_FOUND` issues. The
+  encrypted model call succeeded, while zero engine documents, execution
+  commits and product observations were written.
+- Safety: no retry or repair ran. Both containers, their network and the exact
+  source/credential/key temp directory were removed; original PDF and ignored
+  `.env.local` are unchanged. No source, key, payload or provider identifier
+  entered the repository.
+- Disposition: this one-call charter is consumed and superseded. A wire-level
+  one-line string does not prove canonical line membership. The next offline
+  task must decide an additive segment-selection/runtime-derived-quote contract
+  or an equivalently strict design while retaining historical replay.
+- Verification: content-free PostgreSQL call/error/commit/observation checks;
+  encrypted-response metadata audit; `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0116 single-line observation candidates
 
 - Date: 2026-08-15

@@ -474,9 +474,19 @@ unbound. Zero engine documents and product observations committed. The next
 offline dependency was ACME-0116. Active `evidence.observe-artifact@1.4.0`
 output `/3` limits exact quotes to one canonical source line and 500 characters
 and explicitly instructs `unknown` unless complete dates and clocks are visible
-in that quote. Historical `@1.0.0`–`@1.3.0` remain exact for replay. Full-source
-coverage still needs a separate segmentation/coverage workflow; a fresh
-real-provider acceptance remains.
+in that quote. Historical `@1.0.0`–`@1.3.0` remain exact for replay. ACME-0117
+then made one fresh `@1.4.0` call: output `/3` was complete strict JSON with
+eight candidates and no invalid temporal normalization, but only three quotes
+occurred exactly once. Four of the remaining candidates compressed text across
+canonical line boundaries while changing whitespace and/or punctuation; one
+also changed alphanumeric content. Semantic validation reported five
+`EVIDENCE_QUOTE_NOT_FOUND` issues and committed zero engine documents and zero
+product observations. A provider-wire one-line string does not prove canonical
+line membership. The next offline dependency must move exact-quote authority
+to a deterministic runtime-defined bounded segment selected by the provider,
+or establish an equivalently strict source-authority contract, while preserving
+historical replay. Full-source coverage still needs a separate segmentation/
+coverage workflow; successful real-provider acceptance remains.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -530,7 +540,7 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
-- **ACME-0112 through ACME-0116:** Versioned the observation contract as a
+- **ACME-0112 through ACME-0117:** Versioned the observation contract as a
   bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
   retaining historical replay. The subsequent sole real call returned
   complete strict JSON with six verbatim source quotes, proving truncation was
@@ -543,6 +553,11 @@ redaction and Slice 9 readiness.
   multi-line quotes; strict schema/exact binding again committed nothing.
   ACME-0116 adds active `@1.4.0` output `/3` with provider-wire single-line/
   500-character quote constraints and an explicit full-date temporal rule.
+  ACME-0117 returned complete strict output with eight candidates and avoided
+  the temporal schema defect, but five one-line strings were not verbatim
+  canonical source substrings. Exact runtime binding again refused the whole
+  batch and committed nothing; provider-authored quote text remains the next
+  offline source-authority dependency.
 - **ACME-0110:** Completed the Stage A engineering journey through reviewed
   reassessment. Additive source-complete assessment input, command/job/audit
   contracts and browser/API/worker execution preserve historical synthetic
