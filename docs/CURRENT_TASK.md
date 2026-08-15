@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0123
+Task ID:
 Parent Task: None
-Status: Ready
-Owner: Codex
-Created: 2026-08-15
-Last updated: 2026-08-15
-Charter frozen at: 2026-08-15T18:08:20+02:00
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,118 +18,91 @@ Charter frozen at: 2026-08-15T18:08:20+02:00
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- ADR-0040 through ADR-0043
-- ACME-0107, ACME-0108, ACME-0110, ACME-0121 and ACME-0122
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Add the missing reproducible live acceptance harness for the complete Stage A
-reviewer/reassessment journey over two operator-authorized external sources.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
-The charter was frozen when this task became `Ready`.
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
 
 ### Goal
 
-Make the already implemented POC #1 live vertical executable as one bounded,
-content-safe product acceptance without substituting mocks for provider work.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-An opt-in live Vitest gate that imports two Stage A texts and drives observation,
-review, relation/question, assessment review, restart, later evidence, stale
-attention and reassessment through authenticated case-first product APIs.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Add one fail-closed live test with explicit D1/D2 source/provenance inputs.
-- Use PostgreSQL, private S3, mounted payload/artifact keys and the real gateway.
-- Bound every execution to one model call and the configured monetary ceiling.
-- Assert only domain outcomes: source-bound observations, reviewer decisions,
-  relations/questions, assessment citations/review, restart and stale successor.
-- Verify the harness offline against types, static live-safety requirements and
-  the existing full PostgreSQL journey before any paid run.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- Provider calls in this task, new source classes, PDF/DOCX/OCR ingestion or D2
-  content in Git.
-- New domain behavior, contract/prompt changes, exhaustive coverage claims,
-  technical-audit UI, deployment, push or release.
-- Re-proving the product journey with a new mock fixture.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- Gate refuses unless exact live/hosted inputs, two external sources, durable
-  stores, keys and nested monetary/call budgets are supplied.
-- Journey encodes all remaining POC #1 Stage A domain outcomes and restart.
-- Existing offline PostgreSQL journey and canonical gates pass.
-- No source, credential or provider call occurs; task archived/committed.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [x] Focused type/static live-gate checks
-- [ ] Existing Stage A PostgreSQL journey on fresh PostgreSQL
-- [ ] typecheck, lint, boundaries, test, build, format, docs and diff
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
 
 ## References
 
-- `tests/live/evidence-stage-a-observation.test.ts`
-- `tests/postgres/evidence-stage-a-import.test.ts`
-- `apps/evidence-workbench-worker/src/index.ts`
-- `docs/backlog/slice-9-prerequisite-checklist.md`
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [x] Freeze the bounded offline harness task.
-- [x] Implement authenticated two-source live reviewer journey.
-- [x] Add content-free domain/restart assertions and safety guards.
-- [ ] Run focused and canonical offline verification.
-- [ ] Reality-sync docs, archive and commit.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- This task writes only the harness. The paid run requires a separately frozen
-  one-shot acceptance task after a green checkpoint.
-- Each observation/relation/assessment execution requests one call maximum;
-  the monetary value is minor SEK units, never a token count.
-- API-driving is acceptance automation for the same case-first endpoints used
-  by the primary browser; assertions target domain state, not ACME internals.
-- A checkpoint after every substep is required.
-- The new opt-in gate encodes six one-call executions across three process
-  compositions, uses only authenticated case-first product routes, exercises
-  accept/reject/unresolved review and refuses technical-audit substitution.
-- Typecheck passed; the gate compiles/skips closed without opt-in, and 15
-  focused live-safety/secret/composition tests passed.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
 
-- None.
+Only non-semantic corrections are allowed after `Ready`.
+
+-none
 
 ## Verification
 
-- [ ] Record exact offline commands and results.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
 
 ## Documentation Updates
 
 - [ ] `docs/CURRENT_STATUS.md`
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
-- [ ] completion plan, Slice 9 checklist and `docs/FILESTRUCTURE.md`
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: complete harness and focused static gates pass; no source,
-  credential or provider call occurred.
-- Next recommended step: run fresh PostgreSQL and canonical offline gates.
-- Blockers: none.
-- Child tasks: none.
-- Resume condition: not applicable.
-- Open questions: none.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0123_stage-a-live-reviewer-harness.md`.
-- Restore the task template and add a signed Journal entry.
-- Supersede rather than rewrite if the Goal changes.
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
+- Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

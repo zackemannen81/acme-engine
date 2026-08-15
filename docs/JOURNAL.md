@@ -1,5 +1,28 @@
 # Journal
 
+## 2026-08-15 — ACME-0123 Stage A live reviewer harness
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0123
+- Change: added one opt-in live product gate over two exact external Stage A
+  inputs. It drives D1 observation/review/relation/question/assessment, process
+  restart, D2 observation/review/relation/reassessment and final restart using
+  authenticated case-first APIs, PostgreSQL, private S3 and mounted keys.
+- Product assertions: accept/reject/leave-unresolved decisions; exact source
+  citations; relations and open questions; citation-complete reviewed first
+  assessment; immutable stale predecessor after later evidence; reviewed
+  successor; persistent history; primary domain navigation without technical
+  audit. Six executions each request one call maximum and a nested minor-SEK
+  ceiling.
+- Verification: live gate compiles and skips closed; 15 focused safety tests;
+  fresh PostgreSQL journey 2/2; typecheck, lint, boundaries, build; 751 unit,
+  78 conformance, 62 integration and 26 scenario tests; format, docs and diff.
+  Lint caught one local non-null assertion, corrected before canonical gates.
+- Safety/follow-up: no source, credential or provider call occurred. Freeze a
+  separate bounded paid acceptance before supplying D1/D2 inputs.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0121 product success, process charter superseded
 
 - Date: 2026-08-15

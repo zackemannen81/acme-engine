@@ -1527,6 +1527,15 @@ corrects that assertion and pins the same worker contract in the offline
 PostgreSQL journey without changing runtime behavior. This proves bounded
 observation interoperability/source binding, not exhaustive coverage or later
 relation/assessment provider acceptance.
+ACME-0123 supplies the separate opt-in acceptance surface for those remaining
+Stage A product outcomes. It uses only authenticated case-first routes over
+PostgreSQL/private S3 and two exact external source inputs. Six executions are
+individually capped at one call: initial observation/relation/assessment,
+restart, later observation/relation/reassessment, then final restart. Domain
+assertions cover all three reviewer standings, relations/questions, citation-
+complete reviewed assessments, stale immutable history and a reviewed
+successor; the technical-audit route must remain unavailable. The harness is
+not authority to run live and has passed only offline verification so far.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

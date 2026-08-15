@@ -905,6 +905,9 @@ content remains intentionally omitted here.
   ACME-0121 records the first committed real-provider observation batch under
   `@1.6.0`; ACME-0122 aligns the live and PostgreSQL success-code assertions
   with the worker's established `LIVE_OBSERVATION_COMPLETED` result.
+  `tests/live/evidence-stage-a-reviewer-journey.test.ts` is ACME-0123's
+  fail-closed two-source Stage A domain-journey gate; it requires explicit
+  live authority and never enters the default test suite.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.

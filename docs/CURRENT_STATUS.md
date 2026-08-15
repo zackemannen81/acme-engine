@@ -513,6 +513,14 @@ false because its post-commit assertion still expected the obsolete
 successful reason in an offline PostgreSQL journey. The active observation
 contract therefore has real-provider product evidence, but the consumed
 ACME-0121 process-level charter is superseded rather than rewritten.
+ACME-0123 adds the remaining opt-in two-source Stage A reviewer acceptance
+harness without adding another mock proof. It drives six separately one-call-
+bounded observation/relation/assessment jobs across D1, restart, D2 and final
+restart; exercises accept/reject/unresolved review; requires relations, open
+questions, citation-complete assessments, stale predecessor history and a
+reviewed successor; and asserts that the primary domain shell works while
+technical audit stays unavailable. The harness is fully green offline and no
+provider call has run through it yet.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

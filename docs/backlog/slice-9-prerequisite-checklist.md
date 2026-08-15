@@ -167,6 +167,9 @@ Consequence: imported real documents can now produce validated source-bound
 observations, typed relations, open questions and reviewed assessments.
 Timeline is the existing pure projection of observation temporal bounds.
 ACME-0110 proves the human review and late-evidence reassessment journey.
+ACME-0123 adds the fail-closed two-source live acceptance harness for the same
+journey. It is green offline but its paid relation/assessment/reviewer run has
+not yet occurred.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and

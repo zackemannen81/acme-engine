@@ -251,6 +251,11 @@ observations. The product completed with its established
 made only the Vitest process false. ACME-0122 corrects that assertion offline.
 This is bounded observation acceptance, not exhaustive coverage or proof of
 the later live relation/assessment journey.
+ACME-0123 adds a fail-closed, two-source live acceptance harness for that
+remaining journey: six individually one-call-bounded product jobs span review,
+relations/questions, assessment, restart, later evidence, stale history,
+reassessment and final restart. It is green offline; a separately frozen paid
+acceptance remains.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
