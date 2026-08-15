@@ -498,8 +498,11 @@ describe.skipIf(!ENABLED)('Evidence Stage A live reviewer journey', () => {
           'reject',
           'leave-unresolved',
         ].entries()) {
+          const observation = observations[index];
+          if (observation === undefined)
+            throw new Error('Missing reviewed Stage A observation.');
           const history = await request(
-            `api/cases/${encodeURIComponent(caseId)}/reviews/observation/${encodeURIComponent(observations[index]!.observationId)}`,
+            `api/cases/${encodeURIComponent(caseId)}/reviews/observation/${encodeURIComponent(observation.observationId)}`,
           );
           expect(history.status, await history.clone().text()).toBe(200);
           expect(await history.json()).toMatchObject({
