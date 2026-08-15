@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-15 — ACME-0121 paused for terminal-code child
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0121 / ACME-0122
+- Evidence: the sole bounded provider call stopped normally with 66,819 input
+  and 650 output tokens. All eight output `/4` segment selections were valid,
+  supplied and unique; runtime derived eight exact quotes/one-line locators and
+  durably wrote one committed execution, document and commit plus eight
+  observations.
+- Blocker: after the product job returned its established
+  `LIVE_OBSERVATION_COMPLETED` reason, the live Vitest gate alone failed because
+  it still expected obsolete `LIVE_OBSERVATION_COMMITTED`.
+- Disposition: no retry. ACME-0121 is paused with disposable state isolated;
+  bounded offline child ACME-0122 will align the assertion, verify it without
+  any provider access, then resume the parent for cleanup and completion.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0120 canonical UTC observation prompt
 
 - Date: 2026-08-15
