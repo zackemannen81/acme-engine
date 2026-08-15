@@ -11,7 +11,7 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '92998d1fd1c9463218320845fa27bce2f82af957b19ecbb6e1a0aa8053b3cf12' as const;
+  'e25c896e903229e2c6020a48f829110c55251838d2eaf99090c4afc790b232de' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
   return EvidenceObserveArtifactInputSchema.parse({

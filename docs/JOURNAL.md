@@ -1,5 +1,25 @@
 # Journal
 
+## 2026-08-15 — ACME-0120 canonical UTC observation prompt
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0120
+- Summary: Versioned active `evidence.observe-artifact@1.6.0` without changing
+  output `/4` or ADR-0043 segment authority. The prompt now requires literal
+  `YYYY-MM-DDTHH:MM:SSZ` or three-digit millisecond UTC, forbids local,
+  minute-only and numeric-offset normalized values, and requires `unknown`.
+- Replay: historical `@1.5.0` request hash remains exact and all seven versions
+  resolve. Active development/evaluation hashes were re-pinned; observation
+  identities remain unchanged.
+- Verification: focused 23; typecheck, lint, boundaries, build; 751 unit, 78
+  conformance, 62 integration, 26 scenario; fresh PostgreSQL 36; format, docs
+  and diff. One known async teardown and one transient parallel PostgreSQL
+  fixture failure passed isolated and on exact clean full reruns.
+- Safety/follow-up: no provider call/source/credential access. Freeze a
+  separate one-call acceptance under the approved 200 SEK ceiling.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0119 superseded after temporal-format refusal
 
 - Date: 2026-08-15

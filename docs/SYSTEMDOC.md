@@ -1515,6 +1515,9 @@ ACME-0119 proved all eight provider-selected segment IDs existed and were
 unique, but strict validation refused one exact temporal value expressed at
 local minute precision without seconds or `Z`. A prompt-version successor must
 name the canonical UTC grammar explicitly and require `unknown` otherwise.
+ACME-0120 implements active `@1.6.0` with literal seconds/terminal-`Z` grammar
+and an explicit local/minute-only/numeric-offset prohibition. Output `/4` and
+runtime segment authority are unchanged; historical `@1.5.0` remains exact.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

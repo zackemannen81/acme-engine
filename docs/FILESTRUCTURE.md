@@ -900,6 +900,8 @@ content remains intentionally omitted here.
   offline contract must make runtime-defined bounded segments authoritative.
   ADR-0043/ACME-0118 implement that active `@1.5.0` output `/4` contract and
   retain `@1.0.0`–`@1.4.0` for replay.
+  ACME-0120 adds prompt-only active `@1.6.0` canonical UTC grammar and retains
+  `@1.5.0` exactly.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.

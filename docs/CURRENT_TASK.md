@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0120
+Task ID:
 Parent Task: None
-Status: In Progress
-Owner: Codex
-Created: 2026-08-15
-Last updated: 2026-08-15
-Charter frozen at: 2026-08-15T13:44:51+02:00
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,97 +18,91 @@ Charter frozen at: 2026-08-15T13:44:51+02:00
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- ADR-0040 through ADR-0043
-- ACME-0118 and superseded ACME-0119
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Correct the bounded temporal formatting defect exposed by ACME-0119 without
-changing segment authority or historical replay.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
-The charter was frozen when this task became `Ready`.
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
 
 ### Goal
 
-Make the active prompt state the literal accepted canonical UTC timestamp
-grammar and require temporal `unknown` whenever it cannot be emitted.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-Active `evidence.observe-artifact@1.6.0`, still output `/4`, with explicit
-`YYYY-MM-DDTHH:MM:SSZ` or `YYYY-MM-DDTHH:MM:SS.sssZ` instructions; historical
-`@1.0.0`–`@1.5.0` remain byte-exact and registered.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Add active prompt version and historical `@1.5.0` registration.
-- Preserve output `/4`, segment derivation, identities and all old hashes.
-- Re-pin active fixture hashes and prove wire/prompt/replay offline.
-- Run canonical verification, reality-sync docs and commit.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- Provider/network calls, timestamp parser/coercion, timezone assumptions,
-  output schema changes, relations/assessment, coverage, Stage B or push.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- Prompt names seconds plus terminal `Z`, forbids minute-only/local/offset
-  normalized values and requires `unknown` instead.
-- Historical request hashes remain exact and all versions resolve.
-- Focused/canonical gates pass with no live call; task archived/committed.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] Focused prompt/hash/replay/fixture/live-composition tests
-- [ ] typecheck, lint, boundaries, test, PostgreSQL, build, format, docs, diff
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
 
 ## References
 
-- `docs/finished/ACME-0119_stage-a-segment-provider-acceptance.md`
-- `packages/module-evidence/src/contracts/observe-artifact.ts`
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [x] Freeze offline successor.
-- [ ] Version contract/prompt and preserve replay.
-- [ ] Update fixtures/tests.
-- [ ] Run canonical verification.
-- [ ] Reality-sync docs, archive and commit.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- No timestamp repair/coercion enters runtime; invalid values still fail closed.
-- Output `/4` and ADR-0043 remain unchanged.
-- A checkpoint after every substep is required; no live call is allowed.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
 
-- None.
+Only non-semantic corrections are allowed after `Ready`.
+
+-none
 
 ## Verification
 
-- [ ] Record hashes/focused tests.
-- [ ] Record canonical gates/PostgreSQL.
-- [ ] Record docs/hygiene.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
 
 ## Documentation Updates
 
-- [ ] `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md`, completion plan and Slice 9 checklist
+- [ ] `docs/CURRENT_STATUS.md`
+- [ ] `docs/SYSTEMDOC.md`
+- [ ] `docs/JOURNAL.md`
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: ACME-0119 failed closed; all disposable state is gone.
-- Next recommended step: implement/verify the prompt version offline.
-- Blockers: none.
-- Child tasks: none.
-- Resume condition: not applicable.
-- Open questions: none.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0120_canonical-utc-observation-prompt.md`.
-- Restore template; add signed Journal entry; supersede if Goal changes.
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
+- Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

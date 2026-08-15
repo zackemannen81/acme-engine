@@ -23,6 +23,7 @@ import {
   evidenceObserveArtifactContractV3,
   evidenceObserveArtifactContractV4,
   evidenceObserveArtifactContractV5,
+  evidenceObserveArtifactContractV6,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -188,8 +189,16 @@ describe('evidence.observe-artifact', () => {
       now: '2026-08-11T11:00:00.000Z',
     });
     expect(computeModelRequestHash(request)).toBe(
-      '827587d11888c53edeef458499ce6c2a409b611f9be9cd10f706512654c11081',
+      'f86982f1506410426b0a3b86f59fc90ade36c2b3f389428d083d6078c6a2ab3d',
     );
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV6.buildRequest(projected, {
+          executionId: 'execution-evidence-observe-segment-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('827587d11888c53edeef458499ce6c2a409b611f9be9cd10f706512654c11081');
     expect(
       computeModelRequestHash(
         evidenceObserveArtifactContractV5.buildRequest(projected, {
@@ -247,6 +256,10 @@ describe('evidence.observe-artifact', () => {
     expect(request.messages[0]?.content[0]).toMatchObject({
       type: 'text',
       text: expect.stringContaining('never join segments'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('YYYY-MM-DDTHH:MM:SSZ'),
     });
     const jsonSchema = request.output.jsonSchema as {
       readonly properties?: {
@@ -336,13 +349,14 @@ describe('evidence.observe-artifact', () => {
     ).toBe(true);
   });
 
-  it('keeps all six observation contract versions resolvable for replay', () => {
+  it('keeps all seven observation contract versions resolvable for replay', () => {
     const registry = createContractRegistry([
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
       evidenceObserveArtifactContractV3,
       evidenceObserveArtifactContractV4,
       evidenceObserveArtifactContractV5,
+      evidenceObserveArtifactContractV6,
       evidenceObserveArtifactContract,
     ]);
     expect(
@@ -350,13 +364,14 @@ describe('evidence.observe-artifact', () => {
         .list()
         .filter(({ id }) => id === 'evidence.observe-artifact')
         .map(({ version }) => version),
-    ).toEqual(['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0']);
+    ).toEqual(['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0']);
     for (const contract of [
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
       evidenceObserveArtifactContractV3,
       evidenceObserveArtifactContractV4,
       evidenceObserveArtifactContractV5,
+      evidenceObserveArtifactContractV6,
       evidenceObserveArtifactContract,
     ]) {
       expect(registry.get(contract.ref)).toBe(contract);

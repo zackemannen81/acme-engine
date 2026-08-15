@@ -242,6 +242,8 @@ so in active `@1.5.0` output `/4`: the provider selects a deterministic segment
 identifier and runtime derives the full exact quote and one-line locator.
 ACME-0119 then proved eight real-provider segment selections valid, but failed
 closed on one local minute-precision timestamp lacking seconds and `Z`.
+ACME-0120 adds active `@1.6.0` with literal canonical-UTC grammar and mandatory
+`unknown` fallback while preserving output `/4` and historical replay.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

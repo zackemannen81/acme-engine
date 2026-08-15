@@ -22,6 +22,7 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V3,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V4,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V5,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V6,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -147,6 +148,7 @@ function createContract<
   readonly runtimeDerivedLocator: boolean;
   readonly singleLineCandidate: boolean;
   readonly runtimeDerivedSegmentQuote: boolean;
+  readonly explicitCanonicalUtc: boolean;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
   readonly outputSchema: z.ZodType<TOutput>;
@@ -203,6 +205,9 @@ function createContract<
                       ? 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in the selected source segment; if it shows only a clock time or lacks the complete date, use unknown. '
                       : 'Use an exact, range or approximate temporal value only when every normalized value has its complete calendar date and clock visible in exactQuote; if exactQuote shows only a clock time or lacks the complete date, use unknown. '
                     : 'Normalize time only when the clock value is visible in the quote, otherwise use unknown. ') +
+                  (configuration.explicitCanonicalUtc
+                    ? 'Every normalized timestamp must be canonical UTC exactly as YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.sssZ. Never return local time, minute-only time, or a numeric offset; use temporal unknown instead. '
+                    : '') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
                   (configuration.boundedCandidateBatch
                     ? `Return between one and ${String(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX)} materially distinct observations as a non-exhaustive reviewer candidate batch; do not claim full-source coverage. `
@@ -407,6 +412,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
+    explicitCanonicalUtc: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -421,6 +427,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
+    explicitCanonicalUtc: false,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -435,6 +442,7 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     runtimeDerivedLocator: false,
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
+    explicitCanonicalUtc: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV1Schema,
@@ -449,6 +457,7 @@ export const evidenceObserveArtifactContractV4 = Object.freeze(
     runtimeDerivedLocator: true,
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
+    explicitCanonicalUtc: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_3_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV2Schema,
@@ -463,9 +472,25 @@ export const evidenceObserveArtifactContractV5 = Object.freeze(
     runtimeDerivedLocator: true,
     singleLineCandidate: true,
     runtimeDerivedSegmentQuote: false,
+    explicitCanonicalUtc: false,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_4_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV3Schema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV6 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V6,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: true,
+    explicitCanonicalUtc: false,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_5_0',
+    outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
   }),
 );
 
@@ -477,8 +502,9 @@ export const evidenceObserveArtifactContract = Object.freeze(
     runtimeDerivedLocator: true,
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: true,
+    explicitCanonicalUtc: true,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_5_0',
+    schemaName: 'evidence_observe_artifact_1_6_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
   }),
 );

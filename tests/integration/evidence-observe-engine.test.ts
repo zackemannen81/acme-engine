@@ -98,7 +98,7 @@ describe('Evidence observe execution reliability', () => {
           callKey: 'model:0',
           selection,
           expectedRequestHash:
-            '92998d1fd1c9463218320845fa27bce2f82af957b19ecbb6e1a0aa8053b3cf12',
+            'e25c896e903229e2c6020a48f829110c55251838d2eaf99090c4afc790b232de',
           outcome: {
             kind: 'response',
             response: {

@@ -31,6 +31,8 @@ historical contracts. Another separately frozen acceptance remains.
 ACME-0119 selected eight valid runtime segments but failed strict schema on one
 minute-precision local timestamp without seconds or terminal `Z`; an explicit
 canonical-UTC prompt version remains before another acceptance.
+ACME-0120 implements active `@1.6.0` with literal seconds/terminal-`Z` grammar
+and mandatory `unknown` fallback; another separately frozen acceptance remains.
 
 ## Purpose and Authority
 

@@ -210,11 +210,13 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       real-provider acceptance. ADR-0043/ACME-0118 implement active `@1.5.0`
       output `/4`: provider output selects one deterministic segment identifier
       and runtime derives its entire exact quote plus line locator.
-- [ ] Version the active prompt to require normalized temporal values in exact
+- [x] Version the active prompt to require normalized temporal values in exact
       `YYYY-MM-DDTHH:MM:SSZ` UTC form (optional three-digit milliseconds) and
       require `unknown` when that cannot be emitted. ACME-0119 proved all eight
       segment selectors valid but failed closed on one 16-character local
       minute-precision `exact.at` without seconds or `Z`.
+      ACME-0120 implements active `@1.6.0` while preserving output `/4` and
+      historical `@1.5.0`.
 - [ ] Decide deterministic segmentation, segment identities, deduplication and
       reviewer-visible coverage before making any exhaustive full-source
       analysis claim. A successful ADR-0041 batch proves candidate validity,

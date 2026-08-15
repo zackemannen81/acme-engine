@@ -498,6 +498,11 @@ The other seven temporal bounds were `unknown`. One encrypted call succeeded;
 zero engine documents, commits and product observations were written. The next
 offline dependency is a prompt version that states the exact canonical UTC
 seconds/`Z` grammar and requires `unknown` when it cannot be emitted.
+ACME-0120 implements that dependency as active
+`evidence.observe-artifact@1.6.0`, still output `/4`. The prompt literally
+requires `YYYY-MM-DDTHH:MM:SSZ` or three-digit millisecond UTC, forbids local,
+minute-only and numeric-offset normalized values, and requires `unknown`
+instead. Historical `@1.5.0` remains byte-exact and registered.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
