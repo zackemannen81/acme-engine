@@ -736,6 +736,7 @@ acme-engine/
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
 ├── README.md
+├── startup-full_poc1-autoimport.ps1
 ├── tsconfig.json
 ├── tsconfig.tests.json
 ├── vitest.config.ts

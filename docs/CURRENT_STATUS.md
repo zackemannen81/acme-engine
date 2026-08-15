@@ -561,6 +561,17 @@ Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
 
+ACME-0130 corrected a second defect that made the browser client unusable past
+sign-in. The shell's `casePath` exempted the case catalog by comparing the whole
+argument, query string included, against `/api/cases`, so the real
+`/api/cases?organizationId=…` call was rewritten into a case-scoped path and
+answered `404`. The case selector stayed empty and no case could be opened,
+although case creation kept working through its separately exempted route. The
+exemption now matches `URL.pathname`. The defect entered with ACME-0093 and
+passed through ACME-0101's parse gate, which compiles the emitted module without
+exercising the URLs it builds. No product behavior, contract, persistence or
+data authority changed.
+
 ACME-0101 corrected a defect that made the browser client unusable: the shell
 rendered an unterminated string literal, so the whole module failed to parse
 and no handler was bound, including sign-in. It entered with ACME-0097 and

@@ -1,5 +1,46 @@
 # Journal
 
+## 2026-08-15 — ACME-0130 case catalog request scoping
+
+- Date: 2026-08-15
+- Author: Claude
+- Task: ACME-0130
+- Change: corrective. `casePath` in the browser shell exempted the case catalog
+  by comparing the whole argument, query string included, against
+  `/api/cases`. The real call is `/api/cases?organizationId=…`, so the
+  exemption missed and the request was rewritten to
+  `/api/cases/<caseId>/cases?organizationId=…`. The exemption now matches
+  `URL.pathname`. No product behavior, contract, persistence or data authority
+  changed.
+- Impact: every authenticated session ended at that `404`. The case selector
+  stayed empty, the review queue never left `Loading…`, and a Stage A case
+  could be created but never opened, because creation posts to the separately
+  exempted `/api/organizations/:id/cases`.
+- Provenance: the defect entered with `9037ca1` (ACME-0093) and survived
+  ACME-0101's parse gate, which compiles the emitted module without exercising
+  the URLs it builds. The catalog is the only exempt shell request carrying a
+  query string; every other request was already correct.
+- Launcher: `startup-full_poc1-autoimport.ps1` now starts Node directly instead
+  of through `cmd.exe`/corepack/pnpm, so the recorded PID owns the port, and
+  passes `--env-file-if-exists=.env.local`, so the ignored credential file
+  reaches only the workbench process and the interactive prompt is a fallback.
+  A stale process previously survived a restart and the script's own
+  "already answering" guard then exited `0` with the old environment.
+- Verification: web and API suites 23/23; typecheck, lint, boundaries, build,
+  format, docs and diff checks passed; conformance 78, integration 62 and
+  scenario 26 passed; browser-observed `200` for the catalog, a case switch and
+  the Stage A Documents view. `pnpm test:unit` reported 752/753: `auth-blackbox`
+  exceeds its 5,000 ms bound under full-suite parallelism on a loaded machine
+  and passes in 566 ms alone. The identical failure reproduces with this
+  change stashed and rebuilt, so it is pre-existing and belongs to its own
+  charter.
+- Live/data handling: no provider call occurred, no source content entered Git
+  and the Stage A import form was left unsubmitted; its attestations are
+  operator statements.
+- Handoff: ACME-0129 remains the frozen active task, untouched by this work.
+  A shell request-path gate remains an open follow-up.
+- Signature: Claude
+
 ## 2026-08-15 — ACME-0128 sorted assessment provider output
 
 - Date: 2026-08-15
