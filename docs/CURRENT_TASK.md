@@ -88,8 +88,8 @@ monetary ceiling.
 
 ### Minimum Verification Gates
 
-- [ ] Source digest/byte/page/extraction preflight
-- [ ] Clean PostgreSQL and private S3-compatible health/adapter preflight
+- [x] Source digest/byte/page/extraction preflight
+- [x] Clean PostgreSQL and private S3-compatible health/adapter preflight
 - [ ] Exact `tests/live/evidence-stage-a-observation.test.ts` one-call gate
 - [ ] Post-run call/commit/observation/locator assertions
 - [ ] Credential/source/generated-secret Git hygiene checks
@@ -107,8 +107,8 @@ monetary ceiling.
 ## Checklist
 
 - [x] Activate and freeze the one-call successor charter.
-- [ ] Reverify and prepare the external strict UTF-8 representation.
-- [ ] Start and preflight disposable PostgreSQL/S3/key infrastructure.
+- [x] Reverify and prepare the external strict UTF-8 representation.
+- [x] Start and preflight disposable PostgreSQL/S3/key infrastructure.
 - [ ] Run the exact isolated live acceptance once.
 - [ ] Inspect content-free commit/locator evidence and clean disposable state.
 - [ ] Reality-sync documentation, archive and commit.
@@ -127,6 +127,17 @@ monetary ceiling.
 - A successful batch proves provider/product interoperability and source
   binding, never exhaustive source coverage.
 - A checkpoint after each step or substep is required.
+- Source preflight reverified the unchanged 106,907-byte, 52-page parent
+  SHA-256 as
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`.
+  pypdf 6.10.0 default extraction with explicit LF page joining and NFC again
+  produced 106,072 strict UTF-8 bytes SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`:
+  52/52 pages non-empty with no NUL, replacement character or CR byte.
+- Clean loopback PostgreSQL 16 and private MinIO are healthy on random host
+  ports with new random task-local credentials, artifact KEK and payload key.
+  PostgreSQL began with zero public tables; the signed S3 adapter passed
+  create/stat/read/list/delete in the private acceptance bucket.
 
 ## Charter Amendment Log
 
@@ -134,7 +145,7 @@ monetary ceiling.
 
 ## Verification
 
-- [ ] Record source and hosted-equivalent preflight without content.
+- [x] Source and hosted-equivalent preflight recorded above without content.
 - [ ] Record exact one-call outcome and content-free persistence evidence.
 - [ ] Record complete cleanup and docs/hygiene checks.
 
