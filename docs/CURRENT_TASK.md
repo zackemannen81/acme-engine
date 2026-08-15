@@ -74,8 +74,8 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ### Minimum Verification Gates
 
-- [ ] D1/D2 digest, byte, page and extraction preflight
-- [ ] Clean PostgreSQL/private S3 health and signed-adapter preflight
+- [x] D1/D2 digest, byte, page and extraction preflight
+- [x] Clean PostgreSQL/private S3 health and signed-adapter preflight
 - [ ] Exact isolated six-call live journey once
 - [ ] Content-free job/domain/persistence/restart assertions
 - [ ] Credential/source/key Git hygiene and complete cleanup
@@ -91,8 +91,8 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 ## Checklist
 
 - [x] Freeze the six-call monetary/call charter.
-- [ ] Reverify/prepare both external source representations.
-- [ ] Start/preflight disposable infrastructure.
+- [x] Reverify/prepare both external source representations.
+- [x] Start/preflight disposable infrastructure.
 - [ ] Run exact isolated journey once; never retry within this task.
 - [ ] Inspect content-free evidence and clean disposable state.
 - [ ] Reality-sync docs, archive and commit.
@@ -105,6 +105,18 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 - Success is a persistent reviewed domain assessment/history, not a green ACME
   execution or technical-audit view.
 - A checkpoint after every substep is required.
+- D1 is unchanged: 106,907 PDF bytes, 52/52 non-empty pages, parent SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  pypdf 6.10.0 produced 106,072 LF/NFC UTF-8 bytes SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+- D2 is unchanged: 51,593 PDF bytes, 23/23 non-empty pages, parent SHA-256
+  `7a7188fb8ce18d0d952e6d4a342753817b3c57fdb788290c9f142df4dfac3633`;
+  pypdf 6.10.0 produced 41,563 LF/NFC UTF-8 bytes SHA-256
+  `79efe866cee4c0d445143050ed2d9fa338a4a7bc26b0ccc91312395ea55520ff`.
+  Both texts contain zero NUL, replacement characters or CR.
+- Fresh PostgreSQL 16 began with zero ACME/evidence tables. Private MinIO,
+  random mounted keys and signed S3 create/stat/read/list/delete passed; the
+  probe object was removed.
 
 ## Charter Amendment Log
 
@@ -112,7 +124,7 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ## Verification
 
-- [ ] Record content-free source/infrastructure preflight.
+- [x] Record content-free source/infrastructure preflight.
 - [ ] Record exact job/domain/persistence outcome without content.
 - [ ] Record cleanup and repository hygiene.
 
@@ -125,8 +137,9 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ## Handoff and Follow-ups
 
-- Current state: charter frozen; zero of six provider calls consumed.
-- Next recommended step: D1/D2 extraction and infrastructure preflight.
+- Current state: both sources and disposable infrastructure passed preflight;
+  zero of six provider calls consumed.
+- Next recommended step: run the exact isolated live journey once.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.
