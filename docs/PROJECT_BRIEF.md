@@ -261,6 +261,9 @@ mismatch before review: the primary source view publishes
 `observationVersionId`, not the internal-record name `observationId`. The API
 failed closed; only one of six calls occurred. Correct the harness offline
 before another separately frozen live journey.
+ACME-0125 applies that exact offline correction and makes TypeScript enforce
+the public source-review view identity; all canonical gates pass without a
+provider call.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

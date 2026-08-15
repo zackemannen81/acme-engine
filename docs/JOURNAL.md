@@ -1,5 +1,21 @@
 # Journal
 
+## 2026-08-15 — ACME-0125 typed source-view observation identity
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0125
+- Change: removed the live journey's handwritten source-view response type,
+  imported `EvidencePrimarySourceReviewView` and changed all observation
+  review/history targets to the public `observationVersionId` field. Product
+  API/view/runtime behavior is unchanged.
+- Verification: focused typecheck, lint, format, static identity search and
+  closed live gate; boundaries/build; 751 unit, 78 conformance, 62 integration
+  and 26 scenario tests; format, docs and diff.
+- Safety/follow-up: no source, credential or provider call occurred. Freeze a
+  new bounded Stage A live journey only from this green checkpoint.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0124 superseded after source-view mismatch
 
 - Date: 2026-08-15

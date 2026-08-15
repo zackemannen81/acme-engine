@@ -1543,6 +1543,10 @@ exposes `observationVersionId`. The API refused the undefined review target;
 no relation or assessment call occurred. This is an acceptance-harness defect,
 not a product persistence/provider defect, and requires an offline correction
 before a separately frozen new run.
+ACME-0125 removes that harness ambiguity by importing the public source-review
+view type directly and using its version identity. Product/view behavior is
+unchanged; canonical offline verification is green and another live run still
+requires separate authority.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

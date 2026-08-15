@@ -47,6 +47,9 @@ ACME-0124's first D1 job committed eight valid observations, but the journey
 stopped before review because the harness addressed the source view's
 observation version with the wrong field name. Five jobs never started and no
 retry occurred. A minimal offline harness correction now precedes a new gate.
+ACME-0125 completes that correction by binding the harness to the exported
+public source-review view type and its `observationVersionId`; canonical gates
+are green and a separately frozen new live run remains.
 
 ## Purpose and Authority
 
@@ -99,7 +102,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed the first real-provider observation batch; ACME-0122 corrected its stale post-commit test reason. ACME-0123 adds the two-source live harness. ACME-0124's first observation passed, then a public-view field mismatch stopped review before the remaining five calls. Offline harness correction and a new gate remain. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed the first real-provider observation batch; ACME-0122 corrected its stale post-commit test reason. ACME-0123 adds the two-source live harness. ACME-0124's first observation passed, then a public-view field mismatch stopped review. ACME-0125 binds the harness to the exported view type and passes all offline gates; a new live gate remains. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.

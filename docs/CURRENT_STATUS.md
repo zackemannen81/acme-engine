@@ -529,6 +529,12 @@ primary source view instead of its public `observationVersionId` field. Zero
 review decisions, relations or assessments wrote. The one-shot task was not
 retried and all disposable state was removed; a bounded offline harness
 correction is the next dependency.
+ACME-0125 completes that dependency: the harness now consumes the exported
+`EvidencePrimarySourceReviewView` type and uses its
+`observationVersionId` for review/history routes. The handwritten response
+shape is gone, so this mismatch is compile-time visible. All canonical offline
+gates pass; no provider call occurred. A new separately frozen live journey is
+the next dependency.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

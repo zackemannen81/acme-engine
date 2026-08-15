@@ -173,6 +173,8 @@ not yet occurred.
 ACME-0124 ran the first of those jobs successfully but stopped before review on
 an ACME-0123 source-view field-name mismatch. This is a concrete harness
 correction, not a new product prerequisite.
+ACME-0125 completes that correction offline and prevents recurrence through
+the exported source-view type. Another separately budgeted run remains.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and
