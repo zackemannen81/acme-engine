@@ -67,7 +67,7 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ### Minimum Verification Gates
 
-- [ ] D1/D2 source and infrastructure preflight
+- [x] D1/D2 source and infrastructure preflight
 - [ ] Exact isolated live journey once
 - [ ] Content-free call/domain/persistence assertions
 - [ ] Credential/source/key cleanup and Git hygiene
@@ -83,7 +83,7 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 ## Checklist
 
 - [x] Freeze one-shot call/monetary charter.
-- [ ] Prepare/preflight sources and disposable infrastructure.
+- [x] Prepare/preflight sources and disposable infrastructure.
 - [ ] Run exact live journey once.
 - [ ] Inspect content-free outcome and clean all disposable state.
 - [ ] Reality-sync docs, archive and commit.
@@ -95,6 +95,10 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 - Every execution has `maxModelCalls = 1`; no task-level retry exists.
 - Persistent reviewed domain objects/history are the success surface.
 - A checkpoint after every substep is required.
+- D1/D2 parent and pypdf 6.10.0 LF/NFC hashes/byte/page counts reproduce the
+  exact ACME-0124 values. Both have all pages non-empty and no NUL, replacement
+  character or CR. Fresh PostgreSQL began with zero domain tables; private
+  MinIO, random mounted keys and signed S3 operations passed.
 
 ## Charter Amendment Log
 
@@ -102,7 +106,7 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ## Verification
 
-- [ ] Record source/infrastructure preflight without content.
+- [x] Record source/infrastructure preflight without content.
 - [ ] Record exact journey outcome without content.
 - [ ] Record cleanup and repository hygiene.
 
@@ -113,8 +117,8 @@ private S3 and six individually one-call-bounded `gpt-5.6-luna` jobs.
 
 ## Handoff and Follow-ups
 
-- Current state: charter frozen; zero of six calls consumed.
-- Next recommended step: source/infrastructure preflight.
+- Current state: source/infrastructure preflight passed; zero calls consumed.
+- Next recommended step: run exact isolated journey once.
 - Blockers: none.
 - Child tasks: none.
 - Resume condition: not applicable.
