@@ -93,6 +93,7 @@ import {
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
   evidenceProposeAssessmentContract,
+  evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
   initialEvidenceState,
   type EvidenceObserveArtifactInput,
@@ -113,6 +114,7 @@ import {
 } from './live.js';
 import { createEvidenceLiveObservationService } from './live-observation.js';
 import { createEvidenceLiveRelationService } from './live-relation.js';
+import { createEvidenceLiveAssessmentService } from './live-assessment.js';
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const CASE_ID = 'rillford-annex-synthetic-case';
@@ -539,6 +541,7 @@ export interface EvidenceLiveCompositionOptions {
   /** Fault-injection seam used to prove post-provider restart recovery. */
   readonly afterObservationEngineCommit?: () => void | Promise<void>;
   readonly afterRelationEngineCommit?: () => void | Promise<void>;
+  readonly afterAssessmentEngineCommit?: () => void | Promise<void>;
 }
 
 function optionalNumber(value: string | undefined): number | undefined {
@@ -1003,6 +1006,7 @@ export async function createLocalEvidenceWorkbench(
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContract,
+      evidenceProposeAssessmentContractV1,
       evidenceProposeAssessmentContract,
     ]),
     pipeline: createResponsePipeline(),
@@ -1082,6 +1086,10 @@ export async function createLocalEvidenceWorkbench(
         );
         if (workspace === undefined)
           throw new RangeError('Unknown assessment workspace.');
+        if (
+          fixture.input.schemaVersion !== 'evidence-propose-assessment-input/1'
+        )
+          throw new RangeError('Synthetic assessment fixture version changed.');
         const requiredReviewedIds = [
           ...fixture.input.acceptedObservationIds,
           ...fixture.input.acceptedRelationIds,
@@ -1315,6 +1323,21 @@ export async function createLocalEvidenceWorkbench(
             ? {}
             : { afterEngineCommit: options.live.afterRelationEngineCommit }),
         });
+  const liveAssessment =
+    liveCapability === null
+      ? undefined
+      : createEvidenceLiveAssessmentService({
+          capability: liveCapability,
+          repository: productRepository,
+          worker,
+          ledger,
+          clock,
+          engineIds: ids,
+          productIds: reviewIds,
+          ...(options.live?.afterAssessmentEngineCommit === undefined
+            ? {}
+            : { afterEngineCommit: options.live.afterAssessmentEngineCommit }),
+        });
 
   const server = createEvidenceWorkbenchApi({
     repository: productRepository,
@@ -1338,6 +1361,7 @@ export async function createLocalEvidenceWorkbench(
     stageA: { enabled: liveCapability !== null },
     ...(liveObservation === undefined ? {} : { liveObservation }),
     ...(liveRelation === undefined ? {} : { liveRelation }),
+    ...(liveAssessment === undefined ? {} : { liveAssessment }),
     ...(lateFixture === null
       ? {}
       : {

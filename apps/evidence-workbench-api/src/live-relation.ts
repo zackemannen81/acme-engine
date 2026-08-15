@@ -38,6 +38,7 @@ import {
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
   evidenceProposeAssessmentContract,
+  evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
 } from '@acme/module-evidence';
 
@@ -211,6 +212,7 @@ export function createEvidenceLiveRelationService(options: {
           evidenceObserveArtifactContractV1,
           evidenceObserveArtifactContract,
           evidenceRelateObservationsContract,
+          evidenceProposeAssessmentContractV1,
           evidenceProposeAssessmentContract,
         ]),
         pipeline: createResponsePipeline(),

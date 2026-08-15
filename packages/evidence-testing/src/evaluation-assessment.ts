@@ -1,9 +1,9 @@
 import { computeModelRequestHash } from '@acme/core';
 import {
   evidenceProposeAssessmentContract,
-  EvidenceProposeAssessmentInputSchema,
+  EvidenceProposeAssessmentInputV1Schema,
   EvidenceProposeAssessmentOutputSchema,
-  type EvidenceProposeAssessmentInput,
+  type EvidenceProposeAssessmentInputV1,
   type EvidenceProposeAssessmentOutput,
 } from '@acme/module-evidence';
 
@@ -16,7 +16,7 @@ export interface EvidenceEvaluationAssessmentCase {
   readonly caseId: string;
   readonly truthId: string;
   readonly requestHash: string;
-  readonly input: EvidenceProposeAssessmentInput;
+  readonly input: EvidenceProposeAssessmentInputV1;
   readonly output: EvidenceProposeAssessmentOutput;
   readonly expectedAssessmentVersionId: string;
 }
@@ -79,7 +79,7 @@ export function evaluationAssessmentCases(): readonly EvidenceEvaluationAssessme
           ),
         ),
       ].sort();
-      const input = EvidenceProposeAssessmentInputSchema.parse({
+      const input = EvidenceProposeAssessmentInputV1Schema.parse({
         schemaVersion: 'evidence-propose-assessment-input/1',
         workspaceId: item.workspaceId,
         sequence: item.sequence,

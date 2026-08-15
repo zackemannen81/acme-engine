@@ -880,7 +880,9 @@ content remains intentionally omitted here.
   authenticated browser/API `observe-artifact` job with durable resume.
   ACME-0108 adds `src/live-relation.ts`, a capability-gated browser/API
   `relate-observations` job and atomic relation/open-question projection with
-  no-second-call restart; assessment remains on the later live path.
+  no-second-call restart. ACME-0110 adds `src/live-assessment.ts`, source-
+  complete assessment input, live job/audit contracts and the primary review/
+  late-evidence/reassessment proof.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -938,7 +940,8 @@ judicial text class. ACME-0105 implements its fail-closed PostgreSQL/live-
 provider/external-source/authorized-execution capability and ACME-0106 adds the
 case/import/browser data path. ACME-0107 opens the bounded observation
 operation and ACME-0108 opens bounded relation/open-question analysis over its
-committed observations; Stage B and live assessment execution remain closed.
+committed observations. ACME-0110 completes the Stage A engineering journey
+through reviewed assessment and reassessment; Stage B remains closed.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

@@ -223,7 +223,8 @@ capability and ACME-0106 implements the versioned case/import contract plus
 authenticated browser path for operator-prepared anonymized judicial text.
 ACME-0107 implements the first restart-safe live observation job and ACME-0108
 adds restart-safe relation/open-question analysis over those committed
-observations; live assessment and reassessment remain. The approved
+observations. ACME-0110 completes source-complete live assessment, review and
+late-evidence reassessment; real-provider acceptance remains. The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product

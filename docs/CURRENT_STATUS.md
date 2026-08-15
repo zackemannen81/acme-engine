@@ -425,8 +425,12 @@ durable execution commits. ACME-0108 adds a second case-first live job that
 derives current observations entirely from the authorized product snapshot,
 executes `relate-observations` once and atomically projects typed relations,
 open questions, standing changes and one evidence-revision advance. The
-default engine remains the scripted mock and exposes neither live route nor
-either browser control.
+ACME-0110 assessment job selects accepted current typed evidence server-side,
+uses source-complete assessment input `/2`, preserves historical `/1` replay
+and projects a validated assessment without changing evidence revision. The
+primary product path now covers human review, later-evidence attention and an
+immutable reviewed successor assessment. The default engine remains the
+scripted mock and exposes none of the live routes or browser controls.
 
 Stage A import activation proves the complete ADR-0040 composition tuple:
 durable PostgreSQL, configured live provider, authorized-external source origin
@@ -439,8 +443,12 @@ evidence without a second call. ACME-0108 proves the same boundary for relation
 analysis: refusal paths make zero calls, a fault after engine commit leaves no
 partial product projection, and a full composition restart completes from the
 retained response with the same relation/question identities and one cumulative
-call. A separate opt-in real-call acceptance entry exists but was not run
-because this checkpoint had no process credential.
+call. ACME-0110 proves the assessment boundary plus review/reassessment across
+another imported and observed Stage A source. It also corrects Stage A revision
+alignment: import owns the source evidence revision, observation verifies and
+reuses it, and relation supplies the next shared engine/product revision. A
+separate opt-in real-call acceptance entry exists but was not run because this
+checkpoint had no process credential or approved spend ceiling.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -494,14 +502,21 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0110:** Completed the Stage A engineering journey through reviewed
+  reassessment. Additive source-complete assessment input, command/job/audit
+  contracts and browser/API/worker execution preserve historical synthetic
+  replay, one-call encrypted resume and product evidence revision. PostgreSQL
+  proof covers refusal, post-engine interruption, process restart, human review,
+  later evidence attention and an immutable reviewed successor. ACME-0109 was
+  superseded before code because its charter incorrectly required assessment
+  proposal to advance evidence revision.
 - **ACME-0108:** Added the bounded Stage A live relation job. The authenticated
   case-first API derives all current observations and source authority on the
   server, executes the existing strict relation task once, and atomically
   projects relations, open questions, standing changes and one revision. The
   primary browser can launch and poll the job; PostgreSQL restart proof covers
   post-engine interruption, retained-response resume and stable identities
-  without a second provider call. Live assessment/re-review and real paid
-  acceptance remain subsequent dependencies.
+  without a second provider call. Real paid acceptance remains external.
 - **ACME-0107:** Added the bounded Stage A live observation job. Additive
   command/job/audit contracts, authenticated case-first API, source-analysis
   browser control and durable worker enforce one call, content-free control

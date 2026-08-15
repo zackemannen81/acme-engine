@@ -9,8 +9,8 @@ completion plan and the technical specification, and add the engineering
 prerequisites discovered since those documents were written.
 
 This file grants nothing. ADR-0040 separately authorizes only
-`stage-a-anonymized-judicial-text/1`; ACME-0105 through ACME-0108 implement its
-closed composition, import and bounded observation/relation jobs. Assessment,
+`stage-a-anonymized-judicial-text/1`; ACME-0105 through ACME-0110 implement its
+closed composition, import and bounded observation/relation/assessment journey.
 Stage B and every other class remain closed and cannot activate by implication.
 Unchecked legal,
 security and operational rows remain real programme prerequisites.
@@ -153,21 +153,20 @@ flag.
 - [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. Live observation and relation analysis exist; the complete reviewer journey does not
+### D2. The live reviewer journey exists; real-provider acceptance remains
 
 The default workbench still composes `createScriptedModelGateway`. ACME-0105
 adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
 payload key, explicit opt-in and nested budgets. ACME-0106 permits Stage A
 storage only when that capability exists. ACME-0107 adds one case-first
-observation job and ACME-0108 adds one case-first relation job over server-
-derived current observations; import itself remains pure storage and makes no
-model call.
+observation job, ACME-0108 adds one case-first relation job over server-derived
+current observations and ACME-0110 adds source-complete assessment plus review/
+reassessment; import itself remains pure storage and makes no model call.
 
 Consequence: imported real documents can now produce validated source-bound
-observations, typed relations and open questions. Timeline is the existing pure
-projection of observation temporal bounds. Live assessment and its review/
-late-evidence reassessment journey still require the remaining task-specific
-job.
+observations, typed relations, open questions and reviewed assessments.
+Timeline is the existing pure projection of observation temporal bounds.
+ACME-0110 proves the human review and late-evidence reassessment journey.
 
 - [x] Implement the gated/budgeted live-provider capability in the workbench.
 - [x] Add the bounded case-first live observation job, content-free audit and
@@ -175,8 +174,9 @@ job.
 - [x] Add live relation/timeline/open-question analysis. ACME-0108 derives
       current observations server-side, atomically projects validated relation
       output and proves full PostgreSQL restart without a second call.
-- [ ] Add the live assessment job, then prove the primary review and late-
-      evidence reassessment journey.
+- [x] Add the live assessment job and prove primary review plus late-evidence
+      reassessment. ACME-0110 preserves historical replay and product evidence
+      revision while using source-complete provider input.
 - [x] Decide the Stage A live-call retention policy: ADR-0040 requires
       `encrypted-payload` with a durable mounted key.
 - [ ] Establish what the provider receives, retains and logs, and reconcile
@@ -218,9 +218,10 @@ observation and assessment citing the unredacted version.
 ### D5. Operational debt that must clear first
 
 - [x] `pnpm test:postgres` executed against a real server. Re-proved 2026-08-15
-      under ACME-0108 against a clean `postgres:15`: 36 tests, including Stage
-      A import, live observation/relation full-composition/no-second-call restart,
-      migration v7 and export-policy/audit.
+      under ACME-0110 against a clean `postgres:15`: 36 tests, including Stage
+      A import, live observation/relation/assessment full-composition restart,
+      human review, late-evidence reassessment, migration v7 and export-policy/
+      audit.
       A separate two-document real-source acceptance also reopened identical
       PostgreSQL records/source hashes with zero provider calls. Hosted
       mode *is* PostgreSQL, so this stays a standing gate rather than a

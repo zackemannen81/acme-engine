@@ -102,6 +102,7 @@ describe('Stage A HTTP boundary', () => {
         stageAImport: false,
         liveObservation: false,
         liveRelation: false,
+        liveAssessment: false,
         liveObservationModel: null,
         liveObservationMaxModelCalls: null,
         liveObservationCostCeilingMinor: null,

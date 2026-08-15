@@ -78,8 +78,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   of operator-prepared text with exact outside-PDF provenance. ACME-0107 adds
   one restart-safe live observation job with primary browser navigation, and
   ACME-0108 adds the corresponding restart-safe relation/open-question job
-  over server-derived current observations. The product never ingests the PDF
-  container.
+  over server-derived current observations. ACME-0110 adds source-complete live
+  assessment plus the primary review/late-evidence/reassessment journey. The
+  product never ingests the PDF container.
   ADR-0036's case boundary is implemented: opaque public cases own unique
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
@@ -99,8 +100,9 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   ingestion or activation by implication. ACME-0105 implements the typed
   fail-closed live composition capability and durable payload-key boundary;
   Stage A case creation, import, live observation and live relation analysis
-  require that capability. Assessment, reviewer/reassessment completion and an
-  explicitly budgeted real-provider acceptance remain later increments.
+  require that capability. The Stage A engineering journey is complete through
+  reviewed reassessment; an explicitly budgeted real-provider acceptance
+  remains external evidence before the POC is fully accepted.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

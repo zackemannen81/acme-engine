@@ -38,6 +38,8 @@ import {
   type EvidenceCaseLiveObservationCommand,
   EvidenceCaseLiveRelationCommandSchema,
   type EvidenceCaseLiveRelationCommand,
+  EvidenceCaseLiveAssessmentCommandSchema,
+  type EvidenceCaseLiveAssessmentCommand,
   EvidenceRedactionOperationSchema,
   type EvidenceIngestionService,
   EvidenceBulkReviewCommandSchema,
@@ -97,6 +99,10 @@ import {
   EvidenceLiveRelationRefused,
   type EvidenceLiveRelationService,
 } from './live-relation.js';
+import {
+  EvidenceLiveAssessmentRefused,
+  type EvidenceLiveAssessmentService,
+} from './live-assessment.js';
 
 export * from './live.js';
 
@@ -203,6 +209,7 @@ export function createEvidenceWorkbenchApi(options: {
   readonly stageA?: { readonly enabled: boolean };
   readonly liveObservation?: EvidenceLiveObservationService;
   readonly liveRelation?: EvidenceLiveRelationService;
+  readonly liveAssessment?: EvidenceLiveAssessmentService;
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
@@ -517,6 +524,7 @@ export function createEvidenceWorkbenchApi(options: {
           stageAImport: options.stageA?.enabled === true,
           liveObservation: options.liveObservation !== undefined,
           liveRelation: options.liveRelation !== undefined,
+          liveAssessment: options.liveAssessment !== undefined,
           liveObservationModel:
             options.liveObservation?.deployment.model ?? null,
           liveObservationMaxModelCalls:
@@ -757,6 +765,7 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/imports',
           '/api/live-observations',
           '/api/live-relations',
+          '/api/live-assessments',
           '/api/jobs',
           '/api/technical',
           '/api/export-policy',
@@ -1986,6 +1995,64 @@ export function createEvidenceWorkbenchApi(options: {
           );
         } catch (error) {
           if (error instanceof EvidenceLiveRelationRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
+        return;
+      }
+      if (
+        request.method === 'POST' &&
+        url.pathname === '/api/live-assessments'
+      ) {
+        if (requestCaseId === null || options.liveAssessment === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveAssessmentCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveAssessmentCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveAssessment.refuse({
+            reasonCode: 'LIVE_ASSESSMENT_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live assessment command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveAssessment.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveAssessmentRefused)
             throw new EvidenceAuthorizationError(error.status, error.reason);
           throw error;
         }

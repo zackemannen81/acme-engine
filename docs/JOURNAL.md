@@ -1,5 +1,45 @@
 # Journal
 
+## 2026-08-15 — ACME-0110 Stage A live assessment and reassessment
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0110
+- Summary: Completed the Stage A engineering journey through human-reviewed
+  reassessment. Active assessment contract `@1.1.0` accepts source-complete
+  typed input `/2`; historical `@1.0.0` and identifier-only `/1` remain
+  registered for replay with sealed synthetic outputs unchanged.
+- Product path: additive case/internal commands, `evidence-product-job/4` and
+  security audit `/4` drive a case-admin-only, one-call assessment job. The API
+  derives accepted current observations/relations, open questions, sequence,
+  predecessor, workspace and principal server-side. The provider receives exact
+  typed source/locator/quote evidence; the browser supplies none.
+- Commit/recovery: engine output remains an untrusted candidate. Product
+  projection stores the validated assessment and case binding only after engine
+  commit and deliberately leaves evidence revision unchanged. A post-engine
+  fault stored no product assessment; full composition restart reused encrypted
+  response evidence, preserved the assessment identity and made no second call.
+- Revision correction: Stage A import already advances product revision for a
+  new source. Live observation had advanced it again while the engine counted
+  that source once, preventing a current assessment basis. Observation now
+  verifies/reuses the import revision; relation then advances engine/product
+  together. Later import/observation makes the predecessor due for attention.
+- Reviewer proof: the PostgreSQL journey accepts observations and relation,
+  proposes/resumes assessment v1, records human acceptance, imports and observes
+  another Stage A source, shows v1 attention, proposes v2 with immutable
+  predecessor linkage and records a separate human acceptance. Budget,
+  credential-shaped payload and foreign-case attempts refuse before transport;
+  audit remains content-free.
+- Verification: focused module/web/API suite 11 passed; focused Stage A
+  PostgreSQL suite 2 passed; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`;
+  `pnpm test` — 745 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm test:postgres` — 36 tests on a fresh database; `pnpm build`;
+  `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+- Follow-up/blocker: engineering is complete, but the explicitly budgeted real
+  provider acceptance cannot run without an `OPENAI_API_KEY` and approved spend
+  ceiling. Stage B and every broader class remain closed.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0109 superseded before implementation
 
 - Date: 2026-08-15

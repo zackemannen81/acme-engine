@@ -1162,8 +1162,9 @@ boundary. ACME-0105 implements the closed capability and ACME-0106 implements
 capability-gated Stage A text import. ACME-0107 implements one bounded live
 `observe-artifact` product job and ACME-0108 implements one bounded live
 `relate-observations` product job over server-derived current observations;
-the offline/default profile remains synthetic-only, while live assessment
-remains closed.
+ACME-0110 implements source-complete live `propose-assessment`, human review
+and late-evidence reassessment. The offline/default profile remains
+synthetic-only.
 SQLite and the file product store remain the local/hermetic CI defaults;
 PostgreSQL is opt-in via composition (`--adapter postgres` /
 `ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
@@ -1332,7 +1333,8 @@ ADR-0039 decides the workbench live model boundary. ACME-0105 implements its
 confirmation/composition foundation while the default execution engine remains
 the scripted mock. ACME-0106 consumes capability presence for Stage A import,
 ACME-0107 adds the provider-capable `observe-artifact` product route, and
-ACME-0108 adds `relate-observations` without widening the capability.
+ACME-0108 adds `relate-observations` without widening the capability. ACME-0110
+adds the final existing task, `propose-assessment`, under the same boundary.
 ADR-0040 adds the product applicability boundary and accepts exactly one Stage
 A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
 source text, already anonymized/redacted before import, operator-authorized for
@@ -1411,6 +1413,25 @@ when the live capability exists and at least two current observations are
 available, then returns to the existing relation/open-question views; timeline
 continues to be the pure temporal projection of source-bound observations.
 
+ACME-0110 retains historical `evidence.propose-assessment@1.0.0` and its
+identifier-only synthetic input for replay, while active `@1.1.0` accepts the
+additive source-complete `evidence-propose-assessment-input/2`. The live API
+derives accepted current observations and relations, open questions, sequence,
+predecessor and basis revision from one authorized case. Typed observation
+objects carry exact artifact/locator/quote evidence into the provider request;
+the browser supplies none of it. `evidence-product-job/4` and security audit
+`/4` remain content-free. Assessment projection stores one immutable candidate
+and case binding without changing product evidence revision, after which the
+existing append-only review and attention views govern human authority.
+
+Stage A import already advances product evidence revision for the new source.
+The live observation projection therefore verifies that the engine's source
+revision equals the product revision instead of incrementing the same source a
+second time. Relation analysis advances both once. This keeps assessment
+`basisEvidenceRevision` current across engine and product stores; a later Stage
+A import/observation advances them together and makes the predecessor visibly
+due for attention before a reviewed successor is proposed.
+
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose
 `caseId` equals the requested case, an environment-supplied credential, and a
@@ -1441,10 +1462,10 @@ human decisions, typed relations and temporal uncertainty, case isolation,
 source-complete persistent assessments and visible attention after new
 evidence. A primary browser path rather than technical audit, CLI, JSON or
 database access is the completion surface. The live profile is not complete
-until an explicitly budgeted real Stage A provider acceptance, live assessment
-and the primary review/late-evidence reassessment journey are proven end to
-end. ACME-0107 and ACME-0108 have proven the observation and relation jobs'
-PostgreSQL restart/no-second-call boundaries with injected transports.
+until an explicitly budgeted real Stage A provider acceptance is proven end to
+end. ACME-0107, ACME-0108 and ACME-0110 prove observation, relation and
+assessment PostgreSQL restart/no-second-call boundaries with injected
+transports; ACME-0110 also proves primary review and late-evidence reassessment.
 
 ## Remaining Implementation Baseline
 

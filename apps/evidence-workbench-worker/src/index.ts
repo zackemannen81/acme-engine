@@ -3,6 +3,7 @@ import {
   EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION,
   EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION,
   EVIDENCE_LIVE_RELATION_JOB_SCHEMA_VERSION,
+  EVIDENCE_LIVE_ASSESSMENT_JOB_SCHEMA_VERSION,
   EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
   EvidenceAnyProductJobSchema,
   EvidenceAssessmentCommandSchema,
@@ -11,8 +12,11 @@ import {
   EvidenceLiveObservationJobSchema,
   EvidenceLiveRelationCommandSchema,
   EvidenceLiveRelationJobSchema,
+  EvidenceLiveAssessmentCommandSchema,
+  EvidenceLiveAssessmentJobSchema,
   deriveEvidenceLiveObservationJobId,
   deriveEvidenceLiveRelationJobId,
+  deriveEvidenceLiveAssessmentJobId,
   EvidenceProductCommandCollisionError,
   EvidenceProductJobSchema,
   EvidenceProductChangeSetSchema,
@@ -22,6 +26,8 @@ import {
   type EvidenceLiveObservationJob,
   type EvidenceLiveRelationCommand,
   type EvidenceLiveRelationJob,
+  type EvidenceLiveAssessmentCommand,
+  type EvidenceLiveAssessmentJob,
   type EvidenceProductClock,
   type EvidenceCaseObjectScope,
   type EvidenceProductJob,
@@ -79,6 +85,7 @@ export interface EvidenceLiveObservationExecutor {
     readonly signal: AbortSignal;
   }): Promise<{
     readonly executionId: string;
+    readonly evidenceRevision: number;
     readonly observations: readonly EvidenceObservation[];
     readonly replayed: boolean;
     readonly actualModelCalls: 0 | 1;
@@ -100,6 +107,24 @@ export interface EvidenceLiveRelationExecutor {
     readonly relations: readonly EvidenceRelation[];
     readonly openQuestions: readonly EvidenceOpenQuestion[];
     readonly standingChanges: readonly EvidenceStandingChange[];
+    readonly replayed: boolean;
+    readonly actualModelCalls: 0 | 1;
+  }>;
+  settle?(input: {
+    readonly jobId: string;
+    readonly phase: 'completed' | 'failed';
+    readonly reasonCode: string;
+    readonly actualModelCalls: 0 | 1;
+  }): Promise<void>;
+}
+
+export interface EvidenceLiveAssessmentExecutor {
+  assess(input: {
+    readonly command: EvidenceLiveAssessmentCommand;
+    readonly signal: AbortSignal;
+  }): Promise<{
+    readonly executionId: string;
+    readonly assessment: EvidenceAssessment;
     readonly replayed: boolean;
     readonly actualModelCalls: 0 | 1;
   }>;
@@ -134,6 +159,11 @@ export interface EvidenceWorkbenchWorker {
     executor: EvidenceLiveRelationExecutor,
     scope: EvidenceCaseObjectScope,
   ): Promise<EvidenceLiveRelationJob>;
+  startLiveAssessment(
+    command: EvidenceLiveAssessmentCommand,
+    executor: EvidenceLiveAssessmentExecutor,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceLiveAssessmentJob>;
   proposeAssessment(
     command: EvidenceAssessmentCommand,
     scope?: EvidenceCaseObjectScope,
@@ -236,12 +266,11 @@ export function createEvidenceWorkbenchWorker(options: {
       if (workspace === undefined)
         throw new RangeError(`Unknown workspace ${command.workspaceId}.`);
       await options.repository.putObservations(executed.observations, scope);
-      const nextRevision = workspace.evidenceRevision + 1;
-      await options.repository.advanceEvidenceRevision(
-        command.workspaceId,
-        workspace.evidenceRevision,
-        nextRevision,
-      );
+      if (executed.evidenceRevision !== workspace.evidenceRevision)
+        throw new EvidenceProductCommandCollisionError(
+          `revision:${command.workspaceId}`,
+        );
+      const nextRevision = workspace.evidenceRevision;
       await options.repository.putChangeSet(
         EvidenceProductChangeSetSchema.parse({
           schemaVersion: EVIDENCE_PRODUCT_CHANGE_SET_SCHEMA_VERSION,
@@ -249,7 +278,7 @@ export function createEvidenceWorkbenchWorker(options: {
           commandKey: command.commandKey,
           recordedAt: queued.createdAt,
           changeSet: createEvidenceChangeSet({
-            fromEvidenceRevision: workspace.evidenceRevision,
+            fromEvidenceRevision: Math.max(0, workspace.evidenceRevision - 1),
             toEvidenceRevision: nextRevision,
             addedArtifactVersionIds: [],
             addedObservationIds: executed.observations.map(
@@ -498,6 +527,131 @@ export function createEvidenceWorkbenchWorker(options: {
         {
           phase: controller.signal.aborted ? 'cancelled' : 'failed',
           message: 'Live relation analysis failed before product projection.',
+          reasonCode,
+          actualModelCalls: calls,
+        },
+        scope,
+      );
+    } finally {
+      controllers.delete(queued.jobId);
+    }
+  }
+
+  async function runLiveAssessment(
+    command: EvidenceLiveAssessmentCommand,
+    queued: EvidenceLiveAssessmentJob,
+    controller: AbortController,
+    executor: EvidenceLiveAssessmentExecutor,
+    scope: EvidenceCaseObjectScope,
+  ): Promise<EvidenceLiveAssessmentJob> {
+    let job = queued;
+    try {
+      if (controller.signal.aborted)
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Live assessment cancelled before preparation.',
+            reasonCode: 'LIVE_ASSESSMENT_CANCELLED',
+          },
+          scope,
+        );
+      job = await update(
+        job,
+        {
+          phase: 'preparing',
+          completedUnits: 1,
+          message: 'Preparing accepted case evidence.',
+        },
+        scope,
+      );
+      const executed = await executor.assess({
+        command,
+        signal: controller.signal,
+      });
+      const calls: 0 | 1 =
+        job.actualModelCalls === 1 || executed.actualModelCalls === 1 ? 1 : 0;
+      if (controller.signal.aborted)
+        return update(
+          job,
+          {
+            phase: 'cancelled',
+            message: 'Live assessment cancelled before projection.',
+            reasonCode: 'LIVE_ASSESSMENT_CANCELLED',
+            actualModelCalls: calls,
+            executionId: executed.executionId,
+          },
+          scope,
+        );
+      job = await update(
+        job,
+        {
+          phase: 'projecting',
+          completedUnits: 3,
+          message: 'Saving the validated assessment candidate.',
+          actualModelCalls: calls,
+          executionId: executed.executionId,
+        },
+        scope,
+      );
+      const snapshot = await options.repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      const workspace = snapshot.workspaces.find(
+        (value) => value.workspaceId === command.workspaceId,
+      );
+      if (workspace?.evidenceRevision !== command.basisEvidenceRevision)
+        throw new EvidenceProductCommandCollisionError(
+          `revision:${command.workspaceId}`,
+        );
+      await options.repository.putAssessments([executed.assessment], scope);
+      const reasonCode = executed.replayed
+        ? 'LIVE_ASSESSMENT_RESUMED'
+        : 'LIVE_ASSESSMENT_COMPLETED';
+      await executor.settle?.({
+        jobId: job.jobId,
+        phase: 'completed',
+        reasonCode,
+        actualModelCalls: calls,
+      });
+      return update(
+        job,
+        {
+          phase: 'completed',
+          completedUnits: 4,
+          message: 'Assessment candidate is ready for human review.',
+          reasonCode,
+        },
+        scope,
+      );
+    } catch (error) {
+      const value = error as {
+        readonly reason?: unknown;
+        readonly code?: unknown;
+        readonly actualModelCalls?: unknown;
+      };
+      const reasonCode =
+        typeof value.reason === 'string'
+          ? value.reason
+          : typeof value.code === 'string'
+            ? value.code
+            : 'LIVE_ASSESSMENT_FAILED';
+      const calls: 0 | 1 =
+        job.actualModelCalls === 1 || value.actualModelCalls === 1 ? 1 : 0;
+      await executor
+        .settle?.({
+          jobId: job.jobId,
+          phase: 'failed',
+          reasonCode,
+          actualModelCalls: calls,
+        })
+        .catch(() => undefined);
+      return update(
+        job,
+        {
+          phase: controller.signal.aborted ? 'cancelled' : 'failed',
+          message: 'Live assessment failed before product projection.',
           reasonCode,
           actualModelCalls: calls,
         },
@@ -912,6 +1066,126 @@ export function createEvidenceWorkbenchWorker(options: {
       const controller = new AbortController();
       controllers.set(queued.jobId, controller);
       const promise = runLiveRelation(
+        command,
+        queued,
+        controller,
+        executor,
+        scope,
+      );
+      running.set(queued.jobId, promise);
+      void promise.finally(() => running.delete(queued.jobId));
+      return queued;
+    },
+    async startLiveAssessment(commandValue, executor, scope) {
+      const command = EvidenceLiveAssessmentCommandSchema.parse(commandValue);
+      if (scope.workspaceId !== command.workspaceId)
+        throw new Error('Worker case scope does not match live command.');
+      const snapshot = await options.repository.caseSnapshot(
+        scope.caseId,
+        scope.workspaceId,
+      );
+      const observations = new Set(
+        snapshot.observations.map((item) => item.observationId),
+      );
+      const relations = new Set(
+        snapshot.relations.map((item) => item.relationId),
+      );
+      const questions = new Set(
+        snapshot.openQuestions.map((item) => item.openQuestionId),
+      );
+      if (
+        command.observationIds.some((id) => !observations.has(id)) ||
+        command.relationIds.some((id) => !relations.has(id)) ||
+        command.openQuestionIds.some((id) => !questions.has(id))
+      )
+        throw new RangeError('Live assessment evidence is unavailable.');
+      const existing = snapshot.jobs.find(
+        (item) =>
+          item.workspaceId === command.workspaceId &&
+          item.commandKey === command.commandKey,
+      );
+      let existingLive: EvidenceLiveAssessmentJob | undefined;
+      if (existing !== undefined) {
+        if (
+          existing.schemaVersion !==
+            EVIDENCE_LIVE_ASSESSMENT_JOB_SCHEMA_VERSION ||
+          existing.modelId !== command.modelId ||
+          existing.sequence !== command.sequence ||
+          existing.basisEvidenceRevision !== command.basisEvidenceRevision ||
+          JSON.stringify(existing.observationIds) !==
+            JSON.stringify(command.observationIds) ||
+          JSON.stringify(existing.relationIds) !==
+            JSON.stringify(command.relationIds) ||
+          JSON.stringify(existing.openQuestionIds) !==
+            JSON.stringify(command.openQuestionIds) ||
+          existing.predecessorAssessmentVersionId !==
+            command.predecessorAssessmentVersionId ||
+          existing.maxModelCalls !== command.requestedBudget.maxModelCalls ||
+          existing.costCeilingMinor !==
+            command.requestedBudget.costCeilingMinor ||
+          existing.currency !== command.currency
+        )
+          throw new EvidenceProductCommandCollisionError(command.commandKey);
+        existingLive = EvidenceLiveAssessmentJobSchema.parse(existing);
+        if (
+          ['completed', 'cancelled', 'refused'].includes(existingLive.phase) ||
+          (existingLive.phase === 'failed' &&
+            existingLive.reasonCode !==
+              'LIVE_ASSESSMENT_PRODUCT_PROJECTION_INTERRUPTED')
+        )
+          return existingLive;
+      }
+      const now = options.clock.now();
+      const queued =
+        existingLive === undefined
+          ? EvidenceLiveAssessmentJobSchema.parse(
+              await options.repository.putJob(
+                EvidenceLiveAssessmentJobSchema.parse({
+                  schemaVersion: EVIDENCE_LIVE_ASSESSMENT_JOB_SCHEMA_VERSION,
+                  jobKind: 'live-assessment',
+                  jobId: deriveEvidenceLiveAssessmentJobId(command),
+                  workspaceId: command.workspaceId,
+                  commandKey: command.commandKey,
+                  artifactVersionId: 'case-assessment-set',
+                  sequence: command.sequence,
+                  basisEvidenceRevision: command.basisEvidenceRevision,
+                  observationIds: command.observationIds,
+                  relationIds: command.relationIds,
+                  openQuestionIds: command.openQuestionIds,
+                  predecessorAssessmentVersionId:
+                    command.predecessorAssessmentVersionId,
+                  task: 'propose-assessment',
+                  modelId: command.modelId,
+                  phase: 'queued',
+                  completedUnits: 0,
+                  totalUnits: 4,
+                  message: 'Live assessment queued.',
+                  cancelRequested: false,
+                  maxModelCalls: 1,
+                  actualModelCalls: 0,
+                  costCeilingMinor: command.requestedBudget.costCeilingMinor,
+                  currency: command.currency,
+                  reasonCode: null,
+                  executionId: null,
+                  createdAt: now,
+                  updatedAt: now,
+                }),
+                scope,
+              ),
+            )
+          : await update(
+              existingLive,
+              {
+                phase: 'queued',
+                message: 'Resuming live assessment.',
+                cancelRequested: false,
+                reasonCode: null,
+              },
+              scope,
+            );
+      const controller = new AbortController();
+      controllers.set(queued.jobId, controller);
+      const promise = runLiveAssessment(
         command,
         queued,
         controller,

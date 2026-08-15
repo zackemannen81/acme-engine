@@ -81,5 +81,10 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain(
       "schemaVersion:'evidence-case-live-relation-command/1'",
     );
+    expect(html).toContain('Start assessment proposal');
+    expect(html).toContain('/api/live-assessments');
+    expect(html).toContain(
+      "schemaVersion:'evidence-case-live-assessment-command/1'",
+    );
   });
 });

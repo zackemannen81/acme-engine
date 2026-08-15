@@ -39,6 +39,8 @@ export const EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION =
   'evidence-build-timeline-output/1' as const;
 export const EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION =
   'evidence-propose-assessment-input/1' as const;
+export const EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION_V2 =
+  'evidence-propose-assessment-input/2' as const;
 export const EVIDENCE_PROPOSE_ASSESSMENT_OUTPUT_SCHEMA_VERSION =
   'evidence-propose-assessment-output/1' as const;
 export const EVIDENCE_MEMORY_SCHEMA_VERSION = 'evidence-memory/1' as const;
@@ -754,7 +756,7 @@ export const EvidenceBuildTimelineOutputSchema = z
   })
   .strict();
 
-export const EvidenceProposeAssessmentInputSchema = z
+export const EvidenceProposeAssessmentInputV1Schema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION),
     workspaceId: EvidenceNonBlankStringSchema,
@@ -766,6 +768,55 @@ export const EvidenceProposeAssessmentInputSchema = z
     predecessorAssessmentVersionId: EvidenceDerivedIdSchema.nullable(),
   })
   .strict();
+
+export const EvidenceProposeAssessmentInputV2Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION_V2,
+    ),
+    workspaceId: EvidenceNonBlankStringSchema,
+    sequence: z.number().int().positive(),
+    basisEvidenceRevision: z.number().int().nonnegative(),
+    acceptedObservations: z.array(EvidenceObservationSchema).min(1),
+    acceptedRelations: z.array(EvidenceRelationSchema),
+    acceptedOpenQuestions: z.array(EvidenceOpenQuestionSchema),
+    predecessorAssessmentVersionId: EvidenceDerivedIdSchema.nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    for (const [path, ids] of [
+      [
+        'acceptedObservations',
+        value.acceptedObservations.map((item) => item.observationId),
+      ],
+      [
+        'acceptedRelations',
+        value.acceptedRelations.map((item) => item.relationId),
+      ],
+      [
+        'acceptedOpenQuestions',
+        value.acceptedOpenQuestions.map((item) => item.openQuestionId),
+      ],
+    ] as const) {
+      if (
+        new Set(ids).size !== ids.length ||
+        ids.some((id, index) => index > 0 && (ids[index - 1] as string) > id)
+      )
+        context.addIssue({
+          code: 'custom',
+          path: [path],
+          message: 'Accepted evidence must be unique and sorted by identity.',
+        });
+    }
+  });
+
+export const EvidenceProposeAssessmentInputSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceProposeAssessmentInputV1Schema,
+    EvidenceProposeAssessmentInputV2Schema,
+  ],
+);
 
 export const EvidenceProposeAssessmentOutputSchema = z
   .object({
@@ -842,6 +893,9 @@ export type EvidenceBuildTimelineOutput = z.infer<
 >;
 export type EvidenceProposeAssessmentInput = z.infer<
   typeof EvidenceProposeAssessmentInputSchema
+>;
+export type EvidenceProposeAssessmentInputV1 = z.infer<
+  typeof EvidenceProposeAssessmentInputV1Schema
 >;
 export type EvidenceProposeAssessmentOutput = z.infer<
   typeof EvidenceProposeAssessmentOutputSchema

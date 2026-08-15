@@ -427,13 +427,23 @@ export function assertEvidenceCaseScopedReferences(
   }
   for (const job of scoped.jobs) {
     const missingObservationIds =
-      job.schemaVersion === 'evidence-product-job/3'
+      job.schemaVersion === 'evidence-product-job/3' ||
+      job.schemaVersion === 'evidence-product-job/4'
         ? job.observationIds.filter((id) => !observationIds.has(id))
         : [];
     if (missingObservationIds.length > 0)
       throw new Error('Job observations belong to another case.');
+    if (
+      job.schemaVersion === 'evidence-product-job/4' &&
+      (job.relationIds.some((id) => !relationIds.has(id)) ||
+        job.openQuestionIds.some((id) => !questionIds.has(id)) ||
+        (job.predecessorAssessmentVersionId !== null &&
+          !assessmentIds.has(job.predecessorAssessmentVersionId)))
+    )
+      throw new Error('Assessment job evidence belongs to another case.');
     const inputExists =
-      job.schemaVersion === 'evidence-product-job/3'
+      job.schemaVersion === 'evidence-product-job/3' ||
+      job.schemaVersion === 'evidence-product-job/4'
         ? true
         : sourceIds.has(job.artifactVersionId);
     if (job.workspaceId !== workspaceId)

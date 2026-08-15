@@ -11,6 +11,7 @@ export const EVIDENCE_PROPOSE_ASSESSMENT_TASK =
   'evidence.propose-assessment' as const;
 export const EVIDENCE_TASK_VERSION = '1.0.0' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION = '1.1.0' as const;
+export const EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_VERSION = '1.1.0' as const;
 
 export const EvidenceTaskCatalogueEntrySchema = z
   .object({
@@ -23,6 +24,7 @@ export const EvidenceTaskCatalogueEntrySchema = z
     version: z.enum([
       EVIDENCE_TASK_VERSION,
       EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_VERSION,
+      EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_VERSION,
     ]),
     earliestSlice: z.number().int().min(1).max(5),
     role: z.enum(['analyzer', 'transformer', 'producer']),
@@ -66,7 +68,7 @@ export const EVIDENCE_TASK_CATALOGUE = immutableEvidence(
       },
       {
         id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
-        version: EVIDENCE_TASK_VERSION,
+        version: EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_VERSION,
         earliestSlice: 5,
         role: 'producer',
         modelBacked: true,
@@ -96,6 +98,11 @@ export const EVIDENCE_BUILD_TIMELINE_CONTRACT_REF = immutableEvidence({
 });
 
 export const EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF = immutableEvidence({
+  id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
+  version: EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_VERSION,
+});
+
+export const EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF_V1 = immutableEvidence({
   id: EVIDENCE_PROPOSE_ASSESSMENT_TASK,
   version: EVIDENCE_TASK_VERSION,
 });

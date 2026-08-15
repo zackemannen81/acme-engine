@@ -209,9 +209,93 @@ describe('Evidence Stage A PostgreSQL import', () => {
       'AUTHORIZED ANONYMIZED TEXT\nThe court records one source-bound fact.\nThe record contains a second source-bound fact.\n';
     let providerCalls = 0;
     let relationCalls = 0;
+    let assessmentCalls = 0;
     const observationTransport: ProviderTransport = {
       async send(request) {
         providerCalls += 1;
+        if (request.body.includes('evidence-propose-assessment-input/2')) {
+          assessmentCalls += 1;
+          expect(request.body).toContain(
+            'The court records one source-bound fact.',
+          );
+          const strings: string[] = [];
+          const collect = (value: unknown): void => {
+            if (typeof value === 'string') strings.push(value);
+            else if (Array.isArray(value)) value.forEach(collect);
+            else if (typeof value === 'object' && value !== null)
+              Object.values(value).forEach(collect);
+          };
+          collect(JSON.parse(request.body));
+          const encodedInput = strings.find((value) =>
+            value.includes('evidence-propose-assessment-input/2'),
+          );
+          if (encodedInput === undefined)
+            throw new Error('Assessment provider input was missing.');
+          const assessmentInput = JSON.parse(encodedInput) as {
+            acceptedObservations: Array<{
+              observationId: string;
+              artifactVersionId: string;
+              locator: { locatorId: string };
+            }>;
+            acceptedRelations: Array<{ relationId: string }>;
+            acceptedOpenQuestions: Array<{ openQuestionId: string }>;
+          };
+          const cited = assessmentInput.acceptedObservations[0];
+          if (cited === undefined)
+            throw new Error('Assessment request was not source-complete.');
+          expect(assessmentInput.acceptedRelations.length).toBeGreaterThan(0);
+          return {
+            kind: 'response',
+            status: 200,
+            headers: {},
+            body: JSON.stringify({
+              id: `stage-a-assessment-response-${suffix}-${assessmentCalls}`,
+              model: 'gpt-stage-a-test',
+              status: 'completed',
+              output: [
+                {
+                  type: 'message',
+                  content: [
+                    {
+                      type: 'output_text',
+                      text: JSON.stringify({
+                        schemaVersion: 'evidence-propose-assessment-output/1',
+                        claims: [
+                          {
+                            claimKey: `stage-a-assessment-${assessmentCalls}`,
+                            text: 'The authorized record contains a source-bound fact.',
+                            supportObservationIds: [cited.observationId],
+                            conflictRelationIds: [],
+                            qualificationRelationIds: [],
+                            supportUnresolved: false,
+                            uncertainty: 'medium',
+                            uncertaintyRationale:
+                              'The claim is limited to the cited record.',
+                          },
+                        ],
+                        openQuestionIds: assessmentInput.acceptedOpenQuestions
+                          .slice(0, 1)
+                          .map((item) => item.openQuestionId),
+                        citations: [
+                          {
+                            evidenceId: cited.observationId,
+                            artifactVersionId: cited.artifactVersionId,
+                            locatorId: cited.locator.locatorId,
+                          },
+                        ],
+                      }),
+                    },
+                  ],
+                },
+              ],
+              usage: {
+                input_tokens: 180,
+                output_tokens: 70,
+                total_tokens: 250,
+              },
+            }),
+          };
+        }
         if (request.body.includes('evidence-relate-observations-input/1')) {
           relationCalls += 1;
           const observationIds = [
@@ -389,6 +473,24 @@ describe('Evidence Stage A PostgreSQL import', () => {
         costCeilingMinor: 50,
         currency: 'SEK',
         rationale: 'Bounded Stage A relation restart proof.',
+      },
+    });
+    const assessmentCommand = (
+      commandKey = `postgres-live-assess-${suffix}`,
+    ) => ({
+      schemaVersion: 'evidence-case-live-assessment-command/1',
+      commandKey,
+      requestedBudget: { maxModelCalls: 1, costCeilingMinor: 50 },
+      confirmation: {
+        version: 'evidence-live-confirmation/1',
+        optIn: true,
+        provider: 'openai',
+        model: 'gpt-stage-a-test',
+        caseId,
+        maxModelCalls: 1,
+        costCeilingMinor: 50,
+        currency: 'SEK',
+        rationale: 'Bounded Stage A assessment restart proof.',
       },
     });
     try {
@@ -759,10 +861,20 @@ describe('Evidence Stage A PostgreSQL import', () => {
       await stop(reopened);
     }
 
+    let assessmentInterruptOnce = true;
     const relationReopened = await createLocalEvidenceWorkbench({
       persistence: 'postgres',
       seedMode: 'none',
-      live: { ...live, transport: observationTransport },
+      live: {
+        ...live,
+        transport: observationTransport,
+        afterAssessmentEngineCommit() {
+          if (assessmentInterruptOnce) {
+            assessmentInterruptOnce = false;
+            throw new Error('injected assessment projection interruption');
+          }
+        },
+      },
     });
     try {
       const address = await listenEvidenceWorkbenchApi(
@@ -824,8 +936,380 @@ describe('Evidence Stage A PostgreSQL import', () => {
         relationAudit.filter((item) => item.action === 'live-relation.refused'),
       ).toHaveLength(3);
       expect(JSON.stringify(relationAudit)).not.toContain(sourceText.trim());
+      const reviewTargets = [
+        ...snapshot.observations.map((item) => ({
+          kind: 'observation' as const,
+          id: item.observationId,
+        })),
+        ...snapshot.relations.map((item) => ({
+          kind: 'relation' as const,
+          id: item.relationId,
+        })),
+      ];
+      for (const target of reviewTargets) {
+        const reviewed = await request(
+          `api/cases/${encodeURIComponent(caseId)}/reviews`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              schemaVersion: 'evidence-review-command/3',
+              commandKey: `review-${target.kind}-${target.id}`,
+              targetKind: target.kind,
+              targetVersionId: target.id,
+              action: 'accept',
+              rationale: 'Accepted against the exact Stage A source.',
+              basisEvidenceRevision: null,
+            }),
+          },
+        );
+        expect(reviewed.status, await reviewed.clone().text()).toBe(201);
+      }
+      const assessmentOverBudget = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...assessmentCommand(`assessment-over-budget-${suffix}`),
+            requestedBudget: { maxModelCalls: 1, costCeilingMinor: 101 },
+            confirmation: {
+              ...assessmentCommand().confirmation,
+              costCeilingMinor: 101,
+            },
+          }),
+        },
+      );
+      expect(assessmentOverBudget.status).toBe(403);
+      expect(assessmentCalls).toBe(0);
+      const assessmentCredential = 'must-not-echo-assessment-secret';
+      const assessmentCredentialResponse = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...assessmentCommand(`assessment-credential-${suffix}`),
+            credential: { apiKey: assessmentCredential },
+          }),
+        },
+      );
+      expect(assessmentCredentialResponse.status).toBe(400);
+      expect(await assessmentCredentialResponse.text()).not.toContain(
+        assessmentCredential,
+      );
+      expect(assessmentCalls).toBe(0);
+      const foreignAssessment = await request(
+        `api/cases/${encodeURIComponent(relationReopened.caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...assessmentCommand(`assessment-foreign-${suffix}`),
+            confirmation: {
+              ...assessmentCommand().confirmation,
+              caseId: relationReopened.caseId,
+            },
+          }),
+        },
+      );
+      expect(foreignAssessment.status).toBe(403);
+      expect(assessmentCalls).toBe(0);
+      const assessmentLaunch = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(assessmentCommand()),
+        },
+      );
+      expect(
+        assessmentLaunch.status,
+        await assessmentLaunch.clone().text(),
+      ).toBe(202);
+      let assessmentJob = (await assessmentLaunch.json()) as {
+        jobId: string;
+        phase: string;
+      };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(
+          assessmentJob.phase,
+        )
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        assessmentJob = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(assessmentJob.jobId)}`,
+          )
+        ).json()) as typeof assessmentJob;
+      }
+      expect(assessmentJob).toMatchObject({
+        phase: 'failed',
+        reasonCode: 'LIVE_ASSESSMENT_PRODUCT_PROJECTION_INTERRUPTED',
+        actualModelCalls: 1,
+      });
+      expect(assessmentCalls).toBe(1);
+      expect(
+        (await relationReopened.productRepository.snapshot()).assessments,
+      ).toEqual([]);
     } finally {
       await stop(relationReopened);
     }
-  });
+
+    const assessmentReopened = await createLocalEvidenceWorkbench({
+      persistence: 'postgres',
+      seedMode: 'none',
+      live: { ...live, transport: observationTransport },
+    });
+    try {
+      const address = await listenEvidenceWorkbenchApi(
+        assessmentReopened.server,
+        { port: 0 },
+      );
+      const request = await authenticatedRequest(
+        address.url,
+        assessmentReopened.authCredentials,
+      );
+      const resumed = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(assessmentCommand()),
+        },
+      );
+      expect(resumed.status, await resumed.clone().text()).toBe(202);
+      let job = (await resumed.json()) as { jobId: string; phase: string };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        job = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+          )
+        ).json()) as typeof job;
+      }
+      expect(job).toMatchObject({
+        phase: 'completed',
+        reasonCode: 'LIVE_ASSESSMENT_RESUMED',
+        actualModelCalls: 1,
+      });
+      expect(assessmentCalls).toBe(1);
+      let snapshot = await assessmentReopened.productRepository.snapshot();
+      const firstAssessment = snapshot.assessments[0];
+      if (firstAssessment === undefined)
+        throw new Error('Missing first live assessment.');
+      const evidenceRevisionAfterAssessment = snapshot.workspaces.find(
+        (item) => item.workspaceId === firstAssessment.workspaceId,
+      )?.evidenceRevision;
+      if (evidenceRevisionAfterAssessment === undefined)
+        throw new Error('Missing assessment workspace revision.');
+      expect(evidenceRevisionAfterAssessment).toBe(
+        firstAssessment.basisEvidenceRevision,
+      );
+      const reviewed = await request(
+        `api/cases/${encodeURIComponent(caseId)}/reviews`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-review-command/3',
+            commandKey: `review-first-assessment-${suffix}`,
+            targetKind: 'assessment',
+            targetVersionId: firstAssessment.assessmentVersionId,
+            action: 'accept',
+            rationale: 'Reviewed every claim against its source citation.',
+            basisEvidenceRevision: null,
+          }),
+        },
+      );
+      expect(reviewed.status, await reviewed.clone().text()).toBe(201);
+
+      const laterImport = await request(
+        `api/cases/${encodeURIComponent(caseId)}/text-imports`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              schemaVersion: 'evidence-text-import-metadata/2',
+              commandKey: `postgres-live-later-import-${suffix}`,
+              intent: { kind: 'create' },
+              title: 'Later Stage A evidence',
+              artifactKind: 'structured-exhibit-text',
+              declaredMediaType: 'text/plain; charset=utf-8',
+              dataClass: 'stage-a-anonymized-judicial-text/1',
+              attestationVersion: 'evidence-stage-a-source-attestation/1',
+              anonymizationAttested: true,
+              operatorAuthorityAttested: true,
+              providerTransmissionAuthorized: true,
+              sourceProvenance: {
+                schemaVersion: 'evidence-external-source-provenance/1',
+                sourceKind: 'judicial-document',
+                externalSourceRef: `postgres-live:later:${suffix}`,
+                acquiredAt: '2026-08-15T11:00:00.000Z',
+                parentContainer: {
+                  kind: 'pdf',
+                  sha256: 'd'.repeat(64),
+                  byteLength: 8_765,
+                },
+                extraction: {
+                  method: 'pypdf-text-extraction',
+                  version: 'test-version',
+                  extractedAt: '2026-08-15T11:01:00.000Z',
+                  pageCount: 2,
+                },
+              },
+            },
+            text: sourceText,
+          }),
+        },
+      );
+      expect(laterImport.status, await laterImport.clone().text()).toBe(201);
+      const laterArtifactVersionId = (
+        (await laterImport.json()) as { artifactVersionId: string }
+      ).artifactVersionId;
+      const laterObservationCommand = {
+        ...liveCommand(),
+        commandKey: `postgres-live-later-observe-${suffix}`,
+        artifactVersionId: laterArtifactVersionId,
+      };
+      const laterLaunch = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-observations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(laterObservationCommand),
+        },
+      );
+      expect(laterLaunch.status, await laterLaunch.clone().text()).toBe(202);
+      job = (await laterLaunch.json()) as typeof job;
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        job = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+          )
+        ).json()) as typeof job;
+      }
+      expect(job.phase).toBe('completed');
+      snapshot = await assessmentReopened.productRepository.snapshot();
+      for (const observation of snapshot.observations.filter(
+        (item) => item.artifactVersionId === laterArtifactVersionId,
+      )) {
+        const response = await request(
+          `api/cases/${encodeURIComponent(caseId)}/reviews`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              schemaVersion: 'evidence-review-command/3',
+              commandKey: `review-later-${observation.observationId}`,
+              targetKind: 'observation',
+              targetVersionId: observation.observationId,
+              action: 'accept',
+              rationale: 'Accepted later evidence against source.',
+              basisEvidenceRevision: null,
+            }),
+          },
+        );
+        expect(response.status, await response.clone().text()).toBe(201);
+      }
+      const staleView = await request(
+        `api/cases/${encodeURIComponent(caseId)}/assessments/${encodeURIComponent(firstAssessment.assessmentVersionId)}`,
+      );
+      expect(staleView.status, await staleView.clone().text()).toBe(200);
+      expect(await staleView.json()).toMatchObject({ dueForAttention: true });
+      const successorLaunch = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-assessments`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(
+            assessmentCommand(`postgres-live-reassess-${suffix}`),
+          ),
+        },
+      );
+      expect(successorLaunch.status, await successorLaunch.clone().text()).toBe(
+        202,
+      );
+      job = (await successorLaunch.json()) as typeof job;
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        job = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+          )
+        ).json()) as typeof job;
+      }
+      expect(job.phase).toBe('completed');
+      expect(assessmentCalls).toBe(2);
+      snapshot = await assessmentReopened.productRepository.snapshot();
+      expect(snapshot.assessments).toHaveLength(2);
+      const successor = snapshot.assessments.find(
+        (item) => item.sequence === 2,
+      );
+      expect(successor).toMatchObject({
+        predecessorAssessmentVersionId: firstAssessment.assessmentVersionId,
+        basisEvidenceRevision: evidenceRevisionAfterAssessment + 1,
+      });
+      if (successor === undefined)
+        throw new Error('Missing successor assessment.');
+      const successorReview = await request(
+        `api/cases/${encodeURIComponent(caseId)}/reviews`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            schemaVersion: 'evidence-review-command/3',
+            commandKey: `review-successor-assessment-${suffix}`,
+            targetKind: 'assessment',
+            targetVersionId: successor.assessmentVersionId,
+            action: 'accept',
+            rationale: 'Reviewed the successor against its expanded citations.',
+            basisEvidenceRevision: null,
+          }),
+        },
+      );
+      expect(successorReview.status, await successorReview.clone().text()).toBe(
+        201,
+      );
+      snapshot = await assessmentReopened.productRepository.snapshot();
+      expect(
+        snapshot.reviewDecisions.some(
+          (item) =>
+            item.targetVersionId === firstAssessment.assessmentVersionId &&
+            item.action === 'accept',
+        ),
+      ).toBe(true);
+      expect(
+        snapshot.reviewDecisions.some(
+          (item) =>
+            item.targetVersionId === successor.assessmentVersionId &&
+            item.action === 'accept',
+        ),
+      ).toBe(true);
+      expect(
+        snapshot.securityAudit
+          .filter(
+            (item) => item.schemaVersion === 'evidence-security-audit-event/4',
+          )
+          .map((item) => item.action),
+      ).toEqual(
+        expect.arrayContaining([
+          'live-assessment.started',
+          'live-assessment.failed',
+          'live-assessment.completed',
+          'live-assessment.refused',
+        ]),
+      );
+    } finally {
+      await stop(assessmentReopened);
+    }
+  }, 30_000);
 });
