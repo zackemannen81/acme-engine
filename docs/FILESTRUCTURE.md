@@ -902,6 +902,9 @@ content remains intentionally omitted here.
   retain `@1.0.0`–`@1.4.0` for replay.
   ACME-0120 adds prompt-only active `@1.6.0` canonical UTC grammar and retains
   `@1.5.0` exactly.
+  ACME-0121 records the first committed real-provider observation batch under
+  `@1.6.0`; ACME-0122 aligns the live and PostgreSQL success-code assertions
+  with the worker's established `LIVE_OBSERVATION_COMPLETED` result.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.

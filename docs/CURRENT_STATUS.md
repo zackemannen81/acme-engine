@@ -488,8 +488,7 @@ than quote text. Runtime presents deterministic non-empty, single-line source
 segments of at most 500 Unicode code points, accepts only a supplied identifier
 and derives the entire exact quote plus locator from that immutable segment.
 Historical `@1.0.0`–`@1.4.0` and outputs `/1`–`/3` remain exact for replay.
-Full-source coverage still needs a separate segmentation/coverage workflow;
-successful real-provider acceptance remains.
+Full-source coverage still needs a separate segmentation/coverage workflow.
 ACME-0119's sole fresh `@1.5.0` call returned eight output `/4` candidates;
 all selected segment IDs existed and were unique, so ADR-0043's quote boundary
 held. Strict schema validation refused candidate seven because `exact.at` was a
@@ -503,6 +502,17 @@ ACME-0120 implements that dependency as active
 requires `YYYY-MM-DDTHH:MM:SSZ` or three-digit millisecond UTC, forbids local,
 minute-only and numeric-offset normalized values, and requires `unknown`
 instead. Historical `@1.5.0` remains byte-exact and registered.
+ACME-0121 then made one fresh `@1.6.0` call. It stopped normally after 66,819
+input and 650 output tokens with eight valid, supplied and unique output `/4`
+segment selections. Strict and semantic validation passed; runtime derived all
+eight exact quotes and one-line locators and durably wrote one committed
+execution, document and commit plus eight product observations. The product
+job returned `LIVE_OBSERVATION_COMPLETED`; the Vitest process alone exited
+false because its post-commit assertion still expected the obsolete
+`LIVE_OBSERVATION_COMMITTED`. ACME-0122 aligns that assertion and pins the
+successful reason in an offline PostgreSQL journey. The active observation
+contract therefore has real-provider product evidence, but the consumed
+ACME-0121 process-level charter is superseded rather than rewritten.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).

@@ -1518,6 +1518,15 @@ name the canonical UTC grammar explicitly and require `unknown` otherwise.
 ACME-0120 implements active `@1.6.0` with literal seconds/terminal-`Z` grammar
 and an explicit local/minute-only/numeric-offset prohibition. Output `/4` and
 runtime segment authority are unchanged; historical `@1.5.0` remains exact.
+ACME-0121's sole active `@1.6.0` call returned eight valid unique segment
+selections, passed strict and semantic validation and committed one document
+and eight runtime-derived observations. The new-job worker reason is
+`LIVE_OBSERVATION_COMPLETED`; an obsolete post-commit live-test expectation
+made the Vitest process false only after persistence succeeded. ACME-0122
+corrects that assertion and pins the same worker contract in the offline
+PostgreSQL journey without changing runtime behavior. This proves bounded
+observation interoperability/source binding, not exhaustive coverage or later
+relation/assessment provider acceptance.
 ACME-0107,
 ACME-0108 and
 ACME-0110 prove observation, relation and

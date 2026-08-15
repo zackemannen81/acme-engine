@@ -244,6 +244,13 @@ ACME-0119 then proved eight real-provider segment selections valid, but failed
 closed on one local minute-precision timestamp lacking seconds and `Z`.
 ACME-0120 adds active `@1.6.0` with literal canonical-UTC grammar and mandatory
 `unknown` fallback while preserving output `/4` and historical replay.
+ACME-0121's sole fresh call then passed strict and semantic validation: eight
+valid unique segment selections became eight runtime-derived, durably committed
+observations. The product completed with its established
+`LIVE_OBSERVATION_COMPLETED` reason; a stale post-commit live-test expectation
+made only the Vitest process false. ACME-0122 corrects that assertion offline.
+This is bounded observation acceptance, not exhaustive coverage or proof of
+the later live relation/assessment journey.
 The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).

@@ -1,5 +1,33 @@
 # Journal
 
+## 2026-08-15 — ACME-0121 product success, process charter superseded
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0121
+- Outcome: the sole active `evidence.observe-artifact@1.6.0` call stopped
+  normally at 66,819 input plus 650 output tokens. All eight output `/4`
+  segment selections were supplied, valid and unique. Strict/semantic
+  validation passed; runtime derived all eight exact quotes and one-line
+  locators and durably wrote one committed execution, document and commit plus
+  eight observations.
+- Harness disposition: the product returned its established
+  `LIVE_OBSERVATION_COMPLETED` result. Vitest alone exited false on an obsolete
+  post-commit expected reason; offline child ACME-0122 corrected that assertion
+  and passed focused PostgreSQL plus every canonical gate without a provider
+  call.
+- Status: bounded product observation acceptance is proven. ACME-0121 is
+  nevertheless superseded because its frozen primary deliverable required a
+  recorded green Vitest invocation and its one allowed call was consumed; the
+  charter is not rewritten after the fact.
+- Safety: no retry. Exact PostgreSQL/MinIO containers, network, temporary
+  source and key files were removed. Original PDF and ignored `.env.local` are
+  unchanged; no source content, secret or provider identifier entered Git.
+- Follow-up: separately freeze remaining relation/assessment provider
+  acceptance and the primary reviewer journey; exhaustive coverage remains a
+  distinct workflow problem.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0122 terminal-code assertion correction
 
 - Date: 2026-08-15

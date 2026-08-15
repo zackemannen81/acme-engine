@@ -4,7 +4,9 @@ Status: Approved delivery direction
 
 Date: 2026-08-15
 
-Current checkpoint: ACME-0118 runtime-derived observation quotes. Stages 1–8 are
+Current checkpoint: ACME-0122 corrected the live observation terminal-code
+assertion after ACME-0121 produced the first committed Stage A provider
+observation batch. Stages 1–8 are
 delivered; ADR-0040 accepts
 bounded Stage A authority, ACME-0105 delivers its fail-closed composition
 capability, ACME-0106 delivers authenticated import/browser activation and
@@ -32,7 +34,11 @@ ACME-0119 selected eight valid runtime segments but failed strict schema on one
 minute-precision local timestamp without seconds or terminal `Z`; an explicit
 canonical-UTC prompt version remains before another acceptance.
 ACME-0120 implements active `@1.6.0` with literal seconds/terminal-`Z` grammar
-and mandatory `unknown` fallback; another separately frozen acceptance remains.
+and mandatory `unknown` fallback. ACME-0121 then returned eight valid unique
+segment selections and committed eight runtime-derived observations. Its
+product job completed, but a stale post-commit reason-code expectation made
+Vitest false; ACME-0122 corrects that assertion offline. Relation/assessment
+provider acceptance and the primary reviewer journey remain separate.
 
 ## Purpose and Authority
 
@@ -85,7 +91,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111 truncated; ACME-0113 exposed locator offsets; ADR-0041/0042 and ACME-0112/0114 corrected both. ACME-0115 exposed time-only output and long-quote whitespace; ACME-0116 added single-line/full-date bounds. ACME-0117 exposed non-verbatim quotes; ADR-0043/ACME-0118 move quote/locator authority to runtime segments. ACME-0119 validated all segment selectors but exposed one non-canonical local timestamp. Explicit UTC grammar and successful acceptance remain. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed the first real-provider observation batch: eight valid segment selections became eight runtime-derived observations. ACME-0122 corrected its stale post-commit test reason. Relation/assessment provider acceptance and the reviewer journey remain. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.

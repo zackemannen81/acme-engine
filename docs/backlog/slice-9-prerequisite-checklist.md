@@ -153,7 +153,7 @@ flag.
 - [x] Keep every non-authorized class failing closed after the change, and
       prove it with a refusal test per contract.
 
-### D2. The live reviewer journey exists; fresh provider acceptance remains
+### D2. The live reviewer journey exists; observation provider acceptance passed
 
 The default workbench still composes `createScriptedModelGateway`. ACME-0105
 adds a fail-closed OpenAI capability behind PostgreSQL, hosted mode, a durable
@@ -181,7 +181,7 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       `encrypted-payload` with a durable mounted key.
 - [ ] Establish what the provider receives, retains and logs, and reconcile
       that with section A's provider handling.
-- [ ] Validate the `observe-artifact` strict structured-output contract with an
+- [x] Validate the `observe-artifact` strict structured-output contract with an
       explicitly budgeted real provider call on authorized material outside
       the sealed corpus. ACME-0111 made one call with a 52-page source: the
       provider stopped at 2,048 output tokens with incomplete JSON, and ACME
@@ -190,6 +190,11 @@ ACME-0110 proves the human review and late-evidence reassessment journey.
       retaining both historical versions. ACME-0113's fresh call completed
       strict JSON with six exact quotes, but each model-authored line locator
       was offset; semantic validation correctly committed nothing.
+      Successive bounded corrections culminated in active `@1.6.0`.
+      ACME-0121 returned eight valid unique segment selections; strict and
+      semantic validation passed and runtime committed eight source-bound
+      observations. Its product job completed, while a stale post-commit test
+      reason was corrected offline by ACME-0122.
 - [x] Remove source-locator authority from the observation model output and
       derive canonical start/end lines deterministically from a uniquely
       occurring exact quote, preserving historical contract replay.
