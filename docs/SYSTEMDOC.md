@@ -1160,8 +1160,10 @@ in
 ADR-0040 accepts the first bounded Slice 9 class and live-profile applicability
 boundary. ACME-0105 implements the closed capability and ACME-0106 implements
 capability-gated Stage A text import. ACME-0107 implements one bounded live
-`observe-artifact` product job; the offline/default profile remains
-synthetic-only, while live relation and assessment jobs remain closed.
+`observe-artifact` product job and ACME-0108 implements one bounded live
+`relate-observations` product job over server-derived current observations;
+the offline/default profile remains synthetic-only, while live assessment
+remains closed.
 SQLite and the file product store remain the local/hermetic CI defaults;
 PostgreSQL is opt-in via composition (`--adapter postgres` /
 `ACME_PERSISTENCE=postgres`) and `pnpm test:postgres`.
@@ -1329,8 +1331,8 @@ data authority; every output remains synthetic-only.
 ADR-0039 decides the workbench live model boundary. ACME-0105 implements its
 confirmation/composition foundation while the default execution engine remains
 the scripted mock. ACME-0106 consumes capability presence for Stage A import,
-and ACME-0107 adds the first provider-capable product route for
-`observe-artifact` only.
+ACME-0107 adds the provider-capable `observe-artifact` product route, and
+ACME-0108 adds `relate-observations` without widening the capability.
 ADR-0040 adds the product applicability boundary and accepts exactly one Stage
 A data class, `stage-a-anonymized-judicial-text/1`. The class is real judicial
 source text, already anonymized/redacted before import, operator-authorized for
@@ -1371,6 +1373,17 @@ source in one case before the capability releases its gateway. The browser
 supplies only source identity, actor roster and non-secret confirmation/budget;
 source text, workspace and principal are server-derived.
 
+ACME-0108's `evidence-case-live-relation-command/1` becomes the internal
+`evidence-live-relation-command/1`. `evidence-product-job/3` records the
+four-unit relation lifecycle, exact sorted observation identities and the
+literal one-call ceiling. The API selects only current observations from the
+authorized case snapshot, verifies each against an activated Stage A import
+and supplies no browser-originated evidence to the engine. After the durable
+engine commits, one repository transaction stores typed relations, open
+questions, scoped standing changes, case bindings and exactly one evidence-
+revision advance. File mutation and PostgreSQL transaction validation both
+fail before publishing a partial projection.
+
 `evidence-case-live-observation-command/1` becomes the internal
 `evidence-live-observation-command/1`, and `evidence-product-job/2` records a
 four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
@@ -1388,6 +1401,15 @@ completed, failed and refused outcomes with model/call/budget metadata but no
 source, quote, prompt, response, rationale or credential. A source unavailable
 inside the requested case returns non-disclosing 404; malformed credentials,
 authorization and excess budget refuse before transport.
+
+The relation job applies the same recovery rule. A post-engine/pre-product
+fault leaves relation, question and product revision state untouched; exact
+command replay reads the committed encrypted provider evidence, projects the
+same content-derived identities and finishes with one cumulative call. Live
+relation audit `/3` remains content-free. Its browser control appears only
+when the live capability exists and at least two current observations are
+available, then returns to the existing relation/open-question views; timeline
+continues to be the pure temporal projection of source-bound observations.
 
 Four independent keys are required before a provider is contacted: deployment
 opt-in from the environment, a valid `evidence-live-confirmation/1` whose
@@ -1419,10 +1441,10 @@ human decisions, typed relations and temporal uncertainty, case isolation,
 source-complete persistent assessments and visible attention after new
 evidence. A primary browser path rather than technical audit, CLI, JSON or
 database access is the completion surface. The live profile is not complete
-until an explicitly budgeted real Stage A provider acceptance, live
-relation/assessment jobs and the primary review/late-evidence reassessment
-journey are proven end to end. ACME-0107 has already proven the observation
-job's PostgreSQL restart/no-second-call part with an injected transport.
+until an explicitly budgeted real Stage A provider acceptance, live assessment
+and the primary review/late-evidence reassessment journey are proven end to
+end. ACME-0107 and ACME-0108 have proven the observation and relation jobs'
+PostgreSQL restart/no-second-call boundaries with injected transports.
 
 ## Remaining Implementation Baseline
 

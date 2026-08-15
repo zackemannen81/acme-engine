@@ -1,5 +1,48 @@
 # Journal
 
+## 2026-08-15 — ACME-0108 Stage A live relation job
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0108
+- Summary: Added the second callable Stage A provider operation. Additive
+  case/internal command contracts, `evidence-product-job/3` and live security
+  audit `/3` bind one authorized case, a sorted set of at least two current
+  observations, one model and a literal one-call budget.
+- Server authority: the authenticated case-first API derives workspace,
+  principal, current observations and activated Stage A source authority from
+  one authorized product snapshot. The browser supplies only command identity,
+  confirmation and budget; evidence, source text, state and credentials cannot
+  be supplied by the caller.
+- Product path: the existing strict `relate-observations` task validates model
+  output through the durable encrypted-payload engine. After engine commit, one
+  atomic repository operation stores typed relations, open questions, scoped
+  standing changes, case bindings and exactly one evidence-revision advance.
+  The primary browser launches/polls the job and exposes the committed result
+  through the existing relation/open-question views; timeline stays a pure
+  observation projection.
+- Recovery: an injected interruption after engine commit left no relations,
+  questions or product revision. Reopening the complete PostgreSQL composition
+  and resubmitting the exact command reused retained provider evidence, wrote
+  identical content-derived identities and completed with one cumulative
+  transport call.
+- Refusal/isolation: excess budget, credential-shaped payload and a sibling
+  case with no eligible observations all refused before transport. Refusal,
+  start, failure and completion audits remained content-free and did not echo
+  source text or credential material.
+- Verification: focused web/API/file suite 11 passed; focused PostgreSQL Stage
+  A suite 2 passed; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`;
+  `pnpm test` — 745 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm test:postgres` — 36 tests on a fresh database; `pnpm build`;
+  `pnpm format:check`; `pnpm docs:check`; `git diff --check`. Two initial full
+  local attempts hit existing Test UI/auth timing-teardown flakes; affected
+  tests passed alone and the exact full rerun passed. No paid call ran.
+- Follow-up: add the live assessment job and complete primary assessment
+  review plus late-evidence reassessment. Explicitly budgeted real-provider
+  acceptance still requires a process credential and approved spend ceiling.
+  Stage B and every broader data class remain closed.
+- Signature: Codex
+
 ## 2026-08-15 — ACME-0107 Stage A live observation job
 
 - Date: 2026-08-15

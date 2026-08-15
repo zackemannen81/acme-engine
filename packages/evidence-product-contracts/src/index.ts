@@ -4,6 +4,7 @@ export * from './artifact-service.js';
 export * from './ingestion.js';
 export * from './ingestion-service.js';
 export * from './live-observation.js';
+export * from './live-relation.js';
 export * from './operations.js';
 export * from './case-insights.js';
 export * from './assessment-output.js';

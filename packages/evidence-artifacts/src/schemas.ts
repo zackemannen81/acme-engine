@@ -171,9 +171,46 @@ export const EvidenceLiveSecurityAuditEventSchema = z
   })
   .strict();
 
+export const EvidenceLiveRelationSecurityAuditEventSchema = z
+  .object({
+    schemaVersion: z.literal('evidence-security-audit-event/3'),
+    auditEventId: NonBlank,
+    organizationId: NonBlank,
+    caseId: NonBlank,
+    principalRef: NonBlank,
+    action: z.enum([
+      'live-relation.refused',
+      'live-relation.started',
+      'live-relation.completed',
+      'live-relation.failed',
+    ]),
+    outcome: z.enum(['succeeded', 'denied', 'failed']),
+    reasonCode: NonBlank,
+    resourceKind: z.enum(['live-execution', 'case']),
+    resourceId: NonBlank,
+    requestId: NonBlank,
+    policyVersion: NonBlank,
+    keyId: z.null(),
+    keyVersion: z.null(),
+    beforeDigest: z.null(),
+    afterDigest: z.null(),
+    occurredAt: z.iso.datetime({ offset: true }),
+    task: z.literal('relate-observations'),
+    modelId: NonBlank,
+    maxModelCalls: z.literal(1),
+    actualModelCalls: z.number().int().min(0).max(1),
+    costCeilingMinor: z.number().int().nonnegative().nullable(),
+    currency: NonBlank.nullable(),
+  })
+  .strict();
+
 export const EvidenceSecurityAuditEventSchema = z.discriminatedUnion(
   'schemaVersion',
-  [EvidenceSecurityAuditEventV1Schema, EvidenceLiveSecurityAuditEventSchema],
+  [
+    EvidenceSecurityAuditEventV1Schema,
+    EvidenceLiveSecurityAuditEventSchema,
+    EvidenceLiveRelationSecurityAuditEventSchema,
+  ],
 );
 
 export const EvidenceArtifactBackupManifestSchema = z

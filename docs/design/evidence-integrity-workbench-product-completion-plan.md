@@ -4,10 +4,10 @@ Status: Approved delivery direction
 
 Date: 2026-08-15
 
-Current task: ACME-0107 completion. Stages 1–8 are delivered; ADR-0040 accepts
+Current task: ACME-0108 completion. Stages 1–8 are delivered; ADR-0040 accepts
 bounded Stage A authority, ACME-0105 delivers its fail-closed composition
 capability, ACME-0106 delivers authenticated import/browser activation and
-ACME-0107 delivers the restart-safe live observation job. Live relation,
+ACME-0107/0108 deliver restart-safe live observation and relation jobs. Live
 assessment and reviewer/reassessment completion are the next dependencies.
 
 ## Purpose and Authority
@@ -22,7 +22,9 @@ Stage 3 case/workspace management and isolation boundary, and ACME-0093
 implements it end to end. ADR-0037/ACME-0095 now implement secure object
 storage for the fixed synthetic corpus. ADR-0040 now authorizes only
 `stage-a-anonymized-judicial-text/1`; ACME-0106 implements its fail-closed
-operator-prepared text import and ACME-0107 opens only bounded observation.
+operator-prepared text import, ACME-0107 opens bounded observation and
+ACME-0108 opens bounded relation/open-question analysis over committed current
+observations.
 Stage B FUP, arbitrary ingestion, confidential, privileged, identifiable and
 criminal-offence data remain unauthorized.
 
@@ -59,7 +61,7 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Observation increment complete: ADR-0040 authority, ACME-0105 closed composition, ACME-0106 import and ACME-0107 restart-safe observation. Real-provider acceptance plus relation/assessment/reviewer/reassessment proof remain. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Observation and relation increments complete: ADR-0040 authority, ACME-0105 closed composition, ACME-0106 import, ACME-0107 restart-safe observation and ACME-0108 restart-safe relation/open-question analysis. Real-provider acceptance plus assessment/reviewer/reassessment proof remain. |
 | 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.
@@ -193,7 +195,7 @@ FUP and broader data remain blocked until separately reviewed and authorized.
 
 - ACME-0087 is complete and archived; ADR-0040 supplies Stage A authority.
 - Stage A case/import paths open only when the typed live composition and its
-  executable gates pass; only the bounded observation job is callable so far.
+  executable gates pass; bounded observation and relation jobs are callable.
 - The Primary Product Rule, source-binding invariants and prohibited authority
   remain unchanged.
 - Case Integrity Report work is a later product task and is explicitly outside

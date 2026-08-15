@@ -426,11 +426,22 @@ export function assertEvidenceCaseScopedReferences(
       throw new Error('Change set contains a cross-case object.');
   }
   for (const job of scoped.jobs) {
-    if (
-      job.workspaceId !== workspaceId ||
-      !sourceIds.has(job.artifactVersionId)
-    )
-      throw new Error('Job source belongs to another case.');
+    const missingObservationIds =
+      job.schemaVersion === 'evidence-product-job/3'
+        ? job.observationIds.filter((id) => !observationIds.has(id))
+        : [];
+    if (missingObservationIds.length > 0)
+      throw new Error('Job observations belong to another case.');
+    const inputExists =
+      job.schemaVersion === 'evidence-product-job/3'
+        ? true
+        : sourceIds.has(job.artifactVersionId);
+    if (job.workspaceId !== workspaceId)
+      throw new Error('Job workspace belongs to another case.');
+    if (!inputExists)
+      throw new Error(
+        `Job source belongs to another case (${job.schemaVersion}).`,
+      );
   }
   for (const decision of scoped.reviewDecisions) {
     const targetExists =

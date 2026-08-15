@@ -112,6 +112,7 @@ import {
   type EvidenceLiveCapability,
 } from './live.js';
 import { createEvidenceLiveObservationService } from './live-observation.js';
+import { createEvidenceLiveRelationService } from './live-relation.js';
 
 const WORKSPACE_ID = 'rillford-annex-local';
 const CASE_ID = 'rillford-annex-synthetic-case';
@@ -537,6 +538,7 @@ export interface EvidenceLiveCompositionOptions {
   readonly transport?: ProviderTransport;
   /** Fault-injection seam used to prove post-provider restart recovery. */
   readonly afterObservationEngineCommit?: () => void | Promise<void>;
+  readonly afterRelationEngineCommit?: () => void | Promise<void>;
 }
 
 function optionalNumber(value: string | undefined): number | undefined {
@@ -1298,6 +1300,21 @@ export async function createLocalEvidenceWorkbench(
                 afterEngineCommit: options.live.afterObservationEngineCommit,
               }),
         });
+  const liveRelation =
+    liveCapability === null
+      ? undefined
+      : createEvidenceLiveRelationService({
+          capability: liveCapability,
+          repository: productRepository,
+          worker,
+          ledger,
+          clock,
+          engineIds: ids,
+          productIds: reviewIds,
+          ...(options.live?.afterRelationEngineCommit === undefined
+            ? {}
+            : { afterEngineCommit: options.live.afterRelationEngineCommit }),
+        });
 
   const server = createEvidenceWorkbenchApi({
     repository: productRepository,
@@ -1320,6 +1337,7 @@ export async function createLocalEvidenceWorkbench(
     ingestion: ingestionService,
     stageA: { enabled: liveCapability !== null },
     ...(liveObservation === undefined ? {} : { liveObservation }),
+    ...(liveRelation === undefined ? {} : { liveRelation }),
     ...(lateFixture === null
       ? {}
       : {

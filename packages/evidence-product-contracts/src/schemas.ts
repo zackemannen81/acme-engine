@@ -49,6 +49,8 @@ export const EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION =
   'evidence-product-job/1' as const;
 export const EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION =
   'evidence-product-job/2' as const;
+export const EVIDENCE_LIVE_RELATION_JOB_SCHEMA_VERSION =
+  'evidence-product-job/3' as const;
 export const EVIDENCE_REVIEW_DECISION_SCHEMA_VERSION =
   'evidence-review-decision/1' as const;
 export const EVIDENCE_REVIEW_COMMAND_SCHEMA_VERSION =
@@ -205,9 +207,53 @@ export const EvidenceLiveObservationJobSchema = z
     message: 'Completed units cannot exceed total units.',
   });
 
+export const EvidenceLiveRelationJobSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_LIVE_RELATION_JOB_SCHEMA_VERSION),
+    jobKind: z.literal('live-relation'),
+    jobId: EvidenceNonBlankStringSchema,
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    artifactVersionId: z.literal('case-observation-set'),
+    observationIds: z.array(EvidenceNonBlankStringSchema).min(2),
+    task: z.literal('relate-observations'),
+    modelId: EvidenceNonBlankStringSchema,
+    phase: z.enum([
+      'queued',
+      'preparing',
+      'relating',
+      'projecting',
+      'completed',
+      'failed',
+      'cancelled',
+      'refused',
+    ]),
+    completedUnits: z.number().int().nonnegative(),
+    totalUnits: z.literal(4),
+    message: EvidenceNonBlankStringSchema,
+    cancelRequested: z.boolean(),
+    maxModelCalls: z.literal(1),
+    actualModelCalls: z.number().int().min(0).max(1),
+    costCeilingMinor: z.number().int().nonnegative().nullable(),
+    currency: EvidenceNonBlankStringSchema.nullable(),
+    reasonCode: EvidenceNonBlankStringSchema.nullable(),
+    executionId: EvidenceNonBlankStringSchema.nullable(),
+    createdAt: EvidenceIsoTimestampSchema,
+    updatedAt: EvidenceIsoTimestampSchema,
+  })
+  .strict()
+  .refine((value) => value.completedUnits <= value.totalUnits, {
+    path: ['completedUnits'],
+    message: 'Completed units cannot exceed total units.',
+  });
+
 export const EvidenceAnyProductJobSchema = z.discriminatedUnion(
   'schemaVersion',
-  [EvidenceProductJobSchema, EvidenceLiveObservationJobSchema],
+  [
+    EvidenceProductJobSchema,
+    EvidenceLiveObservationJobSchema,
+    EvidenceLiveRelationJobSchema,
+  ],
 );
 
 export const EvidenceProductChangeSetSchema = z
@@ -431,6 +477,9 @@ export type EvidenceSyntheticProductJob = z.infer<
 >;
 export type EvidenceLiveObservationJob = z.infer<
   typeof EvidenceLiveObservationJobSchema
+>;
+export type EvidenceLiveRelationJob = z.infer<
+  typeof EvidenceLiveRelationJobSchema
 >;
 export type EvidenceProductJob = z.infer<typeof EvidenceAnyProductJobSchema>;
 export type EvidenceProductChangeSet = z.infer<

@@ -421,8 +421,12 @@ visible only when that capability exists. ACME-0107 adds the first callable
 live operation: a case-first `observe-artifact` job hydrates the selected
 canonical representation server-side, enforces exact case/source/budget
 confirmation and projects validated source-bound observations only after the
-durable execution commits. The default engine remains the scripted mock and
-exposes neither the live route nor its browser control.
+durable execution commits. ACME-0108 adds a second case-first live job that
+derives current observations entirely from the authorized product snapshot,
+executes `relate-observations` once and atomically projects typed relations,
+open questions, standing changes and one evidence-revision advance. The
+default engine remains the scripted mock and exposes neither live route nor
+either browser control.
 
 Stage A import activation proves the complete ADR-0040 composition tuple:
 durable PostgreSQL, configured live provider, authorized-external source origin
@@ -431,8 +435,12 @@ through encrypted PostgreSQL import and full restart with zero provider calls.
 ACME-0107 proves the observation path with an injected Responses transport: a
 fault after provider success leaves no product observations, and a full
 PostgreSQL composition restart completes from encrypted retained provider
-evidence without a second call. A separate opt-in real-call acceptance entry
-exists but was not run because this checkpoint had no process credential.
+evidence without a second call. ACME-0108 proves the same boundary for relation
+analysis: refusal paths make zero calls, a fault after engine commit leaves no
+partial product projection, and a full composition restart completes from the
+retained response with the same relation/question identities and one cumulative
+call. A separate opt-in real-call acceptance entry exists but was not run
+because this checkpoint had no process credential.
 Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
 The remaining readiness evidence and later-class prerequisites are gathered in
 [`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
@@ -486,13 +494,21 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0108:** Added the bounded Stage A live relation job. The authenticated
+  case-first API derives all current observations and source authority on the
+  server, executes the existing strict relation task once, and atomically
+  projects relations, open questions, standing changes and one revision. The
+  primary browser can launch and poll the job; PostgreSQL restart proof covers
+  post-engine interruption, retained-response resume and stable identities
+  without a second provider call. Live assessment/re-review and real paid
+  acceptance remain subsequent dependencies.
 - **ACME-0107:** Added the bounded Stage A live observation job. Additive
   command/job/audit contracts, authenticated case-first API, source-analysis
   browser control and durable worker enforce one call, content-free control
   records and server-side source/identity resolution. Injected-transport and
   PostgreSQL restart proofs cover refusal, budget, case isolation, post-commit
-  interruption and zero-call resume. Live relations, assessment and the real
-  paid acceptance remain subsequent dependencies.
+  interruption and zero-call resume. Live assessment and the real paid
+  acceptance remain subsequent dependencies.
 - **ACME-0106:** Implemented bounded Stage A judicial-text import. Added
   additive case/import/provenance contracts, case-policy matching,
   case-admin-only source import, capability-gated API/browser controls and

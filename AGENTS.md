@@ -76,8 +76,10 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   Stage A class, `stage-a-anonymized-judicial-text/1`; ACME-0105 implements its
   fail-closed live capability and ACME-0106 implements case/API/browser import
   of operator-prepared text with exact outside-PDF provenance. ACME-0107 adds
-  one restart-safe live observation job with primary browser navigation. The
-  product never ingests the PDF container.
+  one restart-safe live observation job with primary browser navigation, and
+  ACME-0108 adds the corresponding restart-safe relation/open-question job
+  over server-derived current observations. The product never ingests the PDF
+  container.
   ADR-0036's case boundary is implemented: opaque public cases own unique
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
@@ -96,8 +98,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   A Slice 9 authority without authorizing Stage B FUP material, arbitrary
   ingestion or activation by implication. ACME-0105 implements the typed
   fail-closed live composition capability and durable payload-key boundary;
-  Stage A case creation, import and live observation require that capability.
-  Live relations, assessment, reviewer/reassessment completion and an
+  Stage A case creation, import, live observation and live relation analysis
+  require that capability. Assessment, reviewer/reassessment completion and an
   explicitly budgeted real-provider acceptance remain later increments.
 
 ## Start Here

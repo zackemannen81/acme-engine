@@ -206,11 +206,80 @@ describe('Evidence Stage A PostgreSQL import', () => {
   it('resumes a live observation after provider success without a second call', async () => {
     const suffix = randomUUID();
     const sourceText =
-      'AUTHORIZED ANONYMIZED TEXT\nThe court records one source-bound fact.\n';
+      'AUTHORIZED ANONYMIZED TEXT\nThe court records one source-bound fact.\nThe record contains a second source-bound fact.\n';
     let providerCalls = 0;
+    let relationCalls = 0;
     const observationTransport: ProviderTransport = {
       async send(request) {
         providerCalls += 1;
+        if (request.body.includes('evidence-relate-observations-input/1')) {
+          relationCalls += 1;
+          const observationIds = [
+            ...new Set(
+              request.body.match(/evidence_observation_[a-f0-9]+/gu) ?? [],
+            ),
+          ].sort();
+          expect(observationIds).toHaveLength(2);
+          return {
+            kind: 'response',
+            status: 200,
+            headers: {},
+            body: JSON.stringify({
+              id: `stage-a-relation-response-${suffix}`,
+              model: 'gpt-stage-a-test',
+              status: 'completed',
+              output: [
+                {
+                  type: 'message',
+                  content: [
+                    {
+                      type: 'output_text',
+                      text: JSON.stringify({
+                        schemaVersion: 'evidence-relate-observations-output/1',
+                        propositions: [],
+                        events: [],
+                        relations: [
+                          {
+                            relationKind: 'supports',
+                            endpoints: observationIds.map((id) => ({
+                              kind: 'observation',
+                              id,
+                            })),
+                            comparableScope: {
+                              subject: 'the judicial record',
+                              aspect: 'recorded source-bound facts',
+                              actorReferenceKeys: [],
+                              temporalObservationIds: [],
+                            },
+                            rationaleCode: 'STAGE_A_FACTS_CO_RECORDED',
+                            rationale:
+                              'Both cited observations occur in the same authorized record.',
+                          },
+                        ],
+                        openQuestions: [
+                          {
+                            questionCode: 'STAGE_A_CONTEXT_NEEDED',
+                            questionText:
+                              'What additional source context connects the two recorded facts?',
+                            triggeringObservationIds: [],
+                            triggeringRelationRationaleCodes: [
+                              'STAGE_A_FACTS_CO_RECORDED',
+                            ],
+                          },
+                        ],
+                      }),
+                    },
+                  ],
+                },
+              ],
+              usage: {
+                input_tokens: 150,
+                output_tokens: 80,
+                total_tokens: 230,
+              },
+            }),
+          };
+        }
         expect(request.body).toContain(
           'The court records one source-bound fact.',
         );
@@ -237,6 +306,20 @@ describe('Evidence Stage A PostgreSQL import', () => {
                           endLine: 2,
                           exactQuote:
                             'The court records one source-bound fact.',
+                          sourceActorReference: null,
+                          temporalBound: {
+                            kind: 'unknown',
+                            role: 'document-time',
+                            reason:
+                              'The cited source line supplies no exact time.',
+                          },
+                        },
+                        {
+                          kind: 'exhibit-assertion',
+                          startLine: 3,
+                          endLine: 3,
+                          exactQuote:
+                            'The record contains a second source-bound fact.',
                           sourceActorReference: null,
                           temporalBound: {
                             kind: 'unknown',
@@ -290,6 +373,22 @@ describe('Evidence Stage A PostgreSQL import', () => {
         costCeilingMinor: 50,
         currency: 'SEK',
         rationale: 'Bounded PostgreSQL restart proof.',
+      },
+    });
+    const relationCommand = () => ({
+      schemaVersion: 'evidence-case-live-relation-command/1',
+      commandKey: `postgres-live-relate-${suffix}`,
+      requestedBudget: { maxModelCalls: 1, costCeilingMinor: 50 },
+      confirmation: {
+        version: 'evidence-live-confirmation/1',
+        optIn: true,
+        provider: 'openai',
+        model: 'gpt-stage-a-test',
+        caseId,
+        maxModelCalls: 1,
+        costCeilingMinor: 50,
+        currency: 'SEK',
+        rationale: 'Bounded Stage A relation restart proof.',
       },
     });
     try {
@@ -486,7 +585,13 @@ describe('Evidence Stage A PostgreSQL import', () => {
     const reopened = await createLocalEvidenceWorkbench({
       persistence: 'postgres',
       seedMode: 'none',
-      live: { ...live, transport: observationTransport },
+      live: {
+        ...live,
+        transport: observationTransport,
+        afterRelationEngineCommit() {
+          throw new Error('injected relation projection interruption');
+        },
+      },
     });
     try {
       const address = await listenEvidenceWorkbenchApi(reopened.server, {
@@ -525,11 +630,19 @@ describe('Evidence Stage A PostgreSQL import', () => {
       const observations = snapshot.observations.filter(
         (item) => item.artifactVersionId === artifactVersionId,
       );
-      expect(observations).toHaveLength(1);
-      expect(observations[0]).toMatchObject({
-        exactQuote: 'The court records one source-bound fact.',
-        locator: { startLine: 2, endLine: 2 },
-      });
+      expect(observations).toHaveLength(2);
+      expect(observations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            exactQuote: 'The court records one source-bound fact.',
+            locator: expect.objectContaining({ startLine: 2, endLine: 2 }),
+          }),
+          expect.objectContaining({
+            exactQuote: 'The record contains a second source-bound fact.',
+            locator: expect.objectContaining({ startLine: 3, endLine: 3 }),
+          }),
+        ]),
+      );
       const liveAudit = snapshot.securityAudit.filter(
         (item) => item.schemaVersion === 'evidence-security-audit-event/2',
       );
@@ -547,8 +660,172 @@ describe('Evidence Stage A PostgreSQL import', () => {
       expect(JSON.stringify(liveAudit)).not.toContain(
         'postgres-stage-a-test-key',
       );
+      const relationOverBudget = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-relations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...relationCommand(),
+            commandKey: `postgres-live-relate-over-budget-${suffix}`,
+            requestedBudget: { maxModelCalls: 1, costCeilingMinor: 101 },
+            confirmation: {
+              ...relationCommand().confirmation,
+              costCeilingMinor: 101,
+            },
+          }),
+        },
+      );
+      expect(
+        relationOverBudget.status,
+        await relationOverBudget.clone().text(),
+      ).toBe(403);
+      expect(relationCalls).toBe(0);
+      const relationCredential = 'must-not-echo-relation-secret';
+      const relationCredentialResponse = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-relations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...relationCommand(),
+            commandKey: `postgres-live-relate-credential-${suffix}`,
+            apiKey: relationCredential,
+          }),
+        },
+      );
+      expect(
+        relationCredentialResponse.status,
+        await relationCredentialResponse.clone().text(),
+      ).toBe(400);
+      expect(await relationCredentialResponse.text()).not.toContain(
+        relationCredential,
+      );
+      expect(relationCalls).toBe(0);
+      const foreignRelation = await request(
+        `api/cases/${encodeURIComponent(reopened.caseId)}/live-relations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            ...relationCommand(),
+            commandKey: `postgres-live-relate-foreign-${suffix}`,
+            confirmation: {
+              ...relationCommand().confirmation,
+              caseId: reopened.caseId,
+            },
+          }),
+        },
+      );
+      expect(foreignRelation.status).toBe(403);
+      expect(relationCalls).toBe(0);
+      const relationLaunch = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-relations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(relationCommand()),
+        },
+      );
+      expect(relationLaunch.status, await relationLaunch.clone().text()).toBe(
+        202,
+      );
+      let relationJob = (await relationLaunch.json()) as {
+        jobId: string;
+        phase: string;
+      };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(
+          relationJob.phase,
+        )
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        relationJob = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(relationJob.jobId)}`,
+          )
+        ).json()) as typeof relationJob;
+      }
+      expect(relationJob).toMatchObject({
+        phase: 'failed',
+        reasonCode: 'LIVE_RELATION_PRODUCT_PROJECTION_INTERRUPTED',
+        actualModelCalls: 1,
+      });
+      expect(relationCalls).toBe(1);
+      expect((await reopened.productRepository.snapshot()).relations).toEqual(
+        [],
+      );
     } finally {
       await stop(reopened);
+    }
+
+    const relationReopened = await createLocalEvidenceWorkbench({
+      persistence: 'postgres',
+      seedMode: 'none',
+      live: { ...live, transport: observationTransport },
+    });
+    try {
+      const address = await listenEvidenceWorkbenchApi(
+        relationReopened.server,
+        {
+          port: 0,
+        },
+      );
+      const request = await authenticatedRequest(
+        address.url,
+        relationReopened.authCredentials,
+      );
+      const response = await request(
+        `api/cases/${encodeURIComponent(caseId)}/live-relations`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(relationCommand()),
+        },
+      );
+      expect(response.status, await response.clone().text()).toBe(202);
+      let job = (await response.json()) as { jobId: string; phase: string };
+      while (
+        !['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        job = (await (
+          await request(
+            `api/cases/${encodeURIComponent(caseId)}/jobs/${encodeURIComponent(job.jobId)}`,
+          )
+        ).json()) as typeof job;
+      }
+      expect(job).toMatchObject({
+        phase: 'completed',
+        reasonCode: 'LIVE_RELATION_RESUMED',
+        actualModelCalls: 1,
+      });
+      expect(relationCalls).toBe(1);
+      const snapshot = await relationReopened.productRepository.snapshot();
+      expect(snapshot.relations).toHaveLength(1);
+      expect(snapshot.openQuestions).toHaveLength(1);
+      expect(
+        snapshot.securityAudit
+          .filter(
+            (item) => item.schemaVersion === 'evidence-security-audit-event/3',
+          )
+          .map((item) => item.action),
+      ).toEqual(
+        expect.arrayContaining([
+          'live-relation.started',
+          'live-relation.failed',
+          'live-relation.completed',
+        ]),
+      );
+      const relationAudit = snapshot.securityAudit.filter(
+        (item) => item.schemaVersion === 'evidence-security-audit-event/3',
+      );
+      expect(
+        relationAudit.filter((item) => item.action === 'live-relation.refused'),
+      ).toHaveLength(3);
+      expect(JSON.stringify(relationAudit)).not.toContain(sourceText.trim());
+    } finally {
+      await stop(relationReopened);
     }
   });
 });

@@ -159,6 +159,15 @@ export interface EvidenceProductRepository {
     openQuestions: readonly EvidenceOpenQuestion[],
     scope?: EvidenceCaseObjectScope,
   ): Promise<readonly EvidenceOpenQuestion[]>;
+  commitRelationProjection(input: {
+    readonly relations: readonly EvidenceRelation[];
+    readonly openQuestions: readonly EvidenceOpenQuestion[];
+    readonly changeSet: EvidenceProductChangeSet;
+    readonly workspaceId: string;
+    readonly expectedRevision: number;
+    readonly nextRevision: number;
+    readonly scope: EvidenceCaseObjectScope;
+  }): Promise<EvidenceWorkspace>;
   putAssessments(
     assessments: readonly EvidenceAssessment[],
     scope?: EvidenceCaseObjectScope,

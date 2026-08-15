@@ -76,5 +76,10 @@ describe('renderEvidenceWorkbenchShell', () => {
     );
     expect(html).toContain('No credential or source text belongs');
     expect(html).not.toContain('apiKey');
+    expect(html).toContain('Analyze relationships');
+    expect(html).toContain('Start relationship analysis');
+    expect(html).toContain(
+      "schemaVersion:'evidence-case-live-relation-command/1'",
+    );
   });
 });

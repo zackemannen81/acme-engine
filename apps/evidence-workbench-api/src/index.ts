@@ -36,6 +36,8 @@ import {
   EvidenceTextImportMetadataSchema,
   EvidenceCaseLiveObservationCommandSchema,
   type EvidenceCaseLiveObservationCommand,
+  EvidenceCaseLiveRelationCommandSchema,
+  type EvidenceCaseLiveRelationCommand,
   EvidenceRedactionOperationSchema,
   type EvidenceIngestionService,
   EvidenceBulkReviewCommandSchema,
@@ -91,6 +93,10 @@ import {
   EvidenceLiveObservationRefused,
   type EvidenceLiveObservationService,
 } from './live-observation.js';
+import {
+  EvidenceLiveRelationRefused,
+  type EvidenceLiveRelationService,
+} from './live-relation.js';
 
 export * from './live.js';
 
@@ -196,6 +202,7 @@ export function createEvidenceWorkbenchApi(options: {
   readonly ingestion?: EvidenceIngestionService;
   readonly stageA?: { readonly enabled: boolean };
   readonly liveObservation?: EvidenceLiveObservationService;
+  readonly liveRelation?: EvidenceLiveRelationService;
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
   readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
@@ -509,6 +516,7 @@ export function createEvidenceWorkbenchApi(options: {
           schemaVersion: 'evidence-product-capabilities/1',
           stageAImport: options.stageA?.enabled === true,
           liveObservation: options.liveObservation !== undefined,
+          liveRelation: options.liveRelation !== undefined,
           liveObservationModel:
             options.liveObservation?.deployment.model ?? null,
           liveObservationMaxModelCalls:
@@ -748,6 +756,7 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/reviews',
           '/api/imports',
           '/api/live-observations',
+          '/api/live-relations',
           '/api/jobs',
           '/api/technical',
           '/api/export-policy',
@@ -1922,6 +1931,61 @@ export function createEvidenceWorkbenchApi(options: {
           );
         } catch (error) {
           if (error instanceof EvidenceLiveObservationRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
+        return;
+      }
+      if (request.method === 'POST' && url.pathname === '/api/live-relations') {
+        if (requestCaseId === null || options.liveRelation === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveRelationCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveRelationCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveRelation.refuse({
+            reasonCode: 'LIVE_RELATION_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live relation command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveRelation.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveRelationRefused)
             throw new EvidenceAuthorizationError(error.status, error.reason);
           throw error;
         }

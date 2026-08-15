@@ -101,6 +101,7 @@ describe('Stage A HTTP boundary', () => {
         schemaVersion: 'evidence-product-capabilities/1',
         stageAImport: false,
         liveObservation: false,
+        liveRelation: false,
         liveObservationModel: null,
         liveObservationMaxModelCalls: null,
         liveObservationCostCeilingMinor: null,

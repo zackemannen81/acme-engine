@@ -221,8 +221,9 @@ default callable product remains synthetic-only. ADR-0040 authorizes a
 distinct Stage A live profile, ACME-0105 implements its closed composition
 capability and ACME-0106 implements the versioned case/import contract plus
 authenticated browser path for operator-prepared anonymized judicial text.
-ACME-0107 implements the first restart-safe live observation job; live
-relations, assessment and reassessment remain. The approved
+ACME-0107 implements the first restart-safe live observation job and ACME-0108
+adds restart-safe relation/open-question analysis over those committed
+observations; live assessment and reassessment remain. The approved
 later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
@@ -240,9 +241,9 @@ delivered. ADR-0040 accepts the first Slice 9 class:
 versioned live-profile tuple: durable PostgreSQL, live provider,
 authorized-external source origin and authorized-live execution. Stage A case
 creation/import now requires that capability and stores exact external PDF
-provenance without ingesting the PDF. Only the bounded observation route can
-invoke the provider; Stage B FUP material and every broader data path remain
-unauthorized.
+provenance without ingesting the PDF. The bounded observation and relation
+routes can invoke the provider under the same one-call/case/budget boundary;
+Stage B FUP material and every broader data path remain unauthorized.
 
 ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
 and ACME-0097 implements it end to end.

@@ -9,31 +9,31 @@ import {
   type Clock,
   type ExecutionRepository,
   type IdGenerator,
-  type ModelGateway,
   type RepositoryEvidence,
 } from '@acme/core';
 import type { EvidenceCaseAuthorizationContext } from '@acme/evidence-auth';
 import { EvidenceSecurityAuditEventSchema } from '@acme/evidence-artifacts';
 import {
-  EVIDENCE_LIVE_OBSERVATION_COMMAND_SCHEMA_VERSION,
-  EvidenceLiveObservationCommandSchema,
+  EVIDENCE_LIVE_RELATION_COMMAND_SCHEMA_VERSION,
+  EvidenceLiveRelationCommandSchema,
   EvidenceStageATextImportRecordSchema,
-  deriveEvidenceLiveObservationJobId,
+  deriveEvidenceLiveRelationJobId,
   type EvidenceArtifactReadAuditContext,
-  type EvidenceArtifactService,
-  type EvidenceCaseLiveObservationCommand,
+  type EvidenceCaseLiveRelationCommand,
   type EvidenceCaseObjectScope,
-  type EvidenceLiveObservationJob,
+  type EvidenceLiveRelationJob,
   type EvidenceProductClock,
   type EvidenceProductIds,
   type EvidenceProductRepository,
 } from '@acme/evidence-product-contracts';
 import type {
-  EvidenceLiveObservationExecutor,
+  EvidenceLiveRelationExecutor,
   EvidenceWorkbenchWorker,
 } from '@acme/evidence-workbench-worker';
 import {
-  EvidenceObservationSchema,
+  EvidenceOpenQuestionSchema,
+  EvidenceRelationSchema,
+  EvidenceDeltaSchema,
   evidenceModule,
   evidenceObserveArtifactContract,
   evidenceObserveArtifactContractV1,
@@ -46,28 +46,23 @@ import {
   type EvidenceAuthorizedLiveRun,
   type EvidenceLiveCapability,
 } from './live.js';
+import { createEvidenceSingleCallGateway } from './live-observation.js';
 
 interface SnapshotExecutionRepository {
   snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
 }
 
-export class EvidenceLiveObservationRefused extends Error {
+export class EvidenceLiveRelationRefused extends Error {
   constructor(
     readonly reason: string,
     readonly status: 403 | 404 = 403,
   ) {
     super(reason);
-    this.name = 'EvidenceLiveObservationRefused';
+    this.name = 'EvidenceLiveRelationRefused';
   }
 }
 
-export interface EvidenceLiveObservationService {
-  readonly deployment: {
-    readonly model: string;
-    readonly maxModelCalls: number;
-    readonly costCeilingMinor: number | null;
-    readonly currency: string | null;
-  };
+export interface EvidenceLiveRelationService {
   refuse(input: {
     readonly reasonCode: string;
     readonly authorization: EvidenceCaseAuthorizationContext;
@@ -75,16 +70,16 @@ export interface EvidenceLiveObservationService {
     readonly scope: EvidenceCaseObjectScope;
   }): Promise<void>;
   start(input: {
-    readonly command: EvidenceCaseLiveObservationCommand;
+    readonly command: EvidenceCaseLiveRelationCommand;
     readonly authorization: EvidenceCaseAuthorizationContext;
     readonly audit: EvidenceArtifactReadAuditContext;
     readonly scope: EvidenceCaseObjectScope;
-  }): Promise<EvidenceLiveObservationJob>;
+  }): Promise<EvidenceLiveRelationJob>;
 }
 
 function reasonFor(error: unknown): string {
   if (error instanceof EvidenceLiveRefused) return error.reason;
-  if (error instanceof EvidenceLiveObservationRefused) return error.reason;
+  if (error instanceof EvidenceLiveRelationRefused) return error.reason;
   if (
     typeof error === 'object' &&
     error !== null &&
@@ -92,58 +87,40 @@ function reasonFor(error: unknown): string {
     typeof error.code === 'string'
   )
     return error.code;
-  return 'LIVE_OBSERVATION_REFUSED';
+  return error instanceof Error
+    ? `LIVE_RELATION_${error.name.replaceAll(/[^A-Za-z0-9]+/gu, '_').toUpperCase()}`
+    : 'LIVE_RELATION_REFUSED';
 }
 
-export function createEvidenceSingleCallGateway(input: {
-  readonly gateway: ModelGateway;
-  readonly calls: { value: 0 | 1 };
-}): ModelGateway {
-  return {
-    capabilities: (selection) => input.gateway.capabilities(selection),
-    async generate(request, context) {
-      if (input.calls.value >= 1) {
-        const error = new Error('LIVE_MODEL_CALL_BUDGET_EXHAUSTED') as Error & {
-          code: string;
-          actualModelCalls: 1;
-        };
-        error.code = 'LIVE_MODEL_CALL_BUDGET_EXHAUSTED';
-        error.actualModelCalls = 1;
-        throw error;
-      }
-      input.calls.value = 1;
-      return input.gateway.generate(request, context);
-    },
-  };
-}
-
-export function createEvidenceLiveObservationService(options: {
+export function createEvidenceLiveRelationService(options: {
   readonly capability: EvidenceLiveCapability;
   readonly repository: EvidenceProductRepository;
-  readonly artifacts: EvidenceArtifactService;
   readonly worker: EvidenceWorkbenchWorker;
   readonly ledger: SnapshotExecutionRepository & ExecutionRepository;
   readonly clock: Clock & EvidenceProductClock;
   readonly engineIds: IdGenerator;
   readonly productIds: EvidenceProductIds;
   readonly afterEngineCommit?: () => void | Promise<void>;
-}): EvidenceLiveObservationService {
+}): EvidenceLiveRelationService {
   const appendAudit = async (input: {
     readonly action:
-      'live.refused' | 'live.started' | 'live.completed' | 'live.failed';
+      | 'live-relation.refused'
+      | 'live-relation.started'
+      | 'live-relation.completed'
+      | 'live-relation.failed';
     readonly outcome: 'succeeded' | 'denied' | 'failed';
     readonly reasonCode: string;
     readonly resourceKind: 'case' | 'live-execution';
     readonly resourceId: string;
     readonly actualModelCalls: 0 | 1;
-    readonly command?: EvidenceCaseLiveObservationCommand;
+    readonly command?: EvidenceCaseLiveRelationCommand;
     readonly authorization: EvidenceCaseAuthorizationContext;
     readonly audit: EvidenceArtifactReadAuditContext;
     readonly scope: EvidenceCaseObjectScope;
   }) =>
     options.repository.appendSecurityAudit(
       EvidenceSecurityAuditEventSchema.parse({
-        schemaVersion: 'evidence-security-audit-event/2',
+        schemaVersion: 'evidence-security-audit-event/3',
         auditEventId: options.productIds.next('security-audit'),
         organizationId: input.authorization.organizationId,
         caseId: input.scope.caseId,
@@ -160,7 +137,7 @@ export function createEvidenceLiveObservationService(options: {
         beforeDigest: null,
         afterDigest: null,
         occurredAt: options.clock.now(),
-        task: 'observe-artifact',
+        task: 'relate-observations',
         modelId: options.capability.deployment.model,
         maxModelCalls: 1,
         actualModelCalls: input.actualModelCalls,
@@ -173,17 +150,17 @@ export function createEvidenceLiveObservationService(options: {
 
   const executor = (input: {
     readonly run: EvidenceAuthorizedLiveRun;
+    readonly browserCommand: EvidenceCaseLiveRelationCommand;
     readonly authorization: EvidenceCaseAuthorizationContext;
     readonly audit: EvidenceArtifactReadAuditContext;
     readonly scope: EvidenceCaseObjectScope;
-    readonly browserCommand: EvidenceCaseLiveObservationCommand;
-  }): EvidenceLiveObservationExecutor => ({
-    async observe({ command, signal }) {
-      const jobId = deriveEvidenceLiveObservationJobId(command);
+  }): EvidenceLiveRelationExecutor => ({
+    async relate({ command, signal }) {
+      const jobId = deriveEvidenceLiveRelationJobId(command);
       await appendAudit({
-        action: 'live.started',
+        action: 'live-relation.started',
         outcome: 'succeeded',
-        reasonCode: 'LIVE_OBSERVATION_STARTED',
+        reasonCode: 'LIVE_RELATION_STARTED',
         resourceKind: 'live-execution',
         resourceId: jobId,
         actualModelCalls: 0,
@@ -192,26 +169,27 @@ export function createEvidenceLiveObservationService(options: {
         audit: input.audit,
         scope: input.scope,
       });
-      const snapshot = await options.repository.caseSnapshot(
+      const product = await options.repository.caseSnapshot(
         input.scope.caseId,
         input.scope.workspaceId,
       );
-      const storedSource = snapshot.sources.find(
-        ({ artifactVersionId }) =>
-          artifactVersionId === command.artifactVersionId,
+      const byId = new Map(
+        product.observations.map((observation) => [
+          observation.observationId,
+          observation,
+        ]),
       );
-      if (storedSource === undefined)
-        throw new EvidenceLiveObservationRefused(
-          'LIVE_OBSERVATION_SOURCE_UNAVAILABLE',
-        );
-      const source = await options.artifacts.readSource({
-        snapshot,
-        source: storedSource,
-        scope: input.scope,
-        audit: input.audit,
+      const observations = command.observationIds.map((id) => {
+        const observation = byId.get(id);
+        if (observation === undefined)
+          throw new EvidenceLiveRelationRefused(
+            'LIVE_RELATION_OBSERVATIONS_UNAVAILABLE',
+            404,
+          );
+        return observation;
       });
       const evidence = await options.ledger.snapshot();
-      const requestKey = `live-observe:${command.commandKey}`;
+      const requestKey = `live-relate:${command.commandKey}`;
       const executionId = deriveExecutionId('evidence', requestKey);
       const existingExecution = evidence.executions.find(
         (item) => item.executionId === executionId,
@@ -248,18 +226,17 @@ export function createEvidenceLiveObservationService(options: {
         {
           requestKey,
           namespace: 'evidence',
-          task: 'observe-artifact',
+          task: 'relate-observations',
           entityId: command.workspaceId,
           expectedRevision:
             existingExecution?.request.expectedRevision ??
             latestState?.revision ??
             0,
           input: {
-            schemaVersion: 'evidence-observe-artifact-input/1',
-            artifactVersion: source,
-            actorRoster: command.actorRoster,
+            schemaVersion: 'evidence-relate-observations-input/1',
+            observations,
           },
-          model: input.run.selection('observe-artifact'),
+          model: input.run.selection('relate-observations'),
           policy: {
             timeoutMs: 120_000,
             maxModelCalls: 1,
@@ -289,30 +266,42 @@ export function createEvidenceLiveObservationService(options: {
         await options.afterEngineCommit?.();
       } catch {
         const error = new Error(
-          'LIVE_PRODUCT_PROJECTION_INTERRUPTED',
-        ) as Error & {
-          code: string;
-          actualModelCalls: 0 | 1;
-        };
-        error.code = 'LIVE_PRODUCT_PROJECTION_INTERRUPTED';
+          'LIVE_RELATION_PRODUCT_PROJECTION_INTERRUPTED',
+        ) as Error & { code: string; actualModelCalls: 0 | 1 };
+        error.code = 'LIVE_RELATION_PRODUCT_PROJECTION_INTERRUPTED';
         error.actualModelCalls = calls.value;
         throw error;
       }
       const committed = await options.ledger.snapshot();
-      const observations = committed.memoryRecords.flatMap((record) => {
-        const parsed = EvidenceObservationSchema.safeParse(record.value);
-        return parsed.success &&
-          parsed.data.artifactVersionId === command.artifactVersionId
-          ? [parsed.data]
-          : [];
+      const produced = committed.memoryRecords.filter((record) =>
+        record.provenance.some(
+          (provenance) => provenance.executionId === executionId,
+        ),
+      );
+      const relations = produced.flatMap((record) => {
+        const parsed = EvidenceRelationSchema.safeParse(record.value);
+        return parsed.success ? [parsed.data] : [];
       });
-      if (observations.length === 0)
-        throw new EvidenceLiveObservationRefused(
-          'LIVE_OBSERVATION_EMPTY_RESULT',
-        );
+      const openQuestions = produced.flatMap((record) => {
+        const parsed = EvidenceOpenQuestionSchema.safeParse(record.value);
+        return parsed.success ? [parsed.data] : [];
+      });
+      if (relations.length === 0 && openQuestions.length === 0)
+        throw new EvidenceLiveRelationRefused('LIVE_RELATION_EMPTY_RESULT');
+      const transition = committed.state.transitions.find(
+        (item) => item.executionId === executionId,
+      );
+      const standingChanges =
+        transition === undefined
+          ? []
+          : EvidenceDeltaSchema.parse(transition.delta).standingChanges.filter(
+              (change) => command.observationIds.includes(change.objectId),
+            );
       return {
         executionId,
-        observations,
+        relations,
+        openQuestions,
+        standingChanges,
         replayed: calls.value === 0 || result.replayed,
         actualModelCalls: calls.value,
       };
@@ -320,7 +309,9 @@ export function createEvidenceLiveObservationService(options: {
     async settle(settlement) {
       await appendAudit({
         action:
-          settlement.phase === 'completed' ? 'live.completed' : 'live.failed',
+          settlement.phase === 'completed'
+            ? 'live-relation.completed'
+            : 'live-relation.failed',
         outcome: settlement.phase === 'completed' ? 'succeeded' : 'failed',
         reasonCode: settlement.reasonCode,
         resourceKind: 'live-execution',
@@ -335,15 +326,9 @@ export function createEvidenceLiveObservationService(options: {
   });
 
   return {
-    deployment: Object.freeze({
-      model: options.capability.deployment.model,
-      maxModelCalls: options.capability.deployment.budget.maxModelCalls,
-      costCeilingMinor: options.capability.deployment.budget.costCeilingMinor,
-      currency: options.capability.deployment.currency,
-    }),
     async refuse(input) {
       await appendAudit({
-        action: 'live.refused',
+        action: 'live-relation.refused',
         outcome: 'denied',
         reasonCode: input.reasonCode,
         resourceKind: 'case',
@@ -355,67 +340,101 @@ export function createEvidenceLiveObservationService(options: {
       });
     },
     async start(input) {
-      const sourceSnapshot = await options.repository.caseSnapshot(
-        input.scope.caseId,
-        input.scope.workspaceId,
-      );
       try {
-        const importedValue = sourceSnapshot.textImports.find(
-          (item) =>
-            item.schemaVersion === 'evidence-text-import-record/2' &&
-            item.artifactVersionId === input.command.artifactVersionId &&
-            item.state === 'activated',
+        const snapshot = await options.repository.caseSnapshot(
+          input.scope.caseId,
+          input.scope.workspaceId,
         );
-        const imported =
-          importedValue === undefined
-            ? undefined
-            : EvidenceStageATextImportRecordSchema.parse(importedValue);
-        const source = sourceSnapshot.sources.find(
-          ({ artifactVersionId }) =>
-            artifactVersionId === input.command.artifactVersionId,
+        const standings = new Map(
+          snapshot.observations.map(({ observationId }) => [
+            observationId,
+            'current',
+          ]),
         );
-        if (imported === undefined || source === undefined)
-          throw new EvidenceLiveObservationRefused(
-            'LIVE_OBSERVATION_SOURCE_UNAVAILABLE',
+        for (const changeSet of [...snapshot.changeSets].sort(
+          (left, right) =>
+            left.recordedAt.localeCompare(right.recordedAt) ||
+            left.commandKey.localeCompare(right.commandKey),
+        ))
+          for (const change of changeSet.changeSet.standingChanges)
+            if (standings.has(change.objectId))
+              standings.set(change.objectId, change.to);
+        const observations = snapshot.observations
+          .filter(
+            ({ observationId }) => standings.get(observationId) === 'current',
+          )
+          .sort((left, right) =>
+            left.observationId.localeCompare(right.observationId),
+          );
+        if (observations.length < 2)
+          throw new EvidenceLiveRelationRefused(
+            'LIVE_RELATION_OBSERVATIONS_REQUIRED',
+            403,
+          );
+        const imports = new Map(
+          snapshot.textImports.flatMap((value) => {
+            if (
+              value.schemaVersion !== 'evidence-text-import-record/2' ||
+              value.state !== 'activated'
+            )
+              return [];
+            const parsed = EvidenceStageATextImportRecordSchema.parse(value);
+            return [[parsed.artifactVersionId, parsed] as const];
+          }),
+        );
+        const authorities = observations.map((observation) =>
+          imports.get(observation.artifactVersionId),
+        );
+        if (authorities.some((value) => value === undefined))
+          throw new EvidenceLiveRelationRefused(
+            'LIVE_RELATION_SOURCE_UNAVAILABLE',
             404,
+          );
+        const authority = authorities[0];
+        if (authority === undefined)
+          throw new EvidenceLiveRelationRefused(
+            'LIVE_RELATION_OBSERVATIONS_REQUIRED',
+            403,
           );
         const run = options.capability.authorize({
           confirmation: input.command.confirmation,
           authorization: input.authorization,
           source: {
             sourceOrigin: 'authorized-external',
-            dataClass: imported.dataClass,
-            artifactVersionId: imported.artifactVersionId,
-            externalSourceRef: imported.sourceProvenance.externalSourceRef,
+            dataClass: authority.dataClass,
+            artifactVersionId: authority.artifactVersionId,
+            externalSourceRef: authority.sourceProvenance.externalSourceRef,
             authorityAttested: true,
           },
           requestedBudget: input.command.requestedBudget,
         });
-        const command = EvidenceLiveObservationCommandSchema.parse({
+        const command = EvidenceLiveRelationCommandSchema.parse({
           ...input.command,
-          schemaVersion: EVIDENCE_LIVE_OBSERVATION_COMMAND_SCHEMA_VERSION,
+          schemaVersion: EVIDENCE_LIVE_RELATION_COMMAND_SCHEMA_VERSION,
           workspaceId: input.scope.workspaceId,
           modelId: run.profile.model,
           currency: run.profile.currency,
+          observationIds: observations.map(
+            ({ observationId }) => observationId,
+          ),
         });
-        const job = await options.worker.startLiveObservation(
+        return await options.worker.startLiveRelation(
           command,
           executor({
             run,
+            browserCommand: input.command,
             authorization: input.authorization,
             audit: input.audit,
             scope: input.scope,
-            browserCommand: input.command,
           }),
           input.scope,
         );
-        return job;
       } catch (error) {
         const reason = reasonFor(error);
         const status =
-          error instanceof EvidenceLiveObservationRefused ? error.status : 403;
+          error instanceof EvidenceLiveRelationRefused ? error.status : 403;
         await appendAudit({
-          action: 'live.refused',
+          action: 'live-relation.refused',
           outcome: 'denied',
           reasonCode: reason,
           resourceKind: 'case',
@@ -426,7 +445,7 @@ export function createEvidenceLiveObservationService(options: {
           audit: input.audit,
           scope: input.scope,
         });
-        throw new EvidenceLiveObservationRefused(reason, status);
+        throw new EvidenceLiveRelationRefused(reason, status);
       }
     },
   };
