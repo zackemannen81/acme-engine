@@ -1,6 +1,6 @@
 # Current Task
 
-Task ID: ACME-0142
+Task ID: ACME-0143
 Parent Task: None
 Status: Ready
 Owner: Claude
@@ -13,13 +13,13 @@ Charter frozen at: 2026-08-16
 - `AGENTS.md`
 - `docs/TASK_WORKFLOW.md`
 - ADR-0046
-- `docs/design/evidence-workbench-source-and-claim-surfaces.md` §2.1, §5 ACME-0142
-- `docs/finished/ACME-0141_source-stream-home.md`
+- `docs/design/evidence-workbench-source-and-claim-surfaces.md` §2.3, §5 ACME-0143
+- `docs/finished/ACME-0142_source-blocks-neighbour-context.md`
 
 ## Task Summary
 
-Derive document-native SourceBlock / SourceSegment units from canonical
-text, and allow coverage windows to carry context-only neighbours.
+A read-only claim surface groups current occurrences by a stable aspect
+and lists them as shared cards. Overlap is visible. No stored merge.
 
 ## Task Charter
 
@@ -27,76 +27,61 @@ Frozen at Ready.
 
 ### Goal
 
-Model-free `SourceBlock` / `SourceSegment` derivation from canonical
-text. Coverage windows are sets of those segments plus optional
-context-only neighbours.
+A projection that groups current occurrences by a stable aspect key
+(actor label, place string, vehicle string, or an existing relation
+scope) and lists them as cards.
 
 ### Primary Deliverable
 
-A module-owned planner that yields Q+A / paragraph blocks for a
-synthetic interview fixture, an additive observe contract version that
-can name neighbour context, and semantics that refuse an observation
-whose sole support is a context id. Historical line-segment contracts
-remain registered and replay.
+A read-only view + route. Reuse the 0140 card. Optional sort: source
+time vs asserted event time. Compare-accounts content is reachable as a
+person thread here.
 
 ### In Scope
 
-- New module-owned planner. Persist block/segment graph as an immutable
-  derivation of one artifact version (hash of rule version + text).
-- Observe input continues to name `sourceSegmentId`.
-- Prompt: context is not extractable.
-- Line locators still derived for each segment so existing citation
-  views work.
-- UI may show block headings in the source view.
+- Read-only view + route.
+- Reuse the 0140 card.
+- Optional sort: source time vs asserted event time.
+- Overlap is visible. `corroborates` is not auto-assigned.
 
 ### Out of Scope
 
-- Changing quote binding to a new locator scheme.
-- Pass 2/3.
-- UI rewrite beyond showing block headings in the source view.
-- Recutting committed windows or existing line-segment observations.
-- Claim surface (0143). Continuity / exposure (0144).
+- Information-exposure types.
+- Knowledge-time replay slider.
+- Assessment rewrite.
+- Continuity / exposure job (0144).
+- Automatic `corroborates` from string overlap.
 
 ### Definition of Done
 
-- A synthetic interview fixture yields Q+A blocks, not one line per
-  segment.
-- Historical line-segment contracts still replay.
-- A neighbour-context window refuses an observation that only cites a
-  context id.
-- New analyzes on a source may use the new planner under a new observe
-  contract version.
+- Three “red Volvo” occurrences from two sources appear as three cards
+  in one group, each opening its source.
+- No stored merge.
 
 ### Minimum Verification Gates
 
-- [ ] Q+A block planner test on a synthetic interview fixture
-- [ ] Historical line-segment replay / request-hash gate
-- [ ] Neighbour-context sole-support refusal
-- [ ] typecheck, lint, format, boundaries, unit, docs
+- [ ] Claim-group view test with three unmerged cards
+- [ ] Shell contains view=claim
+- [ ] typecheck, lint, format, unit, docs
 
 ## References
 
 - ADR-0046
 - `docs/design/evidence-workbench-source-and-claim-surfaces.md`
-- `packages/module-evidence/src/coverage.ts`
-- `packages/module-evidence/src/contracts/observe-artifact.ts`
+- `packages/evidence-views`
 
 ## Checklist
 
 - [x] Freeze charter.
-- [ ] Planner: blocks then segments, hash of rule version + text.
-- [ ] Persist derivation per artifact version.
-- [ ] New observe contract version + neighbour context input.
-- [ ] Prompt and semantics: context is not extractable.
-- [ ] Source view may show block headings.
+- [ ] Pure claim-group view builder.
+- [ ] Route and `?view=claim`.
+- [ ] Sort source time vs event time.
 - [ ] Tests, docs, archive, commit, push.
 
 ## Decisions and Notes
 
-- Existing line-segment observations remain. New analyzes only.
-- Segment identity is immutable for that artifact version.
-- Soft block size ~150–350 words, never split a sentence or Q+A pair.
-- Window size stays 64 extractable segments.
+- Grouping is a projection. Occurrences stay source-bound.
+- Compare-accounts becomes a person thread inside Claim.
 
 ## Charter Amendment Log
 
@@ -116,12 +101,10 @@ remain registered and replay.
 ## Handoff and Follow-ups
 
 - Current state: charter frozen; implementation not started.
-- Next recommended step: implement the planner against a synthetic
-  interview fixture.
+- Next recommended step: implement the claim-group view.
 - Blockers: none.
-- Child tasks: none.
 
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0142_source-blocks-neighbour-context.md`.
-- Charter ACME-0143 from the surfaces spec.
+- Archive as `docs/finished/ACME-0143_claim-surface.md`.
+- Charter ACME-0144 from the surfaces spec.

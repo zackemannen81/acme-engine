@@ -12,10 +12,8 @@ import {
 } from '@acme/core';
 
 import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
-import {
-  locateUniqueEvidenceQuote,
-  resolveEvidenceSourceSegment,
-} from '../canonical-text.js';
+import { locateUniqueEvidenceQuote } from '../canonical-text.js';
+import { resolveEvidenceStructuredSourceSegment } from '../source-structure.js';
 import {
   EvidenceCorrectionPairingError,
   pairEvidenceCorrectionObservations,
@@ -137,7 +135,7 @@ function observation(
   const artifactVersionId = input.artifactVersion.artifactVersionId;
   const selectedSegment =
     'sourceSegmentId' in candidate
-      ? resolveEvidenceSourceSegment(
+      ? resolveEvidenceStructuredSourceSegment(
           input.artifactVersion.text,
           candidate.sourceSegmentId,
         )

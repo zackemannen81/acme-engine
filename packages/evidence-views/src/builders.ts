@@ -14,6 +14,7 @@ import type {
 } from '@acme/module-evidence';
 import {
   buildEvidenceTimelineEntries,
+  deriveEvidenceSourceStructure,
   evidenceAttentionTier,
   EvidenceStateSchema,
   pairEvidenceCorrectionObservations,
@@ -778,6 +779,15 @@ export function buildEvidencePrimarySourceReviewView(input: {
           if (lines.at(-1) === '') lines.pop();
           return lines.map((text, index) => ({ lineNumber: index + 1, text }));
         })(),
+        blocks: deriveEvidenceSourceStructure(source.text).blocks.map(
+          (block) => ({
+            blockId: block.blockId,
+            kind: block.kind,
+            heading: block.heading,
+            startLine: block.startLine,
+            endLine: block.endLine,
+          }),
+        ),
       },
       heading: 'Source review',
       observations,

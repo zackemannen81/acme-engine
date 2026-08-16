@@ -1,5 +1,6 @@
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
+  deriveEvidenceSourceStructure,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
   buildEvidenceSourceSegments,
   EvidenceObserveArtifactInputSchema,
@@ -32,7 +33,7 @@ function inputFromOutput(
     versionOrdinal,
   );
   return EvidenceObserveArtifactInputSchema.parse({
-    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
     artifactVersion,
     actorRoster,
     coverageWindow: {
@@ -44,6 +45,8 @@ function inputFromOutput(
         ),
       ],
     },
+    sourceStructureId: deriveEvidenceSourceStructure(artifactVersion.text)
+      .structureId,
   });
 }
 
@@ -100,7 +103,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T01',
         versionOrdinal: 1,
         requestHash:
-          '1548ebd5a7a295633ce72a0aa64baec229644244b35d2df1a65a5d551f954b62',
+          '0bcdaa4ec8671c9451fb596d5330867f71f76d207c35c5a80bce5477862535b8',
         output: output('EVAL-T01', 1, [
           {
             kind: 'statement-occurrence',
@@ -141,7 +144,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T01',
         versionOrdinal: 2,
         requestHash:
-          '78a72dd5cd8227518a01862de893b30b513a69d0a31a26261a66a59077e82a16',
+          '1267ba51fa18b460be3fe2c39d975ae18a28930233497775b240e4b44f71ac4e',
         output: output('EVAL-T01', 2, [
           {
             kind: 'statement-occurrence',
@@ -182,7 +185,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T02',
         versionOrdinal: 1,
         requestHash:
-          'e2f9dbd949803842384890ef291142e0e24b3c1d2aa6dfdd6ed0b82a65ac03d8',
+          '32cc0a10054bfd5a6a6bf268d48fbd1acf470a6da86852577fda662904a2c974',
         output: output('EVAL-T02', 1, [
           {
             kind: 'statement-occurrence',
@@ -225,7 +228,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T03',
         versionOrdinal: 1,
         requestHash:
-          'a8735e110849cd27085f02b6dbd8e40c77693e1f5a4b738a642c46d2e8370c98',
+          '72f7ab81d8a96758372d2a1f7cb85fe78fcd14f1c756d515f6c038ff9e9ee7dc',
         output: output('EVAL-T03', 1, [
           {
             kind: 'statement-occurrence',
@@ -268,7 +271,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-E01',
         versionOrdinal: 1,
         requestHash:
-          '87f6289a8ef26898a5487a8655ed719ca870790683669f9b3d698e2c6b6bd727',
+          '173acaa747b89d4ec0cdde186e7905b73861fb032ec61d4a9243ccc103fcf537',
         output: output('EVAL-E01', 1, [
           {
             kind: 'exhibit-assertion',

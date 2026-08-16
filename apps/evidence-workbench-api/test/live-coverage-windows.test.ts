@@ -46,23 +46,25 @@ describe('live observation coverage windows', () => {
     };
     const first = evidenceObserveArtifactContract.buildRequest(
       {
-        schemaVersion: 'evidence-observe-artifact-input/2',
+        schemaVersion: 'evidence-observe-artifact-input/3',
         artifactVersion: artifact,
         actorRoster: [],
         coverageWindow: {
           sourceSegmentIds: [...(windows[0]?.sourceSegmentIds ?? [])],
         },
+        sourceStructureId: 'a'.repeat(64),
       },
       { executionId: 'e', now: '2026-08-16T00:00:00.000Z' },
     );
     const second = evidenceObserveArtifactContract.buildRequest(
       {
-        schemaVersion: 'evidence-observe-artifact-input/2',
+        schemaVersion: 'evidence-observe-artifact-input/3',
         artifactVersion: artifact,
         actorRoster: [],
         coverageWindow: {
           sourceSegmentIds: [...(windows[1]?.sourceSegmentIds ?? [])],
         },
+        sourceStructureId: 'a'.repeat(64),
       },
       { executionId: 'e', now: '2026-08-16T00:00:00.000Z' },
     );

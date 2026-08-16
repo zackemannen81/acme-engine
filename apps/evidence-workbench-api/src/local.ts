@@ -81,8 +81,9 @@ import {
 import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 import { evaluationRelateCase } from '@acme/evidence-testing/evaluation-relate';
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
   createEvidenceChangeSet,
+  deriveEvidenceSourceStructure,
   evidenceCoverageWindowForSource,
   EvidenceAssessmentSchema,
   EvidenceMemoryValueSchema,
@@ -102,6 +103,7 @@ import {
   evidenceObserveArtifactContractV8,
   evidenceObserveArtifactContractV9,
   evidenceObserveArtifactContractV10,
+  evidenceObserveArtifactContractV11,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceProposeAssessmentContractV2,
@@ -1033,6 +1035,7 @@ export async function createLocalEvidenceWorkbench(
       evidenceObserveArtifactContractV8,
       evidenceObserveArtifactContractV9,
       evidenceObserveArtifactContractV10,
+      evidenceObserveArtifactContractV11,
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContractV1,
       evidenceRelateObservationsContract,
@@ -1064,7 +1067,7 @@ export async function createLocalEvidenceWorkbench(
             value.artifactVersion.artifactVersionId,
         );
         const input = matched?.input ?? {
-          schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+          schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
           artifactVersion: value.artifactVersion,
           actorRoster: value.actorRoster,
           coverageWindow: {
@@ -1073,6 +1076,9 @@ export async function createLocalEvidenceWorkbench(
                 .sourceSegmentIds,
             ],
           },
+          sourceStructureId: deriveEvidenceSourceStructure(
+            value.artifactVersion.text,
+          ).structureId,
         };
         const result = await engine.execute(
           {

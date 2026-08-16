@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-16 — ACME-0142 source blocks and neighbour context
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0142
+- Change: added `evidence-source-structure/1` and active observe
+  `@1.11.0` input `/3` output `/6`. New analyzes derive Q+A / paragraph
+  blocks from canonical text, pin `sourceStructureId`, and may send
+  neighbour context. Semantics refuse a context-only citation.
+  Historical `@1.10.0` and line-segment contracts stay byte-exact.
+  Source review shows block headings.
+- Why now: ADR-0046 requires document-native units and context that is
+  not extractable, without recutting committed line-segment windows.
+- Verification: unit 793/793; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0143 claim surface.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0141 source stream as home
 
 - Date: 2026-08-16

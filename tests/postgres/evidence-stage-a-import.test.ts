@@ -382,7 +382,7 @@ describe('Evidence Stage A PostgreSQL import', () => {
                   {
                     type: 'output_text',
                     text: JSON.stringify({
-                      schemaVersion: 'evidence-observe-artifact-output/5',
+                      schemaVersion: 'evidence-observe-artifact-output/6',
                       observations: [
                         {
                           kind: 'exhibit-assertion',

@@ -207,6 +207,19 @@ export const EvidencePrimarySourceReviewViewSchema = z
             })
             .strict(),
         ),
+        blocks: z
+          .array(
+            z
+              .object({
+                blockId: EvidenceNonBlankStringSchema,
+                kind: z.enum(['qa-pair', 'paragraph', 'heading']),
+                heading: EvidenceNonBlankStringSchema,
+                startLine: z.number().int().positive(),
+                endLine: z.number().int().positive(),
+              })
+              .strict(),
+          )
+          .default([]),
       })
       .strict(),
     heading: z.literal('Source review'),

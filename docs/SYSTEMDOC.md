@@ -8,6 +8,14 @@ count. Source review and the ledger embed the same card object.
 Documents view (`?view=documents` or `?view=stream`) titles that list
 Source stream and shows ingest time plus observation/awaiting coverage
 on each card. Default `?view=` remains overview.
+Active observe is `evidence.observe-artifact@1.11.0` input `/3` output
+`/6`. New analyzes derive a content-addressed `evidence-source-structure/1`
+(hash of rule version + canonical text) into Q+A / paragraph / heading
+blocks. Coverage windows may carry neighbour `contextSegmentIds`; an
+observation that names a context id is refused
+(`EVIDENCE_CONTEXT_SEGMENT_NOT_EXTRACTABLE`). Historical `@1.10.0` and
+line-segment contracts stay registered and byte-exact. Source review
+shows those block headings beside the existing line list.
 
 Reviewer operations are case-bound records (`evidence-review-assignment/1`,
 `evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain
@@ -1101,21 +1109,24 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.10.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.11.0` task projects one immutable source plus an
 explicit actor roster and one coverage window, uses strict structured output
 and refuses invalid quote, kind, actor, temporal, prohibited-authority and
 incomplete-coverage-ledger candidates before commit. An empty actor roster
 requires a null actor reference; unresolved candidates are legal only when
-the roster yields identities. Historical `@1.0.0`–`@1.9.0` remain registered
-for replay. Active input `/2` requires a unique
-`coverageWindow` of at most 64 source segment ids; the provider sees only
-those segments. Output `/5` adds `segmentCoverage`: every supplied window
-segment is accounted for exactly once as `observations_extracted` or
-`no_observation`. A segment may yield zero or many atomic observations.
-Coverage is the ledger, not the observation count. The planner
-`planEvidenceObservationCoverage` splits a source into non-overlapping
-windows of 64 segments; `@1.9.0` admits up to 128 observations so one
-window can hold more than one proposition per segment. Output `evidence-observe-artifact-output/2` gives the
+the roster yields identities. Historical `@1.0.0`–`@1.10.0` remain registered
+for replay. Active input `/3` requires a unique extractable
+`coverageWindow` of at most 64 source segment ids, a `sourceStructureId`
+pin, and optional neighbour `contextSegmentIds`. The provider sees
+extractable segments plus context-only neighbours; an observation may not
+name a context id. Output `/6` accepts line or block segment ids and
+keeps `segmentCoverage`. A segment may yield zero or many atomic
+observations. Coverage is the ledger, not the observation count. The
+structural planner splits document-native blocks into windows of 64
+segments and may attach one previous and one next neighbour as context.
+`@1.9.0` admits up to 128 observations so one window can hold more than
+one proposition per segment. Historical input `/2` and output `/5` stay
+byte-exact on `@1.8.0`–`@1.10.0`. Output `evidence-observe-artifact-output/2` gives the
 model no line fields: exact quotes must occur exactly once in canonical
 source text, then runtime derives the inclusive line range before
 locator/observation identity and projection. Output `/3` additionally
@@ -1432,7 +1443,7 @@ fail before publishing a partial projection.
 window *i* of *n* and accumulated model calls; `actualModelCalls` is
 unbounded across the campaign because coverage is many executions, not one
 call. The worker hydrates canonical text through the audited artifact
-service, plans coverage windows, and executes `evidence.observe-artifact@1.10.0`
+service, plans coverage windows, and executes `evidence.observe-artifact@1.11.0`
 once per window under `live-observe:{commandKey}:wNNNNN`. A committed window
 replays from that request key. Product observations plus one
 evidence-revision advance are written only after the last window commits.

@@ -14,7 +14,6 @@ import {
   buildEvidenceSourceSegments,
   exactQuoteOccurrenceCount,
   locateUniqueEvidenceQuote,
-  resolveEvidenceSourceSegment,
 } from '../canonical-text.js';
 import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF,
@@ -28,24 +27,34 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V8,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V9,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V10,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V11,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactInputV1Schema,
+  EvidenceObserveArtifactInputV2Schema,
   EvidenceObserveArtifactOutputSchema,
   EvidenceObserveArtifactOutputV1Schema,
   EvidenceObserveArtifactOutputV2Schema,
   EvidenceObserveArtifactOutputV3Schema,
   EvidenceObserveArtifactOutputV4Schema,
+  EvidenceObserveArtifactOutputV5Schema,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactInputV1,
+  type EvidenceObserveArtifactInputV2,
   type EvidenceObserveArtifactOutput,
   type EvidenceObserveArtifactOutputV1,
   type EvidenceObserveArtifactOutputV2,
   type EvidenceObserveArtifactOutputV3,
   type EvidenceObserveArtifactOutputV4,
+  type EvidenceObserveArtifactOutputV5,
 } from '../schemas.js';
+import {
+  deriveEvidenceSourceStructure,
+  evidenceStructuredSourceSegments,
+  resolveEvidenceStructuredSourceSegment,
+} from '../source-structure.js';
 
 const PROHIBITED_CONCLUSION =
   /\b(?:credible|credibility|truthful|lying|guilty|innocent|liable|liability|admissible|inadmissible|privileged|culpable)\b/iu;
@@ -87,6 +96,13 @@ const EvidenceBoundedActiveObserveArtifactOutputSchema =
     observations: EvidenceObserveArtifactOutputV4Schema.shape.observations
       .min(1)
       .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE),
+  });
+
+const EvidenceBoundedAtomicObserveArtifactOutputV5Schema =
+  EvidenceObserveArtifactOutputV5Schema.extend({
+    observations: EvidenceObserveArtifactOutputV5Schema.shape.observations
+      .min(0)
+      .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC),
   });
 
 const EvidenceBoundedAtomicObserveArtifactOutputSchema =
@@ -182,13 +198,17 @@ function validateTemporal(
 }
 
 function createContract<
-  TInput extends EvidenceObserveArtifactInput | EvidenceObserveArtifactInputV1,
+  TInput extends
+    | EvidenceObserveArtifactInput
+    | EvidenceObserveArtifactInputV2
+    | EvidenceObserveArtifactInputV1,
   TOutput extends
     | EvidenceObserveArtifactOutput
     | EvidenceObserveArtifactOutputV1
     | EvidenceObserveArtifactOutputV2
     | EvidenceObserveArtifactOutputV3
-    | EvidenceObserveArtifactOutputV4,
+    | EvidenceObserveArtifactOutputV4
+    | EvidenceObserveArtifactOutputV5,
 >(configuration: {
   readonly ref: ContractRef;
   readonly sourceDescription: string;
@@ -200,6 +220,7 @@ function createContract<
   readonly coverageComplete: boolean;
   readonly atomicCoverage: boolean;
   readonly emptyRosterNullActor: boolean;
+  readonly neighbourContext: boolean;
   readonly candidateBatchMax: number;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
@@ -222,16 +243,38 @@ function createContract<
         configuration.coverageComplete && 'coverageWindow' in validated
           ? new Set(validated.coverageWindow.sourceSegmentIds)
           : undefined;
-      const sourceSegments = buildEvidenceSourceSegments(
-        validated.artifactVersion.text,
-      )
+      const contextIds =
+        configuration.neighbourContext &&
+        'coverageWindow' in validated &&
+        'contextSegmentIds' in validated.coverageWindow &&
+        validated.coverageWindow.contextSegmentIds !== undefined
+          ? new Set(validated.coverageWindow.contextSegmentIds)
+          : new Set<string>();
+      const wantedIds =
+        windowIds === undefined
+          ? undefined
+          : new Set([...windowIds, ...contextIds]);
+      const availableSegments = configuration.neighbourContext
+        ? [
+            ...buildEvidenceSourceSegments(validated.artifactVersion.text),
+            ...evidenceStructuredSourceSegments(validated.artifactVersion.text),
+          ]
+        : buildEvidenceSourceSegments(validated.artifactVersion.text);
+      const sourceSegments = availableSegments
         .filter(
           (segment) =>
-            windowIds === undefined || windowIds.has(segment.sourceSegmentId),
+            wantedIds === undefined || wantedIds.has(segment.sourceSegmentId),
         )
         .map(({ sourceSegmentId, exactQuote }) => ({
           sourceSegmentId,
           text: exactQuote,
+          ...(configuration.neighbourContext
+            ? {
+                role: contextIds.has(sourceSegmentId)
+                  ? ('context' as const)
+                  : ('extractable' as const),
+              }
+            : {}),
         }));
       const providerInput = configuration.runtimeDerivedSegmentQuote
         ? {
@@ -274,6 +317,9 @@ function createContract<
                     ? 'Every normalized timestamp must be canonical UTC exactly as YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.sssZ. Never return local time, minute-only time, or a numeric offset; use temporal unknown instead. '
                     : '') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
+                  (configuration.neighbourContext
+                    ? 'Context segments (role context) are supplied only for reference resolution. Never extract an observation whose sole support is a context segment. Do not name a context sourceSegmentId in observations or segmentCoverage. '
+                    : '') +
                   (configuration.atomicCoverage
                     ? 'This request is one coverage window. Account for every supplied sourceSegmentId exactly once in segmentCoverage. ' +
                       'A supplied sourceSegmentId may yield zero, one, or multiple observations. ' +
@@ -360,7 +406,7 @@ function createContract<
         const selectedSegment =
           configuration.runtimeDerivedSegmentQuote &&
           'sourceSegmentId' in observation
-            ? resolveEvidenceSourceSegment(
+            ? resolveEvidenceStructuredSourceSegment(
                 input.artifactVersion.text,
                 observation.sourceSegmentId,
               )
@@ -505,6 +551,42 @@ function createContract<
             ...validateTemporal(observation.temporalBound, exactQuote, index),
           );
       });
+      if (configuration.neighbourContext && 'sourceStructureId' in input) {
+        const derived = deriveEvidenceSourceStructure(
+          input.artifactVersion.text,
+        );
+        if (derived.structureId !== input.sourceStructureId) {
+          issues.push(
+            issue(
+              'EVIDENCE_SOURCE_STRUCTURE_MISMATCH',
+              ['sourceStructureId'],
+              'The supplied source structure id must equal the hash of the active rule version and canonical text.',
+            ),
+          );
+        }
+      }
+      if (
+        configuration.neighbourContext &&
+        'coverageWindow' in input &&
+        'contextSegmentIds' in input.coverageWindow &&
+        input.coverageWindow.contextSegmentIds !== undefined
+      ) {
+        const context = new Set(input.coverageWindow.contextSegmentIds);
+        output.observations.forEach((observation, index) => {
+          if (
+            'sourceSegmentId' in observation &&
+            context.has(observation.sourceSegmentId)
+          ) {
+            issues.push(
+              issue(
+                'EVIDENCE_CONTEXT_SEGMENT_NOT_EXTRACTABLE',
+                ['observations', index, 'sourceSegmentId'],
+                'An observation must not name a neighbour-context segment.',
+              ),
+            );
+          }
+        });
+      }
       if (
         configuration.coverageComplete &&
         'coverageWindow' in input &&
@@ -597,6 +679,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
@@ -617,6 +700,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
@@ -637,6 +721,7 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
@@ -657,6 +742,7 @@ export const evidenceObserveArtifactContractV4 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_3_0',
@@ -677,6 +763,7 @@ export const evidenceObserveArtifactContractV5 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_4_0',
@@ -697,6 +784,7 @@ export const evidenceObserveArtifactContractV6 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_5_0',
@@ -717,6 +805,7 @@ export const evidenceObserveArtifactContractV7 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_6_0',
@@ -737,6 +826,7 @@ export const evidenceObserveArtifactContractV8 = Object.freeze(
     coverageComplete: false,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_7_0',
@@ -757,10 +847,11 @@ export const evidenceObserveArtifactContractV9 = Object.freeze(
     coverageComplete: true,
     atomicCoverage: false,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_8_0',
-    inputSchema: EvidenceObserveArtifactInputSchema,
+    inputSchema: EvidenceObserveArtifactInputV2Schema,
     outputSchema: EvidenceBoundedActiveObserveArtifactOutputSchema,
   }),
 );
@@ -777,11 +868,33 @@ export const evidenceObserveArtifactContractV10 = Object.freeze(
     coverageComplete: true,
     atomicCoverage: true,
     emptyRosterNullActor: false,
+    neighbourContext: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_9_0',
-    inputSchema: EvidenceObserveArtifactInputSchema,
-    outputSchema: EvidenceBoundedAtomicObserveArtifactOutputSchema,
+    inputSchema: EvidenceObserveArtifactInputV2Schema,
+    outputSchema: EvidenceBoundedAtomicObserveArtifactOutputV5Schema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV11 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V11,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: true,
+    explicitCanonicalUtc: true,
+    coverageComplete: true,
+    atomicCoverage: true,
+    emptyRosterNullActor: true,
+    neighbourContext: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_10_0',
+    inputSchema: EvidenceObserveArtifactInputV2Schema,
+    outputSchema: EvidenceBoundedAtomicObserveArtifactOutputV5Schema,
   }),
 );
 
@@ -797,9 +910,10 @@ export const evidenceObserveArtifactContract = Object.freeze(
     coverageComplete: true,
     atomicCoverage: true,
     emptyRosterNullActor: true,
+    neighbourContext: true,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_10_0',
+    schemaName: 'evidence_observe_artifact_1_11_0',
     inputSchema: EvidenceObserveArtifactInputSchema,
     outputSchema: EvidenceBoundedAtomicObserveArtifactOutputSchema,
   }),

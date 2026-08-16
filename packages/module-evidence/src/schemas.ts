@@ -29,6 +29,8 @@ export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION =
   'evidence-observe-artifact-input/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2 =
   'evidence-observe-artifact-input/2' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3 =
+  'evidence-observe-artifact-input/3' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-observe-artifact-output/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V2 =
@@ -37,8 +39,10 @@ export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3 =
   'evidence-observe-artifact-output/3' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V4 =
   'evidence-observe-artifact-output/4' as const;
-export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V5 =
   'evidence-observe-artifact-output/5' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+  'evidence-observe-artifact-output/6' as const;
 export const EVIDENCE_SEGMENT_COVERAGE_STATUS = [
   'observations_extracted',
   'no_observation',
@@ -595,12 +599,80 @@ export const EvidenceObservationCoverageWindowSchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactInputSchema = z
+const EvidenceWindowSourceSegmentIdSchema = z
+  .string()
+  .regex(
+    /^(?:line-[0-9]{6}-segment-[0-9]{4}|block-[0-9]{6}-segment-[0-9]{4})$/u,
+  );
+
+function uniqueSegmentIds(
+  values: readonly string[],
+  context: z.RefinementCtx,
+  message: string,
+): void {
+  if (new Set(values).size !== values.length) {
+    context.addIssue({
+      code: 'custom',
+      message,
+    });
+  }
+}
+
+export const EvidenceObservationCoverageWindowV3Schema = z
+  .object({
+    sourceSegmentIds: z
+      .array(EvidenceWindowSourceSegmentIdSchema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        uniqueSegmentIds(
+          values,
+          context,
+          'Coverage window segment ids must be unique.',
+        );
+      }),
+    contextSegmentIds: z
+      .array(EvidenceWindowSourceSegmentIdSchema)
+      .max(16)
+      .superRefine((values, context) => {
+        uniqueSegmentIds(
+          values,
+          context,
+          'Context segment ids must be unique.',
+        );
+      })
+      .optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const extractable = new Set(value.sourceSegmentIds);
+    for (const id of value.contextSegmentIds ?? []) {
+      if (extractable.has(id)) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            'Context segment ids must not overlap the extractable window.',
+        });
+      }
+    }
+  });
+
+export const EvidenceObserveArtifactInputV2Schema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2),
     artifactVersion: SourceArtifactVersionSchema,
     actorRoster: z.array(EvidenceActorRosterEntrySchema),
     coverageWindow: EvidenceObservationCoverageWindowSchema,
+  })
+  .strict();
+
+export const EvidenceObserveArtifactInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3),
+    artifactVersion: SourceArtifactVersionSchema,
+    actorRoster: z.array(EvidenceActorRosterEntrySchema),
+    coverageWindow: EvidenceObservationCoverageWindowV3Schema,
+    sourceStructureId: EvidenceSha256Schema,
   })
   .strict();
 
@@ -805,9 +877,11 @@ export const EvidenceSegmentCoverageEntrySchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactOutputSchema = z
+export const EvidenceObserveArtifactOutputV5Schema = z
   .object({
-    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V5,
+    ),
     observations: z.array(
       z.discriminatedUnion('kind', [
         EvidenceStatementOccurrenceCandidateSchema,
@@ -830,6 +904,50 @@ export const EvidenceObserveArtifactOutputSchema = z
   })
   .strict();
 
+const EvidenceStructuredSourceSegmentIdSchema = z
+  .string()
+  .regex(
+    /^(?:line-[0-9]{6}-segment-[0-9]{4}|block-[0-9]{6}-segment-[0-9]{4})$/u,
+  );
+
+const EvidenceStatementOccurrenceCandidateV6Schema =
+  EvidenceStatementOccurrenceCandidateSchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+const EvidenceExhibitAssertionCandidateV6Schema =
+  EvidenceExhibitAssertionCandidateSchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+const EvidenceSegmentCoverageEntryV6Schema =
+  EvidenceSegmentCoverageEntrySchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+
+export const EvidenceObserveArtifactOutputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV6Schema,
+        EvidenceExhibitAssertionCandidateV6Schema,
+      ]),
+    ),
+    segmentCoverage: z
+      .array(EvidenceSegmentCoverageEntryV6Schema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        const ids = values.map(({ sourceSegmentId }) => sourceSegmentId);
+        if (new Set(ids).size !== ids.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage ledger segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
 export const EvidenceObserveArtifactReplayOutputSchema = z.discriminatedUnion(
   'schemaVersion',
   [
@@ -837,6 +955,7 @@ export const EvidenceObserveArtifactReplayOutputSchema = z.discriminatedUnion(
     EvidenceObserveArtifactOutputV2Schema,
     EvidenceObserveArtifactOutputV3Schema,
     EvidenceObserveArtifactOutputV4Schema,
+    EvidenceObserveArtifactOutputV5Schema,
     EvidenceObserveArtifactOutputSchema,
   ],
 );
@@ -1067,6 +1186,9 @@ export type EvidenceDelta = z.infer<typeof EvidenceDeltaSchema>;
 export type EvidenceObserveArtifactInputV1 = z.infer<
   typeof EvidenceObserveArtifactInputV1Schema
 >;
+export type EvidenceObserveArtifactInputV2 = z.infer<
+  typeof EvidenceObserveArtifactInputV2Schema
+>;
 export type EvidenceObserveArtifactInput = z.infer<
   typeof EvidenceObserveArtifactInputSchema
 >;
@@ -1084,6 +1206,9 @@ export type EvidenceObserveArtifactOutputV3 = z.infer<
 >;
 export type EvidenceObserveArtifactOutputV4 = z.infer<
   typeof EvidenceObserveArtifactOutputV4Schema
+>;
+export type EvidenceObserveArtifactOutputV5 = z.infer<
+  typeof EvidenceObserveArtifactOutputV5Schema
 >;
 export type EvidenceObserveArtifactReplayOutput = z.infer<
   typeof EvidenceObserveArtifactReplayOutputSchema

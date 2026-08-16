@@ -48,7 +48,8 @@ import {
   evidenceObserveArtifactContractV8,
   evidenceObserveArtifactContractV9,
   evidenceObserveArtifactContractV10,
-  planEvidenceObservationCoverage,
+  planEvidenceStructuralObservationCoverage,
+  evidenceObserveArtifactContractV11,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -264,7 +265,7 @@ export function createEvidenceLiveObservationService(options: {
         scope: input.scope,
         audit: input.audit,
       });
-      const windows = planEvidenceObservationCoverage(source.text);
+      const windows = planEvidenceStructuralObservationCoverage(source.text);
       const collected: EvidenceObservation[] = [];
       let actualModelCalls = 0;
       let lastExecutionId = '';
@@ -309,6 +310,7 @@ export function createEvidenceLiveObservationService(options: {
             evidenceObserveArtifactContractV8,
             evidenceObserveArtifactContractV9,
             evidenceObserveArtifactContractV10,
+            evidenceObserveArtifactContractV11,
             evidenceObserveArtifactContract,
             evidenceRelateObservationsContract,
             evidenceProposeAssessmentContractV1,
@@ -335,12 +337,18 @@ export function createEvidenceLiveObservationService(options: {
               latestState?.revision ??
               0,
             input: {
-              schemaVersion: 'evidence-observe-artifact-input/2',
+              schemaVersion: 'evidence-observe-artifact-input/3',
               artifactVersion: source,
               actorRoster: command.actorRoster,
               coverageWindow: {
                 sourceSegmentIds: [...window.sourceSegmentIds],
+                ...(window.contextSegmentIds.length === 0
+                  ? {}
+                  : {
+                      contextSegmentIds: [...window.contextSegmentIds],
+                    }),
               },
+              sourceStructureId: window.structureId,
             },
             model: input.run.selection('observe-artifact'),
             policy: {

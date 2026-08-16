@@ -1,7 +1,8 @@
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
   buildEvidenceSourceSegments,
+  deriveEvidenceSourceStructure,
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   type EvidenceObserveArtifactInput,
@@ -11,13 +12,13 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '04a42aaa59fc4f7dc5c3f3e782c8f1bd584158b7be97693db22b480ad1ae08bc' as const;
+  'f94acaf93edb52425d575367c5338327ccd3904555d6f4a7abfe605fdd8e0c69' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
   const artifactVersion = loadSourceArtifactVersion('DEV-T01', 1);
   const produced = developmentObserveArtifactOutput();
   return EvidenceObserveArtifactInputSchema.parse({
-    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
     artifactVersion,
     actorRoster: [
       {
@@ -30,6 +31,8 @@ export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput 
         (observation) => observation.sourceSegmentId,
       ),
     },
+    sourceStructureId: deriveEvidenceSourceStructure(artifactVersion.text)
+      .structureId,
   });
 }
 

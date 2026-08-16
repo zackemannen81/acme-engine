@@ -1,5 +1,9 @@
 import { buildEvidenceSourceSegments } from './canonical-text.js';
 import { immutableEvidence } from './immutable.js';
+import {
+  deriveEvidenceSourceStructure,
+  evidenceStructuredSourceSegments,
+} from './source-structure.js';
 
 /**
  * One coverage window is sized to the active observation ceiling so a single
@@ -61,4 +65,52 @@ export function evidenceCoverageWindowForSource(text: string): {
   return immutableEvidence({
     sourceSegmentIds: windows[0].sourceSegmentIds,
   });
+}
+
+export interface EvidenceStructuralObservationCoverageWindow extends EvidenceObservationCoverageWindow {
+  readonly contextSegmentIds: readonly string[];
+  readonly structureId: string;
+}
+
+export function planEvidenceStructuralObservationCoverage(
+  text: string,
+  windowSegments: number = EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+): readonly EvidenceStructuralObservationCoverageWindow[] {
+  if (!Number.isSafeInteger(windowSegments) || windowSegments < 1) {
+    throw new RangeError(
+      'Coverage window size must be a positive safe integer.',
+    );
+  }
+  const structure = deriveEvidenceSourceStructure(text);
+  const segments = evidenceStructuredSourceSegments(text);
+  if (segments.length === 0) {
+    throw new RangeError('Coverage requires at least one source segment.');
+  }
+  const windows: EvidenceStructuralObservationCoverageWindow[] = [];
+  for (let offset = 0; offset < segments.length; offset += windowSegments) {
+    const slice = segments.slice(offset, offset + windowSegments);
+    const first = slice[0];
+    const last = slice.at(-1);
+    if (first === undefined || last === undefined) {
+      throw new RangeError('Coverage window is empty.');
+    }
+    const extractable = new Set(
+      slice.map(({ sourceSegmentId }) => sourceSegmentId),
+    );
+    const neighbours = [segments[offset - 1], segments[offset + slice.length]]
+      .filter((item) => item !== undefined)
+      .map(({ sourceSegmentId }) => sourceSegmentId)
+      .filter((id) => !extractable.has(id));
+    windows.push(
+      immutableEvidence({
+        index: windows.length,
+        sourceSegmentIds: slice.map(({ sourceSegmentId }) => sourceSegmentId),
+        contextSegmentIds: neighbours,
+        structureId: structure.structureId,
+        startLine: first.startLine,
+        endLine: last.endLine,
+      }),
+    );
+  }
+  return Object.freeze(windows);
 }

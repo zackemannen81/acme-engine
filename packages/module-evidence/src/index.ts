@@ -1,6 +1,7 @@
 export * from './canonical-text.js';
 export * from './correction.js';
 export * from './coverage.js';
+export * from './source-structure.js';
 export * from './catalogue.js';
 export * from './attention.js';
 export * from './export.js';

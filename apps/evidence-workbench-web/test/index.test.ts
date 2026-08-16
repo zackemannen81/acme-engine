@@ -49,6 +49,8 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain('/api/integrity-report');
     expect(html).toContain("initialView==='stream'");
     expect(html).toContain('Source stream');
+    expect(html).toContain('source-block');
+    expect(html).toContain('view.source.blocks');
     expect(html).toContain('item.sourceProvenance?.acquiredAt||item.createdAt');
     expect(html).toContain("related.length+' observations</span>");
     expect(html).toContain("awaiting+' awaiting</span>");

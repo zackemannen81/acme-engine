@@ -19,6 +19,7 @@ import {
   evidenceLineCount,
   evidenceModule,
   evidenceObserveArtifactContract,
+  deriveEvidenceSourceStructure,
   planEvidenceObservationCoverage,
 } from '../../packages/module-evidence/src/index.js';
 import { createTestPayloadEncryptor } from '../../packages/testing/src/index.js';
@@ -65,12 +66,14 @@ describe('Evidence observation coverage windows', () => {
         window.index,
       );
       const input = {
-        schemaVersion: 'evidence-observe-artifact-input/2' as const,
+        schemaVersion: 'evidence-observe-artifact-input/3' as const,
         artifactVersion,
         actorRoster: [],
         coverageWindow: {
           sourceSegmentIds: [...window.sourceSegmentIds],
         },
+        sourceStructureId: deriveEvidenceSourceStructure(artifactVersion.text)
+          .structureId,
       };
       return {
         requestKey,
@@ -80,7 +83,7 @@ describe('Evidence observation coverage windows', () => {
           evidenceObserveArtifactContract.buildRequest(input, requestContext),
         ),
         output: {
-          schemaVersion: 'evidence-observe-artifact-output/5' as const,
+          schemaVersion: 'evidence-observe-artifact-output/6' as const,
           observations: window.sourceSegmentIds.map((sourceSegmentId) => ({
             kind: 'exhibit-assertion' as const,
             sourceSegmentId,

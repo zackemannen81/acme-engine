@@ -364,6 +364,7 @@ acme-engine/
 │   │   │   ├── contracts/observe-artifact.ts
 │   │   │   ├── contracts/repair.ts
 │   │   │   ├── coverage.ts
+│   │   │   ├── source-structure.ts
 │   │   │   ├── correction.ts
 │   │   │   ├── identity.ts
 │   │   │   ├── immutable.ts
@@ -376,6 +377,7 @@ acme-engine/
 │   │   │   └── validation.ts
 │   │   └── test/
 │   │       ├── coverage.test.ts
+│   │       ├── source-structure.test.ts
 │   │       ├── identity-and-schemas.test.ts
 │   │       ├── memory-and-module.test.ts
 │   │       ├── observe-artifact.test.ts
@@ -911,6 +913,8 @@ content remains intentionally omitted here.
   8,192-token output bound while keeping historical versions registered.
   ACME-0137 adds `coverage.ts`, input `/2` and live window iteration so
   full-source observation is a workflow over 64-segment windows.
+  ACME-0142 adds `source-structure.ts` and active observe `@1.11.0` input
+  `/3` so new analyzes use document-native blocks plus neighbour context.
   ACME-0138 versions active observe to `@1.9.0` output `/5` with a
   `segmentCoverage` ledger and `0..N` atomic observations per segment.
   ADR-0042/ACME-0114 then activate `@1.3.0` output `/2`, remove provider line

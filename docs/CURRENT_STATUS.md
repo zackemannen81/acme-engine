@@ -457,8 +457,11 @@ keys. Historical `@1.9.0` stays byte-exact. ACME-0140 adds `evidence-observation
 ledger embed the same card; the browser renders quote, citation and
 standing from it. ACME-0141 sorts `/api/text-imports` by acquired/ingest
 time and titles Documents as Source stream with coverage badges;
-`?view=stream` aliases that surface. Next child is ACME-0142
-(deterministic source blocks and neighbour context).
+`?view=stream` aliases that surface. ACME-0142 adds
+`evidence-source-structure/1` and active observe `@1.11.0` input `/3`
+output `/6`: new analyzes use document-native blocks plus optional
+neighbour context, and context-only citations are refused. Historical
+`@1.10.0` stays byte-exact. Next child is ACME-0143 (claim surface).
 
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on
