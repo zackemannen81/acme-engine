@@ -1,5 +1,55 @@
 # Journal
 
+## 2026-08-16 — ACME-0151 V2 chains and chain instances
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0151
+- Change: second V2 layer, `evidence-v2-chain/1` in
+  `@acme/module-evidence-v2`. Source parts organize into longitudinal chains
+  whose subject and instance time are read from the document body's labelled
+  fields — `Hörd person`, `Förhörsdatum`, `Förhör påbörjat`, `Diarienr` — each
+  with provenance to the exact line. The part title is never consulted.
+  Membership decisions are append-only and a pure fold derives the effective
+  state. Deterministic, offline, no persistence, no surface, no provider call.
+- Measured over the real 650-part `source-A` structure: **351 chains**, 467
+  instances, 645 memberships, 5 unassigned parts, 1 instance without a readable
+  time, 21 ms, byte-identical on re-derivation, zero index parts placed in a
+  chain.
+- The result the reset was for: the Hussein Ammouri chain holds 13 instances
+  ordered by body date from 2004-10-19 to 2005-09-16, each resolving to its
+  source line, with instances #4, #6 and #7 spanning two, five and three parts.
+  `part-000387`, titled `Förhör med Ammouri, HUSSEIN; 2007-04-25 14:10`, sits
+  in the `Ammouri, Allia` chain because its body reports a different person.
+  That is the other half of R-02 paid off: reading the title would have filed
+  it under the wrong subject.
+- Charter amendment, recorded in the task: my own Definition of Done asserted
+  "the five Hussein Ammouri interviews" with five dates, a count taken from the
+  superseded 246-part structure. Measurement finds thirteen body-identified
+  interviews, of which those five are instances 2, 8, 10, 12 and 13. The goal
+  and the substance of the condition are unchanged; a stale factual count was
+  corrected rather than quietly satisfied.
+- Discovered while implementing: an `assign` decision left the superseded
+  proposal in place, giving a part two memberships that V1 must never create —
+  a proposal is a candidate and a decision replaces it outright, while a
+  decided membership is only ever demoted. Fixed, and specification §2.2 now
+  states it.
+- Discovered and deliberately **not** fixed: a short document adjacent to a
+  large index block classifies as index, because content character is per part
+  and no rule reacts to an index-run transition. The charter forbids changing
+  the structure layer, so it is recorded as
+  [a backlog proposal](backlog/v2-index-run-part-boundary.md). It is reachable
+  but not reached by the real binder, whose contents pages are part-sized.
+- Verification: typecheck, format, boundaries and docs (273 files) clean; unit
+  828/828, up from 813; conformance 78/78; integration 70/70; scenario 26/26;
+  lint clean over `apps packages tests tooling`. The pre-existing lint error in
+  the gitignored ACME-0148 scratch file is untouched.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. **The next task is
+  not a third offline layer.** Two pure layers exist and the product still has
+  no case, no storage and no screen; W-03 makes real infrastructure and real
+  navigation a precondition for any POC claim.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0150 V2 source structure
 
 - Date: 2026-08-16

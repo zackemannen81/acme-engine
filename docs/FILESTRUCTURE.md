@@ -387,8 +387,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{index.ts,source-structure.ts}
-│   │   └── test/source-structure.test.ts
+│   │   ├── src/{chain.ts,index.ts,source-structure.ts}
+│   │   └── test/{chain.test.ts,source-structure.test.ts}
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -831,8 +831,11 @@ content remains intentionally omitted here.
   canonical text to source parts and citable units, pure and total, with unique
   quote binding as an emission precondition, deterministic index/front-matter
   classification, titles as labels carrying their own provenance, and
-  constant-time lookup. It depends on nothing, and `pnpm boundaries` forbids it
-  from importing the frozen application.
+  constant-time lookup. Its second layer, `evidence-v2-chain/1`, organizes
+  parts into longitudinal chains and instances from body-derived identity and
+  time, with append-only membership decisions and a pure fold to the effective
+  state. It depends on nothing, and `pnpm boundaries` forbids it from importing
+  the frozen application.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

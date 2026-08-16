@@ -38,7 +38,7 @@ implementation detail.
 | `Artifact` | L0 | An immutable registered artifact version: exact received bytes, canonical text, content hashes, locator scheme and provenance to the outside container. Never mutated, never re-cut. |
 | `SourcePart` | L0 derivation | A deterministic, system-owned, contiguous line range of one artifact version, produced by a versioned structure rule. Carries a display title with its own provenance. Not a semantic claim about what the part is. |
 | `Chain` | domain organization | A case-scoped grouping asserting that several source parts concern one longitudinal subject — one person's interviews, one exhibit's protocol series. Carries no evidentiary authority and no truth. |
-| `ChainInstance` | domain organization | A reviewed membership of one source part in one chain, with an ordinal and a typed instance source time. A part may hold `0..N` memberships; exactly one is `primary` at a case revision. Append-only. |
+| `ChainInstance` | domain organization | One document's occurrence within a chain: an ordinal, a typed instance source time, and the one or more consecutive source parts the document occupies. A part may hold `0..N` memberships; exactly one is `primary` at a case revision. Append-only. |
 | `ObservationOccurrence` | L1 | An immutable source-bound record that a source states or depicts something at an exact locator, with a verbatim quote. Statement occurrence or exhibit assertion. Optional actor reference; optional typed temporal bound. |
 | `Claim` | L2 projection | A named grouping target over occurrences that overlap a theme or proposition. Never merges, never absorbs, never owns. Grouping is a recorded decision, not a mutation. |
 | `Relation` | L3 | A typed, reviewable statement about two or more occurrences or claims, with endpoints, comparable scope, rationale and provenance. Never deletes an endpoint. |
@@ -77,10 +77,23 @@ implementation detail.
   membership is primary, appends a new decision and supersedes the previous
   one. It never mutates the part, its occurrences, its relations or any earlier
   decision.
+- **An instance may span several source parts.** A part is size-capped, so one
+  long interview occupies consecutive parts. Membership stays per part; the
+  instance is the group of memberships sharing an ordinal. A part carrying no
+  document identity that directly follows one that does continues it. A part
+  with neither an identity nor an open document is reported unassigned rather
+  than placed, and an index or front-matter part is never placed at all.
+- An `assign` decision replaces a *proposed* membership outright rather than
+  demoting it, because a proposal is a candidate and V1 must never end up
+  holding two memberships from ordinary use. A *decided* membership is only
+  ever demoted or superseded, never discarded.
 - `instanceSourceTime` is typed (`exact`, `range`, `approximate`, `unknown`)
   with explicit provenance (`document-metadata`, `reviewer`, `unknown`). It is
   derived from the document body's own metadata or left unknown. It is never
-  derived from the part title.
+  derived from the part title. Date and time give `exact`; a date alone gives
+  `range` over that calendar day; neither gives `unknown`. Values are recorded
+  as the document states them, with no zone asserted and no conversion
+  performed.
 - Instance ordinal follows `instanceSourceTime`; instances with unknown time
   sort last and are visibly unordered rather than silently placed.
 

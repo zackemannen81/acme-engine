@@ -1104,8 +1104,26 @@ date and no subject identity. `verifyEvidenceV2SourceStructure` proves coverage,
 containment and binding against the original text independently of the
 derivation, and `createEvidenceV2SourceIndex` gives constant-time lookup so the
 structure is derived once. The package depends on nothing and a
-`pnpm boundaries` rule forbids it from importing the frozen application. No
-layer above it exists yet.
+`pnpm boundaries` rule forbids it from importing the frozen application.
+
+The same package implements the second layer as `evidence-v2-chain/1`:
+`SourcePart → Chain → ChainInstance`. Document identity and time are read from
+the body's labelled fields — `Hörd person`, `Förhörsdatum`, `Förhör påbörjat`,
+`Diarienr` — each with provenance to the exact line, pinned by
+`evidence-v2-chain-rules/1`. The part title is never consulted, because in real
+material the header line opening a part is the trailing header of the preceding
+document. `proposeEvidenceV2Chains` is deterministic and offline: parts sharing
+a normalized subject and case file reference form one chain, a part with no
+identity that follows a document continues it, and a part with neither an
+identity nor an open document is reported unassigned rather than placed. An
+index or front-matter part is never placed and closes the open document.
+`instanceSourceTime` is typed `exact` / `range` / `unknown` with no zone
+asserted and no conversion performed. `deriveEvidenceV2ChainState` folds
+append-only `assign` / `unassign` / `set-primary` decisions over the proposal:
+a decision beats a proposal, two decided claims on one part without supersession
+produce a named conflict rather than a silently chosen winner, and nothing is
+mutated or deleted. No layer above these two exists yet, and neither is
+persisted or exposed by any surface.
 
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-

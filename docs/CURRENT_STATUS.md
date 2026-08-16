@@ -49,8 +49,23 @@ parts under the frozen rules. All 944 dot-leader index lines fall inside parts
 classified `index-or-front-matter`. Derivation is a single 88 ms pass and 29,971
 lookups take 3 ms, against the frozen application's re-derivation per lookup that
 blocked its event loop for up to 64 s per window. R-01, R-02's title half, R-03
-and R-10's package half are retired as design properties. Nothing above this
-layer exists yet: no chain, no occurrence, no persistence, no surface.
+and R-10's package half are retired as design properties.
+
+ACME-0151 added the second layer, `evidence-v2-chain/1`: source parts organize
+into longitudinal chains whose subject and instance time come from the document
+body's labelled fields, never from a part title, with append-only membership
+decisions and a pure fold to the effective state. Measured over the same real
+binder: 650 parts propose **351 chains** and 467 instances with 5 unassigned
+parts, deterministically, in 21 ms. The Hussein Ammouri chain holds 13
+instances ordered by body date, each resolving to its exact source line, and
+three of them span several parts. The part titled `Förhör med Ammouri,
+HUSSEIN; 2007-04-25` sits in the `Ammouri, Allia` chain because its body
+reports a different person — which is the other half of R-02 paid off.
+
+Nothing above these two layers exists: no occurrence, no claim, no consensus,
+no persistence and no surface. Both layers are pure and offline, so the product
+still cannot be operated. The next step is persistence and the first surfaces,
+not a third offline layer.
 
 ## Delivered
 
