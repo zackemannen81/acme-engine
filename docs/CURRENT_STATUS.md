@@ -1,5 +1,47 @@
 # Current Status
 
+## Open: real-source acceptance blocked, application-model reset proposed
+
+The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder
+did not complete any of the three intended product journeys. The failures are
+above the engine boundary and are recorded in the journal entry of the same
+date. In summary:
+
+- 126 of 246 source parts (51 %) cannot be analysed, because 259 of 92,141
+  structured segments cannot bind uniquely inside their own locator range and a
+  single such segment aborts the whole job non-retryably;
+- observations project only after whole-job success, so committed coverage
+  windows are discarded when a later window fails;
+- product workspace `evidenceRevision` counts imports while engine
+  `EvidenceState.evidenceRevision` counts canonical-evidence deltas; five
+  reviewer views require them to be equal, so any case with more analysed
+  windows than imports becomes unreadable and its surfaces disagree;
+- part titles systematically name a different document than the part body in
+  this material, so displayed interview dates are wrong while line-level
+  provenance stays exact.
+
+The acceptance case for that run is retained wedged as failure evidence and must
+not be repaired.
+
+[ADR-0047](adr/0047-evidence-application-model-reset.md) is accepted. The
+Evidence *application* domain model is replaced and the delivered workbench is
+frozen as a diagnostic reference. The replacement model, V1 boundary, proof
+journeys and binding regression requirements are normative in
+[the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
+
+Nothing of the replacement is implemented yet, and no implementation task is
+active. Nothing below this section is retracted by the decision: the engine,
+persistence, artifact security, authorization, case isolation and live model
+boundary carry forward unchanged, and no data authority changes. Stage A remains
+the only authorized non-synthetic class and Stage B stays closed.
+
+Only maintenance preserving the frozen application's diagnostic value is
+permitted there. ACME-0149 is the first and so far only such change: the analyze
+confirmation reports the planner's derived bounded call count from a read-only
+case-scoped `coverage-plan` route instead of a fixed `Maximum model calls: 1`.
+
+## Delivered
+
 Stage 8 assessment output and export operations are implemented: a reviewed
 assessment renders as deterministic JSON, Markdown, DOCX and PDF from one
 citation-complete document, every reference resolving to an exact artifact

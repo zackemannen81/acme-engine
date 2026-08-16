@@ -1072,6 +1072,22 @@ normative product boundary is
 [`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
 Research Synthesis is the intended POC #2 but is not active.
 
+**Application-layer status.** [ADR-0047](adr/0047-evidence-application-model-reset.md)
+replaces the Evidence *application* domain model after real-source acceptance
+runs invalidated it, and freezes the delivered application
+(`apps/evidence-workbench-api`, `apps/evidence-workbench-web` and their evidence
+packages) as a diagnostic reference. The replacement model — `Case`, `Artifact`,
+`SourcePart`, `Chain`, `ChainInstance`, `ObservationOccurrence`, `Claim`,
+`Relation`, `Review`/`Standing`, `ConsensusProjection` — is normative in
+[`evidence-workbench-v2-domain-specification.md`](design/evidence-workbench-v2-domain-specification.md)
+and is not yet implemented. Everything described below the application layer —
+engine, persistence, artifact security, authorization, case isolation and the
+live model boundary — is carried forward unchanged, and no data authority
+changes. Only maintenance that preserves the frozen application's diagnostic
+value is permitted there; ACME-0149 is the first and so far only such change,
+replacing a fixed `Maximum model calls: 1` confirmation with the planner's own
+bounded call count from a read-only case-scoped `coverage-plan` route.
+
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-
 world or legal truth. Its authority ladder separates immutable source artifact

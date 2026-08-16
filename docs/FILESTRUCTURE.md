@@ -576,6 +576,7 @@ acme-engine/
 │   │   ├── 0044-poc1-live-product-acceptance-phase.md
 │   │   ├── 0045-real-material-scale-and-recovery.md
 │   │   ├── 0046-source-chronology-and-claim-projection.md
+│   │   ├── 0047-evidence-application-model-reset.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -622,6 +623,7 @@ acme-engine/
 │   │   ├── evidence-integrity-workbench-product-definition.md
 │   │   ├── evidence-integrity-workbench-technical-specification.md
 │   │   ├── evidence-workbench-source-and-claim-surfaces.md
+│   │   ├── evidence-workbench-v2-domain-specification.md
 │   │   ├── first-poc-application-discovery.md
 │   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md

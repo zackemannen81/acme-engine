@@ -1,5 +1,181 @@
 # Journal
 
+## 2026-08-16 — ADR-0047 freeze boundary clarified, ACME-0150 frozen
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0150 charter only. No implementation.
+- Clarification: ADR-0047 §4 froze "supporting evidence packages" without naming
+  them, which contradicted §6's carry-forward of the artifact and authorization
+  foundations. §4 now names the boundary exactly. Frozen because they carry the
+  replaced model: the three workbench apps, `module-evidence`, `evidence-views`,
+  `evidence-product-contracts`, both product adapters and `evidence-testing`.
+  Shared infrastructure the new application links against directly:
+  `evidence-artifacts` and its adapters, `evidence-auth` and its adapters,
+  `live-safety`, the provider and database adapters and `core`. The decision is
+  unchanged; the ambiguity was mine and was resolved in favour of what §6
+  already implied. Recorded in the ADR itself and mirrored as §10a of the
+  specification, where the boundary is a `pnpm boundaries` rule rather than a
+  convention.
+- ACME-0150 frozen at `Ready`: the V2 source-structure layer,
+  `packages/module-evidence-v2` exporting
+  `evidence-v2-source-structure/1`. Pure, total, offline, no persistence, no
+  app, no provider call, no spend. It retires R-01, R-02, R-03 and the
+  package-level half of R-10 as design properties: unique binding becomes an
+  emission precondition rather than a validation that fires after spend, index
+  and front matter are classified deterministically, and the part title is a
+  label with provenance on a type that exposes no date and no title-derived
+  identity.
+- Done is tied to the material that failed: zero non-bindable emitted units over
+  the real 74,469-line `source-A` text, the `"Kamel"` and `"Hussein"` shapes
+  bindable or named-refused, and the binder's contents region classified as
+  index. The text is not committed; the counts are recorded and three synthetic
+  fixtures carry the regression.
+- Out of scope is explicit and includes every other V2 object, all extraction
+  and comparison, all persistence and surfaces, and any change to the frozen set
+  or to shared infrastructure.
+- Verification: `node tooling/docs/check-docs.mjs` 270 files; prettier clean;
+  `git diff --check` clean. No code changed.
+- Handoff: implementation has not started. `docs/CURRENT_TASK.md` holds the
+  frozen charter and work may begin against it.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0149 legacy diagnostic execution-plan confirmation
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0149
+- Change: the frozen workbench's analyze confirmation states the planner's own
+  bounded call count instead of `Maximum model calls: 1`. New read-only
+  `GET /api/cases/{id}/sources/{artifact}/coverage-plan?part=` returns window
+  count, planned calls, emergency ceiling and whether the plan fits. A plan
+  above the ceiling is refused in the confirmation rather than started. The
+  local startup ceiling becomes an emergency ceiling of 20.
+- Why now: the 2026-08-16 run measured jobs spending 4 and 8 calls under a
+  confirmation asserting 1. ADR-0047 permits legacy work only where it preserves
+  diagnostic value, and an instrument that misreports its own execution does not.
+  This regularizes a change made during that run outside any charter.
+- Scope discipline: no V2 work, and none of R-01…R-08 or R-10 touched. Segment
+  binding, window size, per-window projection, the revision model, part titles,
+  stream pagination and structure caching are all left as they are.
+- Verification: typecheck, format, boundaries, docs (269 files) clean; unit
+  800/800, conformance 78/78, integration 70/70, scenario 26/26; lint clean over
+  `apps packages tests tooling`. `pnpm lint` at the repository root still reports
+  one pre-existing `no-unused-vars` in the untracked, gitignored ACME-0148
+  scratch file `tmp/source-ab-prep/exercise-more.mjs`; CI never lints it and this
+  task did not edit it. Manual check against the real 246-part artifact: 4
+  planned calls for one part, 1,440 planned and refused for the whole artifact,
+  404 for an unknown part. No provider call was made.
+- Docs: `CURRENT_STATUS.md` and `SYSTEMDOC.md` synchronized. No ADR changed, no
+  structural change, so `FILESTRUCTURE.md` is untouched.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. No legacy work is
+  chartered beyond this. The next step is the first V2 implementation task under
+  the normative specification.
+- Signature: Claude
+
+## 2026-08-16 — ADR-0047 accepted: Evidence application-model reset
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: none. Governance decision, no implementation.
+- Decision: [ADR-0047](adr/0047-evidence-application-model-reset.md) accepted.
+  The Evidence application domain model is replaced by `Case`, `Artifact`,
+  `SourcePart`, `Chain`, `ChainInstance`, `ObservationOccurrence`, `Claim`,
+  `Relation`, `Review`/`Standing`, `ConsensusProjection`. The delivered
+  workbench is frozen as a diagnostic reference. Engine, persistence, artifact
+  security, authorization, case isolation and the live boundary carry forward
+  unchanged. No data authority changes.
+- The specification
+  [`evidence-workbench-v2-domain-specification.md`](design/evidence-workbench-v2-domain-specification.md)
+  is normative, with the five activation decisions taken:
+  1. `-v2` package and app names, revisited only when legacy is removed.
+  2. Cardinality is `SourcePart 0..N ChainMembership` with one `primary` at a
+     case revision. V1 workflow exercises the primary membership only; the
+     one-to-one shortcut was rejected so lifting the limit needs no migration.
+  3. Chain proposal is deterministic first, model only on the residue, always
+     as a candidate.
+  4. Consensus is computed per claim; chain and case consensus are aggregates of
+     claim-level projections and are not separate objects.
+  5. The acceptance harness provisions a clean database, bucket and namespace
+     per proof run. The product still carries many cases in one substrate.
+- Design notes worth keeping: extraction stays blind and comparison is a
+  separate chain-scoped Pass 2 over frozen accepted occurrences, preserving
+  ADR-0046 §4 while delivering the longitudinal flow; part titles are demoted to
+  labels with their own provenance and instance time comes from document body
+  metadata or stays unknown; `insufficient-material` makes "absence of evidence
+  is not evidence of absence" a data semantic rather than prompt discipline.
+- The ten findings of the preceding run are carried into §9 of the
+  specification as binding regression requirements R-01…R-10 plus workflow rules
+  W-01…W-03. V1 may not be declared complete while any of them regresses.
+- Verification: `node tooling/docs/check-docs.mjs` 269 files; `git diff --check`
+  clean. No code changed by this decision.
+- Handoff: no implementation is activated. The next step is one explicitly
+  approved V2 task with a frozen charter — not a "build V2" container.
+- Signature: Claude
+
+## 2026-08-16 — Real-source acceptance run and proposed application-model reset
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: none. No charter was active; `docs/CURRENT_TASK.md` is the template.
+- Run: drove the three intended product journeys against the complete
+  1,915-page `source-A` binder on the live Stage A substrate
+  (`acme_poc1_ab`, bucket `evidence-private-poc1-ab`). Two live observation
+  jobs, 10 provider calls, 38,428 input + 42,350 output tokens. Cost is
+  **unknown**: `acme.model_calls` records usage but no price field.
+- The case under test was already wedged before this session: engine evidence
+  revision 7 against product workspace revision 2 at 14:48, before any call
+  made here. It is retained as failure evidence and was not repaired.
+- Findings, each verified against code plus durable evidence:
+  1. The imported `source-A` was a deliberate 280-page excerpt
+     (`tmp/source-ab-prep/source-A.metadata.json`) whose text is the binder's
+     table of contents. 911 of 1,436 lines are dot-leader index rows. A prior
+     run extracted 41 formally valid observations quoting index lines.
+  2. Re-imported complete: 74,469 lines, 3,521,477 bytes, all 1,915 pages
+     carry a text layer. Slicing produced 246 parts over 101 distinct titled
+     units; one interview spans up to ten parts.
+  3. Part title and part body name different documents. Verified on five
+     consecutive parts; `part-000169` is titled 2004-11-09 and its body reads
+     `Förhörsdatum 2004-11-29`. Line-level provenance stays exact.
+  4. 259 of 92,141 structured segments (0.28 %) cannot bind uniquely inside
+     their own locator range — degenerate one-word segments such as `"Kamel"`
+     and `"Hussein"`. Because one aborts the whole job non-retryably, 126 of
+     246 parts (51 %) are unanalysable.
+  5. Second job died on `EVIDENCE_COVERAGE_WINDOW_INCOMPLETE` at window 7 of 9
+     after 8 calls, one of them a repair.
+  6. Projection runs only after whole-job success. The two jobs committed one
+     and six windows to the engine and projected nothing.
+  7. Product `evidenceRevision` counts imports; engine
+     `EvidenceState.evidenceRevision` counts canonical-evidence deltas. Five
+     views require equality and the projection guard requires engine ≤ product.
+     Confirmed on two substrates: `acme0136` at 3/2, this run at 13/3.
+  8. The wedged case answers inconsistently: overview reports 40 pending
+     observations, the source stream reports 0 for every part, ledger/claims/
+     relations return HTTP 409, timeline returns 200 and empty.
+  9. Scale: 279 stream cards over 94,073 px; the event loop blocked up to 64 s
+     per window; ~4 min per window wall clock.
+- Code, at the user's direct request and outside any charter: the browser
+  analyze confirmation no longer asserts `Maximum model calls: 1`. A new
+  `GET /api/cases/{id}/sources/{artifact}/coverage-plan` returns the planner's
+  own window count, the confirmation states the derived bounded call count, and
+  the deployment ceiling becomes an emergency ceiling (20). Verified on a second
+  instance: 4 planned for one part, 1,440 planned and refused for a whole
+  artifact, 404 for an unknown part. Typecheck and `tsc -b` clean. **Uncommitted
+  and unchartered** — it needs either a minimal charter or a revert.
+- Docs: proposed [ADR-0047](adr/0047-evidence-application-model-reset.md) and
+  drafted
+  [the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
+  The findings above are carried into that specification as binding regression
+  requirements R-01…R-10 and W-01…W-03 rather than as a defect list.
+- Verification: `node tooling/docs/check-docs.mjs` — 269 Markdown files;
+  `git diff --check` clean. No test suite was run; no code was changed after the
+  typecheck reported above.
+- Handoff: ADR-0047 is Proposed and decides nothing yet. Nothing was activated,
+  no task was frozen, and the wedged case stands. Next step is the user's
+  decision on ADR-0047 and on the five activation questions in §10 of the
+  specification.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0148 document parts
 
 - Date: 2026-08-16
