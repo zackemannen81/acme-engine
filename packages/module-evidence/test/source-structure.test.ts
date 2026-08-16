@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import { buildEvidenceSourceSegments } from '../src/canonical-text.js';
 import {
+  EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS,
+  EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
   deriveEvidenceSourceStructure,
   planEvidenceStructuralObservationCoverage,
 } from '../src/index.js';
+
+function words(count: number, seed: string): string {
+  return Array.from(
+    { length: count },
+    (_, index) => `${seed}${String(index + 1)}.`,
+  ).join(' ');
+}
 
 const INTERVIEW = [
   'Interview of Nera Sol — Rillford Annex',
@@ -22,7 +31,7 @@ describe('deriveEvidenceSourceStructure', () => {
   it('groups a synthetic interview into Q+A blocks instead of one line per segment', () => {
     const structure = deriveEvidenceSourceStructure(INTERVIEW);
     const lineSegments = buildEvidenceSourceSegments(INTERVIEW);
-    expect(structure.ruleVersion).toBe('evidence-source-structure-rules/1');
+    expect(structure.ruleVersion).toBe('evidence-source-structure-rules/2');
     expect(structure.structureId).toMatch(/^[0-9a-f]{64}$/u);
     expect(structure.blocks.map((block) => block.kind)).toEqual([
       'heading',
@@ -46,6 +55,41 @@ describe('deriveEvidenceSourceStructure', () => {
       structure.structureId,
     );
   });
+
+  it('splits a long no-blank-line exhibit at sentence bounds toward the soft maximum', () => {
+    const text = Array.from({ length: 80 }, (_, index) =>
+      words(20, `fact${String(index + 1)}-`),
+    ).join(' ');
+    expect(text.split(/\s+/u).length).toBe(1600);
+    expect(text.includes('\n')).toBe(false);
+    const structure = deriveEvidenceSourceStructure(text);
+    const paragraphs = structure.blocks.filter(
+      (block) => block.kind === 'paragraph',
+    );
+    expect(paragraphs.length).toBeGreaterThan(1);
+    for (const block of paragraphs) {
+      const count = block.segments
+        .map((segment) => segment.exactQuote.trim().split(/\s+/u).length)
+        .reduce((sum, value) => sum + value, 0);
+      expect(count).toBeLessThanOrEqual(
+        EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS,
+      );
+    }
+  });
+
+  it('does not split a Q+A pair when the answer exceeds the soft maximum', () => {
+    const answer = words(700, 'answer-');
+    const text = [
+      'Interviewer: What happened in the annex?',
+      `Nera Sol: ${answer}`,
+    ].join('\n');
+    const structure = deriveEvidenceSourceStructure(text);
+    expect(structure.blocks.map((block) => block.kind)).toEqual(['qa-pair']);
+    expect(structure.blocks[0]?.segments).toHaveLength(2);
+    expect(
+      structure.blocks[0]?.segments[1]?.exactQuote.trim().split(/\s+/u).length,
+    ).toBeGreaterThan(EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS);
+  });
 });
 
 describe('planEvidenceStructuralObservationCoverage', () => {
@@ -62,5 +106,21 @@ describe('planEvidenceStructuralObservationCoverage', () => {
     expect(windows[1]?.contextSegmentIds).toContain(
       windows[0]?.sourceSegmentIds[0],
     );
+  });
+
+  it('defaults structural windows to a block-scale size', () => {
+    expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS).toBe(3);
+    const text = Array.from({ length: 12 }, (_, index) =>
+      words(160, `block${String(index + 1)}-`),
+    ).join('\n\n');
+    const windows = planEvidenceStructuralObservationCoverage(text);
+    expect(windows.length).toBeGreaterThan(1);
+    expect(
+      windows.every(
+        (window) =>
+          window.sourceSegmentIds.length <=
+          EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+      ),
+    ).toBe(true);
   });
 });

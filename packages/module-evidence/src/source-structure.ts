@@ -10,13 +10,19 @@ import { immutableEvidence } from './immutable.js';
 export const EVIDENCE_SOURCE_STRUCTURE_SCHEMA_VERSION =
   'evidence-source-structure/1' as const;
 export const EVIDENCE_SOURCE_STRUCTURE_RULE_VERSION =
-  'evidence-source-structure-rules/1' as const;
+  'evidence-source-structure-rules/2' as const;
 
-const TARGET_MIN_WORDS = 150;
-const TARGET_MAX_WORDS = 350;
-const SOFT_MAX_WORDS = 600;
+export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MIN_WORDS = 150 as const;
+export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MAX_WORDS = 350 as const;
+export const EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS = 600 as const;
+
+const TARGET_MIN_WORDS = EVIDENCE_SOURCE_STRUCTURE_TARGET_MIN_WORDS;
+const TARGET_MAX_WORDS = EVIDENCE_SOURCE_STRUCTURE_TARGET_MAX_WORDS;
+const SOFT_MAX_WORDS = EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS;
 const QUESTION_PREFIX =
   /^(?:Q|Question|Fråga|Interviewer|Utredare|Åklagare|Police|Officer)\s*[:-]/iu;
+const SENTENCE_TERMINALS = new Set(['.', '!', '?', '…']);
+const SENTENCE_CLOSERS = new Set(['"', "'", '”', '’', '»', ')', ']', '}']);
 
 export type EvidenceSourceBlockKind = 'qa-pair' | 'paragraph' | 'heading';
 
@@ -71,7 +77,18 @@ function headingFrom(lines: readonly LineUnit[]): string {
 }
 
 function joinLines(lines: readonly LineUnit[]): string {
-  return lines.map((line) => line.text).join('\n');
+  if (lines.length === 0) return '';
+  let result = lines[0]?.text ?? '';
+  for (let index = 1; index < lines.length; index += 1) {
+    const previous = lines[index - 1];
+    const current = lines[index];
+    if (previous === undefined || current === undefined) continue;
+    result +=
+      previous.lineNumber === current.lineNumber
+        ? ` ${current.text}`
+        : `\n${current.text}`;
+  }
+  return result;
 }
 
 function pad(value: number, width: number): string {
@@ -177,6 +194,99 @@ function atomicUnits(lines: readonly LineUnit[]): AtomicUnit[] {
   return units;
 }
 
+function isNumberedPrefix(text: string, terminalIndex: number): boolean {
+  const before = text.slice(0, terminalIndex).trim();
+  return /^\d+$/u.test(before);
+}
+
+function splitTextSentences(text: string): readonly string[] {
+  const sentences: string[] = [];
+  let start = 0;
+  let index = 0;
+  while (index < text.length) {
+    const character = text[index] ?? '';
+    if (!SENTENCE_TERMINALS.has(character)) {
+      index += 1;
+      continue;
+    }
+    if (isNumberedPrefix(text.slice(start, index + 1), index - start)) {
+      index += 1;
+      continue;
+    }
+    let boundary = index + 1;
+    while (SENTENCE_TERMINALS.has(text[boundary] ?? '')) {
+      boundary += 1;
+    }
+    while (SENTENCE_CLOSERS.has(text[boundary] ?? '')) {
+      boundary += 1;
+    }
+    const following = text[boundary];
+    if (
+      following === undefined ||
+      following === ' ' ||
+      following === '\n' ||
+      following === '\t'
+    ) {
+      const sentence = text.slice(start, boundary).trim();
+      if (sentence.length > 0) sentences.push(sentence);
+      start = boundary;
+      index = boundary;
+      continue;
+    }
+    index += 1;
+  }
+  const fragment = text.slice(start).trim();
+  if (fragment.length > 0) sentences.push(fragment);
+  return sentences;
+}
+
+function sentenceLineGroups(
+  lines: readonly LineUnit[],
+): readonly (readonly LineUnit[])[] {
+  const pieces: LineUnit[] = [];
+  for (const line of lines) {
+    const parts = splitTextSentences(line.text);
+    if (parts.length === 0) continue;
+    for (const text of parts) {
+      pieces.push({ lineNumber: line.lineNumber, text });
+    }
+  }
+  return pieces.map((piece) => [piece]);
+}
+
+function splitOversizedParagraph(unit: AtomicUnit): AtomicUnit[] {
+  if (unit.kind !== 'paragraph') return [unit];
+  const words = wordCount(joinLines(unit.lines));
+  if (words <= TARGET_MAX_WORDS) return [unit];
+  const sentences = sentenceLineGroups(unit.lines);
+  const chunks: LineUnit[][] = [];
+  let current: LineUnit[] = [];
+  for (const sentence of sentences) {
+    const combined = [...current, ...sentence];
+    const combinedWords = wordCount(joinLines(combined));
+    const currentWords = wordCount(joinLines(current));
+    if (
+      current.length > 0 &&
+      ((currentWords >= TARGET_MIN_WORDS && combinedWords > TARGET_MAX_WORDS) ||
+        combinedWords > SOFT_MAX_WORDS)
+    ) {
+      chunks.push(current);
+      current = [...sentence];
+      continue;
+    }
+    current = combined;
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks.map((lines) => ({
+    kind: 'paragraph' as const,
+    lines,
+  }));
+}
+
+function splitOversizedParagraphs(units: readonly AtomicUnit[]): AtomicUnit[] {
+  return units.flatMap(splitOversizedParagraph);
+}
+
 function mergeParagraphs(units: readonly AtomicUnit[]): AtomicUnit[] {
   const merged: AtomicUnit[] = [];
   for (const unit of units) {
@@ -258,7 +368,7 @@ export function deriveEvidenceSourceStructure(
   if (lines.length === 0) {
     throw new RangeError('Source structure requires at least one line.');
   }
-  const units = mergeParagraphs(atomicUnits(lines));
+  const units = mergeParagraphs(splitOversizedParagraphs(atomicUnits(lines)));
   const blocks = units.map((unit, index) => {
     const blockId = `block-${pad(index + 1, 6)}`;
     const first = unit.lines[0];

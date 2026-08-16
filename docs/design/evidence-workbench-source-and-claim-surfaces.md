@@ -294,6 +294,11 @@ context id.
 on a source may use the new planner under a new observe contract
 version. Do not re-cut committed windows.
 
+ACME-0145 later implemented the missing split half as
+`evidence-source-structure-rules/2` without a new observe contract:
+oversized paragraphs split at sentence bounds, and structural windows
+default to 3 extractable segments.
+
 ### ACME-0143 — Claim surface
 
 **Goal.** A projection that groups current occurrences by a stable

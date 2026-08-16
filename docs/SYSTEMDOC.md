@@ -11,8 +11,11 @@ on each card. Default `?view=` remains overview.
 Active observe is `evidence.observe-artifact@1.11.0` input `/3` output
 `/6`. New analyzes derive a content-addressed `evidence-source-structure/1`
 (hash of rule version + canonical text) into Q+A / paragraph / heading
-blocks. Coverage windows may carry neighbour `contextSegmentIds`; an
-observation that names a context id is refused
+blocks under `evidence-source-structure-rules/2`. Oversized paragraph
+units split at sentence boundaries toward 150–350 words (soft 600);
+a sentence and a Q+A pair are never split. Structural coverage windows
+default to 3 extractable segments. Coverage windows may carry neighbour
+`contextSegmentIds`; an observation that names a context id is refused
 (`EVIDENCE_CONTEXT_SEGMENT_NOT_EXTRACTABLE`). Historical `@1.10.0` and
 line-segment contracts stay registered and byte-exact. Source review
 shows those block headings beside the existing line list.
@@ -1132,8 +1135,11 @@ extractable segments plus context-only neighbours; an observation may not
 name a context id. Output `/6` accepts line or block segment ids and
 keeps `segmentCoverage`. A segment may yield zero or many atomic
 observations. Coverage is the ledger, not the observation count. The
-structural planner splits document-native blocks into windows of 64
-segments and may attach one previous and one next neighbour as context.
+structural planner splits oversized paragraphs at sentence boundaries
+toward 150–350 words (soft 600, never a sentence or Q+A pair) and
+windows those blocks 3 extractable segments at a time. It may attach
+one previous and one next neighbour as context. Line-segment windows
+stay 64.
 `@1.9.0` admits up to 128 observations so one window can hold more than
 one proposition per segment. Historical input `/2` and output `/5` stay
 byte-exact on `@1.8.0`–`@1.10.0`. Output `evidence-observe-artifact-output/2` gives the
@@ -1453,7 +1459,8 @@ fail before publishing a partial projection.
 window *i* of *n* and accumulated model calls; `actualModelCalls` is
 unbounded across the campaign because coverage is many executions, not one
 call. The worker hydrates canonical text through the audited artifact
-service, plans coverage windows, and executes `evidence.observe-artifact@1.11.0`
+service, plans structural coverage windows of 3 extractable segments,
+and executes `evidence.observe-artifact@1.11.0`
 once per window under `live-observe:{commandKey}:wNNNNN`. A committed window
 replays from that request key. Product observations plus one
 evidence-revision advance are written only after the last window commits.

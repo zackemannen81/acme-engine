@@ -1,5 +1,27 @@
 # Journal
 
+## 2026-08-16 — ACME-0145 oversized source-block split
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0145
+- Change: `evidence-source-structure-rules/2` splits oversized paragraph
+  units at sentence boundaries toward 150–350 words (soft 600) and never
+  splits a sentence or Q+A pair. Structural coverage windows default to
+  3 extractable segments; the line-segment window stays 64. Schema
+  `evidence-source-structure/1` and active observe `@1.11.0` stay in
+  place. Historical `@1.10.0` request hashes remain byte-exact.
+- Why now: Live Analyze of D1 refused as `MODEL_INVALID_RESPONSE` after
+  0142's merge-only planner left a 16k-word judicial extract as nine
+  huge segments. Same-segment null-actor exhibit-assertions then
+  collapsed to byte-identical candidates.
+- Verification: unit 798/798; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: new Analyze uses rules/2. Do not recut the failed D1 job.
+  Same-segment identity collision when actor and time are both null
+  remains a follow-up.
+- Signature: Grok
+
 ## 2026-08-16 — ACME-0144 continuity and information exposure
 
 - Date: 2026-08-16

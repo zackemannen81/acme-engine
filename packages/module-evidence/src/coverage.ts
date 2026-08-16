@@ -13,6 +13,14 @@ import {
  */
 export const EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS = 64 as const;
 
+/**
+ * Structural windows are block-scale (150–350 words), not line-scale.
+ * Three extractable segments stay inside a readable call; 64 would pack
+ * most of a judicial extract into one window.
+ */
+export const EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS =
+  3 as const;
+
 export interface EvidenceObservationCoverageWindow {
   readonly index: number;
   readonly sourceSegmentIds: readonly string[];
@@ -74,7 +82,7 @@ export interface EvidenceStructuralObservationCoverageWindow extends EvidenceObs
 
 export function planEvidenceStructuralObservationCoverage(
   text: string,
-  windowSegments: number = EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+  windowSegments: number = EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
 ): readonly EvidenceStructuralObservationCoverageWindow[] {
   if (!Number.isSafeInteger(windowSegments) || windowSegments < 1) {
     throw new RangeError(
