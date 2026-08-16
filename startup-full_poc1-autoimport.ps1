@@ -5,6 +5,8 @@ param(
     [string]$D2Pdf = "$env:USERPROFILE\Downloads\Anonymiserad_d2.pdf",
     [string]$Model = "gpt-5.6-luna",
     [int]$WorkbenchPort = 8790,
+    [string]$PostgresDatabase = "acme",
+    [string]$Bucket = "evidence-private",
     [switch]$SkipInstall,
     [switch]$SkipBuild,
     [switch]$AutoImport,
@@ -274,7 +276,15 @@ elseif (-not (Test-ContainerRunning "acme-ew-postgres")) {
 }
 
 Wait-Postgres
-Write-Ok "PostgreSQL ready on 127.0.0.1:55432."
+if ($PostgresDatabase -ne "acme") {
+    $exists = docker exec acme-ew-postgres psql -U acme -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$PostgresDatabase'"
+    if (($exists | Out-String).Trim() -ne "1") {
+        Invoke-Native {
+            docker exec acme-ew-postgres psql -U acme -d postgres -c "CREATE DATABASE `"$PostgresDatabase`" OWNER acme"
+        } "Create PostgreSQL database $PostgresDatabase"
+    }
+}
+Write-Ok "PostgreSQL ready on 127.0.0.1:55432 database $PostgresDatabase."
 
 # ---------------------------------------------------------------------------
 # MinIO
@@ -303,14 +313,14 @@ elseif (-not (Test-ContainerRunning "acme-ew-minio")) {
 Wait-Http -Url "http://127.0.0.1:9000/minio/health/live" -TimeoutSeconds 60
 Write-Ok "MinIO ready on 127.0.0.1:9000."
 
-Write-Step "Ensuring evidence-private bucket exists"
+Write-Step "Ensuring MinIO bucket $Bucket exists"
 Invoke-Native {
     docker run --rm `
         --entrypoint /bin/sh `
         minio/mc `
-        -c "mc alias set local http://host.docker.internal:9000 acmeadmin acme-evidence-dev-secret >/dev/null && mc mb --ignore-existing local/evidence-private"
-} "Create/verify MinIO bucket"
-Write-Ok "Bucket evidence-private ready."
+        -c "mc alias set local http://host.docker.internal:9000 acmeadmin acme-evidence-dev-secret >/dev/null && mc mb --ignore-existing local/$Bucket"
+} "Create/verify MinIO bucket $Bucket"
+Write-Ok "Bucket $Bucket ready."
 
 # ---------------------------------------------------------------------------
 # Local secrets
@@ -503,14 +513,14 @@ $env:EVIDENCE_WORKBENCH_SEED = "none"
 $env:EVIDENCE_AUTH_MODE = "development"
 
 $env:ACME_PERSISTENCE = "postgres"
-$env:ACME_POSTGRES_URL = "postgresql://acme:acme@127.0.0.1:55432/acme"
+$env:ACME_POSTGRES_URL = "postgresql://acme:acme@127.0.0.1:55432/$PostgresDatabase"
 
 $env:ACME_HOSTED = "1"
 
 $env:ACME_ARTIFACT_STORE = "s3"
 $env:ACME_ARTIFACT_S3_ENDPOINT = "http://127.0.0.1:9000"
 $env:ACME_ARTIFACT_S3_REGION = "us-east-1"
-$env:ACME_ARTIFACT_S3_BUCKET = "evidence-private"
+$env:ACME_ARTIFACT_S3_BUCKET = $Bucket
 $env:ACME_ARTIFACT_S3_ACCESS_KEY_ID = "acmeadmin"
 $env:ACME_ARTIFACT_S3_SECRET_FILE = $S3SecretFile
 
@@ -525,7 +535,10 @@ $env:ACME_EVIDENCE_LIVE_MODEL = $Model
 $env:ACME_EVIDENCE_PAYLOAD_KEY_FILE = $PayloadKeyFile
 $env:ACME_EVIDENCE_PAYLOAD_KEY_ID = "evidence-poc1-payload-1"
 
-$env:ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS = "6"
+# Emergency hard ceiling only. The reviewer confirmation shows the planner's
+# exact bounded call count for the selected part; this stops a real loop or
+# regression, not a run the planner already sized.
+$env:ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS = "20"
 $env:ACME_EVIDENCE_LIVE_COST_CEILING_MINOR = "19998"
 $env:ACME_EVIDENCE_LIVE_CURRENCY = "SEK"
 
@@ -661,6 +674,7 @@ if ($AutoImport) {
 const fs = require("node:fs");
 const crypto = require("node:crypto");
 
+async function main() {
 const base = process.env.ACME_POC1_AUTOIMPORT_URL;
 const organizationId = "acme-synthetic-organization";
 const caseReference = "POC1-AUTO-UI";
@@ -915,9 +929,15 @@ fs.writeFileSync(
 );
 
 console.log(`AUTOIMPORT_CASE_ID=${caseId}`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
 '@
 
-    $autoImportJs | node -
+    $autoImportJs | node --input-type=commonjs -
     if ($LASTEXITCODE -ne 0) {
         throw "AutoImport failed."
     }
@@ -948,7 +968,8 @@ Write-Host "============================================================" -Foreg
 Write-Host ""
 Write-Host "Workbench       : $WorkbenchUrl"
 Write-Host "MinIO console   : http://127.0.0.1:9001/"
-Write-Host "PostgreSQL      : postgresql://acme:acme@127.0.0.1:55432/acme"
+Write-Host "PostgreSQL      : postgresql://acme:acme@127.0.0.1:55432/$PostgresDatabase"
+Write-Host "MinIO bucket    : $Bucket"
 Write-Host ""
 Write-Host "Workbench login : reviewer@acme.local"
 Write-Host "Password        : acme-synthetic-reviewer"

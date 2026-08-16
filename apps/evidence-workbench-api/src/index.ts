@@ -91,6 +91,7 @@ import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
 import {
   deriveEvidenceSourceStructure,
+  planEvidenceStructuralObservationCoverage,
   type EvidenceState,
 } from '@acme/module-evidence';
 import { assertNoLiveCredentialFields } from '@acme/live-safety';
@@ -1902,6 +1903,53 @@ export function createEvidenceWorkbenchApi(options: {
           schemaVersion: 'evidence-export-audit-view/1',
           records: snapshot.exportAuditRecords,
         });
+        return;
+      }
+      // The coverage plan is deterministic and model-free: it is the same
+      // planner the live observation job runs, so a reviewer can be told the
+      // exact bounded call count before confirming instead of asserting a
+      // ceiling by hand.
+      const coveragePlanMatch =
+        /^\/api\/sources\/([^/]+)\/coverage-plan$/u.exec(url.pathname);
+      if (request.method === 'GET' && coveragePlanMatch?.[1] !== undefined) {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
+        await requireAuthorized('workspace.read', workspaceId);
+        const snapshot = await scopedSnapshot(workspaceId);
+        const artifactVersionId = decodeURIComponent(coveragePlanMatch[1]);
+        const source = snapshot.sources.find(
+          (item) => item.artifactVersionId === artifactVersionId,
+        );
+        if (source === undefined) {
+          send(response, 404, 'Not found.');
+          return;
+        }
+        const sourcePartId = url.searchParams.get('part');
+        try {
+          const windows = planEvidenceStructuralObservationCoverage(
+            source.text,
+            sourcePartId === null ? {} : { partId: sourcePartId },
+          );
+          const emergencyCallCeiling =
+            options.liveObservation?.deployment.maxModelCalls ?? null;
+          send(response, 200, {
+            schemaVersion: 'evidence-source-coverage-plan/1',
+            artifactVersionId,
+            sourcePartId,
+            windowCount: windows.length,
+            plannedModelCalls: windows.length,
+            emergencyCallCeiling,
+            withinEmergencyCeiling:
+              emergencyCallCeiling === null ||
+              windows.length <= emergencyCallCeiling,
+          });
+        } catch (error) {
+          if (error instanceof RangeError) {
+            send(response, 404, 'Source part is unavailable.');
+            return;
+          }
+          throw error;
+        }
         return;
       }
       const sourceMatch = /^\/api\/sources\/([^/]+)$/u.exec(url.pathname);

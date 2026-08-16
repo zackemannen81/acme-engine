@@ -164,6 +164,15 @@ architecture boundary.
 - Use an ADR for decisions that constrain multiple packages, public
   contracts, persistence, compatibility, security or future migrations.
 
+Live-call policy:
+- Execution budget must follow the planned bounded operation, not impose an arbitrary per-job call count.
+- When the system can deterministically derive the number of model calls from immutable input, coverage windows and the selected execution plan, that derived count is the normal execution bound.
+- The user-facing confirmation should report the planned execution, including the expected number of model calls and measurable usage/cost information where available.
+- A separate emergency hard ceiling may exist only as protection against unexpected loops, planner defects or runaway execution. It must not prevent a valid bounded plan merely because the plan requires more than one model call.
+- Missing usage or cost data must remain unknown; it must not be interpreted as zero.
+- Cost control must not become a substitute for correctness testing during an explicitly authorized POC acceptance run.
+- Do not spend more execution/reasoning effort deciding whether to perform a known bounded model operation than the operation itself reasonably costs.
+
 ### Pause or Handoff
 
 - Leave explicit next steps, blockers and open questions in
