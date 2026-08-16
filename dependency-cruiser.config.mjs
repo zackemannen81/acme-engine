@@ -207,6 +207,18 @@ export default {
       },
     },
     {
+      name: 'v2-application-does-not-depend-on-the-frozen-workbench',
+      severity: 'error',
+      comment:
+        'ADR-0047 freezes the packages and apps that carry the replaced Evidence application model. The replacement links against shared infrastructure (core, evidence-artifacts, evidence-auth, live-safety, adapters) and never against the frozen set, so "frozen" is structural rather than a convention.',
+      from: {
+        path: '(?:^|/)(?:packages/(?:module-evidence-v2|evidence-v2-[^/]+)|apps/evidence-workbench-v2-[^/]+)/src',
+      },
+      to: {
+        path: '^(?:apps/evidence-workbench-(?:api|web|worker)/src|packages/(?:module-evidence|evidence-views|evidence-product-contracts|adapter-evidence-product-file|adapter-evidence-product-postgres|evidence-testing)(?:/|$))',
+      },
+    },
+    {
       name: 'sealed-evaluation-truth-stays-out-of-prompts',
       severity: 'error',
       comment:

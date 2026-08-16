@@ -40,6 +40,18 @@ permitted there. ACME-0149 is the first and so far only such change: the analyze
 confirmation reports the planner's derived bounded call count from a read-only
 case-scoped `coverage-plan` route instead of a fixed `Maximum model calls: 1`.
 
+ACME-0150 delivered the first V2 layer: `@acme/module-evidence-v2` derives
+source parts and citable units from canonical text, pure, total and offline,
+with no dependency on anything. Measured over the real 74,469-line `source-A`
+text: 650 parts, 29,971 citable units, **zero** that cannot bind uniquely inside
+their own line range, against 259 non-bindable units and 126 of 246 unanalysable
+parts under the frozen rules. All 944 dot-leader index lines fall inside parts
+classified `index-or-front-matter`. Derivation is a single 88 ms pass and 29,971
+lookups take 3 ms, against the frozen application's re-derivation per lookup that
+blocked its event loop for up to 64 s per window. R-01, R-02's title half, R-03
+and R-10's package half are retired as design properties. Nothing above this
+layer exists yet: no chain, no occurrence, no persistence, no surface.
+
 ## Delivered
 
 Stage 8 assessment output and export operations are implemented: a reviewed

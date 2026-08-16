@@ -383,6 +383,12 @@ acme-engine/
 │   │       ├── observe-artifact.test.ts
 │   │       ├── repair.test.ts
 │   │       └── state.test.ts
+│   ├── module-evidence-v2/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/{index.ts,source-structure.ts}
+│   │   └── test/source-structure.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -820,6 +826,13 @@ content remains intentionally omitted here.
   bound candidate validation, conservative correction pairing, typed temporal
   behavior, attention/export helpers, compact state/delta, pure reducer/
   invariants and memory policy.
+- `@acme/module-evidence-v2`: the replacement Evidence application domain
+  module under ADR-0047. It currently owns one layer, source structure:
+  canonical text to source parts and citable units, pure and total, with unique
+  quote binding as an emission precondition, deterministic index/front-matter
+  classification, titles as labels carrying their own provenance, and
+  constant-time lookup. It depends on nothing, and `pnpm boundaries` forbids it
+  from importing the frozen application.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

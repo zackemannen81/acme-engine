@@ -47,6 +47,9 @@
       "path": "./packages/module-evidence"
     },
     {
+      "path": "./packages/module-evidence-v2"
+    },
+    {
       "path": "./packages/evidence-testing"
     },
     {

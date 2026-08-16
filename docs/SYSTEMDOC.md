@@ -1088,6 +1088,25 @@ value is permitted there; ACME-0149 is the first and so far only such change,
 replacing a fixed `Maximum model calls: 1` confirmation with the planner's own
 bounded call count from a read-only case-scoped `coverage-plan` route.
 
+**Implemented V2 layer.** `@acme/module-evidence-v2` implements
+`Artifact → SourcePart → CitableUnit` as `evidence-v2-source-structure/1`. The
+derivation is pure, total and offline: it reads no repository, no artifact
+store and no clock, consults no model, and depends only on canonical text plus
+`evidence-v2-source-structure-rules/1`. Parts partition every line exactly once
+and are size-bounded. Unique quote binding is an emission precondition rather
+than a later validation — a unit whose text repeats inside its own line range
+absorbs its predecessor until it binds, and failing that widens to its whole
+line range where uniqueness holds by construction — so no consumer can spend a
+provider call on a unit that cannot be located. Parts carry a deterministic
+`index-or-front-matter` / `substantive` character from dot-leader density, and a
+part's title is a label carrying the line it came from on a type that exposes no
+date and no subject identity. `verifyEvidenceV2SourceStructure` proves coverage,
+containment and binding against the original text independently of the
+derivation, and `createEvidenceV2SourceIndex` gives constant-time lookup so the
+structure is derived once. The package depends on nothing and a
+`pnpm boundaries` rule forbids it from importing the frozen application. No
+layer above it exists yet.
+
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-
 world or legal truth. Its authority ladder separates immutable source artifact

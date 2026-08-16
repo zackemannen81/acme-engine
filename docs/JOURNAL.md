@@ -1,5 +1,52 @@
 # Journal
 
+## 2026-08-16 — ACME-0150 V2 source structure
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0150
+- Change: first V2 layer. `@acme/module-evidence-v2` derives
+  `Artifact → SourcePart → CitableUnit` as `evidence-v2-source-structure/1`:
+  pure, total, offline, zero dependencies, no persistence, no app, no provider
+  call. A `pnpm boundaries` rule plus fixture forbids it from importing the
+  frozen application.
+- The load-bearing design choice: unique quote binding is an emission
+  precondition, not a validation. A unit whose text repeats inside its own line
+  range absorbs its predecessor until it binds, and failing that widens to its
+  whole line range where uniqueness holds by construction. The frozen pipeline
+  discovered the same condition through `DOMAIN_INVALID_RESULT` after the call
+  was already paid for.
+- Measured over the real 74,469-line `source-A` text: 650 parts, 29,971 citable
+  units, **0** non-bindable, 0 diagnostics, largest part 400 lines, 88 ms to
+  derive in a single pass, 3 ms for 29,971 lookups, byte-identical on
+  re-derivation. The frozen rules produced 259 non-bindable units and left 126
+  of 246 parts unanalysable. All 944 dot-leader index lines land inside parts
+  classified `index-or-front-matter`. L50796 and L50823 — the `"Kamel"` and
+  `"Hussein"` lines that aborted two paid jobs — now yield units spanning the
+  page marker instead of bare repeated words.
+- Discovered while implementing, both fixed inside the charter because part
+  derivation is the deliverable, both now carried by regression tests: index
+  rows opened parts, because every contents row starts with `Förhör`, which is
+  R-01 in a new shape; and reprinted page headers plus `Förhör påbörjat` /
+  `Förhör avslutat` metadata labels opened parts, giving 2,819 parts of which
+  933 were three lines or shorter and 357 repeated the previous title. An index
+  row references a document rather than opening one, a lexicon header must
+  carry a date or case reference, and a reprint of the currently open header is
+  not a boundary. 2,819 → 650 parts, 933 → 32 short parts, 357 → 0 repeats.
+- A test also caught a real bug in the reprint rule: a header on line 1 never
+  initialized the open-header state, so the first reprint still split.
+- Verification: typecheck, format, boundaries (including the new
+  `v2-frozen-model` fixture) and docs (271 files) clean; unit 813/813, up from
+  800; conformance 78/78; integration 70/70; scenario 26/26; lint clean over
+  `apps packages tests tooling`. The pre-existing lint error in the gitignored
+  ACME-0148 scratch file is unchanged and untouched.
+- Not done, deliberately: no chain, no instance, no occurrence, no persistence,
+  no surface, no instance source time. The frozen set was not modified.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next by dependency
+  is `SourcePart → Chain → ChainInstance`, where `instanceSourceTime` comes
+  from document body metadata — the other half of R-02.
+- Signature: Claude
+
 ## 2026-08-16 — ADR-0047 freeze boundary clarified, ACME-0150 frozen
 
 - Date: 2026-08-16
