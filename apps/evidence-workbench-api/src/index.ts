@@ -75,6 +75,7 @@ import {
 } from '@acme/evidence-auth';
 import {
   buildEvidencePrimaryAssessmentView,
+  buildEvidenceClaimSurfaceView,
   buildEvidencePrimaryAccountComparisonView,
   buildEvidencePrimaryObservationLedgerView,
   buildEvidencePrimaryOpenQuestionsView,
@@ -764,6 +765,7 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/work-queue',
           '/api/observations',
           '/api/accounts',
+          '/api/claims',
           '/api/relations',
           '/api/timeline',
           '/api/open-questions',
@@ -1461,6 +1463,28 @@ export function createEvidenceWorkbenchApi(options: {
           audit: artifactReadAudit,
         });
         send(response, 201, log);
+        return;
+      }
+      if (request.method === 'GET' && url.pathname === '/api/claims') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Claim projection is unavailable.');
+        const sort =
+          url.searchParams.get('sort') === 'event-time'
+            ? 'event-time'
+            : 'source-time';
+        send(
+          response,
+          200,
+          buildEvidenceClaimSurfaceView({
+            workspaceId,
+            snapshot: await scopedSnapshot(workspaceId),
+            evidenceState: await options.evidenceProjection(workspaceId),
+            sort,
+          }),
+        );
         return;
       }
       if (

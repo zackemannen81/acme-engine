@@ -14,6 +14,8 @@ export const EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION =
   'evidence-primary-observation-ledger-view/1' as const;
 export const EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION =
   'evidence-primary-account-comparison-view/1' as const;
+export const EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION =
+  'evidence-claim-surface-view/1' as const;
 export const EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION =
   'evidence-primary-relation-review-view/1' as const;
 export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
@@ -385,6 +387,34 @@ export type EvidencePrimaryObservationLedgerView = z.infer<
 >;
 export type EvidencePrimaryAccountComparisonView = z.infer<
   typeof EvidencePrimaryAccountComparisonViewSchema
+>;
+
+export const EvidenceClaimSurfaceViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION),
+    workspaceId: EvidenceNonBlankStringSchema,
+    heading: z.literal('Claim'),
+    explanation: z.literal(
+      'Occurrences are grouped by a shared aspect. Cards stay separate; overlap is visible and is not a stored merge.',
+    ),
+    sort: z.enum(['source-time', 'event-time']),
+    groups: z.array(
+      z
+        .object({
+          groupId: EvidenceNonBlankStringSchema,
+          kind: z.enum(['relation-scope', 'actor-thread']),
+          subject: EvidenceNonBlankStringSchema,
+          aspect: EvidenceNonBlankStringSchema,
+          comparePath: EvidenceNonBlankStringSchema.nullable(),
+          cards: z.array(EvidenceObservationCardSchema).min(1),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidenceClaimSurfaceView = z.infer<
+  typeof EvidenceClaimSurfaceViewSchema
 >;
 
 export const EvidencePrimaryRelationReviewViewSchema = z

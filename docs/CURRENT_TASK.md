@@ -1,6 +1,6 @@
 # Current Task
 
-Task ID: ACME-0143
+Task ID: ACME-0144
 Parent Task: None
 Status: Ready
 Owner: Claude
@@ -13,13 +13,13 @@ Charter frozen at: 2026-08-16
 - `AGENTS.md`
 - `docs/TASK_WORKFLOW.md`
 - ADR-0046
-- `docs/design/evidence-workbench-source-and-claim-surfaces.md` §2.3, §5 ACME-0143
-- `docs/finished/ACME-0142_source-blocks-neighbour-context.md`
+- `docs/design/evidence-workbench-source-and-claim-surfaces.md` §2.3, §5 ACME-0144
+- `docs/finished/ACME-0143_claim-surface.md`
 
 ## Task Summary
 
-A read-only claim surface groups current occurrences by a stable aspect
-and lists them as shared cards. Overlap is visible. No stored merge.
+Additive relation families for statement evolution and information flow.
+A Pass 2/3 job over frozen occurrences only.
 
 ## Task Charter
 
@@ -27,61 +27,60 @@ Frozen at Ready.
 
 ### Goal
 
-A projection that groups current occurrences by a stable aspect key
-(actor label, place string, vehicle string, or an existing relation
-scope) and lists them as cards.
+Represent statement evolution and information flow as reviewable
+relations over frozen occurrences, without deleting earlier ones.
 
 ### Primary Deliverable
 
-A read-only view + route. Reuse the 0140 card. Optional sort: source
-time vs asserted event time. Compare-accounts content is reachable as a
-person thread here.
+New relation codes; a new optional live/offline job; reviewable like
+today’s relations. UI shows those relations on the claim group and on
+the card.
 
 ### In Scope
 
-- Read-only view + route.
-- Reuse the 0140 card.
-- Optional sort: source time vs asserted event time.
-- Overlap is visible. `corroborates` is not auto-assigned.
+- New relation codes for continuity and information flow.
+- New optional live/offline job over frozen occurrences only.
+- Reviewable like today’s relations.
+- Interview question may be modelled as a procedural occurrence if the
+  observe contract already emits it; otherwise a minimal additive
+  occurrence kind.
 
 ### Out of Scope
 
-- Information-exposure types.
+- Psychological or credibility scoring.
+- Automatic `corroborates` from exposure.
+- Legal conclusions.
 - Knowledge-time replay slider.
-- Assessment rewrite.
-- Continuity / exposure job (0144).
-- Automatic `corroborates` from string overlap.
 
 ### Definition of Done
 
-- Three “red Volvo” occurrences from two sources appear as three cards
-  in one group, each opening its source.
-- No stored merge.
+- The X#1 “unknown colour” → X#2 “maybe red Volvo” after a question
+  that named the colour can be represented as `changes_certainty` +
+  `prompted_by` without deleting X#1.
 
 ### Minimum Verification Gates
 
-- [ ] Claim-group view test with three unmerged cards
-- [ ] Shell contains view=claim
+- [ ] Continuity / exposure relation codes and semantic tests
+- [ ] Offline job or fixture representing the X#1 → X#2 example
 - [ ] typecheck, lint, format, unit, docs
 
 ## References
 
 - ADR-0046
 - `docs/design/evidence-workbench-source-and-claim-surfaces.md`
-- `packages/evidence-views`
 
 ## Checklist
 
 - [x] Freeze charter.
-- [ ] Pure claim-group view builder.
-- [ ] Route and `?view=claim`.
-- [ ] Sort source time vs event time.
+- [ ] Additive relation codes.
+- [ ] Pass 2/3 job over frozen occurrences.
+- [ ] Show relations on claim group and card.
 - [ ] Tests, docs, archive, commit, push.
 
 ## Decisions and Notes
 
-- Grouping is a projection. Occurrences stay source-bound.
-- Compare-accounts becomes a person thread inside Claim.
+- Pass 1 must not receive prior interviews. Pass 2/3 may.
+- `corroborates` is not inferred from overlap plus exposure.
 
 ## Charter Amendment Log
 
@@ -98,13 +97,7 @@ person thread here.
 - [ ] `docs/JOURNAL.md`
 - [ ] `docs/FILESTRUCTURE.md` when structure changes
 
-## Handoff and Follow-ups
-
-- Current state: charter frozen; implementation not started.
-- Next recommended step: implement the claim-group view.
-- Blockers: none.
-
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0143_claim-surface.md`.
-- Charter ACME-0144 from the surfaces spec.
+- Archive as `docs/finished/ACME-0144_continuity-information-exposure.md`.
+- Restore the task template or the next approved task.

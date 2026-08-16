@@ -16,6 +16,10 @@ observation that names a context id is refused
 (`EVIDENCE_CONTEXT_SEGMENT_NOT_EXTRACTABLE`). Historical `@1.10.0` and
 line-segment contracts stay registered and byte-exact. Source review
 shows those block headings beside the existing line list.
+`GET /api/claims` (`?view=claim`) is the claim projection: current
+occurrences grouped by relation scope or actor label as unmerged cards.
+Optional `sort=source-time|event-time`. Overlap is visible;
+`corroborates` is not assigned.
 
 Reviewer operations are case-bound records (`evidence-review-assignment/1`,
 `evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain

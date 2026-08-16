@@ -849,10 +849,10 @@ content remains intentionally omitted here.
   synthetic text-import/redaction records and security audit, separate from
   the ACME ledger. PostgreSQL migration v5 owns the Stage 5 tables.
 - `@acme/evidence-views`: pure registered primary work-queue, source-review,
-  observation-ledger, account-comparison, relation-review, timeline and open-
-  question view contracts/builders plus gated technical provenance/replay
-  views, assessment/review-history primary views, stable citations and the
-  vocabulary guard.
+  observation-ledger, account-comparison, claim-surface, relation-review,
+  timeline and open-question view contracts/builders plus gated technical
+  provenance/replay views, assessment/review-history primary views, stable
+  citations and the vocabulary guard.
 - `@acme/evidence-testing`: exact synthetic corpus plus manifest/open/sealed
   truth loaders, deterministic golden builder, identity vectors, the `DEV-T01`
   mock fixture, truth-free deterministic evaluation candidates and product/view
@@ -896,7 +896,8 @@ content remains intentionally omitted here.
   adds the Documents import view, immutable redaction draft/apply flow and
   restart-safe case-first records. ACME-0141 sorts that list as the source
   stream (`text-import-list.ts`) and shows ingest time plus observation
-  coverage; `?view=stream` aliases Documents. ACME-0105 adds the closed
+  coverage; `?view=stream` aliases Documents. ACME-0143 adds
+  `GET /api/claims` and `?view=claim`. ACME-0105 adds the closed
   `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
   authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
   key are required before an OpenAI gateway can be released. ACME-0106 adds

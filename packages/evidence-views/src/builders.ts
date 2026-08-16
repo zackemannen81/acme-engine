@@ -22,6 +22,7 @@ import {
 
 import {
   EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION,
+  EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
@@ -33,6 +34,7 @@ import {
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
+  EvidenceClaimSurfaceViewSchema,
   EvidenceObservationCardSchema,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryAssessmentViewSchema,
@@ -45,6 +47,7 @@ import {
   EvidencePrimaryWorkQueueViewSchema,
   EvidenceTechnicalProvenanceViewSchema,
   EvidenceTechnicalReplayViewSchema,
+  type EvidenceClaimSurfaceView,
   type EvidenceObservationCard,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryAssessmentView,
@@ -1227,6 +1230,151 @@ export function buildEvidenceTechnicalProvenanceView(input: {
       contractFingerprint: input.contractFingerprint,
       operationDigest: input.operationDigest,
       retainedCallAvailable: input.retainedCallAvailable,
+    }),
+  );
+}
+
+export function buildEvidenceClaimSurfaceView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+  readonly sort?: 'source-time' | 'event-time';
+}): EvidenceClaimSurfaceView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const sort = input.sort ?? 'source-time';
+  const standings = standingMap(state);
+  const sources = new Map(
+    snapshot.sources.map((source) => [source.artifactVersionId, source]),
+  );
+  const current = snapshot.observations.filter((observation) => {
+    const value = standings.get(observation.observationId);
+    return value === 'current' || value === 'contested';
+  });
+  const cardsById = new Map(
+    current.map((observation) => {
+      const source = sources.get(observation.artifactVersionId);
+      if (source === undefined) {
+        throw new RangeError(
+          `Missing source for ${observation.observationId}.`,
+        );
+      }
+      return [
+        observation.observationId,
+        {
+          observation,
+          source,
+          card: buildEvidenceObservationCard({
+            observation,
+            source,
+            snapshot,
+          }),
+        },
+      ];
+    }),
+  );
+  const sortCards = (
+    items: readonly {
+      readonly observation: EvidenceObservation;
+      readonly source: SourceArtifactVersion;
+      readonly card: EvidenceObservationCard;
+    }[],
+  ) =>
+    [...items].sort((left, right) => {
+      const leftKey =
+        sort === 'event-time'
+          ? (left.card.assertedEventTimeDisplay ??
+            left.card.sourceTimeDisplay ??
+            '')
+          : (left.card.sourceTimeDisplay ?? left.source.title);
+      const rightKey =
+        sort === 'event-time'
+          ? (right.card.assertedEventTimeDisplay ??
+            right.card.sourceTimeDisplay ??
+            '')
+          : (right.card.sourceTimeDisplay ?? right.source.title);
+      return (
+        leftKey.localeCompare(rightKey) ||
+        left.card.citation.display.localeCompare(right.card.citation.display) ||
+        left.observation.observationId.localeCompare(
+          right.observation.observationId,
+        )
+      );
+    });
+  const groups: EvidenceClaimSurfaceView['groups'] = [];
+  const scopeBuckets = new Map<string, Set<string>>();
+  for (const relation of snapshot.relations) {
+    if (state.currentRelationVersionIds.includes(relation.relationId) === false)
+      continue;
+    const key = `${relation.comparableScope.subject}\u0000${relation.comparableScope.aspect}`;
+    const bucket = scopeBuckets.get(key) ?? new Set<string>();
+    for (const endpoint of relation.endpoints) {
+      if (endpoint.kind === 'observation' && cardsById.has(endpoint.id))
+        bucket.add(endpoint.id);
+    }
+    scopeBuckets.set(key, bucket);
+  }
+  for (const [key, ids] of [...scopeBuckets.entries()].sort(([left], [right]) =>
+    left.localeCompare(right),
+  )) {
+    if (ids.size === 0) continue;
+    const [subject = 'unscoped', aspect = 'aspect'] = key.split('\u0000');
+    const items = sortCards(
+      [...ids].flatMap((id) => {
+        const value = cardsById.get(id);
+        return value === undefined ? [] : [value];
+      }),
+    );
+    groups.push({
+      groupId: `scope:${subject}:${aspect}`,
+      kind: 'relation-scope',
+      subject,
+      aspect,
+      comparePath: null,
+      cards: items.map(({ card }) => card),
+    });
+  }
+  const actorBuckets = new Map<string, Set<string>>();
+  for (const observation of current) {
+    const actor = sourceActor(observation);
+    if (actor === null) continue;
+    const bucket = actorBuckets.get(actor.sourceLabel) ?? new Set<string>();
+    bucket.add(observation.observationId);
+    actorBuckets.set(actor.sourceLabel, bucket);
+  }
+  for (const [label, ids] of [...actorBuckets.entries()].sort(
+    ([left], [right]) => left.localeCompare(right),
+  )) {
+    if (ids.size === 0) continue;
+    const items = sortCards(
+      [...ids].flatMap((id) => {
+        const value = cardsById.get(id);
+        return value === undefined ? [] : [value];
+      }),
+    );
+    const hasCorrection = items.some(
+      ({ source }) => source.predecessorVersionId !== null,
+    );
+    groups.push({
+      groupId: `actor:${label}`,
+      kind: 'actor-thread',
+      subject: label,
+      aspect: 'person thread',
+      comparePath: hasCorrection ? '/api/accounts/compare' : null,
+      cards: items.map(({ card }) => card),
+    });
+  }
+  return detached(
+    EvidenceClaimSurfaceViewSchema.parse({
+      schemaVersion: EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION,
+      workspaceId: input.workspaceId,
+      heading: 'Claim',
+      explanation:
+        'Occurrences are grouped by a shared aspect. Cards stay separate; overlap is visible and is not a stored merge.',
+      sort,
+      groups,
     }),
   );
 }

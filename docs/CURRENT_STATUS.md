@@ -461,7 +461,10 @@ time and titles Documents as Source stream with coverage badges;
 `evidence-source-structure/1` and active observe `@1.11.0` input `/3`
 output `/6`: new analyzes use document-native blocks plus optional
 neighbour context, and context-only citations are refused. Historical
-`@1.10.0` stays byte-exact. Next child is ACME-0143 (claim surface).
+`@1.10.0` stays byte-exact. ACME-0143 adds the read-only claim surface:
+`evidence-claim-surface-view/1` groups current occurrences by relation
+scope or actor thread as unmerged 0140 cards; `?view=claim` opens it.
+Next child is ACME-0144 (continuity and information exposure).
 
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on

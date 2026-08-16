@@ -1,5 +1,21 @@
 # Journal
 
+## 2026-08-16 — ACME-0143 claim surface
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0143
+- Change: added `evidence-claim-surface-view/1` and `GET /api/claims`.
+  Current occurrences group by relation scope or actor thread as unmerged
+  0140 cards. `?view=claim` opens the surface; sort is source time or
+  asserted event time. Compare-accounts is reachable from a person thread
+  that has a correction. No stored merge and no auto-`corroborates`.
+- Why now: ADR-0046 names Claim as the comparison job over occurrences.
+- Verification: unit 794/794; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0144 continuity and information exposure.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0142 source blocks and neighbour context
 
 - Date: 2026-08-16
