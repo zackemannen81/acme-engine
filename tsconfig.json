@@ -90,6 +90,18 @@
     },
     {
       "path": "./apps/evidence-workbench-api"
+    },
+    {
+      "path": "./packages/evidence-v2-contracts"
+    },
+    {
+      "path": "./packages/adapter-evidence-v2-postgres"
+    },
+    {
+      "path": "./apps/evidence-workbench-v2-web"
+    },
+    {
+      "path": "./apps/evidence-workbench-v2-api"
     }
   ]
 }

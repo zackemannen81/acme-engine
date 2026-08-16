@@ -62,10 +62,27 @@ three of them span several parts. The part titled `Förhör med Ammouri,
 HUSSEIN; 2007-04-25` sits in the `Ammouri, Allia` chain because its body
 reports a different person — which is the other half of R-02 paid off.
 
-Nothing above these two layers exists: no occurrence, no claim, no consensus,
-no persistence and no surface. Both layers are pure and offline, so the product
-still cannot be operated. The next step is persistence and the first surfaces,
-not a third offline layer.
+ACME-0152 made those two layers operable. `@acme/evidence-v2-contracts`,
+`@acme/adapter-evidence-v2-postgres`, `apps/evidence-workbench-v2-api` and
+`apps/evidence-workbench-v2-web` persist a case, an artifact whose canonical
+text is encrypted in an object store through the shared ADR-0037 envelope, and
+the structure and chain proposal derived exactly once at import. A plain
+server-rendered surface walks Case → Source → Chain → Instance → exact source
+lines, every list bounded at 100 rows.
+
+Recorded on a fresh PostgreSQL database and a fresh MinIO bucket with the real
+`source-A` text: import 1,205 ms, canonical SHA-256 matching, 74,469 lines, 650
+parts and 351 chains persisted; after a process restart every read comes from
+PostgreSQL. The Hussein chain shows its 13 instances in body-date order, the
+part titled `Förhör med Ammouri, HUSSEIN; 2007-04-25` opens under
+`Ammouri, Allia`, and appending one membership decision moves it while the
+stored proposal (645 rows) and structure (650 rows) stay md5-identical.
+
+**Known limitation, deferred by decision:** the V2 app has no authentication or
+authorization. It binds to loopback and every route names its case explicitly,
+so it is a single-operator local tool until the shared `@acme/evidence-auth`
+model is wired. That is the next task. No occurrence, claim or consensus layer
+exists yet.
 
 ## Delivered
 

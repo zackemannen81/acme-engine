@@ -102,7 +102,7 @@ export default {
       from: {
         path: '(?:^|/)(?:packages|apps)/[^/]+/src',
         pathNot:
-          '(?:^|/)packages/adapter-(?:postgres|evidence-product-postgres|evidence-auth-postgres)/src|(?:^|/)apps/(?:cli|evidence-workbench-api)/src',
+          '(?:^|/)packages/adapter-(?:postgres|evidence-product-postgres|evidence-auth-postgres|evidence-v2-postgres)/src|(?:^|/)apps/(?:cli|evidence-workbench-api|evidence-workbench-v2-api)/src',
       },
       to: {
         path: '(?:^|/)pg(?:/|$)',
@@ -212,7 +212,7 @@ export default {
       comment:
         'ADR-0047 freezes the packages and apps that carry the replaced Evidence application model. The replacement links against shared infrastructure (core, evidence-artifacts, evidence-auth, live-safety, adapters) and never against the frozen set, so "frozen" is structural rather than a convention.',
       from: {
-        path: '(?:^|/)(?:packages/(?:module-evidence-v2|evidence-v2-[^/]+)|apps/evidence-workbench-v2-[^/]+)/src',
+        path: '(?:^|/)(?:packages/(?:module-evidence-v2|evidence-v2-[^/]+|adapter-evidence-v2-[^/]+)|apps/evidence-workbench-v2-[^/]+)/src',
       },
       to: {
         path: '^(?:apps/evidence-workbench-(?:api|web|worker)/src|packages/(?:module-evidence|evidence-views|evidence-product-contracts|adapter-evidence-product-file|adapter-evidence-product-postgres|evidence-testing)(?:/|$))',

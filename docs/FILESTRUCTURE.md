@@ -836,6 +836,16 @@ content remains intentionally omitted here.
   time, with append-only membership decisions and a pure fold to the effective
   state. It depends on nothing, and `pnpm boundaries` forbids it from importing
   the frozen application.
+- `@acme/evidence-v2-contracts`: the V2 stored records and the single
+  repository port over them. Shapes only; derivation stays in the module.
+- `@acme/adapter-evidence-v2-postgres`: that port over PostgreSQL in its own
+  schema, with versioned migrations and separate proposed/effective membership
+  tables.
+- `apps/evidence-workbench-v2-api`: the V2 composition root and HTTP surface —
+  cases, import, bounded parts and chains, a part's exact source lines and
+  appended membership decisions. Loopback only; authentication is not wired.
+- `apps/evidence-workbench-v2-web`: plain server-rendered HTML for
+  Case → Source → Chain → Instance.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

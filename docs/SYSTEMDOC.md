@@ -1122,8 +1122,24 @@ asserted and no conversion performed. `deriveEvidenceV2ChainState` folds
 append-only `assign` / `unassign` / `set-primary` decisions over the proposal:
 a decision beats a proposal, two decided claims on one part without supersession
 produce a named conflict rather than a silently chosen winner, and nothing is
-mutated or deleted. No layer above these two exists yet, and neither is
-persisted or exposed by any surface.
+mutated or deleted.
+
+**Operable V2 application.** `@acme/evidence-v2-contracts` fixes the stored
+records — case, artifact, structure, chain proposal, chain decision — and one
+repository port. `@acme/adapter-evidence-v2-postgres` implements that port in
+its own PostgreSQL schema with versioned migrations over the shared
+`@acme/adapter-postgres` helpers, keeping proposed and effective memberships in
+separate tables so a decision provably cannot rewrite the proposal.
+`apps/evidence-workbench-v2-api` composes pool, object store, KEK ring and
+repository, stores canonical text through the shared ADR-0037 envelope, derives
+structure and chains exactly once inside the import transaction, and serves
+bounded JSON and HTML for cases, parts, a part's exact source lines, chains, one
+chain's ordered instances and appended membership decisions.
+`apps/evidence-workbench-v2-web` renders those pages as plain server-rendered
+HTML. A chain view reflects effective membership, so a reviewer's correction is
+visible where it was made. No read path re-derives anything. The app has no
+authentication yet and binds to loopback; no occurrence, claim or consensus
+layer exists.
 
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-

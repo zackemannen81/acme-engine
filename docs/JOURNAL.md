@@ -1,5 +1,48 @@
 # Journal
 
+## 2026-08-16 — ACME-0152 V2 persistence and first surfaces
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0152
+- Change: the two derived V2 layers became operable. Four new units —
+  `@acme/evidence-v2-contracts`, `@acme/adapter-evidence-v2-postgres`,
+  `apps/evidence-workbench-v2-api` and `apps/evidence-workbench-v2-web` —
+  persist a case and an artifact on real PostgreSQL, store canonical text
+  encrypted in an object store through the shared ADR-0037 envelope, derive
+  structure and chains exactly once inside the import transaction, and serve a
+  plain browser surface for Case → Source → Chain → Instance → exact source
+  lines. Every list is bounded at 100 rows. No model call, no spend.
+- Recorded run on a fresh database and a fresh bucket with the real `source-A`
+  text: import 1,205 ms, canonical SHA-256 matching, 74,469 lines, 650 parts
+  and 351 chains persisted. The process was then stopped and restarted and
+  every read below came from PostgreSQL: bounded pages, the Hussein chain with
+  13 instances in body-date order, and `part-000387` — titled
+  `Förhör med Ammouri, HUSSEIN; 2007-04-25` — opening under `Ammouri, Allia`
+  with its 352 exact source lines. All six HTML pages answered 200.
+- One appended membership decision moved `part-000381` to Allia's chain. The
+  Hussein chain view went 13 → 12 instances while the stored proposal (645
+  rows) and stored structure (650 rows) stayed md5-identical, read straight
+  from PostgreSQL. Blast radius measured, not asserted.
+- Discovered by the run and fixed: the chain page rendered the proposal rather
+  than the effective state, so a moved part still appeared in the chain it had
+  been moved off — a correction invisible on the surface where it was made. A
+  unit test now covers it. Nothing else discovered was acted on.
+- Deferred by decision and stated as a limitation, not hidden: the V2 app has
+  no authentication or authorization. It binds to loopback and every route
+  names its case explicitly. Wiring the shared `@acme/evidence-auth` model is
+  the next task.
+- Verification: typecheck, format, boundaries (with the frozen-set rule
+  extended to the new adapter and app) and docs (274 files) clean; unit
+  836/836, up from 828; conformance 78/78; integration 70/70; scenario 26/26;
+  `pnpm test:postgres` gains a 4-test `evidence-v2-persistence` suite that
+  passes against real PostgreSQL. Lint clean over `apps packages tests
+  tooling`; the pre-existing gitignored ACME-0148 scratch-file error is
+  untouched.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. The next task is
+  authentication and authorization for the V2 app.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0151 V2 chains and chain instances
 
 - Date: 2026-08-16

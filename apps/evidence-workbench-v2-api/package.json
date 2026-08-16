@@ -1,0 +1,34 @@
+{
+  "name": "@acme/evidence-workbench-v2-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./local": {
+      "types": "./dist/local.d.ts",
+      "default": "./dist/local.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/adapter-evidence-artifact-file": "workspace:*",
+    "@acme/adapter-evidence-artifact-s3": "workspace:*",
+    "@acme/adapter-evidence-v2-postgres": "workspace:*",
+    "@acme/adapter-postgres": "workspace:*",
+    "@acme/evidence-artifacts": "workspace:*",
+    "@acme/evidence-v2-contracts": "workspace:*",
+    "@acme/evidence-workbench-v2-web": "workspace:*",
+    "@acme/module-evidence-v2": "workspace:*",
+    "pg": "8.16.3"
+  }
+}

@@ -164,6 +164,38 @@ importers:
         specifier: 8.15.5
         version: 8.15.5
 
+  apps/evidence-workbench-v2-api:
+    dependencies:
+      '@acme/adapter-evidence-artifact-file':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-artifact-file
+      '@acme/adapter-evidence-artifact-s3':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-artifact-s3
+      '@acme/adapter-evidence-v2-postgres':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-v2-postgres
+      '@acme/adapter-postgres':
+        specifier: workspace:*
+        version: link:../../packages/adapter-postgres
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../../packages/evidence-artifacts
+      '@acme/evidence-v2-contracts':
+        specifier: workspace:*
+        version: link:../../packages/evidence-v2-contracts
+      '@acme/evidence-workbench-v2-web':
+        specifier: workspace:*
+        version: link:../evidence-workbench-v2-web
+      '@acme/module-evidence-v2':
+        specifier: workspace:*
+        version: link:../../packages/module-evidence-v2
+      pg:
+        specifier: 8.16.3
+        version: 8.16.3
+
+  apps/evidence-workbench-v2-web: {}
+
   apps/evidence-workbench-web: {}
 
   apps/evidence-workbench-worker:
@@ -305,6 +337,18 @@ importers:
         specifier: 8.15.5
         version: 8.15.5
 
+  packages/adapter-evidence-v2-postgres:
+    dependencies:
+      '@acme/adapter-postgres':
+        specifier: workspace:*
+        version: link:../adapter-postgres
+      '@acme/evidence-v2-contracts':
+        specifier: workspace:*
+        version: link:../evidence-v2-contracts
+      '@acme/module-evidence-v2':
+        specifier: workspace:*
+        version: link:../module-evidence-v2
+
   packages/adapter-memory:
     dependencies:
       '@acme/core':
@@ -441,6 +485,15 @@ importers:
         specifier: 4.0.18
         version: 4.0.18(@types/node@24.13.3)(tsx@4.23.1)(yaml@2.8.1)
 
+  packages/evidence-v2-contracts:
+    dependencies:
+      '@acme/evidence-artifacts':
+        specifier: workspace:*
+        version: link:../evidence-artifacts
+      '@acme/module-evidence-v2':
+        specifier: workspace:*
+        version: link:../module-evidence-v2
+
   packages/evidence-views:
     dependencies:
       '@acme/evidence-product-contracts':
@@ -463,6 +516,8 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
+
+  packages/module-evidence-v2: {}
 
   packages/module-narrative:
     dependencies:
