@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { buildEvidenceSourceSegments } from '../src/canonical-text.js';
 import {
+  EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
   EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS,
-  EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+  EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS,
   deriveEvidenceSourceStructure,
   planEvidenceStructuralObservationCoverage,
 } from '../src/index.js';
@@ -31,7 +32,7 @@ describe('deriveEvidenceSourceStructure', () => {
   it('groups a synthetic interview into Q+A blocks instead of one line per segment', () => {
     const structure = deriveEvidenceSourceStructure(INTERVIEW);
     const lineSegments = buildEvidenceSourceSegments(INTERVIEW);
-    expect(structure.ruleVersion).toBe('evidence-source-structure-rules/2');
+    expect(structure.ruleVersion).toBe('evidence-source-structure-rules/3');
     expect(structure.structureId).toMatch(/^[0-9a-f]{64}$/u);
     expect(structure.blocks.map((block) => block.kind)).toEqual([
       'heading',
@@ -40,17 +41,14 @@ describe('deriveEvidenceSourceStructure', () => {
     ]);
     const qa = structure.blocks.filter((block) => block.kind === 'qa-pair');
     expect(qa).toHaveLength(2);
-    expect(qa[0]?.segments).toHaveLength(2);
-    expect(qa[0]?.segments[1]?.exactQuote).toContain(
+    expect(qa[0]?.segments.map((segment) => segment.exactQuote)).toEqual([
+      'Interviewer: Where were you on Tuesday evening?',
+      'Nera Sol: I stayed inside the greenhouse.',
       'I checked the hatch twice.',
-    );
-    expect(qa[0]?.segments[1]?.startLine).toBeLessThan(
-      qa[0]?.segments[1]?.endLine ?? 0,
-    );
-    const structuredCount = structure.blocks.flatMap(
-      (block) => block.segments,
-    ).length;
-    expect(structuredCount).toBeLessThan(lineSegments.length);
+      'The indicator stayed amber the whole time.',
+    ]);
+    expect(qa[0]?.segments[2]?.startLine).toBe(qa[0]?.segments[2]?.endLine);
+    expect(lineSegments.length).toBeGreaterThan(0);
     expect(deriveEvidenceSourceStructure(INTERVIEW).structureId).toBe(
       structure.structureId,
     );
@@ -85,10 +83,24 @@ describe('deriveEvidenceSourceStructure', () => {
     ].join('\n');
     const structure = deriveEvidenceSourceStructure(text);
     expect(structure.blocks.map((block) => block.kind)).toEqual(['qa-pair']);
-    expect(structure.blocks[0]?.segments).toHaveLength(2);
+    expect(structure.blocks[0]?.segments[0]?.exactQuote).toContain(
+      'What happened in the annex?',
+    );
+    expect(structure.blocks[0]?.segments.length).toBeGreaterThan(600);
+  });
+
+  it('emits one segment per sentence inside an in-bounds paragraph', () => {
+    const text =
+      'The hatch stayed amber. The operator signed the log at the annex.';
+    const structure = deriveEvidenceSourceStructure(text);
+    expect(structure.blocks).toHaveLength(1);
+    expect(structure.blocks[0]?.kind).toBe('paragraph');
     expect(
-      structure.blocks[0]?.segments[1]?.exactQuote.trim().split(/\s+/u).length,
-    ).toBeGreaterThan(EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS);
+      structure.blocks[0]?.segments.map((item) => item.exactQuote),
+    ).toEqual([
+      'The hatch stayed amber.',
+      'The operator signed the log at the annex.',
+    ]);
   });
 });
 
@@ -108,8 +120,8 @@ describe('planEvidenceStructuralObservationCoverage', () => {
     );
   });
 
-  it('defaults structural windows to a block-scale size', () => {
-    expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS).toBe(3);
+  it('packs structural windows by word budget under the coverage ceiling', () => {
+    expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS).toBe(800);
     const text = Array.from({ length: 12 }, (_, index) =>
       words(160, `block${String(index + 1)}-`),
     ).join('\n\n');
@@ -119,7 +131,7 @@ describe('planEvidenceStructuralObservationCoverage', () => {
       windows.every(
         (window) =>
           window.sourceSegmentIds.length <=
-          EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+          EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
       ),
     ).toBe(true);
   });

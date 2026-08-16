@@ -14,12 +14,12 @@ import {
 export const EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS = 64 as const;
 
 /**
- * Structural windows are block-scale (150–350 words), not line-scale.
- * Three extractable segments stay inside a readable call; 64 would pack
- * most of a judicial extract into one window.
+ * Structural windows pack sentence-scale segments toward a readable
+ * word budget. The 64-segment ceiling is the observe coverage schema
+ * maximum, not a target.
  */
-export const EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS =
-  3 as const;
+export const EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS =
+  800 as const;
 
 export interface EvidenceObservationCoverageWindow {
   readonly index: number;
@@ -80,13 +80,20 @@ export interface EvidenceStructuralObservationCoverageWindow extends EvidenceObs
   readonly structureId: string;
 }
 
+function segmentWordCount(exactQuote: string): number {
+  return exactQuote
+    .trim()
+    .split(/\s+/u)
+    .filter((token) => token.length > 0).length;
+}
+
 export function planEvidenceStructuralObservationCoverage(
   text: string,
-  windowSegments: number = EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+  windowWords: number = EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS,
 ): readonly EvidenceStructuralObservationCoverageWindow[] {
-  if (!Number.isSafeInteger(windowSegments) || windowSegments < 1) {
+  if (!Number.isSafeInteger(windowWords) || windowWords < 1) {
     throw new RangeError(
-      'Coverage window size must be a positive safe integer.',
+      'Coverage window word budget must be a positive safe integer.',
     );
   }
   const structure = deriveEvidenceSourceStructure(text);
@@ -95,8 +102,25 @@ export function planEvidenceStructuralObservationCoverage(
     throw new RangeError('Coverage requires at least one source segment.');
   }
   const windows: EvidenceStructuralObservationCoverageWindow[] = [];
-  for (let offset = 0; offset < segments.length; offset += windowSegments) {
-    const slice = segments.slice(offset, offset + windowSegments);
+  let offset = 0;
+  while (offset < segments.length) {
+    let words = 0;
+    let count = 0;
+    while (offset + count < segments.length) {
+      const next = segments[offset + count];
+      if (next === undefined) break;
+      const nextWords = segmentWordCount(next.exactQuote);
+      if (
+        count > 0 &&
+        (count >= EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS ||
+          words + nextWords > windowWords)
+      ) {
+        break;
+      }
+      words += nextWords;
+      count += 1;
+    }
+    const slice = segments.slice(offset, offset + count);
     const first = slice[0];
     const last = slice.at(-1);
     if (first === undefined || last === undefined) {
@@ -119,6 +143,7 @@ export function planEvidenceStructuralObservationCoverage(
         endLine: last.endLine,
       }),
     );
+    offset += count;
   }
   return Object.freeze(windows);
 }

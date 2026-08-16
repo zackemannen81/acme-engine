@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
   EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
-  EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS,
+  EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS,
   planEvidenceObservationCoverage,
 } from '../src/index.js';
 
@@ -12,7 +12,7 @@ describe('observation coverage planner', () => {
     expect(EVIDENCE_OBSERVATION_COVERAGE_WINDOW_SEGMENTS).toBe(
       EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     );
-    expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_SEGMENTS).toBe(3);
+    expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS).toBe(800);
   });
 
   it('keeps a short source in one window and splits a longer one', () => {

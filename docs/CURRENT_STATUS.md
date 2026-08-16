@@ -458,13 +458,14 @@ ledger embed the same card; the browser renders quote, citation and
 standing from it. ACME-0141 sorts `/api/text-imports` by acquired/ingest
 time and titles Documents as Source stream with coverage badges;
 `?view=stream` aliases that surface. ACME-0142 adds
-`evidence-source-structure/1` under `evidence-source-structure-rules/2`
+`evidence-source-structure/1` under `evidence-source-structure-rules/3`
 and active observe `@1.11.0` input `/3`
 output `/6`: new analyzes use document-native blocks plus optional
 neighbour context, and context-only citations are refused. Oversized
 paragraphs split at sentence boundaries toward 150–350 words (soft
-600); Q+A is not split. Structural windows default to 3 extractable
-segments. Historical `@1.10.0` stays byte-exact. ACME-0143 adds the read-only claim surface:
+600); Q+A is not split. Paragraph and answer blocks emit one segment
+per sentence. Structural windows pack toward 800 words, cap 64.
+Historical `@1.10.0` stays byte-exact. ACME-0143 adds the read-only claim surface:
 `evidence-claim-surface-view/1` groups current occurrences by relation
 scope or actor thread as unmerged 0140 cards; `?view=claim` opens it.
 ACME-0144 adds relate `@1.2.0` continuity and exposure kinds
@@ -472,7 +473,9 @@ ACME-0144 adds relate `@1.2.0` continuity and exposure kinds
 stays byte-exact. The X#1 → X#2 colour example can be represented
 without deleting X#1. ADR-0046 children 0139–0144 are implemented.
 ACME-0145 versions source-structure rules to `/2` so a long exhibit is
-not one window of giant paragraphs.
+not one window of giant paragraphs. ACME-0146 versions them to `/3` so
+a paragraph yields one citable sentence per segment and 0..N
+observations can carry distinct runtime quotes.
 
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on

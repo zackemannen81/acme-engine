@@ -918,8 +918,9 @@ content remains intentionally omitted here.
   ACME-0142 adds `source-structure.ts` and active observe `@1.11.0` input
   `/3` so new analyzes use document-native blocks plus neighbour context.
   ACME-0145 versions those rules to `/2` so oversized paragraphs split at
-  sentence bounds toward 150–350 words, and structural windows default
-  to 3 extractable segments.
+  sentence bounds toward 150–350 words. ACME-0146 versions them to `/3`
+  so paragraph and Q+A-answer blocks emit one segment per sentence and
+  structural windows pack toward 800 words (cap 64).
   ACME-0138 versions active observe to `@1.9.0` output `/5` with a
   `segmentCoverage` ledger and `0..N` atomic observations per segment.
   ADR-0042/ACME-0114 then activate `@1.3.0` output `/2`, remove provider line

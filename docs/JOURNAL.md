@@ -1,5 +1,26 @@
 # Journal
 
+## 2026-08-16 — ACME-0146 sentence-level source segments
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0146
+- Change: `evidence-source-structure-rules/3` emits one citable segment
+  per sentence inside paragraph and Q+A-answer blocks. The question
+  half of a Q+A pair stays one segment. Structural windows pack toward
+  800 words with the existing 64-segment coverage ceiling. Schema
+  `/1` and observe `@1.11.0` stay in place. Historical `@1.10.0`
+  request hashes remain byte-exact.
+- Why now: 0145 sized blocks, but a block was still one quote. Empty-
+  roster exhibit-assertions from the same paragraph were byte-identical
+  and Analyze refused the window.
+- Verification: unit 799/799; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0147 three-mode default shell. Two
+  propositions in one sentence with null actor and null time still
+  collapse.
+- Signature: Grok
+
 ## 2026-08-16 — ACME-0145 oversized source-block split
 
 - Date: 2026-08-16

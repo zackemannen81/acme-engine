@@ -48,7 +48,8 @@ Application surfaces:
   [`ADR-0046`](../adr/0046-source-chronology-and-claim-projection.md).
   Origin and claim stay two graphs over one occurrence. Delivery is six
   stoppable children (ACME-0139–0144), implemented. ACME-0145 completes
-  the 0142 size bounds as `evidence-source-structure-rules/2`.
+  the 0142 size bounds as `evidence-source-structure-rules/2`. ACME-0146
+  makes the citable unit a sentence (`rules/3`).
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and

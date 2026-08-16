@@ -10,7 +10,7 @@ import { immutableEvidence } from './immutable.js';
 export const EVIDENCE_SOURCE_STRUCTURE_SCHEMA_VERSION =
   'evidence-source-structure/1' as const;
 export const EVIDENCE_SOURCE_STRUCTURE_RULE_VERSION =
-  'evidence-source-structure-rules/2' as const;
+  'evidence-source-structure-rules/3' as const;
 
 export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MIN_WORDS = 150 as const;
 export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MAX_WORDS = 350 as const;
@@ -349,16 +349,33 @@ function segmentsFor(
       blockId,
     });
   };
+  const sentencePushes = (
+    startOrdinal: number,
+    lines: readonly LineUnit[],
+  ): EvidenceStructuredSourceSegment[] => {
+    const groups = sentenceLineGroups(lines);
+    const segments: EvidenceStructuredSourceSegment[] = [];
+    let ordinal = startOrdinal;
+    for (const group of groups) {
+      const segment = push(ordinal, group);
+      if (segment === undefined) continue;
+      segments.push(segment);
+      ordinal += 1;
+    }
+    return segments;
+  };
   if (unit.kind === 'qa-pair') {
+    const question = push(1, unit.questionLines ?? []);
     return [
-      push(1, unit.questionLines ?? []),
-      push(2, unit.answerLines ?? []),
-    ].filter(
-      (item): item is EvidenceStructuredSourceSegment => item !== undefined,
-    );
+      ...(question === undefined ? [] : [question]),
+      ...sentencePushes(2, unit.answerLines ?? []),
+    ];
   }
-  const single = push(1, unit.lines);
-  return single === undefined ? [] : [single];
+  if (unit.kind === 'heading') {
+    const single = push(1, unit.lines);
+    return single === undefined ? [] : [single];
+  }
+  return sentencePushes(1, unit.lines);
 }
 
 export function deriveEvidenceSourceStructure(
