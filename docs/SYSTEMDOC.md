@@ -1,5 +1,9 @@
 # System Documentation
 
+Primary observation surfaces share `evidence-observation-card/1`: quote,
+source title, citation, review standing, asserted event time and relation
+count. Source review and the ledger embed the same card object.
+
 Reviewer operations are case-bound records (`evidence-review-assignment/1`,
 `evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain
 append-only canonical history; an assignment is projected as completed once

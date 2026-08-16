@@ -106,6 +106,12 @@ describe('Evidence slice-2 primary views', () => {
       superseded: 2,
       rejected: 0,
     });
+    const first = ledger.entries[0];
+    if (first === undefined) throw new Error('Missing ledger entry.');
+    expect(first.card.schemaVersion).toBe('evidence-observation-card/1');
+    expect(first.card.observationVersionId).toBe(first.observationVersionId);
+    expect(first.card.exactQuote).toBe(first.exactQuote);
+    expect(first.card.citation).toEqual(first.citation);
     expect(comparison.correction.pairs).toHaveLength(2);
     expect(
       comparison.correction.pairs.map(

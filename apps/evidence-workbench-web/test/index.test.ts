@@ -38,6 +38,10 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain("headers.set('x-acme-csrf'");
     expect(html).not.toContain('reviewerRef:');
     expect(html).toContain('Reviewed against the exact cited source lines.');
+    expect(html).toContain('function observationCardHtml');
+    expect(html).toContain('card.exactQuote');
+    expect(html).toContain('observationCardHtml(item.card)');
+    expect(html).toContain('item.card.sourceTitle');
     expect(html).toContain('Observation ledger');
     expect(html).toContain('Compare accounts');
     expect(html).toContain('Case overview');

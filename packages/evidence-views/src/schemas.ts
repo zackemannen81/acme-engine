@@ -40,6 +40,34 @@ const CitationSchema = z
   })
   .strict();
 
+export const EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION =
+  'evidence-observation-card/1' as const;
+
+export const EvidenceObservationCardSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION),
+    observationVersionId: EvidenceNonBlankStringSchema,
+    kind: z.enum(['statement-occurrence', 'exhibit-assertion']),
+    exactQuote: EvidenceNonBlankStringSchema,
+    sourceTitle: EvidenceNonBlankStringSchema,
+    sourceTimeDisplay: EvidenceNonBlankStringSchema.nullable(),
+    citation: CitationSchema,
+    reviewStanding: z.enum([
+      'awaiting-review',
+      'accepted',
+      'rejected',
+      'unresolved',
+      'revision-requested',
+    ]),
+    assertedEventTimeDisplay: EvidenceNonBlankStringSchema.nullable(),
+    relationCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export type EvidenceObservationCard = z.infer<
+  typeof EvidenceObservationCardSchema
+>;
+
 const ReviewStandingSchema = z.enum([
   'awaiting-review',
   'accepted',
@@ -222,6 +250,7 @@ export const EvidencePrimarySourceReviewViewSchema = z
               'request-revision',
             ]),
           ),
+          card: EvidenceObservationCardSchema,
         })
         .strict(),
     ),
@@ -265,6 +294,7 @@ export const EvidencePrimaryObservationLedgerViewSchema = z
             'corrected-version',
             'independent-source',
           ]),
+          card: EvidenceObservationCardSchema,
         })
         .strict(),
     ),

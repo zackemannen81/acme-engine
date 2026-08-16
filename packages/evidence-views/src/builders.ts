@@ -20,6 +20,7 @@ import {
 } from '@acme/module-evidence';
 
 import {
+  EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
@@ -31,6 +32,7 @@ import {
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
+  EvidenceObservationCardSchema,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryAssessmentViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
@@ -42,6 +44,7 @@ import {
   EvidencePrimaryWorkQueueViewSchema,
   EvidenceTechnicalProvenanceViewSchema,
   EvidenceTechnicalReplayViewSchema,
+  type EvidenceObservationCard,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryAssessmentView,
   type EvidencePrimaryObservationLedgerView,
@@ -95,6 +98,44 @@ function sourceActor(observation: EvidenceObservation) {
   return observation.kind === 'statement-occurrence'
     ? observation.actorReference
     : observation.sourceActorReference;
+}
+
+function relationCount(
+  snapshot: EvidenceProductSnapshot,
+  observationId: string,
+): number {
+  return snapshot.relations.filter((relation) =>
+    relation.endpoints.some(
+      (endpoint) =>
+        endpoint.kind === 'observation' && endpoint.id === observationId,
+    ),
+  ).length;
+}
+
+export function buildEvidenceObservationCard(input: {
+  readonly observation: EvidenceObservation;
+  readonly source: SourceArtifactVersion;
+  readonly snapshot: EvidenceProductSnapshot;
+}): EvidenceObservationCard {
+  const { observation, source, snapshot } = input;
+  const temporal = observation.temporalBound;
+  return EvidenceObservationCardSchema.parse({
+    schemaVersion: EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION,
+    observationVersionId: observation.observationId,
+    kind: observation.kind,
+    exactQuote: observation.exactQuote,
+    sourceTitle: source.title,
+    sourceTimeDisplay: null,
+    citation: citation(source, observation),
+    reviewStanding: standing(
+      effectiveReviewDecision(
+        snapshot.reviewDecisions,
+        observation.observationId,
+      ),
+    ),
+    assertedEventTimeDisplay: temporal === null ? null : timeDisplay(temporal),
+    relationCount: relationCount(snapshot, observation.observationId),
+  });
 }
 
 function citation(
@@ -713,6 +754,11 @@ export function buildEvidencePrimarySourceReviewView(input: {
           'leave-unresolved',
           'request-revision',
         ] as const,
+        card: buildEvidenceObservationCard({
+          observation,
+          source,
+          snapshot,
+        }),
       };
     });
   return detached(
@@ -785,6 +831,11 @@ export function buildEvidencePrimaryObservationLedgerView(input: {
             : successorIds.has(source.artifactVersionId)
               ? ('original-version' as const)
               : ('independent-source' as const),
+        card: buildEvidenceObservationCard({
+          observation,
+          source,
+          snapshot,
+        }),
       };
     })
     .sort(

@@ -1,5 +1,18 @@
 # Journal
 
+## 2026-08-16 — ACME-0140 shared observation card
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0140
+- Change: added `evidence-observation-card/1` and
+  `buildEvidenceObservationCard`. Source review and the ledger embed the
+  same card. The browser renders quote, citation and standing from it.
+- Why now: ADR-0046 requires one card so three modes can share identity.
+- Verification: unit 788/788; conformance 78; integration 70; scenario 26.
+- Handoff: next child ACME-0141 source stream as home.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0139 empty-roster Pass 1
 
 - Date: 2026-08-16
