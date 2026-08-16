@@ -406,6 +406,7 @@ export const EvidenceClaimSurfaceViewSchema = z
           subject: EvidenceNonBlankStringSchema,
           aspect: EvidenceNonBlankStringSchema,
           comparePath: EvidenceNonBlankStringSchema.nullable(),
+          relationKinds: z.array(EvidenceNonBlankStringSchema),
           cards: z.array(EvidenceObservationCardSchema).min(1),
         })
         .strict(),
@@ -445,6 +446,14 @@ export const EvidencePrimaryRelationReviewViewSchema = z
             duplicate: z.number().int().nonnegative(),
             correction: z.number().int().nonnegative(),
             unresolved: z.number().int().nonnegative(),
+            repeats: z.number().int().nonnegative().default(0),
+            adds_detail: z.number().int().nonnegative().default(0),
+            changes_certainty: z.number().int().nonnegative().default(0),
+            retracts: z.number().int().nonnegative().default(0),
+            omits_previous_detail: z.number().int().nonnegative().default(0),
+            prompted_by: z.number().int().nonnegative().default(0),
+            exposed_to_before: z.number().int().nonnegative().default(0),
+            asked_after: z.number().int().nonnegative().default(0),
           })
           .strict(),
         unresolvedActorRelations: z.number().int().nonnegative(),
@@ -464,6 +473,14 @@ export const EvidencePrimaryRelationReviewViewSchema = z
             'duplicate',
             'correction',
             'unresolved',
+            'repeats',
+            'adds_detail',
+            'changes_certainty',
+            'retracts',
+            'omits_previous_detail',
+            'prompted_by',
+            'exposed_to_before',
+            'asked_after',
           ]),
           endpoints: z.array(
             z

@@ -5,6 +5,7 @@ import {
   deriveEvidenceRelationId,
   evidenceRelateObservationsContract,
   evidenceRelateObservationsContractV1,
+  evidenceRelateObservationsContractV2,
 } from '@acme/module-evidence';
 
 import {
@@ -38,18 +39,27 @@ describe('evaluation relate candidates', () => {
       '9c4f7a883a6363d0a652f5d90e603e610d5969715069079ed1fdd5c3516815b0',
     );
     expect(computeModelRequestHash(active)).toBe(
-      '1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f',
+      '12e266c128fd481091da2ce529054a45947007eac04fc8de5d20f32a5756f026',
     );
     expect(JSON.stringify(historical)).not.toContain(
       'ascending lexicographic order',
     );
     expect(JSON.stringify(active)).toContain('ascending lexicographic order');
-    expect(active.output.schemaName).toBe('evidence_relate_observations_1_1_0');
+    expect(active.output.schemaName).toBe('evidence_relate_observations_1_2_0');
+    expect(
+      computeModelRequestHash(
+        evidenceRelateObservationsContractV2.buildRequest(
+          relate.input,
+          context,
+        ),
+      ),
+    ).toBe('1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f');
     expect(historical.output.schemaName).toBe(
       'evidence_relate_observations_1_0_0',
     );
     const registry = createContractRegistry([
       evidenceRelateObservationsContractV1,
+      evidenceRelateObservationsContractV2,
       evidenceRelateObservationsContract,
     ]);
     expect(registry.has(evidenceRelateObservationsContractV1.ref)).toBe(true);

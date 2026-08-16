@@ -20,6 +20,12 @@ shows those block headings beside the existing line list.
 occurrences grouped by relation scope or actor label as unmerged cards.
 Optional `sort=source-time|event-time`. Overlap is visible;
 `corroborates` is not assigned.
+Active relate is `evidence.relate-observations@1.2.0` output `/2` with
+continuity kinds (`repeats`, `adds_detail`, `changes_certainty`,
+`retracts`, `omits_previous_detail`) and exposure kinds (`prompted_by`,
+`exposed_to_before`, `asked_after`). Historical `@1.1.0` stays
+byte-exact. These relations do not delete earlier occurrences and do
+not infer `corroborates`. Claim groups list those relation kinds.
 
 Reviewer operations are case-bound records (`evidence-review-assignment/1`,
 `evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain

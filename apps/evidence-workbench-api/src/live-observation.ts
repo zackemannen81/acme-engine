@@ -53,6 +53,7 @@ import {
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
+  evidenceRelateObservationsContractV2,
 } from '@acme/module-evidence';
 
 import {
@@ -312,9 +313,10 @@ export function createEvidenceLiveObservationService(options: {
             evidenceObserveArtifactContractV10,
             evidenceObserveArtifactContractV11,
             evidenceObserveArtifactContract,
-            evidenceRelateObservationsContract,
             evidenceProposeAssessmentContractV1,
             evidenceProposeAssessmentContract,
+            evidenceRelateObservationsContractV2,
+            evidenceRelateObservationsContract,
           ]),
           pipeline: createResponsePipeline(),
           gateway: createEvidenceSingleCallGateway({

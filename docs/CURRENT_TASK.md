@@ -1,94 +1,86 @@
 # Current Task
 
-Task ID: ACME-0144
+Task ID:
 Parent Task: None
-Status: Ready
-Owner: Claude
-Created: 2026-08-16
-Last updated: 2026-08-16
-Charter frozen at: 2026-08-16
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
 - `AGENTS.md`
 - `docs/TASK_WORKFLOW.md`
-- ADR-0046
-- `docs/design/evidence-workbench-source-and-claim-surfaces.md` §2.3, §5 ACME-0144
-- `docs/finished/ACME-0143_claim-surface.md`
+- `docs/PROJECT_BRIEF.md`
+- `docs/CONTRIBUTING.md`
+- `docs/CURRENT_STATUS.md`
+- `docs/SYSTEMDOC.md`
+- `docs/JOURNAL.md`
+- `docs/FILESTRUCTURE.md`
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Additive relation families for statement evolution and information flow.
-A Pass 2/3 job over frozen occurrences only.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
-Frozen at Ready.
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
 
 ### Goal
 
-Represent statement evolution and information flow as reviewable
-relations over frozen occurrences, without deleting earlier ones.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-New relation codes; a new optional live/offline job; reviewable like
-today’s relations. UI shows those relations on the claim group and on
-the card.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- New relation codes for continuity and information flow.
-- New optional live/offline job over frozen occurrences only.
-- Reviewable like today’s relations.
-- Interview question may be modelled as a procedural occurrence if the
-  observe contract already emits it; otherwise a minimal additive
-  occurrence kind.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- Psychological or credibility scoring.
-- Automatic `corroborates` from exposure.
-- Legal conclusions.
-- Knowledge-time replay slider.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- The X#1 “unknown colour” → X#2 “maybe red Volvo” after a question
-  that named the colour can be represented as `changes_certainty` +
-  `prompted_by` without deleting X#1.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] Continuity / exposure relation codes and semantic tests
-- [ ] Offline job or fixture representing the X#1 → X#2 example
-- [ ] typecheck, lint, format, unit, docs
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
 
 ## References
 
-- ADR-0046
-- `docs/design/evidence-workbench-source-and-claim-surfaces.md`
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [x] Freeze charter.
-- [ ] Additive relation codes.
-- [ ] Pass 2/3 job over frozen occurrences.
-- [ ] Show relations on claim group and card.
-- [ ] Tests, docs, archive, commit, push.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- Pass 1 must not receive prior interviews. Pass 2/3 may.
-- `corroborates` is not inferred from overlap plus exposure.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
 
-- None.
+Only non-semantic corrections are allowed after `Ready`.
+
+-none
 
 ## Verification
 
-- [ ] Record offline commands and results.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
 
 ## Documentation Updates
 
@@ -96,8 +88,21 @@ the card.
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
 - [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
+
+## Handoff and Follow-ups
+
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
-- Archive as `docs/finished/ACME-0144_continuity-information-exposure.md`.
-- Restore the task template or the next approved task.
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
+- Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

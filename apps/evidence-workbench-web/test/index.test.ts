@@ -50,6 +50,7 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain("initialView==='stream'");
     expect(html).toContain("initialView==='claim'");
     expect(html).toContain('/api/claims');
+    expect(html).toContain('group.relationKinds');
     expect(html).toContain('Source stream');
     expect(html).toContain('source-block');
     expect(html).toContain('view.source.blocks');

@@ -897,7 +897,8 @@ content remains intentionally omitted here.
   restart-safe case-first records. ACME-0141 sorts that list as the source
   stream (`text-import-list.ts`) and shows ingest time plus observation
   coverage; `?view=stream` aliases Documents. ACME-0143 adds
-  `GET /api/claims` and `?view=claim`. ACME-0105 adds the closed
+  `GET /api/claims` and `?view=claim`. ACME-0144 versions relate to
+  `@1.2.0` with continuity and exposure kinds. ACME-0105 adds the closed
   `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
   authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
   key are required before an OpenAI gateway can be released. ACME-0106 adds

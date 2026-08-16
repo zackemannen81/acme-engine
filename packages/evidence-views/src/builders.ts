@@ -1014,6 +1014,14 @@ export function buildEvidencePrimaryRelationReviewView(input: {
     duplicate: 0,
     correction: 0,
     unresolved: 0,
+    repeats: 0,
+    adds_detail: 0,
+    changes_certainty: 0,
+    retracts: 0,
+    omits_previous_detail: 0,
+    prompted_by: 0,
+    exposed_to_before: 0,
+    asked_after: 0,
   };
   let unresolvedActorRelations = 0;
   let awaitingReview = 0;
@@ -1327,12 +1335,25 @@ export function buildEvidenceClaimSurfaceView(input: {
         return value === undefined ? [] : [value];
       }),
     );
+    const relationKinds = [
+      ...new Set(
+        snapshot.relations
+          .filter(
+            (relation) =>
+              `${relation.comparableScope.subject}\u0000${relation.comparableScope.aspect}` ===
+                key &&
+              state.currentRelationVersionIds.includes(relation.relationId),
+          )
+          .map((relation) => relation.relationKind),
+      ),
+    ].sort();
     groups.push({
       groupId: `scope:${subject}:${aspect}`,
       kind: 'relation-scope',
       subject,
       aspect,
       comparePath: null,
+      relationKinds,
       cards: items.map(({ card }) => card),
     });
   }
@@ -1363,6 +1384,7 @@ export function buildEvidenceClaimSurfaceView(input: {
       subject: label,
       aspect: 'person thread',
       comparePath: hasCorrection ? '/api/accounts/compare' : null,
+      relationKinds: [],
       cards: items.map(({ card }) => card),
     });
   }

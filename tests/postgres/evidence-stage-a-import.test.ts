@@ -319,7 +319,7 @@ describe('Evidence Stage A PostgreSQL import', () => {
                     {
                       type: 'output_text',
                       text: JSON.stringify({
-                        schemaVersion: 'evidence-relate-observations-output/1',
+                        schemaVersion: 'evidence-relate-observations-output/2',
                         propositions: [],
                         events: [],
                         relations: [

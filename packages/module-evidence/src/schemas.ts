@@ -49,8 +49,10 @@ export const EVIDENCE_SEGMENT_COVERAGE_STATUS = [
 ] as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
   'evidence-relate-observations-input/1' as const;
-export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-relate-observations-output/1' as const;
+export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
+  'evidence-relate-observations-output/2' as const;
 export const EVIDENCE_BUILD_TIMELINE_INPUT_SCHEMA_VERSION =
   'evidence-build-timeline-input/1' as const;
 export const EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION =
@@ -299,7 +301,7 @@ export const EvidenceEventOccurrenceSchema = z
   })
   .strict();
 
-export const EvidenceRelationKindSchema = z.enum([
+export const EVIDENCE_RELATION_KIND_V1 = [
   'supports',
   'contradicts',
   'qualifies',
@@ -307,6 +309,24 @@ export const EvidenceRelationKindSchema = z.enum([
   'duplicate',
   'correction',
   'unresolved',
+] as const;
+export const EVIDENCE_CONTINUITY_RELATION_KIND = [
+  'repeats',
+  'adds_detail',
+  'changes_certainty',
+  'retracts',
+  'omits_previous_detail',
+] as const;
+export const EVIDENCE_EXPOSURE_RELATION_KIND = [
+  'prompted_by',
+  'exposed_to_before',
+  'asked_after',
+] as const;
+export const EvidenceRelationKindV1Schema = z.enum(EVIDENCE_RELATION_KIND_V1);
+export const EvidenceRelationKindSchema = z.enum([
+  ...EVIDENCE_RELATION_KIND_V1,
+  ...EVIDENCE_CONTINUITY_RELATION_KIND,
+  ...EVIDENCE_EXPOSURE_RELATION_KIND,
 ]);
 
 export const EvidenceRelationEndpointSchema = z
@@ -1002,6 +1022,16 @@ export const EvidenceRelationComparableScopeCandidateSchema = z
   })
   .strict();
 
+export const EvidenceRelationCandidateV1Schema = z
+  .object({
+    relationKind: EvidenceRelationKindV1Schema,
+    endpoints: z.array(EvidenceRelationEndpointSchema).min(2),
+    comparableScope: EvidenceRelationComparableScopeCandidateSchema,
+    rationaleCode: EvidenceNonBlankStringSchema,
+    rationale: EvidenceNonBlankStringSchema,
+  })
+  .strict();
+
 export const EvidenceRelationCandidateSchema = z
   .object({
     relationKind: EvidenceRelationKindSchema,
@@ -1030,6 +1060,18 @@ export const EvidenceOpenQuestionCandidateSchema = z
         'An open question must cite at least one observation or relation.',
     },
   );
+
+export const EvidenceRelateObservationsOutputV1Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION_V1,
+    ),
+    propositions: z.array(EvidencePropositionCandidateSchema),
+    events: z.array(EvidenceEventCandidateSchema),
+    relations: z.array(EvidenceRelationCandidateV1Schema),
+    openQuestions: z.array(EvidenceOpenQuestionCandidateSchema),
+  })
+  .strict();
 
 export const EvidenceRelateObservationsOutputSchema = z
   .object({
@@ -1215,6 +1257,9 @@ export type EvidenceObserveArtifactReplayOutput = z.infer<
 >;
 export type EvidenceRelateObservationsInput = z.infer<
   typeof EvidenceRelateObservationsInputSchema
+>;
+export type EvidenceRelateObservationsOutputV1 = z.infer<
+  typeof EvidenceRelateObservationsOutputV1Schema
 >;
 export type EvidenceRelateObservationsOutput = z.infer<
   typeof EvidenceRelateObservationsOutputSchema

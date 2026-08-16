@@ -103,7 +103,7 @@ export function evaluationRelateCase(): EvidenceEvaluationRelateCase {
   });
 
   const output = EvidenceRelateObservationsOutputSchema.parse({
-    schemaVersion: 'evidence-relate-observations-output/1',
+    schemaVersion: 'evidence-relate-observations-output/2',
     propositions: [],
     events: [],
     relations,

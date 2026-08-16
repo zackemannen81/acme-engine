@@ -49,6 +49,7 @@ import {
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
+  evidenceRelateObservationsContractV2,
 } from '@acme/module-evidence';
 
 import {
@@ -248,6 +249,7 @@ export function createEvidenceLiveAssessmentService(options: {
           evidenceObserveArtifactContractV10,
           evidenceObserveArtifactContractV11,
           evidenceObserveArtifactContract,
+          evidenceRelateObservationsContractV2,
           evidenceRelateObservationsContract,
           evidenceProposeAssessmentContractV1,
           evidenceProposeAssessmentContract,

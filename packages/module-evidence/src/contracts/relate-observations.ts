@@ -13,13 +13,16 @@ import {
 import {
   EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF,
   EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF_V1,
+  EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF_V2,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
   EvidenceRelateObservationsInputSchema,
   EvidenceRelateObservationsOutputSchema,
+  EvidenceRelateObservationsOutputV1Schema,
   type EvidenceRelateObservationsInput,
   type EvidenceRelateObservationsOutput,
+  type EvidenceRelateObservationsOutputV1,
 } from '../schemas.js';
 
 const PROHIBITED_CONCLUSION =
@@ -33,18 +36,20 @@ function issue(
   return immutableEvidence({ code, path, message, severity: 'error' });
 }
 
-function createContract(configuration: {
+function createContract<
+  TOutput extends
+    EvidenceRelateObservationsOutput | EvidenceRelateObservationsOutputV1,
+>(configuration: {
   readonly ref: ContractRef;
   readonly explicitSortedSets: boolean;
+  readonly continuityAndExposure: boolean;
   readonly schemaName: string;
-}): PromptContract<
-  EvidenceRelateObservationsInput,
-  EvidenceRelateObservationsOutput
-> {
+  readonly outputSchema: z.ZodType<TOutput>;
+}): PromptContract<EvidenceRelateObservationsInput, TOutput> {
   return {
     ref: configuration.ref,
     inputSchema: EvidenceRelateObservationsInputSchema,
-    outputSchema: EvidenceRelateObservationsOutputSchema,
+    outputSchema: configuration.outputSchema,
     requiredCapabilities: Object.freeze({ structuredOutput: true }),
     retention: 'encrypted-payload',
 
@@ -64,6 +69,9 @@ function createContract(configuration: {
                   (configuration.explicitSortedSets
                     ? 'For every set-like array of string identifiers or rationale codes, remove duplicates and sort strings in ascending lexicographic order. For every relation endpoints array, use distinct endpoints sorted ascending by kind and then id. '
                     : '') +
+                  (configuration.continuityAndExposure
+                    ? 'When two frozen statement occurrences are the same speaker evolving an account, you may use repeats, adds_detail, changes_certainty, retracts or omits_previous_detail. When a later occurrence follows a question or earlier exposure, you may use prompted_by, exposed_to_before or asked_after. Do not infer corroborates from overlap or exposure. Never delete or replace an earlier occurrence. '
+                    : '') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. Return only the requested JSON.',
               },
             ],
@@ -81,9 +89,7 @@ function createContract(configuration: {
         output: {
           mode: 'json',
           schemaName: configuration.schemaName,
-          jsonSchema: z.toJSONSchema(
-            EvidenceRelateObservationsOutputSchema,
-          ) as JsonValue,
+          jsonSchema: z.toJSONSchema(configuration.outputSchema) as JsonValue,
         },
         maxOutputTokens: 4096,
       } satisfies ModelRequest;
@@ -320,7 +326,19 @@ export const evidenceRelateObservationsContractV1 = Object.freeze(
   createContract({
     ref: EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF_V1,
     explicitSortedSets: false,
+    continuityAndExposure: false,
     schemaName: 'evidence_relate_observations_1_0_0',
+    outputSchema: EvidenceRelateObservationsOutputV1Schema,
+  }),
+);
+
+export const evidenceRelateObservationsContractV2 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF_V2,
+    explicitSortedSets: true,
+    continuityAndExposure: false,
+    schemaName: 'evidence_relate_observations_1_1_0',
+    outputSchema: EvidenceRelateObservationsOutputV1Schema,
   }),
 );
 
@@ -328,6 +346,8 @@ export const evidenceRelateObservationsContract = Object.freeze(
   createContract({
     ref: EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF,
     explicitSortedSets: true,
-    schemaName: 'evidence_relate_observations_1_1_0',
+    continuityAndExposure: true,
+    schemaName: 'evidence_relate_observations_1_2_0',
+    outputSchema: EvidenceRelateObservationsOutputSchema,
   }),
 );

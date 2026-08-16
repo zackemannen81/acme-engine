@@ -1,5 +1,22 @@
 # Journal
 
+## 2026-08-16 — ACME-0144 continuity and information exposure
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0144
+- Change: active `evidence.relate-observations@1.2.0` output `/2` accepts
+  continuity and exposure relation kinds. Historical `@1.1.0` stays
+  byte-exact. `changes_certainty` + `prompted_by` can represent X#1
+  unknown colour → X#2 maybe red Volvo after a question, without
+  deleting X#1. Claim groups list those kinds. No auto-`corroborates`.
+- Why now: ADR-0046 Pass 2/3 is a later job over frozen occurrences.
+- Verification: unit 795/795; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: ADR-0046 children 0139–0144 are implemented. Date-only
+  temporal bounds and the 409 views remain separate.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0143 claim surface
 
 - Date: 2026-08-16
