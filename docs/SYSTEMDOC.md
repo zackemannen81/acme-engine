@@ -11,7 +11,12 @@ and Search. Default signed-in entry is the source stream
 review queue by source title and keeps integrity, assessment and the
 legacy type views as secondary. Source review places observations
 under the block that contains their citation. Legacy `?view=` routes
-remain.
+remain. ACME-0148 derives document-native source parts from section
+titles (förhör, analys, ALL-CAPS, numbered) and word-budget slices of
+about 2,500 words. The source stream lists those parts as their own
+cards. Opening `?part=` returns only that part’s lines. Live Analyze
+accepts `sourcePartId` and plans windows only for that part. The
+imported artifact stays one object.
 Active observe is `evidence.observe-artifact@1.11.0` input `/3` output
 `/6`. New analyzes derive a content-addressed `evidence-source-structure/1`
 (hash of rule version + canonical text) into Q+A / paragraph / heading

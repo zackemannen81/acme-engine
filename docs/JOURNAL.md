@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-16 — ACME-0148 document parts
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0148
+- Change: a large import is still one artifact, but the stream now
+  lists deterministic parts (förhör / analys / ALL-CAPS / numbered
+  titles, otherwise ~2,500-word slices). Opening `?part=` returns only
+  that part. Live Analyze accepts `sourcePartId`. “Analyze next part”
+  starts the first part with no observations. The model does not choose
+  the cuts.
+- Why now: opening or analyzing D1/D2 as one document still loaded
+  every line and every window.
+- Verification: unit 800/800; typecheck, lint and docs clean.
+- Handoff: restart the workbench. Analyze one part at a time. Do not
+  recut the failed whole-document job.
+- Signature: Grok
+
 ## 2026-08-16 — ACME-0147 three-mode default shell
 
 - Date: 2026-08-16

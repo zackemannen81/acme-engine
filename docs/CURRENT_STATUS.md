@@ -479,7 +479,9 @@ without deleting X#1. ADR-0046 children 0139–0144 are implemented.
 ACME-0145 versions source-structure rules to `/2` so a long exhibit is
 not one window of giant paragraphs. ACME-0146 versions them to `/3` so
 a paragraph yields one citable sentence per segment and 0..N
-observations can carry distinct runtime quotes.
+observations can carry distinct runtime quotes. ACME-0148 projects
+heading-titled and word-budget source parts onto the stream so a
+judicial extract can be opened and analyzed one part at a time.
 
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on

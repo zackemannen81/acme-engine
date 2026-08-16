@@ -89,15 +89,37 @@ function segmentWordCount(exactQuote: string): number {
 
 export function planEvidenceStructuralObservationCoverage(
   text: string,
-  windowWords: number = EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS,
+  windowWordsOrOptions:
+    | number
+    | {
+        readonly windowWords?: number;
+        readonly partId?: string;
+      } = EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS,
 ): readonly EvidenceStructuralObservationCoverageWindow[] {
+  const options =
+    typeof windowWordsOrOptions === 'number'
+      ? { windowWords: windowWordsOrOptions }
+      : windowWordsOrOptions;
+  const windowWords =
+    options.windowWords ??
+    EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS;
   if (!Number.isSafeInteger(windowWords) || windowWords < 1) {
     throw new RangeError(
       'Coverage window word budget must be a positive safe integer.',
     );
   }
   const structure = deriveEvidenceSourceStructure(text);
-  const segments = evidenceStructuredSourceSegments(text);
+  const part =
+    options.partId === undefined
+      ? undefined
+      : structure.parts.find((item) => item.partId === options.partId);
+  if (options.partId !== undefined && part === undefined) {
+    throw new RangeError(`Unknown source part ${options.partId}.`);
+  }
+  const allowed = part === undefined ? undefined : new Set(part.blockIds);
+  const segments = evidenceStructuredSourceSegments(text).filter(
+    (segment) => allowed === undefined || allowed.has(segment.blockId),
+  );
   if (segments.length === 0) {
     throw new RangeError('Coverage requires at least one source segment.');
   }

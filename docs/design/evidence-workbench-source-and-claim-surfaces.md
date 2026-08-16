@@ -299,7 +299,9 @@ ACME-0145 later implemented the missing split half as
 oversized paragraphs split at sentence bounds, and structural windows
 default to 3 extractable segments. ACME-0146 then versions rules to
 `/3`: the citable unit inside a paragraph or Q+A answer is a sentence,
-and windows pack toward 800 words (cap 64).
+and windows pack toward 800 words (cap 64). ACME-0148 adds
+`evidence-source-part-rules/1`: named or word-budget parts appear as
+stream cards and are opened or analyzed one at a time.
 
 ### ACME-0143 — Claim surface
 

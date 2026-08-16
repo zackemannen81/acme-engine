@@ -266,7 +266,22 @@ export function createEvidenceLiveObservationService(options: {
         scope: input.scope,
         audit: input.audit,
       });
-      const windows = planEvidenceStructuralObservationCoverage(source.text);
+      let windows;
+      try {
+        windows = planEvidenceStructuralObservationCoverage(
+          source.text,
+          command.sourcePartId === undefined
+            ? {}
+            : { partId: command.sourcePartId },
+        );
+      } catch (error) {
+        if (error instanceof RangeError)
+          throw new EvidenceLiveObservationRefused(
+            'LIVE_OBSERVATION_SOURCE_UNAVAILABLE',
+            404,
+          );
+        throw error;
+      }
       const collected: EvidenceObservation[] = [];
       let actualModelCalls = 0;
       let lastExecutionId = '';

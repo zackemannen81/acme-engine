@@ -89,7 +89,10 @@ import {
 } from '@acme/evidence-views';
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
-import type { EvidenceState } from '@acme/module-evidence';
+import {
+  deriveEvidenceSourceStructure,
+  type EvidenceState,
+} from '@acme/module-evidence';
 import { assertNoLiveCredentialFields } from '@acme/live-safety';
 
 import {
@@ -1313,7 +1316,27 @@ export function createEvidenceWorkbenchApi(options: {
         const snapshot = await scopedSnapshot(workspaceId);
         send(response, 200, {
           schemaVersion: 'evidence-text-import-list/1',
-          imports: sortTextImportsBySourceTime(snapshot.textImports),
+          imports: sortTextImportsBySourceTime(snapshot.textImports).map(
+            (item) => {
+              const source = snapshot.sources.find(
+                (value) => value.artifactVersionId === item.artifactVersionId,
+              );
+              return {
+                ...item,
+                parts:
+                  source === undefined
+                    ? []
+                    : deriveEvidenceSourceStructure(source.text).parts.map(
+                        (part) => ({
+                          partId: part.partId,
+                          title: part.title,
+                          startLine: part.startLine,
+                          endLine: part.endLine,
+                        }),
+                      ),
+              };
+            },
+          ),
           redactionDrafts: snapshot.redactionDrafts,
           redactionLogs: snapshot.redactionLogs,
         });
@@ -1896,15 +1919,28 @@ export function createEvidenceWorkbenchApi(options: {
           send(response, 404, 'Not found.');
           return;
         }
-        send(
-          response,
-          200,
-          buildEvidencePrimarySourceReviewView({
-            workspaceId,
-            artifactVersionId,
-            snapshot,
-          }),
-        );
+        const sourcePartId = url.searchParams.get('part');
+        try {
+          send(
+            response,
+            200,
+            buildEvidencePrimarySourceReviewView({
+              workspaceId,
+              artifactVersionId,
+              snapshot,
+              ...(sourcePartId === null ? {} : { sourcePartId }),
+            }),
+          );
+        } catch (error) {
+          if (
+            error instanceof RangeError &&
+            error.message === 'Source part is unavailable.'
+          ) {
+            send(response, 404, 'Source part is unavailable.');
+            return;
+          }
+          throw error;
+        }
         return;
       }
       if (request.method === 'POST' && url.pathname === '/api/imports') {

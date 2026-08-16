@@ -711,12 +711,27 @@ export function buildEvidencePrimarySourceReviewView(input: {
   readonly workspaceId: string;
   readonly artifactVersionId: string;
   readonly snapshot: EvidenceProductSnapshot;
+  readonly sourcePartId?: string;
 }): EvidencePrimarySourceReviewView {
   const snapshot = structuredClone(input.snapshot);
   requireWorkspace(snapshot, input.workspaceId);
   const source = requireSource(snapshot, input.artifactVersionId);
+  const structure = deriveEvidenceSourceStructure(source.text);
+  const part =
+    input.sourcePartId === undefined
+      ? undefined
+      : structure.parts.find((item) => item.partId === input.sourcePartId);
+  if (input.sourcePartId !== undefined && part === undefined) {
+    throw new RangeError('Source part is unavailable.');
+  }
   const observations = snapshot.observations
     .filter((value) => value.artifactVersionId === source.artifactVersionId)
+    .filter(
+      (value) =>
+        part === undefined ||
+        (value.locator.startLine >= part.startLine &&
+          value.locator.startLine <= part.endLine),
+    )
     .sort(
       (left, right) =>
         left.locator.startLine - right.locator.startLine ||
@@ -772,7 +787,8 @@ export function buildEvidencePrimarySourceReviewView(input: {
       source: {
         artifactVersionId: source.artifactVersionId,
         logicalArtifactId: source.logicalArtifactId,
-        title: source.title,
+        title:
+          part === undefined ? source.title : `${source.title} · ${part.title}`,
         kind: source.kind,
         versionOrdinal: source.versionOrdinal,
         contentHash: source.contentHash,
@@ -780,17 +796,27 @@ export function buildEvidencePrimarySourceReviewView(input: {
         lines: (() => {
           const lines = source.text.split('\n');
           if (lines.at(-1) === '') lines.pop();
-          return lines.map((text, index) => ({ lineNumber: index + 1, text }));
+          return lines
+            .map((text, index) => ({ lineNumber: index + 1, text }))
+            .filter(
+              (line) =>
+                part === undefined ||
+                (line.lineNumber >= part.startLine &&
+                  line.lineNumber <= part.endLine),
+            );
         })(),
-        blocks: deriveEvidenceSourceStructure(source.text).blocks.map(
-          (block) => ({
+        blocks: structure.blocks
+          .filter(
+            (block) =>
+              part === undefined || part.blockIds.includes(block.blockId),
+          )
+          .map((block) => ({
             blockId: block.blockId,
             kind: block.kind,
             heading: block.heading,
             startLine: block.startLine,
             endLine: block.endLine,
-          }),
-        ),
+          })),
       },
       heading: 'Source review',
       observations,

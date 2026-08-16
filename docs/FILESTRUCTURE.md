@@ -917,7 +917,9 @@ content remains intentionally omitted here.
   full-source observation is a workflow over 64-segment windows.
   ACME-0147 switches the browser shell to Source stream / Claim / Stance
   / Search, defaults signed-in entry to the stream, and seats source
-  observations under their block.
+  observations under their block. ACME-0148 lists derived source parts
+  as stream cards and scopes source review plus live Analyze to one
+  part.
   ACME-0142 adds `source-structure.ts` and active observe `@1.11.0` input
   `/3` so new analyzes use document-native blocks plus neighbour context.
   ACME-0145 versions those rules to `/2` so oversized paragraphs split at

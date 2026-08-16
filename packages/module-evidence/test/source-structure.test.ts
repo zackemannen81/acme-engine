@@ -120,6 +120,51 @@ describe('planEvidenceStructuralObservationCoverage', () => {
     );
   });
 
+  it('derives named document parts and word-budget slices', () => {
+    const titled = [
+      'Cover sheet for the annex file.',
+      '',
+      'Förhör med Nera Sol',
+      '',
+      words(40, 'hearing-'),
+      '',
+      'Analys av kniv',
+      '',
+      words(40, 'knife-'),
+    ].join('\n');
+    const named = deriveEvidenceSourceStructure(titled);
+    expect(named.parts.map((part) => part.title)).toEqual([
+      'Opening',
+      'Förhör med Nera Sol',
+      'Analys av kniv',
+    ]);
+    const hearing = named.parts[1];
+    const knife = named.parts[2];
+    if (hearing === undefined || knife === undefined) {
+      throw new Error('Expected titled hearing and knife parts.');
+    }
+    expect(hearing.startLine).toBeLessThan(knife.startLine);
+    const hearingWindows = planEvidenceStructuralObservationCoverage(titled, {
+      partId: hearing.partId,
+    });
+    const hearingIds = new Set(
+      hearingWindows.flatMap((window) => window.sourceSegmentIds),
+    );
+    const knifeWindows = planEvidenceStructuralObservationCoverage(titled, {
+      partId: knife.partId,
+    });
+    expect(
+      knifeWindows.some((window) =>
+        window.sourceSegmentIds.some((id) => hearingIds.has(id)),
+      ),
+    ).toBe(false);
+
+    const long = words(4000, 'plain-');
+    const sliced = deriveEvidenceSourceStructure(long);
+    expect(sliced.parts.length).toBeGreaterThan(1);
+    expect(sliced.parts[0]?.title).toContain('Opening');
+  });
+
   it('packs structural windows by word budget under the coverage ceiling', () => {
     expect(EVIDENCE_STRUCTURAL_OBSERVATION_COVERAGE_WINDOW_WORDS).toBe(800);
     const text = Array.from({ length: 12 }, (_, index) =>

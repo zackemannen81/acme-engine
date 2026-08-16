@@ -21,6 +21,10 @@ export const EvidenceRequestedLiveObservationBudgetSchema = z
 const browserFields = {
   commandKey: EvidenceNonBlankStringSchema,
   artifactVersionId: EvidenceNonBlankStringSchema,
+  sourcePartId: z
+    .string()
+    .regex(/^part-[0-9]{6}$/u)
+    .optional(),
   actorRoster: z.array(EvidenceActorRosterEntrySchema),
   requestedBudget: EvidenceRequestedLiveObservationBudgetSchema,
   confirmation: z.unknown(),

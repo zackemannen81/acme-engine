@@ -15,6 +15,10 @@ export const EVIDENCE_SOURCE_STRUCTURE_RULE_VERSION =
 export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MIN_WORDS = 150 as const;
 export const EVIDENCE_SOURCE_STRUCTURE_TARGET_MAX_WORDS = 350 as const;
 export const EVIDENCE_SOURCE_STRUCTURE_SOFT_MAX_WORDS = 600 as const;
+export const EVIDENCE_SOURCE_PART_TARGET_WORDS = 2500 as const;
+export const EVIDENCE_SOURCE_PART_SOFT_MAX_WORDS = 3500 as const;
+export const EVIDENCE_SOURCE_PART_RULE_VERSION =
+  'evidence-source-part-rules/1' as const;
 
 const TARGET_MIN_WORDS = EVIDENCE_SOURCE_STRUCTURE_TARGET_MIN_WORDS;
 const TARGET_MAX_WORDS = EVIDENCE_SOURCE_STRUCTURE_TARGET_MAX_WORDS;
@@ -23,6 +27,8 @@ const QUESTION_PREFIX =
   /^(?:Q|Question|Fråga|Interviewer|Utredare|Åklagare|Police|Officer)\s*[:-]/iu;
 const SENTENCE_TERMINALS = new Set(['.', '!', '?', '…']);
 const SENTENCE_CLOSERS = new Set(['"', "'", '”', '’', '»', ')', ']', '}']);
+const PART_TITLE_PREFIX =
+  /^(?:\d{1,3}[.)]\s+)?(?:förhör|forhor|hearing|interview|analys|analysis|protokoll|yttrande|beslut|bilaga|exhibit|anteckning|transkription|transcription|övervakning|overvakning|cctv|beslag|seizure|pm)(?:\s|$)/iu;
 
 export type EvidenceSourceBlockKind = 'qa-pair' | 'paragraph' | 'heading';
 
@@ -39,11 +45,20 @@ export interface EvidenceSourceBlock {
   readonly segments: readonly EvidenceStructuredSourceSegment[];
 }
 
+export interface EvidenceSourcePart {
+  readonly partId: string;
+  readonly title: string;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly blockIds: readonly string[];
+}
+
 export interface EvidenceSourceStructure {
   readonly schemaVersion: typeof EVIDENCE_SOURCE_STRUCTURE_SCHEMA_VERSION;
   readonly ruleVersion: typeof EVIDENCE_SOURCE_STRUCTURE_RULE_VERSION;
   readonly structureId: string;
   readonly blocks: readonly EvidenceSourceBlock[];
+  readonly parts: readonly EvidenceSourcePart[];
 }
 
 interface LineUnit {
@@ -378,6 +393,123 @@ function segmentsFor(
   return sentencePushes(1, unit.lines);
 }
 
+function isPartTitle(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length === 0 || isQuestionLine(trimmed)) return false;
+  const words = wordCount(trimmed);
+  if (words === 0 || words > 15) return false;
+  if (PART_TITLE_PREFIX.test(trimmed)) return true;
+  const letters = trimmed.replace(/[^\p{L}]/gu, '');
+  if (
+    letters.length >= 4 &&
+    words >= 2 &&
+    words <= 12 &&
+    letters === letters.toLocaleUpperCase()
+  ) {
+    return true;
+  }
+  return (
+    /^\d{1,3}[.)]\s+\p{L}/u.test(trimmed) &&
+    words <= 12 &&
+    !/[.!?…]/.test(trimmed.slice(-1))
+  );
+}
+
+function blockWordCount(block: EvidenceSourceBlock): number {
+  return block.segments.reduce(
+    (sum, segment) => sum + wordCount(segment.exactQuote),
+    0,
+  );
+}
+
+function flushPart(
+  title: string,
+  blocks: readonly EvidenceSourceBlock[],
+): Omit<EvidenceSourcePart, 'partId'>[] {
+  if (blocks.length === 0) return [];
+  const chunks: EvidenceSourceBlock[][] = [];
+  let current: EvidenceSourceBlock[] = [];
+  let words = 0;
+  for (const block of blocks) {
+    const nextWords = blockWordCount(block);
+    if (
+      current.length > 0 &&
+      (words + nextWords > EVIDENCE_SOURCE_PART_SOFT_MAX_WORDS ||
+        (words >= EVIDENCE_SOURCE_PART_TARGET_WORDS && nextWords > 0))
+    ) {
+      chunks.push(current);
+      current = [];
+      words = 0;
+    }
+    current.push(block);
+    words += nextWords;
+  }
+  if (current.length > 0) chunks.push(current);
+  const many = chunks.length > 1;
+  return chunks.map((chunk) => {
+    const first = chunk[0];
+    const last = chunk.at(-1);
+    if (first === undefined || last === undefined) {
+      throw new RangeError('Source part is missing line bounds.');
+    }
+    const label = many
+      ? `${title} · L${String(first.startLine)}–L${String(last.endLine)}`
+      : title;
+    return {
+      title: label,
+      startLine: first.startLine,
+      endLine: last.endLine,
+      blockIds: chunk.map((item) => item.blockId),
+    };
+  });
+}
+
+export function deriveEvidenceSourceParts(
+  blocks: readonly EvidenceSourceBlock[],
+): readonly EvidenceSourcePart[] {
+  const untitled: EvidenceSourceBlock[] = [];
+  const titled: { title: string; blocks: EvidenceSourceBlock[] }[] = [];
+  let currentTitle: string | undefined;
+  let current: EvidenceSourceBlock[] = [];
+  const pushCurrent = () => {
+    if (current.length === 0) return;
+    if (currentTitle === undefined) untitled.push(...current);
+    else titled.push({ title: currentTitle, blocks: current });
+    current = [];
+  };
+  for (const block of blocks) {
+    if (isPartTitle(block.heading) && block.kind === 'heading') {
+      pushCurrent();
+      currentTitle = block.heading;
+      current = [block];
+      continue;
+    }
+    if (isPartTitle(block.heading) && current.length > 0) {
+      pushCurrent();
+      currentTitle = block.heading;
+      current = [block];
+      continue;
+    }
+    if (isPartTitle(block.heading)) {
+      currentTitle = block.heading;
+      current = [block];
+      continue;
+    }
+    current.push(block);
+  }
+  pushCurrent();
+  const raw = [
+    ...flushPart('Opening', untitled),
+    ...titled.flatMap((item) => flushPart(item.title, item.blocks)),
+  ];
+  return raw.map((part, index) =>
+    immutableEvidence({
+      ...part,
+      partId: `part-${pad(index + 1, 6)}`,
+    }),
+  );
+}
+
 export function deriveEvidenceSourceStructure(
   text: string,
 ): EvidenceSourceStructure {
@@ -413,6 +545,7 @@ export function deriveEvidenceSourceStructure(
     ruleVersion: EVIDENCE_SOURCE_STRUCTURE_RULE_VERSION,
     structureId,
     blocks,
+    parts: deriveEvidenceSourceParts(blocks),
   });
 }
 
