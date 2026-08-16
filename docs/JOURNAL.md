@@ -1,5 +1,46 @@
 # Journal
 
+## 2026-08-16 — ACME-0134 real-material scale
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0134
+- Change: implemented ADR-0045 sections 2, 3 and 4. Active observation contract
+  `evidence.observe-artifact@1.7.0` raises the candidate ceiling from the
+  fixture-sized eight to a response-derived 64, in both prompt and schema.
+  Canonical text bounds rise from 2,097,152 bytes and 20,000 lines to
+  16,777,216 bytes and 400,000 lines, with the request body from 2,200,000 to
+  25,000,000. The live assessment no longer requires at least one relation.
+- Why now: ACME-0133 showed the model returned exactly eight candidates from a
+  100-page report because a ninth was forbidden, that a 1,915-page document was
+  refused outright, and that one refused relation removed the product's end
+  deliverable. None of those were defects; they were the product's own bounds,
+  calibrated against a seven-artifact synthetic corpus.
+- Replay: `1.0.0` through `1.6.0` keep the eight-candidate ceiling and their own
+  schemas, and `1.6.0` is now registered historically as
+  `evidenceObserveArtifactContractV7`. The active request hash moved from
+  `f86982f1…` to `9d0fa2b9…`, as expected for a new version. Six scripted
+  fixture hashes were recomputed against `1.7.0` rather than hand-edited, and
+  the integration resume gate now derives its hash from the fixture constant.
+- Blast radius: changing the active contract moved every scripted fixture that
+  pins its request hash. Seventeen gates failed at first and every one traced to
+  that single cause. The charter had assumed a contained constant change.
+- Verification: unit 768/768 across 121 files; conformance 78; integration 62;
+  scenario 26; typecheck, lint, boundaries, build, format, docs and diff clean;
+  `pnpm test:postgres` 37/37 on a disposable `postgres:15` created and removed
+  for this task.
+- Not delivered: the assessment-without-relations gate. The change is one
+  condition, covered by typecheck and the ADR, but the live assessment path has
+  no offline seam exercisable without a provider transport. The decoupling is
+  verified by inspection only, and that Definition-of-Done item was not met.
+- Live/data handling: no provider call was made and no source content entered
+  Git.
+- Handoff: ADR-0045 §5 repair calls in the execution engine plus non-zero repair
+  budgets in the live jobs. Then ADR-0045 §6, the full-source coverage
+  workflow, which is what actually turns a bounded batch into document
+  coverage.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0132 measured cost and optional campaign ceiling
 
 - Date: 2026-08-16

@@ -22,8 +22,17 @@ export const EVIDENCE_STAGE_A_TEXT_DATA_CLASS =
   'stage-a-anonymized-judicial-text/1' as const;
 export const EVIDENCE_STAGE_A_ATTESTATION_VERSION =
   'evidence-stage-a-source-attestation/1' as const;
-export const EVIDENCE_TEXT_IMPORT_MAX_BYTES = 2_097_152;
-export const EVIDENCE_TEXT_IMPORT_MAX_LINES = 20_000;
+/**
+ * Sized for real investigation files, not for the synthetic corpus.
+ *
+ * ADR-0045 §3. ACME-0133 refused a 1,915-page document at 3,521,477 canonical
+ * bytes over 74,469 lines, which is ordinary for the material this product
+ * exists to serve. Admitting a document is not a claim that one model call can
+ * analyse it; coverage is ADR-0045 §6.
+ */
+export const EVIDENCE_TEXT_IMPORT_MAX_BYTES = 16_777_216;
+export const EVIDENCE_TEXT_IMPORT_MAX_LINES = 400_000;
+/** Unchanged: one enormous line is malformed extraction, not a large file. */
 export const EVIDENCE_TEXT_IMPORT_MAX_LINE_SCALARS = 16_384;
 export const EVIDENCE_REDACTION_REPLACEMENT_VERSION =
   'evidence-redaction-token/1' as const;

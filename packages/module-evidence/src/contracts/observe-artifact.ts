@@ -23,6 +23,7 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V4,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V5,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V6,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V7,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -41,13 +42,36 @@ import {
 const PROHIBITED_CONCLUSION =
   /\b(?:credible|credibility|truthful|lying|guilty|innocent|liable|liability|admissible|inadmissible|privileged|culpable)\b/iu;
 
+/**
+ * Historical ceiling. ADR-0041 sized it for the synthetic corpus; every
+ * contract version up to `1.6.0` is registered against it and must keep it
+ * byte-exact for replay.
+ */
 export const EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX = 8 as const;
+
+/**
+ * Active ceiling, derived from the response budget rather than the fixture.
+ *
+ * ACME-0133 measured roughly 54 output tokens per candidate, so 64 candidates
+ * cost about 3,500 of the 8,192-token budget. The ceiling stays explicit and
+ * machine-checked because an unbounded array truncates against that budget,
+ * and truncated JSON is a refusal rather than a result. The batch remains
+ * non-exhaustive: ADR-0045 §6 owns full-source coverage.
+ */
+export const EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE = 64 as const;
 
 const EvidenceBoundedObserveArtifactOutputSchema =
   EvidenceObserveArtifactOutputSchema.extend({
     observations: EvidenceObserveArtifactOutputSchema.shape.observations
       .min(1)
       .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX),
+  });
+
+const EvidenceBoundedActiveObserveArtifactOutputSchema =
+  EvidenceObserveArtifactOutputSchema.extend({
+    observations: EvidenceObserveArtifactOutputSchema.shape.observations
+      .min(1)
+      .max(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE),
   });
 
 const EvidenceBoundedObserveArtifactOutputV1Schema =
@@ -149,6 +173,7 @@ function createContract<
   readonly singleLineCandidate: boolean;
   readonly runtimeDerivedSegmentQuote: boolean;
   readonly explicitCanonicalUtc: boolean;
+  readonly candidateBatchMax: number;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
   readonly outputSchema: z.ZodType<TOutput>;
@@ -210,7 +235,7 @@ function createContract<
                     : '') +
                   'Do not assess credibility, guilt, legal sufficiency, admissibility or privilege. ' +
                   (configuration.boundedCandidateBatch
-                    ? `Return between one and ${String(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX)} materially distinct observations as a non-exhaustive reviewer candidate batch; do not claim full-source coverage. `
+                    ? `Return between one and ${String(configuration.candidateBatchMax)} materially distinct observations as a non-exhaustive reviewer candidate batch; do not claim full-source coverage. `
                     : '') +
                   'Return only the requested JSON.',
               },
@@ -413,6 +438,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -428,6 +454,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
     outputSchema: EvidenceObserveArtifactOutputV1Schema,
@@ -443,6 +470,7 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV1Schema,
@@ -458,6 +486,7 @@ export const evidenceObserveArtifactContractV4 = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: false,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_3_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV2Schema,
@@ -473,6 +502,7 @@ export const evidenceObserveArtifactContractV5 = Object.freeze(
     singleLineCandidate: true,
     runtimeDerivedSegmentQuote: false,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_4_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputV3Schema,
@@ -488,8 +518,25 @@ export const evidenceObserveArtifactContractV6 = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: true,
     explicitCanonicalUtc: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_5_0',
+    outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV7 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V7,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: true,
+    explicitCanonicalUtc: true,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_6_0',
     outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
   }),
 );
@@ -503,8 +550,9 @@ export const evidenceObserveArtifactContract = Object.freeze(
     singleLineCandidate: false,
     runtimeDerivedSegmentQuote: true,
     explicitCanonicalUtc: true,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_6_0',
-    outputSchema: EvidenceBoundedObserveArtifactOutputSchema,
+    schemaName: 'evidence_observe_artifact_1_7_0',
+    outputSchema: EvidenceBoundedActiveObserveArtifactOutputSchema,
   }),
 );

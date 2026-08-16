@@ -41,6 +41,7 @@ import {
   evidenceObserveArtifactContractV4,
   evidenceObserveArtifactContractV5,
   evidenceObserveArtifactContractV6,
+  evidenceObserveArtifactContractV7,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -233,6 +234,7 @@ export function createEvidenceLiveAssessmentService(options: {
           evidenceObserveArtifactContractV4,
           evidenceObserveArtifactContractV5,
           evidenceObserveArtifactContractV6,
+          evidenceObserveArtifactContractV7,
           evidenceObserveArtifactContract,
           evidenceRelateObservationsContract,
           evidenceProposeAssessmentContractV1,
@@ -414,7 +416,11 @@ export function createEvidenceLiveAssessmentService(options: {
         const questions = [...snapshot.openQuestions].sort((a, b) =>
           a.openQuestionId.localeCompare(b.openQuestionId),
         );
-        if (observations.length === 0 || relations.length === 0)
+        // ADR-0045 §4: relations are a first-class input when present, not a
+        // precondition. A case with accepted observations and no relations is
+        // an ordinary state; the assessment reports what is missing instead of
+        // refusing to exist.
+        if (observations.length === 0)
           throw new EvidenceLiveAssessmentRefused(
             'LIVE_ASSESSMENT_ACCEPTED_EVIDENCE_REQUIRED',
           );

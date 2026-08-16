@@ -17,6 +17,7 @@ import {
 } from '../../packages/core/src/index.js';
 import {
   developmentObserveArtifactInput,
+  EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
   developmentObserveArtifactOutput,
 } from '../../packages/evidence-testing/src/index.js';
 import {
@@ -97,8 +98,7 @@ describe('Evidence observe execution reliability', () => {
           executionId,
           callKey: 'model:0',
           selection,
-          expectedRequestHash:
-            'e25c896e903229e2c6020a48f829110c55251838d2eaf99090c4afc790b232de',
+          expectedRequestHash: EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
           outcome: {
             kind: 'response',
             response: {

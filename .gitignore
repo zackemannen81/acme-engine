@@ -17,6 +17,12 @@ coverage/
 *.tmp
 tmp/
 
+# Operator source material and sealed evaluation sources.
+# ADR-0040: source content never enters Git. Acceptance runs read these from
+# the working tree and commit only content-free evidence.
+*.pdf
+facit*
+
 # Editors and operating systems
 .DS_Store
 Thumbs.db

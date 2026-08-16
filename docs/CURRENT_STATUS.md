@@ -407,6 +407,26 @@ non-synthetic classes remain unauthorized.
 
 ## Active Work
 
+ACME-0133 ran the first outcome-blind acceptance against two real investigation
+documents and returned FAIL. The integrity machinery held throughout — exact
+canonical hashes, exact source binding, atomic projection, idempotent review,
+fail-closed refusals, measured cost — but the product produced no usable domain
+result, and none of the reasons were defects. A 1,915-page document was refused
+at ingest, one call returned exactly eight candidates because eight was the
+schema maximum, one refused relation removed the assessment entirely, and no
+observation carried a temporal bound. Every one of those numbers was calibrated
+against the synthetic corpus. The frozen report is
+`docs/acceptance/ACME-0133-frozen-acceptance-report.md`.
+
+ADR-0045 accepts the consequence: bounds are sized for the material, not for
+the fixture. ACME-0134 implements its sections 2 to 4 — active observation
+contract `1.7.0` with a response-derived ceiling of 64, canonical text bounds
+of 16 MiB and 400,000 lines, and an assessment that proceeds from accepted
+observations without requiring a relation. Historical contract versions keep
+their own ceilings and replay byte-exact. Sections 5 and 6, repair calls and
+full-source coverage, are the next two tasks and are what turn a bounded batch
+into document coverage.
+
 POC #1 has entered its live product acceptance phase. ACME-0129 is superseded
 before its acceptance run: it was frozen to prove live execution could happen
 safely without uncontrolled spend, and that question is answered. ADR-0044

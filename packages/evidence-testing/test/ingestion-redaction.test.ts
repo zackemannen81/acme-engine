@@ -1,6 +1,8 @@
 import { sha256 } from '@acme/core';
 import {
   EVIDENCE_REDACTION_REPLACEMENT_VERSION,
+  EVIDENCE_TEXT_IMPORT_MAX_BYTES,
+  EVIDENCE_TEXT_IMPORT_MAX_LINES,
   applyEvidenceRedactions,
   buildImportedSourceArtifactVersion,
   deriveEvidenceRepresentationId,
@@ -80,12 +82,30 @@ describe('bounded evidence text ingestion', () => {
   });
 
   it('enforces exact byte and line boundaries', () => {
+    // ADR-0045 §3 sized these for real investigation files. A document at the
+    // scale ACME-0133 refused must now be admitted, and the bound must still
+    // bind one byte above itself.
     expect(() =>
       validateEvidenceTextImport(
-        new Uint8Array(2_097_153).fill(0x61),
+        new Uint8Array(EVIDENCE_TEXT_IMPORT_MAX_BYTES + 1).fill(0x61),
         'text/plain',
       ),
     ).toThrowError(expect.objectContaining({ reasonCode: 'TEXT_TOO_LARGE' }));
+    expect(() =>
+      validateEvidenceTextImport(
+        encoder.encode('a\n'.repeat(EVIDENCE_TEXT_IMPORT_MAX_LINES + 1)),
+        'text/plain',
+      ),
+    ).toThrowError(
+      expect.objectContaining({ reasonCode: 'TEXT_TOO_MANY_LINES' }),
+    );
+    // The ACME-0133 refusal: 3,521,477 bytes over 74,469 lines must import.
+    expect(() =>
+      validateEvidenceTextImport(
+        encoder.encode(`${'a'.repeat(46)}\n`.repeat(74_469)),
+        'text/plain',
+      ),
+    ).not.toThrow();
     expect(() =>
       validateEvidenceTextImport(
         encoder.encode(`${'a'.repeat(16_385)}\n`),

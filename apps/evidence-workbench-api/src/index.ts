@@ -1314,7 +1314,7 @@ export function createEvidenceWorkbenchApi(options: {
       if (request.method === 'POST' && url.pathname === '/api/text-imports') {
         if (requestCaseId === null || options.ingestion === undefined)
           throw new EvidenceAuthorizationError(404, 'Not found.');
-        const payload = (await boundedJsonBody(request, 2_200_000)) as Record<
+        const payload = (await boundedJsonBody(request, 25_000_000)) as Record<
           string,
           unknown
         >;

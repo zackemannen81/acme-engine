@@ -23,7 +23,9 @@ import {
   evidenceObserveArtifactContractV3,
   evidenceObserveArtifactContractV4,
   evidenceObserveArtifactContractV5,
+  EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
   evidenceObserveArtifactContractV6,
+  evidenceObserveArtifactContractV7,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -189,7 +191,7 @@ describe('evidence.observe-artifact', () => {
       now: '2026-08-11T11:00:00.000Z',
     });
     expect(computeModelRequestHash(request)).toBe(
-      'f86982f1506410426b0a3b86f59fc90ade36c2b3f389428d083d6078c6a2ab3d',
+      '9d0fa2b9bb28b5d86a4b03cebbf4f5e0704e28ee362d834d029604f4ac4fa229',
     );
     expect(
       computeModelRequestHash(
@@ -271,7 +273,7 @@ describe('evidence.observe-artifact', () => {
     };
     expect(jsonSchema.properties?.observations).toMatchObject({
       minItems: 1,
-      maxItems: 8,
+      maxItems: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     });
     expect(JSON.stringify(request.output.jsonSchema)).not.toMatch(
       /startLine|endLine|exactQuote/u,
@@ -283,13 +285,19 @@ describe('evidence.observe-artifact', () => {
     expect(Object.isFrozen(request)).toBe(true);
   });
 
-  it('accepts one through eight candidates and refuses a ninth', () => {
+  it('accepts up to the active candidate ceiling and refuses one more', () => {
     const candidate = output.observations[0];
     if (candidate === undefined) throw new Error('Missing fixture candidate.');
     const legacyCandidate = legacyOutput.observations[0];
     if (legacyCandidate === undefined)
       throw new Error('Missing legacy fixture candidate.');
-    for (const count of [1, 8]) {
+    // The active ceiling is response-derived (ADR-0045 §2), not the historical
+    // fixture-sized eight. Historical versions keep their own ceiling below.
+    for (const count of [
+      1,
+      8,
+      EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
+    ]) {
       expect(
         evidenceObserveArtifactContract.outputSchema.safeParse({
           schemaVersion: 'evidence-observe-artifact-output/4',
@@ -300,9 +308,18 @@ describe('evidence.observe-artifact', () => {
     expect(
       evidenceObserveArtifactContract.outputSchema.safeParse({
         schemaVersion: 'evidence-observe-artifact-output/4',
-        observations: Array.from({ length: 9 }, () => candidate),
+        observations: Array.from(
+          { length: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE + 1 },
+          () => candidate,
+        ),
       }).success,
     ).toBe(false);
+    // The ceiling must stay provably inside the response budget: at the
+    // ~54 output tokens per candidate measured in ACME-0133, the ceiling may
+    // not approach the contract's 8,192-token bound.
+    expect(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE * 54).toBeLessThan(
+      8192 * 0.75,
+    );
     expect(
       evidenceObserveArtifactContractV2.outputSchema.safeParse({
         schemaVersion: 'evidence-observe-artifact-output/1',
@@ -349,7 +366,7 @@ describe('evidence.observe-artifact', () => {
     ).toBe(true);
   });
 
-  it('keeps all seven observation contract versions resolvable for replay', () => {
+  it('keeps all eight observation contract versions resolvable for replay', () => {
     const registry = createContractRegistry([
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
@@ -357,6 +374,7 @@ describe('evidence.observe-artifact', () => {
       evidenceObserveArtifactContractV4,
       evidenceObserveArtifactContractV5,
       evidenceObserveArtifactContractV6,
+      evidenceObserveArtifactContractV7,
       evidenceObserveArtifactContract,
     ]);
     expect(
@@ -364,7 +382,16 @@ describe('evidence.observe-artifact', () => {
         .list()
         .filter(({ id }) => id === 'evidence.observe-artifact')
         .map(({ version }) => version),
-    ).toEqual(['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0']);
+    ).toEqual([
+      '1.0.0',
+      '1.1.0',
+      '1.2.0',
+      '1.3.0',
+      '1.4.0',
+      '1.5.0',
+      '1.6.0',
+      '1.7.0',
+    ]);
     for (const contract of [
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
@@ -372,6 +399,7 @@ describe('evidence.observe-artifact', () => {
       evidenceObserveArtifactContractV4,
       evidenceObserveArtifactContractV5,
       evidenceObserveArtifactContractV6,
+      evidenceObserveArtifactContractV7,
       evidenceObserveArtifactContract,
     ]) {
       expect(registry.get(contract.ref)).toBe(contract);
