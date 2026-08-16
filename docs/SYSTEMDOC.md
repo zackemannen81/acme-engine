@@ -3,6 +3,11 @@
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
 count. Source review and the ledger embed the same card object.
+`GET /api/text-imports` is the case source stream: imports sort by
+`sourceProvenance.acquiredAt` then `createdAt` then `importId`. The
+Documents view (`?view=documents` or `?view=stream`) titles that list
+Source stream and shows ingest time plus observation/awaiting coverage
+on each card. Default `?view=` remains overview.
 
 Reviewer operations are case-bound records (`evidence-review-assignment/1`,
 `evidence-review-comment/1`, `evidence-review-activity/1`). Decisions remain

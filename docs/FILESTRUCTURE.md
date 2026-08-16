@@ -32,8 +32,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{index.ts,live.ts,live-observation.ts,live-relation.ts,live-assessment.ts,local.ts,local-main.ts}
-│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-coverage-windows.test.ts,live-path-regressions.test.ts,live-repair-budget.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
+│   │   ├── src/{index.ts,live.ts,live-observation.ts,live-relation.ts,live-assessment.ts,local.ts,local-main.ts,text-import-list.ts}
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-coverage-windows.test.ts,live-path-regressions.test.ts,live-repair-budget.test.ts,local-blackbox.test.ts,secret-scan.test.ts,text-import-list.test.ts,artifact-config.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -892,7 +892,9 @@ content remains intentionally omitted here.
   ACME-0095 adds encrypted artifact hydration, product security audit and
   case-admin artifact inspection, re-wrap and revisioned deletion. ACME-0097
   adds the Documents import view, immutable redaction draft/apply flow and
-  restart-safe case-first records. ACME-0105 adds the closed
+  restart-safe case-first records. ACME-0141 sorts that list as the source
+  stream (`text-import-list.ts`) and shows ingest time plus observation
+  coverage; `?view=stream` aliases Documents. ACME-0105 adds the closed
   `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
   authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
   key are required before an OpenAI gateway can be released. ACME-0106 adds

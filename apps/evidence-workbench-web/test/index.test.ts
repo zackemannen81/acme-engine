@@ -47,6 +47,11 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain('Case overview');
     expect(html).toContain('Integrity report');
     expect(html).toContain('/api/integrity-report');
+    expect(html).toContain("initialView==='stream'");
+    expect(html).toContain('Source stream');
+    expect(html).toContain('item.sourceProvenance?.acquiredAt||item.createdAt');
+    expect(html).toContain("related.length+' observations</span>");
+    expect(html).toContain("awaiting+' awaiting</span>");
     expect(html).toContain("initialView==='overview'");
     expect(html).toContain("initialView==='integrity'");
     // Every integrity row cites observations that open their exact source.

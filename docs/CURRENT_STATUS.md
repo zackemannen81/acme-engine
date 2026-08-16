@@ -455,7 +455,10 @@ in that sequence is implemented until a child is chartered. ACME-0139 implements
 a null actor when the roster is empty and refuses invented unresolved
 keys. Historical `@1.9.0` stays byte-exact. ACME-0140 adds `evidence-observation-card/1`. Source review and the
 ledger embed the same card; the browser renders quote, citation and
-standing from it. Next child is ACME-0141 (source stream as home).
+standing from it. ACME-0141 sorts `/api/text-imports` by acquired/ingest
+time and titles Documents as Source stream with coverage badges;
+`?view=stream` aliases that surface. Next child is ACME-0142
+(deterministic source blocks and neighbour context).
 
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on

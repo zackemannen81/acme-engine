@@ -103,8 +103,14 @@ import {
   EvidenceLiveAssessmentRefused,
   type EvidenceLiveAssessmentService,
 } from './live-assessment.js';
+import { sortTextImportsBySourceTime } from './text-import-list.js';
 
 export * from './live.js';
+export {
+  compareTextImportsBySourceTime,
+  sortTextImportsBySourceTime,
+  textImportSourceTime,
+} from './text-import-list.js';
 
 function zCaseStatus(value: string): 'active' | 'archived' {
   if (value === 'active' || value === 'archived') return value;
@@ -1305,7 +1311,7 @@ export function createEvidenceWorkbenchApi(options: {
         const snapshot = await scopedSnapshot(workspaceId);
         send(response, 200, {
           schemaVersion: 'evidence-text-import-list/1',
-          imports: snapshot.textImports,
+          imports: sortTextImportsBySourceTime(snapshot.textImports),
           redactionDrafts: snapshot.redactionDrafts,
           redactionLogs: snapshot.redactionLogs,
         });

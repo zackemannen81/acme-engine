@@ -1,5 +1,22 @@
 # Journal
 
+## 2026-08-16 — ACME-0141 source stream as home
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0141
+- Change: `/api/text-imports` sorts by `acquiredAt` then `createdAt` then
+  `importId`. Documents is titled Source stream, shows ingest time and
+  observation/awaiting coverage, and opens on `?view=stream` as well as
+  `?view=documents`. Default entry stays overview.
+- Why now: ADR-0046 names the case/source stream as the chronology job.
+  Reviewers must walk ingest order and see coverage without opening Ledger.
+- Verification: unit 790/790; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0142 deterministic source blocks and neighbour
+  context.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0140 shared observation card
 
 - Date: 2026-08-16
