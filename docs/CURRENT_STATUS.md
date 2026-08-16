@@ -444,6 +444,18 @@ committed window is not paid for again. A single window still cannot claim
 document coverage. Date-only temporal bounds and the 409
 ledger/relation/question views remain follow-ups.
 
+ADR-0046 accepts the surface and pipeline direction: source chronology
+and claim projection are two graphs over the same immutable occurrence.
+Segmentation follows the document, not the event timeline. Observe is
+Pass 1 only. The reviewer surface is three jobs (case/source stream,
+claim, stance), not a type inventory. The specification and child
+sequence ACME-0139–0144 are
+`docs/design/evidence-workbench-source-and-claim-surfaces.md`. Nothing
+in that sequence is implemented until a child is chartered. ACME-0139 implements Pass 1 empty-roster: active observe `@1.10.0` requires
+a null actor when the roster is empty and refuses invented unresolved
+keys. Historical `@1.9.0` stays byte-exact. Next child is ACME-0140
+(shared observation card).
+
 ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
 Observation of source-B produced 24 accepted fragments. Repair ran on
 relation and assessment and both still failed. Observation of source-A

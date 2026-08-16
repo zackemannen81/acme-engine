@@ -68,6 +68,10 @@ This plan records the agreed sequence from the current synthetic Evidence
 Integrity Workbench to a complete product proof and a bounded Stage A live
 proof. It supplements but does not supersede ADR-0028, ADR-0040, the
 accepted product definition or the normative technical specification.
+ADR-0046 and
+`evidence-workbench-source-and-claim-surfaces.md` now decide how origin
+and claim reach the surface after `@1.9.0`; that sequence is ACME-0139–
+0144 and is not implemented by this completion plan.
 
 Stage 2 is implemented by ACME-0091 under ADR-0035. ADR-0036 now decides the
 Stage 3 case/workspace management and isolation boundary, and ACME-0093

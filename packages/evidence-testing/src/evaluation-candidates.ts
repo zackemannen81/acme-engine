@@ -100,7 +100,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T01',
         versionOrdinal: 1,
         requestHash:
-          'd76a81d2b72b2221b6cc58607f8daa2e20774a8f35f478669811e23ad48d3d3f',
+          '1548ebd5a7a295633ce72a0aa64baec229644244b35d2df1a65a5d551f954b62',
         output: output('EVAL-T01', 1, [
           {
             kind: 'statement-occurrence',
@@ -141,7 +141,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T01',
         versionOrdinal: 2,
         requestHash:
-          '0c5107e888362a5cefdebe6e9e7f574cb5bfac3e5b0527bf657a86e0fefb1ddc',
+          '78a72dd5cd8227518a01862de893b30b513a69d0a31a26261a66a59077e82a16',
         output: output('EVAL-T01', 2, [
           {
             kind: 'statement-occurrence',
@@ -182,7 +182,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T02',
         versionOrdinal: 1,
         requestHash:
-          'ebf3dda22d7a68e5412916476c008fdbe226b493b389f0366a1598b868041e76',
+          'e2f9dbd949803842384890ef291142e0e24b3c1d2aa6dfdd6ed0b82a65ac03d8',
         output: output('EVAL-T02', 1, [
           {
             kind: 'statement-occurrence',
@@ -225,7 +225,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-T03',
         versionOrdinal: 1,
         requestHash:
-          '1254262ec2fe9534facbdebd4ba0e987bbf4aaf32dd4be726dd755315c82a0ee',
+          'a8735e110849cd27085f02b6dbd8e40c77693e1f5a4b738a642c46d2e8370c98',
         output: output('EVAL-T03', 1, [
           {
             kind: 'statement-occurrence',
@@ -268,7 +268,7 @@ export function evaluationObserveCases(): readonly EvidenceEvaluationObserveCase
         logicalArtifactId: 'EVAL-E01',
         versionOrdinal: 1,
         requestHash:
-          '67a7910d866214ea0818a27e7821b6a6ee5c428c6ca84b93c4f6bf66a004e949',
+          '87f6289a8ef26898a5487a8655ed719ca870790683669f9b3d698e2c6b6bd727',
         output: output('EVAL-E01', 1, [
           {
             kind: 'exhibit-assertion',

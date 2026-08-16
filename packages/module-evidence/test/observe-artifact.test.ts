@@ -29,6 +29,7 @@ import {
   evidenceObserveArtifactContractV7,
   evidenceObserveArtifactContractV8,
   evidenceObserveArtifactContractV9,
+  evidenceObserveArtifactContractV10,
   evidenceCoverageWindowForSource,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
@@ -43,7 +44,7 @@ import {
 } from '../src/index.js';
 
 const ACTIVE_OBSERVE_REQUEST_HASH =
-  '63887a9a15702412870714b1bc851d696e5bfd8b2dd18ff351f8005eb5594ca5';
+  'df8be8fcfb40f5e9609c7c03f063995b354c7b714122f90bc764d2e06219f3e6';
 
 const text = [
   'Synthetic development transcript — Rillford Annex',
@@ -320,6 +321,10 @@ describe('evidence.observe-artifact', () => {
       type: 'text',
       text: expect.stringContaining('no_observation'),
     });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('If the actor roster is empty'),
+    });
     expect(
       computeModelRequestHash(
         evidenceObserveArtifactContractV9.buildRequest(input, {
@@ -328,6 +333,14 @@ describe('evidence.observe-artifact', () => {
         }),
       ),
     ).toBe('e3cf4b2385146eed01298e03fd1269ddc908784143cc76f4b41df2ef1171ba97');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV10.buildRequest(input, {
+          executionId: 'ignored-by-contract',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('63887a9a15702412870714b1bc851d696e5bfd8b2dd18ff351f8005eb5594ca5');
     expect(request.messages[0]?.content[0]).toMatchObject({
       type: 'text',
       text: expect.stringContaining('shows only a clock time'),
@@ -465,7 +478,7 @@ describe('evidence.observe-artifact', () => {
     ).toBe(true);
   });
 
-  it('keeps all ten observation contract versions resolvable for replay', () => {
+  it('keeps all eleven observation contract versions resolvable for replay', () => {
     const registry = createContractRegistry([
       evidenceObserveArtifactContractV1,
       evidenceObserveArtifactContractV2,
@@ -476,6 +489,7 @@ describe('evidence.observe-artifact', () => {
       evidenceObserveArtifactContractV7,
       evidenceObserveArtifactContractV8,
       evidenceObserveArtifactContractV9,
+      evidenceObserveArtifactContractV10,
       evidenceObserveArtifactContract,
     ]);
     expect(
@@ -486,6 +500,7 @@ describe('evidence.observe-artifact', () => {
     ).toEqual([
       '1.0.0',
       '1.1.0',
+      '1.10.0',
       '1.2.0',
       '1.3.0',
       '1.4.0',
@@ -505,6 +520,7 @@ describe('evidence.observe-artifact', () => {
       evidenceObserveArtifactContractV7,
       evidenceObserveArtifactContractV8,
       evidenceObserveArtifactContractV9,
+      evidenceObserveArtifactContractV10,
       evidenceObserveArtifactContract,
     ]) {
       expect(registry.get(contract.ref)).toBe(contract);
@@ -562,6 +578,64 @@ describe('evidence.observe-artifact', () => {
         coverageWindow: { sourceSegmentIds: [first.sourceSegmentId] },
       }),
     ).toEqual([]);
+  });
+
+  it('accepts an empty-roster exhibit with a null actor and refuses invented keys', () => {
+    const emptyRosterInput: EvidenceObserveArtifactInput = {
+      ...input,
+      actorRoster: [],
+      artifactVersion: {
+        ...input.artifactVersion,
+        kind: 'structured-exhibit-text',
+      },
+      coverageWindow: {
+        sourceSegmentIds: ['line-000001-segment-0001'],
+      },
+    };
+    const exhibit: EvidenceObserveArtifactOutput = {
+      schemaVersion: 'evidence-observe-artifact-output/5',
+      observations: [
+        {
+          kind: 'exhibit-assertion',
+          sourceSegmentId: 'line-000001-segment-0001',
+          sourceActorReference: null,
+          temporalBound: null,
+        },
+      ],
+      segmentCoverage: [
+        {
+          sourceSegmentId: 'line-000001-segment-0001',
+          status: 'observations_extracted',
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract.validateSemantics(
+        exhibit,
+        emptyRosterInput,
+      ),
+    ).toEqual([]);
+    const invented: EvidenceObserveArtifactOutput = {
+      ...exhibit,
+      observations: [
+        {
+          kind: 'exhibit-assertion',
+          sourceSegmentId: 'line-000001-segment-0001',
+          sourceActorReference: {
+            status: 'unresolved',
+            sourceLabel: 'Nera Sol',
+            sourceRole: 'operator-label',
+            candidateActorKeys: ['invented-actor'],
+          },
+          temporalBound: null,
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract
+        .validateSemantics(invented, emptyRosterInput)
+        .map(({ code }) => code),
+    ).toContain('EVIDENCE_ACTOR_REQUIRES_ROSTER');
   });
 
   it('accepts a heading segment as no_observation', () => {

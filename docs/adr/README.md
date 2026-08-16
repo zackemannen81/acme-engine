@@ -78,3 +78,6 @@ current architecture.
 - [`0041-bounded-observation-candidate-batches.md`](0041-bounded-observation-candidate-batches.md)
 - [`0042-runtime-derived-observation-locators.md`](0042-runtime-derived-observation-locators.md)
 - [`0043-runtime-derived-observation-quotes.md`](0043-runtime-derived-observation-quotes.md)
+- [`0044-poc1-live-product-acceptance-phase.md`](0044-poc1-live-product-acceptance-phase.md)
+- [`0045-real-material-scale-and-recovery.md`](0045-real-material-scale-and-recovery.md)
+- [`0046-source-chronology-and-claim-projection.md`](0046-source-chronology-and-claim-projection.md)

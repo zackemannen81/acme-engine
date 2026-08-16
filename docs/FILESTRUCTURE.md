@@ -571,6 +571,9 @@ acme-engine/
 │   │   ├── 0041-bounded-observation-candidate-batches.md
 │   │   ├── 0042-runtime-derived-observation-locators.md
 │   │   ├── 0043-runtime-derived-observation-quotes.md
+│   │   ├── 0044-poc1-live-product-acceptance-phase.md
+│   │   ├── 0045-real-material-scale-and-recovery.md
+│   │   ├── 0046-source-chronology-and-claim-projection.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -616,6 +619,7 @@ acme-engine/
 │   │   ├── evidence-integrity-workbench-product-completion-plan.md
 │   │   ├── evidence-integrity-workbench-product-definition.md
 │   │   ├── evidence-integrity-workbench-technical-specification.md
+│   │   ├── evidence-workbench-source-and-claim-surfaces.md
 │   │   ├── first-poc-application-discovery.md
 │   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md
@@ -957,6 +961,10 @@ launch, progress and cancellation under ADR-0027. Multi-step live scenarios run
 through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 stays
 single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
+
+`docs/design/evidence-workbench-source-and-claim-surfaces.md` is the accepted
+ADR-0046 implementation and UX sequence (ACME-0139–0144). It is direction;
+children are not started until chartered.
 
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
 normative POC #1 implementation plan. Slices 0–8 are delivered; ACME-0087 and

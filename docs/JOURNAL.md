@@ -1,5 +1,40 @@
 # Journal
 
+## 2026-08-16 — ACME-0139 empty-roster Pass 1
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0139
+- Change: active `evidence.observe-artifact@1.10.0` requires a null
+  actor when the roster is empty and refuses invented unresolved
+  candidate keys (`EVIDENCE_ACTOR_REQUIRES_ROSTER`). Historical `@1.9.0`
+  stays registered and byte-exact. Output remains `/5`.
+- Why now: live 1.9.0 jobs died on `EVIDENCE_ACTOR_CANDIDATES_MISMATCH`
+  against Stage A's empty roster. Pass 1 must not invent identities.
+- Verification: unit 788/788; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0140 shared observation card. Restart the
+  workbench before a new live analyze so it loads `@1.10.0`.
+- Signature: Claude
+
+## 2026-08-16 — ADR-0046 source chronology and claim surfaces
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: none (direction record; no implementation child activated)
+- Change: accepted ADR-0046 and
+  `docs/design/evidence-workbench-source-and-claim-surfaces.md`. An
+  occurrence stays source-bound; comparison is a projection. Segmentation
+  follows the document. Observe is Pass 1. The UI is three jobs over one
+  card. Delivery is ACME-0139–0144, each stoppable and additive.
+- Why now: the dual-graph model was decided after 1.9.0 and the live
+  empty-roster refusal. The product definition already named the layers;
+  the surface and pipeline did not.
+- Verification: docs:check pending with this entry; no code change.
+- Handoff: charter ACME-0139 from the surfaces spec when implementation
+  should start. Do not pull 0140–0144 into that charter.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0138 atomic observation coverage
 
 - Date: 2026-08-16

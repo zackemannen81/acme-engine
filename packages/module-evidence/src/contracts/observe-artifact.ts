@@ -27,6 +27,7 @@ import {
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V7,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V8,
   EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V9,
+  EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V10,
 } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';
 import {
@@ -198,6 +199,7 @@ function createContract<
   readonly explicitCanonicalUtc: boolean;
   readonly coverageComplete: boolean;
   readonly atomicCoverage: boolean;
+  readonly emptyRosterNullActor: boolean;
   readonly candidateBatchMax: number;
   readonly maxOutputTokens: number;
   readonly schemaName: string;
@@ -259,7 +261,9 @@ function createContract<
                     ? 'Each exactQuote must be a short contiguous substring copied exactly from one canonical source line, with no line break and at most 500 characters. '
                     : '') +
                   'A transcript yields statement occurrences; a structured exhibit yields exhibit assertions. ' +
-                  'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ' +
+                  (configuration.emptyRosterNullActor
+                    ? 'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved when the roster yields candidates. If the actor roster is empty, set actorReference and sourceActorReference to null. Do not invent unresolved candidate keys. '
+                    : 'Resolve an actor only through the supplied roster; preserve ambiguity as unresolved. ') +
                   (configuration.singleLineCandidate ||
                   configuration.runtimeDerivedSegmentQuote
                     ? configuration.runtimeDerivedSegmentQuote
@@ -440,7 +444,24 @@ function createContract<
           observation.kind === 'statement-occurrence'
             ? observation.actorReference
             : observation.sourceActorReference;
-        if (actor !== null) {
+        if (
+          configuration.emptyRosterNullActor &&
+          input.actorRoster.length === 0 &&
+          actor !== null
+        ) {
+          issues.push(
+            issue(
+              'EVIDENCE_ACTOR_REQUIRES_ROSTER',
+              [
+                ...path,
+                observation.kind === 'statement-occurrence'
+                  ? 'actorReference'
+                  : 'sourceActorReference',
+              ],
+              'An empty actor roster requires a null actor reference. Do not invent unresolved candidates.',
+            ),
+          );
+        } else if (actor !== null) {
           const matching = matchingActorKeys(input, actor.sourceLabel);
           if (
             exactQuote === undefined ||
@@ -575,6 +596,7 @@ export const evidenceObserveArtifactContractV1 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
@@ -594,6 +616,7 @@ export const evidenceObserveArtifactContractV2 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 2048,
     schemaName: 'evidence_observe_artifact_1_0_0',
@@ -613,6 +636,7 @@ export const evidenceObserveArtifactContractV3 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_2_0',
@@ -632,6 +656,7 @@ export const evidenceObserveArtifactContractV4 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_3_0',
@@ -651,6 +676,7 @@ export const evidenceObserveArtifactContractV5 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_4_0',
@@ -670,6 +696,7 @@ export const evidenceObserveArtifactContractV6 = Object.freeze(
     explicitCanonicalUtc: false,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_5_0',
@@ -689,6 +716,7 @@ export const evidenceObserveArtifactContractV7 = Object.freeze(
     explicitCanonicalUtc: true,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_6_0',
@@ -708,6 +736,7 @@ export const evidenceObserveArtifactContractV8 = Object.freeze(
     explicitCanonicalUtc: true,
     coverageComplete: false,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_7_0',
@@ -727,11 +756,32 @@ export const evidenceObserveArtifactContractV9 = Object.freeze(
     explicitCanonicalUtc: true,
     coverageComplete: true,
     atomicCoverage: false,
+    emptyRosterNullActor: false,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
     maxOutputTokens: 8192,
     schemaName: 'evidence_observe_artifact_1_8_0',
     inputSchema: EvidenceObserveArtifactInputSchema,
     outputSchema: EvidenceBoundedActiveObserveArtifactOutputSchema,
+  }),
+);
+
+export const evidenceObserveArtifactContractV10 = Object.freeze(
+  createContract({
+    ref: EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF_V10,
+    sourceDescription: 'artifact',
+    boundedCandidateBatch: true,
+    runtimeDerivedLocator: true,
+    singleLineCandidate: false,
+    runtimeDerivedSegmentQuote: true,
+    explicitCanonicalUtc: true,
+    coverageComplete: true,
+    atomicCoverage: true,
+    emptyRosterNullActor: false,
+    candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
+    maxOutputTokens: 8192,
+    schemaName: 'evidence_observe_artifact_1_9_0',
+    inputSchema: EvidenceObserveArtifactInputSchema,
+    outputSchema: EvidenceBoundedAtomicObserveArtifactOutputSchema,
   }),
 );
 
@@ -746,9 +796,10 @@ export const evidenceObserveArtifactContract = Object.freeze(
     explicitCanonicalUtc: true,
     coverageComplete: true,
     atomicCoverage: true,
+    emptyRosterNullActor: true,
     candidateBatchMax: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
     maxOutputTokens: 8192,
-    schemaName: 'evidence_observe_artifact_1_9_0',
+    schemaName: 'evidence_observe_artifact_1_10_0',
     inputSchema: EvidenceObserveArtifactInputSchema,
     outputSchema: EvidenceBoundedAtomicObserveArtifactOutputSchema,
   }),

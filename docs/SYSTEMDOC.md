@@ -1092,11 +1092,13 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.9.0` task projects one immutable source plus an
+`evidence.observe-artifact@1.10.0` task projects one immutable source plus an
 explicit actor roster and one coverage window, uses strict structured output
 and refuses invalid quote, kind, actor, temporal, prohibited-authority and
-incomplete-coverage-ledger candidates before commit. Historical `@1.0.0`–
-`@1.8.0` remain registered for replay. Active input `/2` requires a unique
+incomplete-coverage-ledger candidates before commit. An empty actor roster
+requires a null actor reference; unresolved candidates are legal only when
+the roster yields identities. Historical `@1.0.0`–`@1.9.0` remain registered
+for replay. Active input `/2` requires a unique
 `coverageWindow` of at most 64 source segment ids; the provider sees only
 those segments. Output `/5` adds `segmentCoverage`: every supplied window
 segment is accounted for exactly once as `observations_extracted` or
@@ -1421,11 +1423,11 @@ fail before publishing a partial projection.
 window *i* of *n* and accumulated model calls; `actualModelCalls` is
 unbounded across the campaign because coverage is many executions, not one
 call. The worker hydrates canonical text through the audited artifact
-service, plans coverage windows, and executes `evidence.observe-artifact@1.9.0`
+service, plans coverage windows, and executes `evidence.observe-artifact@1.10.0`
 once per window under `live-observe:{commandKey}:wNNNNN`. A committed window
 replays from that request key. Product observations plus one
 evidence-revision advance are written only after the last window commits.
-Historical `@1.0.0`–`@1.8.0` prompts/output remain registered for replay.
+Historical `@1.0.0`–`@1.9.0` prompts/output remain registered for replay.
 ADR-0041 sized the first bounded batch; ADR-0045 §6 makes coverage a
 workflow over those windows. A successful window is not evidence of
 document-complete coverage. ADR-0042 removes model-authored line fields from

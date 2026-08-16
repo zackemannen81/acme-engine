@@ -43,6 +43,12 @@ Application surfaces:
   legal-conclusion boundaries. ADR-0040 adds the narrow Stage A live
   applicability decision without weakening those permanent rules.
 
+- [`evidence-workbench-source-and-claim-surfaces.md`](evidence-workbench-source-and-claim-surfaces.md)
+  — accepted implementation, migration and UX specification for
+  [`ADR-0046`](../adr/0046-source-chronology-and-claim-projection.md).
+  Origin and claim stay two graphs over one occurrence. Delivery is six
+  stoppable children (ACME-0139–0144). Not yet implemented.
+
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
   continued through ACME-0053: the gate freezes are accepted in
