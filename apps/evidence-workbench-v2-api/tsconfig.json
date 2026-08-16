@@ -7,13 +7,41 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
-    { "path": "../../packages/adapter-evidence-artifact-file" },
-    { "path": "../../packages/adapter-evidence-artifact-s3" },
-    { "path": "../../packages/adapter-evidence-v2-postgres" },
-    { "path": "../../packages/adapter-postgres" },
-    { "path": "../../packages/evidence-artifacts" },
-    { "path": "../../packages/evidence-v2-contracts" },
-    { "path": "../../packages/module-evidence-v2" },
-    { "path": "../evidence-workbench-v2-web" }
+    {
+      "path": "../../packages/adapter-evidence-artifact-file"
+    },
+    {
+      "path": "../../packages/adapter-evidence-artifact-s3"
+    },
+    {
+      "path": "../../packages/adapter-evidence-auth-memory"
+    },
+    {
+      "path": "../../packages/adapter-evidence-auth-postgres"
+    },
+    {
+      "path": "../../packages/adapter-evidence-v2-postgres"
+    },
+    {
+      "path": "../../packages/adapter-postgres"
+    },
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/evidence-artifacts"
+    },
+    {
+      "path": "../../packages/evidence-auth"
+    },
+    {
+      "path": "../../packages/evidence-v2-contracts"
+    },
+    {
+      "path": "../../packages/module-evidence-v2"
+    },
+    {
+      "path": "../evidence-workbench-v2-web"
+    }
   ]
 }

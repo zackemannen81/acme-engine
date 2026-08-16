@@ -7,7 +7,14 @@ import {
   buildEvidenceV2Migrations,
   createEvidenceV2PostgresRepository,
 } from '../../packages/adapter-evidence-v2-postgres/src/index.js';
+import { createDeterministicEvidenceAuthenticator } from '../../packages/adapter-evidence-auth-memory/src/index.js';
+import {
+  createEvidenceIdentityMigrations,
+  createPostgresEvidenceIdentityRepository,
+} from '../../packages/adapter-evidence-auth-postgres/src/index.js';
 import { migratePostgresSchema } from '../../packages/adapter-postgres/src/index.js';
+import { createAes256GcmPayloadEncryptor } from '../../packages/core/src/index.js';
+import { createEvidenceV2Auth } from '../../apps/evidence-workbench-v2-api/src/auth.js';
 import {
   EVIDENCE_V2_ARTIFACT_RECORD_VERSION,
   EVIDENCE_V2_CASE_RECORD_VERSION,
@@ -191,4 +198,77 @@ describe('evidence v2 postgres persistence', () => {
       await repository.listChainDecisions(artifact.artifactId),
     ).toHaveLength(1);
   });
+
+  it('keeps sessions and case membership across a new composition', async () => {
+    const identitySchema = `${schema}_identity`;
+    await migratePostgresSchema({
+      pool,
+      schema: identitySchema,
+      appliedAt: '2026-08-16T00:00:00.000Z',
+      migrations: createEvidenceIdentityMigrations(identitySchema),
+    });
+
+    const build = () =>
+      createEvidenceV2Auth({
+        identity: createPostgresEvidenceIdentityRepository({
+          pool,
+          schema: identitySchema,
+        }),
+        authenticator: createDeterministicEvidenceAuthenticator({
+          issuer: 'https://local.acme.invalid/',
+          accounts: [
+            {
+              email: 'durable@acme.local',
+              password: 'durable-secret',
+              subject: 'durable',
+              displayLabel: 'Durable reviewer',
+            },
+          ],
+          expiresAt: () => new Date(Date.now() + 3_600_000).toISOString(),
+        }),
+        protector: createAes256GcmPayloadEncryptor({
+          key: Buffer.alloc(32, 9),
+          keyId: 'durable-session',
+        }),
+        issuer: 'https://local.acme.invalid/',
+        organizationId: 'durable-org',
+        organizationLabel: 'Durable organization',
+        accounts: [
+          {
+            email: 'durable@acme.local',
+            subject: 'durable',
+            displayLabel: 'Durable reviewer',
+            organizationRole: 'organization-admin',
+          },
+        ],
+        now: () => new Date().toISOString(),
+        nextToken: (kind) => `${kind}-${randomBytes(8).toString('hex')}`,
+      });
+
+    const first = build();
+    await first.bootstrap();
+    const session = await first.login({
+      email: 'durable@acme.local',
+      password: 'durable-secret',
+    });
+    await first.registerCase({
+      caseId: 'durable-case',
+      title: 'Durable case',
+      caseReference: 'D-1',
+      principalRef: session.principal.principalRef,
+    });
+
+    // A second composition reads the same rows: nothing was held in memory.
+    const second = build();
+    const visible = await second.visibleCaseIds(session.principal.principalRef);
+    expect([...visible]).toContain('durable-case');
+    const context = await second.requireCase({
+      principalRef: session.principal.principalRef,
+      caseId: 'durable-case',
+      action: 'workspace.read',
+    });
+    expect(context.effectiveCaseRole).toBe('case-admin');
+
+    await pool.query(`DROP SCHEMA IF EXISTS "${identitySchema}" CASCADE`);
+  }, 60_000);
 });

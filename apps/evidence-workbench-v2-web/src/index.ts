@@ -9,6 +9,11 @@
  * exact source, and no page renders an unbounded list.
  */
 
+export interface EvidenceV2Viewer {
+  readonly principalRef: string;
+  readonly displayLabel: string;
+}
+
 export interface EvidenceV2PageLink {
   readonly href: string;
   readonly label: string;
@@ -45,6 +50,8 @@ const STYLES = `
   ol.lines { padding-left: 4.5rem; }
   ol.lines li { white-space: pre-wrap; }
   form { margin: 0.75rem 0; }
+  nav .who { float: right; opacity: 0.75; }
+  nav .who form { display: inline; margin: 0; }
   input, button { font: inherit; padding: 0.25rem 0.4rem; }
 `;
 
@@ -52,6 +59,7 @@ function layout(
   title: string,
   breadcrumbs: readonly EvidenceV2PageLink[],
   body: string,
+  viewer?: EvidenceV2Viewer,
 ): string {
   const trail = breadcrumbs
     .map(
@@ -59,11 +67,16 @@ function layout(
         `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`,
     )
     .join('');
+  const who =
+    viewer === undefined
+      ? ''
+      : `<span class="who">${escapeHtml(viewer.displayLabel)} ` +
+        `<form method="post" action="/sign-out"><button type="submit">Sign out</button></form></span>`;
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title><style>${STYLES}</style></head>
-<body><nav>${trail}</nav>${body}</body></html>`;
+<body><nav>${trail}${who}</nav>${body}</body></html>`;
 }
 
 function pager(basePath: string, page: EvidenceV2ListPage<unknown>): string {
@@ -87,8 +100,29 @@ export interface EvidenceV2CaseRow {
   readonly createdAt: string;
 }
 
+/**
+ * Sign-in. The only page an unauthenticated request may see, and it states
+ * nothing about what exists behind it.
+ */
+export function renderSignIn(input: { readonly error?: string }): string {
+  return layout(
+    'Sign in',
+    [],
+    `<h1>Sign in</h1>
+     <p class="muted">Authentication is required before any case, source or
+     chain is loaded.</p>
+     ${input.error === undefined ? '' : `<p class="muted">${escapeHtml(input.error)}</p>`}
+     <form method="post" action="/auth/session">
+       <input name="email" type="email" placeholder="Email" required>
+       <input name="password" type="password" placeholder="Password" required>
+       <button type="submit">Sign in</button>
+     </form>`,
+  );
+}
+
 export function renderCases(
   page: EvidenceV2ListPage<EvidenceV2CaseRow>,
+  viewer?: EvidenceV2Viewer,
 ): string {
   const rows = page.items
     .map(
@@ -109,6 +143,7 @@ export function renderCases(
      <table><thead><tr><th>Title</th><th>Reference</th><th>Created</th></tr></thead>
      <tbody>${rows || '<tr><td colspan="3" class="muted">No cases yet.</td></tr>'}</tbody></table>
      ${pager('/', page)}`,
+    viewer,
   );
 }
 

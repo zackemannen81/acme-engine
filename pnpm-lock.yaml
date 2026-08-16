@@ -172,15 +172,27 @@ importers:
       '@acme/adapter-evidence-artifact-s3':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-artifact-s3
+      '@acme/adapter-evidence-auth-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-auth-memory
+      '@acme/adapter-evidence-auth-postgres':
+        specifier: workspace:*
+        version: link:../../packages/adapter-evidence-auth-postgres
       '@acme/adapter-evidence-v2-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-v2-postgres
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@acme/evidence-artifacts':
         specifier: workspace:*
         version: link:../../packages/evidence-artifacts
+      '@acme/evidence-auth':
+        specifier: workspace:*
+        version: link:../../packages/evidence-auth
       '@acme/evidence-v2-contracts':
         specifier: workspace:*
         version: link:../../packages/evidence-v2-contracts

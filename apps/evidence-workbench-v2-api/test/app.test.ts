@@ -21,7 +21,12 @@ import {
   type EvidenceV2ChainProposal,
 } from '@acme/module-evidence-v2';
 
+import { createDeterministicEvidenceAuthenticator } from '@acme/adapter-evidence-auth-memory';
+import { createInMemoryEvidenceIdentityRepository } from '@acme/adapter-evidence-auth-memory';
+import { createAes256GcmPayloadEncryptor } from '@acme/core';
+
 import { createEvidenceV2App } from '../src/app.js';
+import { createEvidenceV2Auth } from '../src/auth.js';
 import type {
   EvidenceV2StoredText,
   EvidenceV2TextStore,
@@ -198,9 +203,59 @@ describe('evidence v2 api', () => {
 
   beforeEach(async () => {
     repository = memoryRepository();
+    let counter = 0;
+    const auth = createEvidenceV2Auth({
+      identity: createInMemoryEvidenceIdentityRepository(),
+      authenticator: createDeterministicEvidenceAuthenticator({
+        issuer: 'https://local.acme.invalid/',
+        accounts: [
+          {
+            email: 'first@acme.local',
+            password: 'first-secret',
+            subject: 'first',
+            displayLabel: 'First reviewer',
+          },
+          {
+            email: 'second@acme.local',
+            password: 'second-secret',
+            subject: 'second',
+            displayLabel: 'Second reviewer',
+          },
+        ],
+        expiresAt: () => new Date(Date.now() + 3_600_000).toISOString(),
+      }),
+      protector: createAes256GcmPayloadEncryptor({
+        key: Buffer.alloc(32, 7),
+        keyId: 'test-session',
+      }),
+      issuer: 'https://local.acme.invalid/',
+      organizationId: 'test-org',
+      organizationLabel: 'Test organization',
+      accounts: [
+        {
+          email: 'first@acme.local',
+          subject: 'first',
+          displayLabel: 'First reviewer',
+          organizationRole: 'organization-admin',
+        },
+        {
+          email: 'second@acme.local',
+          subject: 'second',
+          displayLabel: 'Second reviewer',
+          organizationRole: 'reviewer',
+        },
+      ],
+      now: () => new Date().toISOString(),
+      nextToken: () => {
+        counter += 1;
+        return `token-${String(counter)}`;
+      },
+    });
+    await auth.bootstrap();
     const handler = createEvidenceV2App({
       repository,
       textStore: memoryTextStore(),
+      auth,
       now: () => '2026-08-16T00:00:00.000Z',
     });
     server = createServer((request, response) => {
@@ -219,10 +274,38 @@ describe('evidence v2 api', () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
-  async function seed(): Promise<{ caseId: string; artifactId: string }> {
-    const created = await fetch(`${base}/api/cases`, {
+  async function signIn(
+    email: string,
+    password: string,
+  ): Promise<Record<string, string>> {
+    const response = await fetch(`${base}/auth/session`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (response.status !== 201)
+      throw new Error(`sign-in failed: ${String(response.status)}`);
+    const cookie = response.headers
+      .getSetCookie()
+      .map((value) => value.split(';')[0])
+      .join('; ');
+    const body = (await response.json()) as { csrfToken: string };
+    return {
+      cookie,
+      'x-acme-csrf': body.csrfToken,
+      'content-type': 'application/json',
+    };
+  }
+
+  async function seed(): Promise<{
+    caseId: string;
+    artifactId: string;
+    headers: Record<string, string>;
+  }> {
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
       body: JSON.stringify({ title: 'Test case', caseReference: 'T-1' }),
     });
     const record = (await created.json()) as EvidenceV2CaseRecord;
@@ -230,12 +313,12 @@ describe('evidence v2 api', () => {
       `${base}/api/cases/${record.caseId}/artifacts`,
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers,
         body: JSON.stringify({ title: 'source-A', text: CORPUS }),
       },
     );
     const artifact = (await imported.json()) as { artifactId: string };
-    return { caseId: record.caseId, artifactId: artifact.artifactId };
+    return { caseId: record.caseId, artifactId: artifact.artifactId, headers };
   }
 
   it('imports once and reports what was derived', async () => {
@@ -251,9 +334,9 @@ describe('evidence v2 api', () => {
   });
 
   it('chains by body subject, so a mis-titled part opens under the right person', async () => {
-    const { artifactId } = await seed();
+    const { artifactId, headers } = await seed();
     const chains = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains`)
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
     ).json()) as EvidenceV2Page<EvidenceV2ChainSummary>;
 
     expect(chains.items.map((item) => item.subjectLabel).sort()).toEqual([
@@ -267,11 +350,14 @@ describe('evidence v2 api', () => {
     const detail = (await (
       await fetch(
         `${base}/api/artifacts/${artifactId}/chains/${allia?.chainId ?? ''}`,
+        { headers },
       )
     ).json()) as { chain: EvidenceV2Chain };
     const firstPart = detail.chain.instances[0]?.sourcePartIds[0] ?? '';
     const part = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/parts/${firstPart}`)
+      await fetch(`${base}/api/artifacts/${artifactId}/parts/${firstPart}`, {
+        headers,
+      })
     ).json()) as { part: EvidenceV2SourcePart };
 
     // The part's own label names Hussein; the chain it belongs to is Allia's.
@@ -279,9 +365,10 @@ describe('evidence v2 api', () => {
   });
 
   it('bounds every list route', async () => {
-    const { artifactId } = await seed();
+    const { artifactId, headers } = await seed();
     const response = await fetch(
       `${base}/api/artifacts/${artifactId}/parts?limit=100000`,
+      { headers },
     );
     const parts =
       (await response.json()) as EvidenceV2Page<EvidenceV2SourcePart>;
@@ -293,15 +380,17 @@ describe('evidence v2 api', () => {
   });
 
   it('serves a part with its exact source lines', async () => {
-    const { artifactId } = await seed();
+    const { artifactId, headers } = await seed();
     const parts = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/parts`)
+      await fetch(`${base}/api/artifacts/${artifactId}/parts`, { headers })
     ).json()) as EvidenceV2Page<EvidenceV2SourcePart>;
     const first = parts.items[0];
     if (first === undefined) throw new Error('expected a part');
 
     const view = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/parts/${first.partId}`)
+      await fetch(`${base}/api/artifacts/${artifactId}/parts/${first.partId}`, {
+        headers,
+      })
     ).json()) as { lines: string[] };
 
     expect(view.lines.length).toBe(first.endLine - first.startLine + 1);
@@ -311,11 +400,11 @@ describe('evidence v2 api', () => {
   });
 
   it('appends a membership decision without disturbing the proposal', async () => {
-    const { artifactId } = await seed();
+    const { artifactId, headers } = await seed();
     const before = await repository.readProposedMemberships(artifactId);
     const frozen = JSON.stringify(before);
     const chains = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains`)
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
     ).json()) as EvidenceV2Page<EvidenceV2ChainSummary>;
     const target = chains.items[1];
     const moved = before[0];
@@ -334,11 +423,7 @@ describe('evidence v2 api', () => {
     };
     const response = await fetch(
       `${base}/api/artifacts/${artifactId}/chain-decisions`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(decision),
-      },
+      { method: 'POST', headers, body: JSON.stringify(decision) },
     );
 
     expect(response.status).toBe(201);
@@ -353,23 +438,26 @@ describe('evidence v2 api', () => {
   });
 
   it('shows a corrected membership on the chain it was moved off', async () => {
-    const { artifactId } = await seed();
+    const { artifactId, headers } = await seed();
     const chains = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains`)
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
     ).json()) as EvidenceV2Page<EvidenceV2ChainSummary>;
     const from = chains.items[0];
     const to = chains.items[1];
     if (from === undefined || to === undefined)
       throw new Error('expected two chains');
     const before = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains/${from.chainId}`)
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${from.chainId}`,
+        { headers },
+      )
     ).json()) as { chain: EvidenceV2Chain };
     const movedPart = before.chain.instances[0]?.sourcePartIds[0];
     if (movedPart === undefined) throw new Error('expected a part');
 
     await fetch(`${base}/api/artifacts/${artifactId}/chain-decisions`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({
         decisionId: 'decision-move',
         action: 'assign',
@@ -383,7 +471,10 @@ describe('evidence v2 api', () => {
     });
 
     const after = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains/${from.chainId}`)
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${from.chainId}`,
+        { headers },
+      )
     ).json()) as { chain: EvidenceV2Chain };
     const stillThere = after.chain.instances.flatMap(
       (instance) => instance.sourcePartIds,
@@ -391,7 +482,9 @@ describe('evidence v2 api', () => {
     expect(stillThere).not.toContain(movedPart);
 
     const target = (await (
-      await fetch(`${base}/api/artifacts/${artifactId}/chains/${to.chainId}`)
+      await fetch(`${base}/api/artifacts/${artifactId}/chains/${to.chainId}`, {
+        headers,
+      })
     ).json()) as { memberships: EvidenceV2ChainMembership[] };
     expect(
       target.memberships.some((item) => item.sourcePartId === movedPart),
@@ -399,35 +492,144 @@ describe('evidence v2 api', () => {
   });
 
   it('renders navigable HTML for every surface', async () => {
-    const { caseId, artifactId } = await seed();
+    const { caseId, artifactId, headers } = await seed();
 
-    const cases = await (await fetch(`${base}/`)).text();
+    const cases = await (await fetch(`${base}/`, { headers })).text();
     expect(cases).toContain('<h1>Cases</h1>');
     expect(cases).toContain(`/cases/${caseId}`);
 
-    const casePage = await (await fetch(`${base}/cases/${caseId}`)).text();
+    const casePage = await (
+      await fetch(`${base}/cases/${caseId}`, { headers })
+    ).text();
     expect(casePage).toContain(`/artifacts/${artifactId}/parts`);
     expect(casePage).toContain(`/artifacts/${artifactId}/chains`);
 
     const partsPage = await (
-      await fetch(`${base}/artifacts/${artifactId}/parts`)
+      await fetch(`${base}/artifacts/${artifactId}/parts`, { headers })
     ).text();
     expect(partsPage).toContain('Source parts');
 
     const chainsPage = await (
-      await fetch(`${base}/artifacts/${artifactId}/chains`)
+      await fetch(`${base}/artifacts/${artifactId}/chains`, { headers })
     ).text();
     expect(chainsPage).toContain('Ammouri, Hussein');
   });
 
+  it('refuses every route without a session', async () => {
+    const { caseId, artifactId } = await seed();
+    const paths = [
+      '/',
+      `/cases/${caseId}`,
+      `/artifacts/${artifactId}/parts`,
+      `/artifacts/${artifactId}/chains`,
+      '/api/cases',
+      `/api/cases/${caseId}`,
+      `/api/artifacts/${artifactId}/parts`,
+      `/api/artifacts/${artifactId}/chains`,
+      `/api/artifacts/${artifactId}/chain-decisions`,
+    ];
+    for (const path of paths) {
+      const response = await fetch(`${base}${path}`);
+      expect([401, 403]).toContain(response.status);
+    }
+    expect((await fetch(`${base}/health`)).status).toBe(200);
+  });
+
+  it('shows a non-member 404 on every case-scoped route, never 403', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const parts = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/parts`, { headers })
+    ).json()) as EvidenceV2Page<EvidenceV2SourcePart>;
+    const chains = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
+    ).json()) as EvidenceV2Page<EvidenceV2ChainSummary>;
+    const partId = parts.items[0]?.partId ?? '';
+    const chainId = chains.items[0]?.chainId ?? '';
+
+    const stranger = await signIn('second@acme.local', 'second-secret');
+    const routes = [
+      `/api/cases/${caseId}`,
+      `/api/artifacts/${artifactId}/parts`,
+      `/api/artifacts/${artifactId}/parts/${partId}`,
+      `/api/artifacts/${artifactId}/chains`,
+      `/api/artifacts/${artifactId}/chains/${chainId}`,
+      `/api/artifacts/${artifactId}/chain-decisions`,
+    ];
+    for (const route of routes) {
+      const response = await fetch(`${base}${route}`, { headers: stranger });
+      expect(response.status, route).toBe(404);
+    }
+
+    // Writing is refused the same way, and says nothing more.
+    const write = await fetch(`${base}/api/cases/${caseId}/artifacts`, {
+      method: 'POST',
+      headers: stranger,
+      body: JSON.stringify({ title: 'x', text: 'y' }),
+    });
+    expect(write.status).toBe(404);
+
+    // And the stranger's own case list is empty rather than filtered-looking.
+    const cases = (await (
+      await fetch(`${base}/api/cases`, { headers: stranger })
+    ).json()) as EvidenceV2Page<EvidenceV2CaseRecord>;
+    expect(cases.total).toBe(0);
+  });
+
+  it('refuses a write with a missing or wrong CSRF token', async () => {
+    const { caseId, headers } = await seed();
+    const noCsrf = {
+      cookie: headers['cookie'] ?? '',
+      'content-type': 'application/json',
+    };
+    const wrongCsrf = { ...noCsrf, 'x-acme-csrf': 'not-the-token' };
+
+    for (const attempt of [noCsrf, wrongCsrf]) {
+      const response = await fetch(`${base}/api/cases/${caseId}/artifacts`, {
+        method: 'POST',
+        headers: attempt,
+        body: JSON.stringify({ title: 'x', text: 'y' }),
+      });
+      expect([401, 403]).toContain(response.status);
+    }
+  });
+
+  it('refuses a cross-origin write', async () => {
+    const { caseId, headers } = await seed();
+    const response = await fetch(`${base}/api/cases/${caseId}/artifacts`, {
+      method: 'POST',
+      headers: { ...headers, origin: 'http://evil.example' },
+      body: JSON.stringify({ title: 'x', text: 'y' }),
+    });
+    expect(response.status).toBe(403);
+  });
+
+  it('ends the session on sign-out', async () => {
+    const { headers } = await seed();
+    expect((await fetch(`${base}/api/cases`, { headers })).status).toBe(200);
+
+    const out = await fetch(`${base}/auth/session`, {
+      method: 'DELETE',
+      headers,
+    });
+    expect(out.status).toBe(204);
+    expect([401, 403]).toContain(
+      (await fetch(`${base}/api/cases`, { headers })).status,
+    );
+  });
+
   it('answers 404 for an unknown case, artifact, part and chain', async () => {
-    expect((await fetch(`${base}/cases/nope`)).status).toBe(404);
-    expect((await fetch(`${base}/api/artifacts/nope/parts`)).status).toBe(404);
+    const headers = await signIn('first@acme.local', 'first-secret');
+    expect((await fetch(`${base}/cases/nope`, { headers })).status).toBe(404);
     expect(
-      (await fetch(`${base}/api/artifacts/nope/parts/part-1`)).status,
+      (await fetch(`${base}/api/artifacts/nope/parts`, { headers })).status,
     ).toBe(404);
     expect(
-      (await fetch(`${base}/api/artifacts/nope/chains/chain-1`)).status,
+      (await fetch(`${base}/api/artifacts/nope/parts/part-1`, { headers }))
+        .status,
+    ).toBe(404);
+    expect(
+      (await fetch(`${base}/api/artifacts/nope/chains/chain-1`, { headers }))
+        .status,
     ).toBe(404);
   });
 });

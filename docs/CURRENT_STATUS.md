@@ -78,11 +78,22 @@ part titled `Förhör med Ammouri, HUSSEIN; 2007-04-25` opens under
 `Ammouri, Allia`, and appending one membership decision moves it while the
 stored proposal (645 rows) and structure (650 rows) stay md5-identical.
 
-**Known limitation, deferred by decision:** the V2 app has no authentication or
-authorization. It binds to loopback and every route names its case explicitly,
-so it is a single-operator local tool until the shared `@acme/evidence-auth`
-model is wired. That is the next task. No occurrence, claim or consensus layer
-exists yet.
+ACME-0153 closed that gap. The V2 app now authenticates every route and every
+page except sign-in and `/health`, using the shared `@acme/evidence-auth`
+session service with its cookie, CSRF token and encrypted upstream session, on
+a durable PostgreSQL identity schema. Case-scoped access goes through
+`authorizeEvidenceCaseAction`, case creation registers the identity case and an
+owning membership in the same operation, and the case list is scoped to
+membership. Measured in the recorded run: a second principal receives **404 on
+all six case-scoped routes and on the import write**, and sees an empty case
+list; an unauthenticated request gets 401, a write without CSRF 401, a
+cross-origin write 403, and sign-out invalidates the session.
+
+Remaining limitations: credentials come from a development authenticator, so a
+real upstream identity provider is still unwired, and no occurrence, claim or
+consensus layer exists. `pnpm test:postgres` has two pre-existing frozen-app
+failures unrelated to the V2 work, recorded in
+[the backlog](backlog/postgres-gate-test-hygiene.md).
 
 ## Delivered
 

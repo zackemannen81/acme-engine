@@ -1,5 +1,45 @@
 # Journal
 
+## 2026-08-16 — ACME-0153 V2 authentication and authorization
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0153
+- Change: the V2 app now authenticates every route and authorizes every
+  case-scoped one. `@acme/adapter-evidence-auth-postgres` persists principals,
+  memberships and sessions in their own schema; `createEvidenceSessionService`
+  issues the session cookie, CSRF token and encrypted upstream session;
+  `authorizeEvidenceCaseAction` decides access. Sign-in, sign-out and session
+  read are the only unauthenticated routes besides `/health`. Case creation
+  registers the identity case and an owning `case-admin` membership in the same
+  operation, and the case list is scoped to membership. No new authorization
+  model was written: ADR-0035 and ADR-0036 are applied, not amended.
+- Recorded run on a fresh database and bucket with the real `source-A` text,
+  signed in throughout: import 988 ms with a matching canonical SHA-256, 650
+  parts, 351 chains, restart, the Hussein chain's 13 instances, `part-000387`
+  under `Ammouri, Allia`, and one membership decision leaving the stored
+  proposal and structure md5-identical. Then, as a second principal with no
+  membership: **404 on all six case-scoped routes and on the import write**, and
+  an empty case list. Unauthenticated 401, write without CSRF 401, cross-origin
+  write 403, sign-out 204 followed by 401.
+- Discovered while implementing: two case-scoped routes I believed were guarded
+  were not. `GET /api/cases/{caseId}` and `GET /api/artifacts/{id}/parts/{partId}`
+  answered 200 to a non-member until the denial matrix — one assertion per
+  route, which the charter demanded for exactly this reason — found them. Both
+  now authorize and each is covered.
+- Verification: typecheck, format, boundaries and docs (276 files) clean; unit
+  841/841, up from 836; conformance 78/78; integration 70/70; scenario 26/26.
+  `pnpm test:postgres` is 41/42: one pre-existing frozen-app failure, and a
+  second that appears when the gate is re-run against the same database. Both
+  were reproduced at commit `6c73843` with this task's work stashed, so neither
+  is caused by it; they are recorded in
+  [the backlog](backlog/postgres-gate-test-hygiene.md).
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next by dependency
+  is `ObservationOccurrence` — extraction over a chain instance, the first V2
+  layer that spends a provider call. A real upstream identity provider remains
+  deliberately deferred.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0152 V2 persistence and first surfaces
 
 - Date: 2026-08-16

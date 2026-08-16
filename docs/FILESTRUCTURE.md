@@ -842,10 +842,12 @@ content remains intentionally omitted here.
   schema, with versioned migrations and separate proposed/effective membership
   tables.
 - `apps/evidence-workbench-v2-api`: the V2 composition root and HTTP surface —
-  cases, import, bounded parts and chains, a part's exact source lines and
-  appended membership decisions. Loopback only; authentication is not wired.
-- `apps/evidence-workbench-v2-web`: plain server-rendered HTML for
-  Case → Source → Chain → Instance.
+  sign-in and sign-out, cases, import, bounded parts and chains, a part's exact
+  source lines and appended membership decisions. Every route is authenticated
+  and every case-scoped route authorized through the shared policy; a
+  non-member receives 404.
+- `apps/evidence-workbench-v2-web`: plain server-rendered HTML for sign-in and
+  for Case → Source → Chain → Instance.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

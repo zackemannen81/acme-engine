@@ -1137,8 +1137,20 @@ bounded JSON and HTML for cases, parts, a part's exact source lines, chains, one
 chain's ordered instances and appended membership decisions.
 `apps/evidence-workbench-v2-web` renders those pages as plain server-rendered
 HTML. A chain view reflects effective membership, so a reviewer's correction is
-visible where it was made. No read path re-derives anything. The app has no
-authentication yet and binds to loopback; no occurrence, claim or consensus
+visible where it was made. No read path re-derives anything.
+
+**V2 authentication and authorization.** ACME-0153 wired the shared identity
+machinery in without adding a model. `@acme/adapter-evidence-auth-postgres`
+persists principals, organization and case memberships and sessions in their own
+schema; `createEvidenceSessionService` issues the session cookie, the CSRF token
+and the encrypted upstream session; `authorizeEvidenceCaseAction` decides every
+case-scoped read and write. Sign-in, sign-out and session read are the only
+unauthenticated routes besides `/health`. Case creation registers the identity
+case and an owning `case-admin` membership in the same operation, and the case
+list is scoped to the principal's memberships. A principal without membership
+receives 404 rather than 403 on every case-scoped route, so a case's existence
+is not disclosed (ADR-0036). Credentials come from a development authenticator;
+a real upstream identity provider is unwired. No occurrence, claim or consensus
 layer exists.
 
 The POC is a corpus-bound, non-adjudicative review product. It canonically
