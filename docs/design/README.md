@@ -49,7 +49,8 @@ Application surfaces:
   Origin and claim stay two graphs over one occurrence. Delivery is six
   stoppable children (ACME-0139–0144), implemented. ACME-0145 completes
   the 0142 size bounds as `evidence-source-structure-rules/2`. ACME-0146
-  makes the citable unit a sentence (`rules/3`).
+  makes the citable unit a sentence (`rules/3`). ACME-0147 switches the
+  default shell to Source stream / Claim / Stance / Search.
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and

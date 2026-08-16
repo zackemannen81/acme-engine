@@ -177,8 +177,8 @@ Do not rebuild these; project them.
 | Documents import | Becomes the source stream |
 
 Current default UI (twelve buttons, queue + detail, full source as a
-line list) is the **legacy shell**. It remains until a child switches
-the default entry.
+line list) was the **legacy shell**. ACME-0147 switches the default
+entry to Source stream and makes Claim and Stance primary jobs.
 
 ## 4. Delivery principles
 

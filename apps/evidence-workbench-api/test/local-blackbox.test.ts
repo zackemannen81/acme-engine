@@ -403,7 +403,7 @@ describe('local Evidence workbench', () => {
       const page = await authFetch(address.url);
       expect(page.status).toBe(200);
       expect(await page.text()).toContain(
-        'Review source-bound observations beside their exact lines.',
+        'Source chronology and claim projection over immutable occurrences.',
       );
 
       const queueResponse = await authFetch(

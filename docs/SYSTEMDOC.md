@@ -5,9 +5,13 @@ source title, citation, review standing, asserted event time and relation
 count. Source review and the ledger embed the same card object.
 `GET /api/text-imports` is the case source stream: imports sort by
 `sourceProvenance.acquiredAt` then `createdAt` then `importId`. The
-Documents view (`?view=documents` or `?view=stream`) titles that list
-Source stream and shows ingest time plus observation/awaiting coverage
-on each card. Default `?view=` remains overview.
+primary shell is three jobs plus search: Source stream, Claim, Stance
+and Search. Default signed-in entry is the source stream
+(`?view=stream` or omitted). Claim is `?view=claim`. Stance groups the
+review queue by source title and keeps integrity, assessment and the
+legacy type views as secondary. Source review places observations
+under the block that contains their citation. Legacy `?view=` routes
+remain.
 Active observe is `evidence.observe-artifact@1.11.0` input `/3` output
 `/6`. New analyzes derive a content-addressed `evidence-source-structure/1`
 (hash of rule version + canonical text) into Q+A / paragraph / heading

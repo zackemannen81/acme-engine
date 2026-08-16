@@ -915,6 +915,9 @@ content remains intentionally omitted here.
   8,192-token output bound while keeping historical versions registered.
   ACME-0137 adds `coverage.ts`, input `/2` and live window iteration so
   full-source observation is a workflow over 64-segment windows.
+  ACME-0147 switches the browser shell to Source stream / Claim / Stance
+  / Search, defaults signed-in entry to the stream, and seats source
+  observations under their block.
   ACME-0142 adds `source-structure.ts` and active observe `@1.11.0` input
   `/3` so new analyzes use document-native blocks plus neighbour context.
   ACME-0145 versions those rules to `/2` so oversized paragraphs split at

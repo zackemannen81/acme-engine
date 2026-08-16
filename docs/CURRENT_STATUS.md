@@ -457,7 +457,11 @@ keys. Historical `@1.9.0` stays byte-exact. ACME-0140 adds `evidence-observation
 ledger embed the same card; the browser renders quote, citation and
 standing from it. ACME-0141 sorts `/api/text-imports` by acquired/ingest
 time and titles Documents as Source stream with coverage badges;
-`?view=stream` aliases that surface. ACME-0142 adds
+`?view=stream` aliases that surface. ACME-0147 makes Source stream,
+Claim, Stance and Search the primary nav; default signed-in entry is
+the source stream. Stance groups the review queue by source title.
+Source review seats observations under their block. Legacy `?view=`
+routes remain. ACME-0142 adds
 `evidence-source-structure/1` under `evidence-source-structure-rules/3`
 and active observe `@1.11.0` input `/3`
 output `/6`: new analyzes use document-native blocks plus optional

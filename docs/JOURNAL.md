@@ -1,5 +1,26 @@
 # Journal
 
+## 2026-08-16 — ACME-0147 three-mode default shell
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0147
+- Change: the workbench primary nav is Source stream, Claim, Stance and
+  Search. Default signed-in entry is the source stream. Stance groups
+  the review queue by source title and keeps integrity, assessment and
+  the legacy type views as secondary. Source review seats observations
+  under the block that contains their citation. Legacy `?view=` routes
+  remain.
+- Why now: ADR-0046's first version is three jobs, not twelve buttons.
+  0141 deferred the default-entry switch to this child.
+- Verification: unit 799/799; typecheck, lint and docs clean. No
+  browser tool was available; shell parse plus local blackbox cover the
+  HTML contract.
+- Handoff: ADR-0046 first version is complete (0139–0147). Restart the
+  workbench to pick up rules/3 and the new shell. Knowledge-time sort
+  and same-sentence identity collision remain follow-ups.
+- Signature: Grok
+
 ## 2026-08-16 — ACME-0146 sentence-level source segments
 
 - Date: 2026-08-16

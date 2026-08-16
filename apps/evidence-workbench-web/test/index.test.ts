@@ -49,9 +49,15 @@ describe('renderEvidenceWorkbenchShell', () => {
     expect(html).toContain('/api/integrity-report');
     expect(html).toContain("initialView==='stream'");
     expect(html).toContain("initialView==='claim'");
+    expect(html).toContain("initialView==='stance'");
     expect(html).toContain('/api/claims');
     expect(html).toContain('group.relationKinds');
     expect(html).toContain('Source stream');
+    expect(html).toContain('id="nav-claim"');
+    expect(html).toContain('id="nav-stance"');
+    expect(html).toContain('else await loadDocuments()');
+    expect(html).toContain('data-block-id');
+    expect(html).toContain('function observationReviewHtml');
     expect(html).toContain('source-block');
     expect(html).toContain('view.source.blocks');
     expect(html).toContain('item.sourceProvenance?.acquiredAt||item.createdAt');
