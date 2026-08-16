@@ -57,8 +57,15 @@ describe('Milestone 1 execution identity', () => {
       retention: 'hash-only',
     });
     expect(Object.isFrozen(resolveExecutionPolicy())).toBe(true);
+    // ADR-0045 §5: a bounded repair budget is admitted. One primary call and
+    // zero revision calls remain the bound.
+    expect(resolveExecutionPolicy({ maxRepairCalls: 1 })).toMatchObject({
+      maxModelCalls: 1,
+      maxRepairCalls: 1,
+      maxRevisionCalls: 0,
+    });
     expectCode(
-      () => resolveExecutionPolicy({ maxRepairCalls: 1 }),
+      () => resolveExecutionPolicy({ maxRepairCalls: -1 }),
       'INVALID_REQUEST',
     );
     expectCode(

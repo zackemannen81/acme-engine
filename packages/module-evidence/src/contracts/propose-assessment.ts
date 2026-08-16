@@ -1,3 +1,4 @@
+import { buildEvidenceRepairRequest } from './repair.js';
 import { z } from 'zod';
 
 import {
@@ -114,6 +115,13 @@ function createContract(configuration: {
         maxOutputTokens: 4096,
       } satisfies ModelRequest;
       return immutableEvidence(request);
+    },
+
+    buildRepairRequest(input, context) {
+      return buildEvidenceRepairRequest({
+        request: this.buildRequest(input, context),
+        issues: context.issues,
+      });
     },
 
     validateSemantics(output, input) {

@@ -165,7 +165,7 @@ export const EvidenceLiveSecurityAuditEventSchema = z
     task: z.literal('observe-artifact'),
     modelId: NonBlank,
     maxModelCalls: z.literal(1),
-    actualModelCalls: z.number().int().min(0).max(1),
+    actualModelCalls: z.number().int().nonnegative(),
     costCeilingMinor: z.number().int().nonnegative().nullable(),
     currency: NonBlank.nullable(),
   })
@@ -198,7 +198,7 @@ export const EvidenceLiveRelationSecurityAuditEventSchema = z
     task: z.literal('relate-observations'),
     modelId: NonBlank,
     maxModelCalls: z.literal(1),
-    actualModelCalls: z.number().int().min(0).max(1),
+    actualModelCalls: z.number().int().nonnegative(),
     costCeilingMinor: z.number().int().nonnegative().nullable(),
     currency: NonBlank.nullable(),
   })
@@ -231,7 +231,7 @@ export const EvidenceLiveAssessmentSecurityAuditEventSchema = z
     task: z.literal('propose-assessment'),
     modelId: NonBlank,
     maxModelCalls: z.literal(1),
-    actualModelCalls: z.number().int().min(0).max(1),
+    actualModelCalls: z.number().int().nonnegative(),
     costCeilingMinor: z.number().int().nonnegative().nullable(),
     currency: NonBlank.nullable(),
   })

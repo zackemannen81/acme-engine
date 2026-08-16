@@ -15,7 +15,7 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-08-09
+Last updated: 2026-08-16
 Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
@@ -1092,22 +1092,30 @@ namespace `evidence`, exports strict V1 schemas, canonical
 source/locator/actor/observation/meaning/relation/question/assessment
 identities, source binding, compact state/delta contracts, a pure reducer,
 invariants and a domain memory policy. Its registered
-`evidence.observe-artifact@1.5.0` task projects one immutable source plus an
-explicit actor roster, uses strict structured output and refuses invalid quote,
-kind, actor, temporal and prohibited-authority candidates before commit. Its
-active prompt returns one to eight materially distinct, explicitly non-
-exhaustive reviewer candidates and allows at most 8,192 output tokens. Output
-`evidence-observe-artifact-output/2` gives the model no line fields: exact
-quotes must occur exactly once in canonical source text, then runtime derives
-the inclusive line range before locator/observation identity and projection.
-Output `/3` additionally requires a quote from one canonical source line, at
-most 500 characters; its prompt requires temporal `unknown` when a complete
-date and clock are not both visible in that quote. Active output `/4` removes
-provider-authored quote text entirely. Runtime supplies deterministic non-empty
-single-line segments of at most 500 Unicode code points; the provider selects
+`evidence.observe-artifact@1.9.0` task projects one immutable source plus an
+explicit actor roster and one coverage window, uses strict structured output
+and refuses invalid quote, kind, actor, temporal, prohibited-authority and
+incomplete-coverage-ledger candidates before commit. Historical `@1.0.0`–
+`@1.8.0` remain registered for replay. Active input `/2` requires a unique
+`coverageWindow` of at most 64 source segment ids; the provider sees only
+those segments. Output `/5` adds `segmentCoverage`: every supplied window
+segment is accounted for exactly once as `observations_extracted` or
+`no_observation`. A segment may yield zero or many atomic observations.
+Coverage is the ledger, not the observation count. The planner
+`planEvidenceObservationCoverage` splits a source into non-overlapping
+windows of 64 segments; `@1.9.0` admits up to 128 observations so one
+window can hold more than one proposition per segment. Output `evidence-observe-artifact-output/2` gives the
+model no line fields: exact quotes must occur exactly once in canonical
+source text, then runtime derives the inclusive line range before
+locator/observation identity and projection. Output `/3` additionally
+requires a quote from one canonical source line, at most 500 characters; its
+prompt requires temporal `unknown` when a complete date and clock are not
+both visible in that quote. Active output `/4` removes provider-authored
+quote text entirely. Runtime supplies deterministic non-empty single-line
+segments of at most 500 Unicode code points; the provider selects
 `sourceSegmentId`, then runtime derives the full quote and one-line locator.
 Unknown segment IDs refuse without fuzzy matching. Historical `@1.0.0`–
-`@1.4.0` outputs `/1`–`/3` remain registered unchanged for replay.
+`@1.8.0` outputs `/1`–`/4` remain registered unchanged for replay.
 Applied observation identities and their source document advance Evidence
 revision once; exact duplicates advance nothing. Active registered
 `evidence.relate-observations@1.1.0` accepts current observations, proposes
@@ -1115,7 +1123,11 @@ scoped relations and open questions, and contests only statement endpoints that
 scoped `contradicts` relations require. Its prompt requires unique
 lexicographically sorted set-like identifier/rationale arrays and distinct
 relation endpoints sorted by kind then id. Historical `@1.0.0` remains
-registered byte-exact for replay; runtime never repairs unvalidated output.
+registered byte-exact for replay. When `policy.maxRepairCalls` is positive and
+the contract offers `buildRepairRequest`, a recoverably invalid response is
+repaired as its own recorded model call (`purpose: repair`, call key
+`repair:N`) before the execution fails. Repair never fires on the ADR-0017
+resume path and never weakens schema or semantic validation.
 
 For an explicit adjacent `transcription-correction`, the observation task now
 pairs complete predecessor/successor occurrence sets through the ADR-0032 V1
@@ -1405,17 +1417,18 @@ revision advance. File mutation and PostgreSQL transaction validation both
 fail before publishing a partial projection.
 
 `evidence-case-live-observation-command/1` becomes the internal
-`evidence-live-observation-command/1`, and `evidence-product-job/2` records a
-four-unit live lifecycle with a literal one-call ceiling. The worker hydrates
-canonical text through the audited artifact service, executes
-`evidence.observe-artifact@1.5.0`, and writes product observations plus one
-evidence-revision advance only after the execution ledger reports committed.
-The historical `@1.0.0`–`@1.4.0` prompts/output remain registered for replay.
-ADR-0041 makes the active result a one-to-eight
-candidate batch with `minItems`/`maxItems` preserved on the provider wire and
-an 8,192-output-token request. A successful batch is not evidence of exhaustive
-full-source coverage; deterministic segmentation and coverage projection need
-a separate workflow decision. ADR-0042 removes model-authored line fields from
+`evidence-live-observation-command/1`. The live observation job reports
+window *i* of *n* and accumulated model calls; `actualModelCalls` is
+unbounded across the campaign because coverage is many executions, not one
+call. The worker hydrates canonical text through the audited artifact
+service, plans coverage windows, and executes `evidence.observe-artifact@1.9.0`
+once per window under `live-observe:{commandKey}:wNNNNN`. A committed window
+replays from that request key. Product observations plus one
+evidence-revision advance are written only after the last window commits.
+Historical `@1.0.0`–`@1.8.0` prompts/output remain registered for replay.
+ADR-0041 sized the first bounded batch; ADR-0045 §6 makes coverage a
+workflow over those windows. A successful window is not evidence of
+document-complete coverage. ADR-0042 removes model-authored line fields from
 active output `/2`; runtime accepts only a globally unique verbatim quote and
 derives its canonical line locator before the engine may commit.
 ADR-0043 removes exact-quote authorship from active output `/4`; runtime-defined

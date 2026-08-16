@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-15
+Last updated: 2026-08-16
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -32,8 +32,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{index.ts,live.ts,local.ts,local-main.ts}
-│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-path-regressions.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
+│   │   ├── src/{index.ts,live.ts,live-observation.ts,live-relation.ts,live-assessment.ts,local.ts,local-main.ts}
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-coverage-windows.test.ts,live-path-regressions.test.ts,live-repair-budget.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -362,6 +362,8 @@ acme-engine/
 │   │   │   ├── canonical-text.ts
 │   │   │   ├── catalogue.ts
 │   │   │   ├── contracts/observe-artifact.ts
+│   │   │   ├── contracts/repair.ts
+│   │   │   ├── coverage.ts
 │   │   │   ├── correction.ts
 │   │   │   ├── identity.ts
 │   │   │   ├── immutable.ts
@@ -373,9 +375,11 @@ acme-engine/
 │   │   │   ├── tasks/observe-artifact.ts
 │   │   │   └── validation.ts
 │   │   └── test/
+│   │       ├── coverage.test.ts
 │   │       ├── identity-and-schemas.test.ts
 │   │       ├── memory-and-module.test.ts
 │   │       ├── observe-artifact.test.ts
+│   │       ├── repair.test.ts
 │   │       └── state.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
@@ -476,6 +480,9 @@ acme-engine/
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
+│   │   ├── execution-repair.test.ts
+│   │   ├── evidence-coverage-windows.test.ts
+│   │   ├── evidence-observe-engine.test.ts
 │   │   ├── scenario-live-offline.test.ts
 │   │   ├── test-ui-launch.test.ts
 │   │   ├── test-ui-live-launch.test.ts
@@ -714,6 +721,10 @@ acme-engine/
 │   ├── presentations/
 │   │   ├── narrative-module-build-and-test-plan.docx
 │   │   └── research-module-build-and-test-plan.docx
+│   ├── acceptance/
+│   │   ├── ACME-0133-frozen-acceptance-report.md
+│   │   ├── ACME-0136-frozen-acceptance-report.md
+│   │   └── ACME-0136-post-freeze-comparison.md
 │   ├── CONTRIBUTING.md
 │   ├── CURRENT_STATUS.md
 │   ├── CURRENT_TASK.md
@@ -890,8 +901,12 @@ content remains intentionally omitted here.
   no-second-call restart. ACME-0110 adds `src/live-assessment.ts`, source-
   complete assessment input, live job/audit contracts and the primary review/
   late-evidence/reassessment proof. ADR-0041/ACME-0112 version the active
-  observation prompt to a one-to-eight non-exhaustive candidate batch with an
-  8,192-token output bound while keeping both historical versions registered.
+  observation prompt to a bounded candidate batch with an
+  8,192-token output bound while keeping historical versions registered.
+  ACME-0137 adds `coverage.ts`, input `/2` and live window iteration so
+  full-source observation is a workflow over 64-segment windows.
+  ACME-0138 versions active observe to `@1.9.0` output `/5` with a
+  `segmentCoverage` ledger and `0..N` atomic observations per segment.
   ADR-0042/ACME-0114 then activate `@1.3.0` output `/2`, remove provider line
   fields, derive unique exact-quote locators in runtime and retain all three
   historical contracts for replay.

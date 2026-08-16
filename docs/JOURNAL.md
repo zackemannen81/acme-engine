@@ -1,5 +1,114 @@
 # Journal
 
+## 2026-08-16 — ACME-0138 atomic observation coverage
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0138
+- Change: split segment coverage from observation cardinality. Active
+  `evidence.observe-artifact@1.9.0` output `/5` requires `segmentCoverage`
+  (`observations_extracted` | `no_observation`) for every supplied window
+  segment. A segment may yield zero or many atomic observations. The
+  prompt forbids invented coverage observations, extraction-time dedup
+  and promoting reported speech to a world fact. Incomplete or relative
+  time stays in `temporalBound.reason` when normalization is `unknown`.
+  `@1.8.0` remains registered and byte-exact. The per-call observation
+  ceiling for `1.9.0` is 128; the window size stays 64.
+- Why now: `1.8.0` said "exactly one observation per segment", which
+  forced compression of multi-proposition lines and invented observations
+  for headings.
+- Verification: unit 787/787; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean.
+- Live/data handling: none. The running workbench process still serves
+  the previous build until restarted.
+- Handoff: restart the workbench before a new live analysis. Date-only
+  temporal bounds and the 409 views remain separate.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0137 full-source observation coverage
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0137
+- Change: implemented ADR-0045 §6. `planEvidenceObservationCoverage` splits
+  a source into non-overlapping windows of at most 64 segments. Active
+  `evidence.observe-artifact@1.8.0` takes input `/2` with a unique
+  `coverageWindow`; the provider sees only those segments. Semantics refuse
+  a window that omits a supplied segment or names one outside it. Two
+  distinct observations of the same supplied segment remain valid. The live
+  observation job iterates windows as separate executions under
+  `live-observe:{commandKey}:wNNNNN`, reports window *i* of *n*, and records
+  unbounded accumulated model calls. Offline seed/import attaches the
+  fixture window so scripted hashes stay pinned. Historical `@1.0.0`–
+  `@1.7.0` stay registered.
+- Why now: ACME-0136 produced 24 observations from source-B because the
+  1.7.0 prompt asked for a non-exhaustive 1–64 sample. Coverage is a
+  workflow, not a larger array.
+- Verification: unit 786/786; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean.
+- Live/data handling: none. No provider call and no new acceptance run.
+- Handoff: date-only temporal bounds, the remaining 409 revision mismatch
+  on read views, and a later live acceptance are separate tasks.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0136 POC #1 outcome-blind acceptance
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0136
+- Change: ran the second outcome-blind acceptance on a fresh case. source-A
+  imported (3,521,477 canonical bytes). source-B observation produced 24
+  accepted fragments. Relation and assessment each consumed a recorded
+  repair call and still failed. source-A observation failed
+  `INVALID_REQUEST`. Ledger, relations and open-question views answered
+  409. Frozen result: FAIL.
+- Mid-run defect: a first probe on the shared volume collided because two
+  imports put the product revision ahead of the engine. The worker guard
+  now refuses only when the engine is ahead. The acceptance case was
+  created on an isolated database after that fix.
+- Cost: 6 calls, 5/6 reporting usage, 94,064 input + 13,861 output tokens,
+  provider cost unknown.
+- Live/data handling: two operator-supplied PDFs were extracted outside
+  ACME and imported as text. No source content entered Git. The sealed
+  judgment was opened only after freeze.
+- Handoff: ADR-0045 §6, date-only temporal bounds, the remaining 409
+  revision mismatch on read views, and source-A live analysis.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0135 bounded repair call
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0135
+- Change: implemented ADR-0045 §5. `resolveExecutionPolicy` admits a
+  non-negative `maxRepairCalls` while still requiring one primary call and
+  zero revision calls. The execution engine issues each repair as its own
+  recorded model call (`purpose: repair`, call key `repair:N`) when the
+  pipeline classifies a failure `repairable`, the contract offers
+  `buildRepairRequest`, and budget remains. The three live Evidence contracts
+  append the pipeline issues to the original request without changing the
+  primary request hash. Live observation, relation and assessment jobs now
+  set `maxRepairCalls: 1` and the provider gateway ceiling is two. Job and
+  audit `actualModelCalls` admit 0–2; the worker records the numeric count
+  instead of collapsing it to a boolean.
+- Why now: ACME-0133 paid for a relation response that failed semantic
+  validation as `repairable: true` and discarded it, which removed the
+  assessment and the run's domain result. The policy already declared the
+  budget; nothing consumed it.
+- Repair never fires on the ADR-0017 resume path. A recorded primary
+  response is completed from evidence; the provider is not contacted again.
+- Verification: unit 779/779; conformance 78; integration 69; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean. Focused gates
+  cover success-within-budget, exhaustion, non-repairable and resume. The
+  PostgreSQL journey was skipped: Docker daemon was not running and no
+  isolated `ACME_POSTGRES_*` was in the process environment.
+- Live/data handling: no provider call was made and no source content entered
+  Git.
+- Handoff: activate the POC #1 outcome-blind acceptance run on a fresh case.
+  Date-only temporal bounds and ADR-0045 §6 remain follow-ups. Re-run
+  `pnpm test:postgres` when Docker is available.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0134 real-material scale
 
 - Date: 2026-08-16

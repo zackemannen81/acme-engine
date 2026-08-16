@@ -45,6 +45,9 @@ import {
   evidenceObserveArtifactContractV5,
   evidenceObserveArtifactContractV6,
   evidenceObserveArtifactContractV7,
+  evidenceObserveArtifactContractV8,
+  evidenceObserveArtifactContractV9,
+  planEvidenceObservationCoverage,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -132,23 +135,36 @@ function reasonFor(error: unknown): string {
   return 'LIVE_OBSERVATION_REFUSED';
 }
 
+/** One primary plus one ADR-0045 §5 repair. */
+export const EVIDENCE_LIVE_REPAIR_BUDGET = 1 as const;
+export const EVIDENCE_LIVE_PROVIDER_CALL_CEILING = 2 as const;
+
+export function deriveEvidenceObservationWindowRequestKey(
+  commandKey: string,
+  windowIndex: number,
+): string {
+  return `live-observe:${commandKey}:w${String(windowIndex).padStart(5, '0')}`;
+}
+
 export function createEvidenceSingleCallGateway(input: {
   readonly gateway: ModelGateway;
-  readonly calls: { value: 0 | 1 };
+  readonly calls: { value: number };
+  readonly maxCalls?: number;
 }): ModelGateway {
+  const maxCalls = input.maxCalls ?? 1;
   return {
     capabilities: (selection) => input.gateway.capabilities(selection),
     async generate(request, context) {
-      if (input.calls.value >= 1) {
+      if (input.calls.value >= maxCalls) {
         const error = new Error('LIVE_MODEL_CALL_BUDGET_EXHAUSTED') as Error & {
           code: string;
-          actualModelCalls: 1;
+          actualModelCalls: number;
         };
         error.code = 'LIVE_MODEL_CALL_BUDGET_EXHAUSTED';
-        error.actualModelCalls = 1;
+        error.actualModelCalls = input.calls.value;
         throw error;
       }
-      input.calls.value = 1;
+      input.calls.value += 1;
       return input.gateway.generate(request, context);
     },
   };
@@ -172,7 +188,7 @@ export function createEvidenceLiveObservationService(options: {
     readonly reasonCode: string;
     readonly resourceKind: 'case' | 'live-execution';
     readonly resourceId: string;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
     readonly command?: EvidenceCaseLiveObservationCommand;
     readonly authorization: EvidenceCaseAuthorizationContext;
     readonly audit: EvidenceArtifactReadAuditContext;
@@ -215,7 +231,7 @@ export function createEvidenceLiveObservationService(options: {
     readonly scope: EvidenceCaseObjectScope;
     readonly browserCommand: EvidenceCaseLiveObservationCommand;
   }): EvidenceLiveObservationExecutor => ({
-    async observe({ command, signal }) {
+    async observe({ command, signal, onProgress }) {
       const jobId = deriveEvidenceLiveObservationJobId(command);
       await appendAudit({
         action: 'live.started',
@@ -247,112 +263,140 @@ export function createEvidenceLiveObservationService(options: {
         scope: input.scope,
         audit: input.audit,
       });
-      const evidence = await options.ledger.snapshot();
-      const requestKey = `live-observe:${command.commandKey}`;
-      const executionId = deriveExecutionId('evidence', requestKey);
-      const existingExecution = evidence.executions.find(
-        (item) => item.executionId === executionId,
-      );
-      const latestState = evidence.state.snapshots
-        .filter(
-          (item) =>
-            item.namespace === 'evidence' &&
-            item.entityId === command.workspaceId,
-        )
-        .sort((left, right) => left.revision - right.revision)
-        .at(-1);
-      const calls: { value: 0 | 1 } = { value: 0 };
-      const engine = createExecutionEngine({
-        clock: options.clock,
-        ids: options.engineIds,
-        modules: createModuleRegistry([evidenceModule]),
-        contracts: createContractRegistry([
-          evidenceObserveArtifactContractV1,
-          evidenceObserveArtifactContractV2,
-          evidenceObserveArtifactContractV3,
-          evidenceObserveArtifactContractV4,
-          evidenceObserveArtifactContractV5,
-          evidenceObserveArtifactContractV6,
-          evidenceObserveArtifactContractV7,
-          evidenceObserveArtifactContract,
-          evidenceRelateObservationsContract,
-          evidenceProposeAssessmentContractV1,
-          evidenceProposeAssessmentContract,
-        ]),
-        pipeline: createResponsePipeline(),
-        gateway: createEvidenceSingleCallGateway({
-          gateway: input.run.gateway,
-          calls,
-        }),
-        memory: createMemoryEngine({ ids: options.engineIds }),
-        state: createStateEngine(),
-        repository: options.ledger,
-      });
-      const result = await engine.execute(
-        {
-          requestKey,
-          namespace: 'evidence',
-          task: 'observe-artifact',
-          entityId: command.workspaceId,
-          expectedRevision:
-            existingExecution?.request.expectedRevision ??
-            latestState?.revision ??
-            0,
-          input: {
-            schemaVersion: 'evidence-observe-artifact-input/1',
-            artifactVersion: source,
-            actorRoster: command.actorRoster,
+      const windows = planEvidenceObservationCoverage(source.text);
+      const collected: EvidenceObservation[] = [];
+      let actualModelCalls = 0;
+      let lastExecutionId = '';
+      let lastReplayed = true;
+      for (const window of windows) {
+        await onProgress?.({
+          windowIndex: window.index + 1,
+          windowCount: windows.length,
+          actualModelCalls,
+          lastExecutionId,
+        });
+        const requestKey = deriveEvidenceObservationWindowRequestKey(
+          command.commandKey,
+          window.index,
+        );
+        const executionId = deriveExecutionId('evidence', requestKey);
+        const evidence = await options.ledger.snapshot();
+        const existingExecution = evidence.executions.find(
+          (item) => item.executionId === executionId,
+        );
+        const latestState = evidence.state.snapshots
+          .filter(
+            (item) =>
+              item.namespace === 'evidence' &&
+              item.entityId === command.workspaceId,
+          )
+          .sort((left, right) => left.revision - right.revision)
+          .at(-1);
+        const calls: { value: number } = { value: 0 };
+        const engine = createExecutionEngine({
+          clock: options.clock,
+          ids: options.engineIds,
+          modules: createModuleRegistry([evidenceModule]),
+          contracts: createContractRegistry([
+            evidenceObserveArtifactContractV1,
+            evidenceObserveArtifactContractV2,
+            evidenceObserveArtifactContractV3,
+            evidenceObserveArtifactContractV4,
+            evidenceObserveArtifactContractV5,
+            evidenceObserveArtifactContractV6,
+            evidenceObserveArtifactContractV7,
+            evidenceObserveArtifactContractV8,
+            evidenceObserveArtifactContractV9,
+            evidenceObserveArtifactContract,
+            evidenceRelateObservationsContract,
+            evidenceProposeAssessmentContractV1,
+            evidenceProposeAssessmentContract,
+          ]),
+          pipeline: createResponsePipeline(),
+          gateway: createEvidenceSingleCallGateway({
+            gateway: input.run.gateway,
+            calls,
+            maxCalls: EVIDENCE_LIVE_PROVIDER_CALL_CEILING,
+          }),
+          memory: createMemoryEngine({ ids: options.engineIds }),
+          state: createStateEngine(),
+          repository: options.ledger,
+        });
+        const result = await engine.execute(
+          {
+            requestKey,
+            namespace: 'evidence',
+            task: 'observe-artifact',
+            entityId: command.workspaceId,
+            expectedRevision:
+              existingExecution?.request.expectedRevision ??
+              latestState?.revision ??
+              0,
+            input: {
+              schemaVersion: 'evidence-observe-artifact-input/2',
+              artifactVersion: source,
+              actorRoster: command.actorRoster,
+              coverageWindow: {
+                sourceSegmentIds: [...window.sourceSegmentIds],
+              },
+            },
+            model: input.run.selection('observe-artifact'),
+            policy: {
+              timeoutMs: 120_000,
+              maxModelCalls: 1,
+              maxRepairCalls: EVIDENCE_LIVE_REPAIR_BUDGET,
+              maxRevisionCalls: 0,
+              ...(command.requestedBudget.costCeilingMinor === null
+                ? {}
+                : {
+                    maxEstimatedCostMinor:
+                      command.requestedBudget.costCeilingMinor,
+                  }),
+              retention: 'encrypted-payload',
+            },
           },
-          model: input.run.selection('observe-artifact'),
-          policy: {
-            timeoutMs: 120_000,
-            maxModelCalls: 1,
-            maxRepairCalls: 0,
-            maxRevisionCalls: 0,
-            ...(command.requestedBudget.costCeilingMinor === null
-              ? {}
-              : {
-                  maxEstimatedCostMinor:
-                    command.requestedBudget.costCeilingMinor,
-                }),
-            retention: 'encrypted-payload',
-          },
-        },
-        { signal },
-      );
-      if (result.status !== 'committed') {
-        const error = new Error(result.error.code) as Error & {
-          code: string;
-          actualModelCalls: 0 | 1;
-        };
-        error.code = result.error.code;
-        error.actualModelCalls = calls.value;
-        throw error;
+          { signal },
+        );
+        actualModelCalls += calls.value;
+        lastExecutionId = executionId;
+        if (result.status !== 'committed') {
+          const error = new Error(result.error.code) as Error & {
+            code: string;
+            actualModelCalls: number;
+          };
+          error.code = result.error.code;
+          error.actualModelCalls = actualModelCalls;
+          throw error;
+        }
+        lastReplayed = lastReplayed && (calls.value === 0 || result.replayed);
+        try {
+          await options.afterEngineCommit?.();
+        } catch {
+          const error = new Error(
+            'LIVE_PRODUCT_PROJECTION_INTERRUPTED',
+          ) as Error & {
+            code: string;
+            actualModelCalls: number;
+          };
+          error.code = 'LIVE_PRODUCT_PROJECTION_INTERRUPTED';
+          error.actualModelCalls = actualModelCalls;
+          throw error;
+        }
+        const committed = await options.ledger.snapshot();
+        collected.push(
+          ...selectExecutionObservations({
+            records: committed.memoryRecords,
+            executionId,
+            artifactVersionId: command.artifactVersionId,
+          }),
+        );
       }
-      try {
-        await options.afterEngineCommit?.();
-      } catch {
-        const error = new Error(
-          'LIVE_PRODUCT_PROJECTION_INTERRUPTED',
-        ) as Error & {
-          code: string;
-          actualModelCalls: 0 | 1;
-        };
-        error.code = 'LIVE_PRODUCT_PROJECTION_INTERRUPTED';
-        error.actualModelCalls = calls.value;
-        throw error;
-      }
-      const committed = await options.ledger.snapshot();
-      const observations = selectExecutionObservations({
-        records: committed.memoryRecords,
-        executionId,
-        artifactVersionId: command.artifactVersionId,
-      });
-      if (observations.length === 0)
+      if (collected.length === 0)
         throw new EvidenceLiveObservationRefused(
           'LIVE_OBSERVATION_EMPTY_RESULT',
         );
-      const state = committed.state.snapshots
+      const finalEvidence = await options.ledger.snapshot();
+      const state = finalEvidence.state.snapshots
         .filter(
           (item) =>
             item.namespace === 'evidence' &&
@@ -365,12 +409,12 @@ export function createEvidenceLiveObservationService(options: {
           'LIVE_OBSERVATION_STATE_MISSING',
         );
       return {
-        executionId,
+        executionId: lastExecutionId,
         evidenceRevision: EvidenceStateSchema.parse(state.value)
           .evidenceRevision,
-        observations,
-        replayed: calls.value === 0 || result.replayed,
-        actualModelCalls: calls.value,
+        observations: collected,
+        replayed: lastReplayed,
+        actualModelCalls,
       };
     },
     async settle(settlement) {

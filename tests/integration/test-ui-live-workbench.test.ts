@@ -310,7 +310,7 @@ describe('test-ui S10 live workbench', () => {
     });
     expect(overBudget.status).toBe(400);
     expect(await overBudget.text()).toContain(
-      'exactly one model call and zero repair/revision calls',
+      'exactly one model call and zero revision calls',
     );
     expect(transportCalls).toBe(0);
 

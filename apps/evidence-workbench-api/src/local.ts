@@ -81,8 +81,9 @@ import {
 import { evaluationObserveCases } from '@acme/evidence-testing/evaluation-candidates';
 import { evaluationRelateCase } from '@acme/evidence-testing/evaluation-relate';
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
   createEvidenceChangeSet,
+  evidenceCoverageWindowForSource,
   EvidenceAssessmentSchema,
   EvidenceMemoryValueSchema,
   EvidenceObservationSchema,
@@ -97,6 +98,9 @@ import {
   evidenceObserveArtifactContractV4,
   evidenceObserveArtifactContractV5,
   evidenceObserveArtifactContractV6,
+  evidenceObserveArtifactContractV7,
+  evidenceObserveArtifactContractV8,
+  evidenceObserveArtifactContractV9,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceProposeAssessmentContractV2,
@@ -1024,6 +1028,9 @@ export async function createLocalEvidenceWorkbench(
       evidenceObserveArtifactContractV4,
       evidenceObserveArtifactContractV5,
       evidenceObserveArtifactContractV6,
+      evidenceObserveArtifactContractV7,
+      evidenceObserveArtifactContractV8,
+      evidenceObserveArtifactContractV9,
       evidenceObserveArtifactContract,
       evidenceRelateObservationsContractV1,
       evidenceRelateObservationsContract,
@@ -1045,6 +1052,26 @@ export async function createLocalEvidenceWorkbench(
         const before = await ledger.snapshot();
         const expectedStateRevision =
           before.state.snapshots.at(-1)?.revision ?? 0;
+        const fixtures = [
+          ...seedFixtures,
+          ...(lateFixture === null ? [] : [lateFixture]),
+        ];
+        const matched = fixtures.find(
+          (fixture) =>
+            fixture.input.artifactVersion.artifactVersionId ===
+            value.artifactVersion.artifactVersionId,
+        );
+        const input = matched?.input ?? {
+          schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+          artifactVersion: value.artifactVersion,
+          actorRoster: value.actorRoster,
+          coverageWindow: {
+            sourceSegmentIds: [
+              ...evidenceCoverageWindowForSource(value.artifactVersion.text)
+                .sourceSegmentIds,
+            ],
+          },
+        };
         const result = await engine.execute(
           {
             requestKey: value.requestKey,
@@ -1052,11 +1079,7 @@ export async function createLocalEvidenceWorkbench(
             task: 'observe-artifact',
             entityId: value.workspaceId,
             expectedRevision: expectedStateRevision,
-            input: {
-              schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
-              artifactVersion: value.artifactVersion,
-              actorRoster: value.actorRoster,
-            },
+            input,
             model: OBSERVE_SELECTION,
             policy: { retention: 'encrypted-payload' },
           },

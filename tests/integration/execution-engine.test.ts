@@ -261,10 +261,12 @@ describe('ExecutionEngine neutral integration', () => {
     ).rejects.toMatchObject({
       data: { code: 'INVALID_REQUEST', stage: 'accepted' },
     });
+    // ADR-0045 §5 admits a repair budget; a second primary or a revision
+    // budget is still refused.
     await expect(
       subject.engine.execute({
         ...subject.request,
-        policy: { maxRepairCalls: 1 },
+        policy: { maxModelCalls: 2 },
       }),
     ).rejects.toMatchObject({
       data: { code: 'INVALID_REQUEST', stage: 'accepted' },

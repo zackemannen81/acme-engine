@@ -27,14 +27,22 @@ export const EVIDENCE_STATE_SCHEMA_VERSION = 'evidence-state/1' as const;
 export const EVIDENCE_DELTA_SCHEMA_VERSION = 'evidence-delta/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION =
   'evidence-observe-artifact-input/1' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2 =
+  'evidence-observe-artifact-input/2' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-observe-artifact-output/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V2 =
   'evidence-observe-artifact-output/2' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3 =
   'evidence-observe-artifact-output/3' as const;
-export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V4 =
   'evidence-observe-artifact-output/4' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+  'evidence-observe-artifact-output/5' as const;
+export const EVIDENCE_SEGMENT_COVERAGE_STATUS = [
+  'observations_extracted',
+  'no_observation',
+] as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
   'evidence-relate-observations-input/1' as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
@@ -562,11 +570,37 @@ export const EvidenceActorRosterEntrySchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactInputSchema = z
+export const EvidenceObserveArtifactInputV1Schema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION),
     artifactVersion: SourceArtifactVersionSchema,
     actorRoster: z.array(EvidenceActorRosterEntrySchema),
+  })
+  .strict();
+
+export const EvidenceObservationCoverageWindowSchema = z
+  .object({
+    sourceSegmentIds: z
+      .array(z.string().regex(/^line-[0-9]{6}-segment-[0-9]{4}$/u))
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        if (new Set(values).size !== values.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage window segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2),
+    artifactVersion: SourceArtifactVersionSchema,
+    actorRoster: z.array(EvidenceActorRosterEntrySchema),
+    coverageWindow: EvidenceObservationCoverageWindowSchema,
   })
   .strict();
 
@@ -750,9 +784,11 @@ export const EvidenceExhibitAssertionCandidateSchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactOutputSchema = z
+export const EvidenceObserveArtifactOutputV4Schema = z
   .object({
-    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V4,
+    ),
     observations: z.array(
       z.discriminatedUnion('kind', [
         EvidenceStatementOccurrenceCandidateSchema,
@@ -762,12 +798,45 @@ export const EvidenceObserveArtifactOutputSchema = z
   })
   .strict();
 
+export const EvidenceSegmentCoverageEntrySchema = z
+  .object({
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
+    status: z.enum(EVIDENCE_SEGMENT_COVERAGE_STATUS),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateSchema,
+        EvidenceExhibitAssertionCandidateSchema,
+      ]),
+    ),
+    segmentCoverage: z
+      .array(EvidenceSegmentCoverageEntrySchema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        const ids = values.map(({ sourceSegmentId }) => sourceSegmentId);
+        if (new Set(ids).size !== ids.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage ledger segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
 export const EvidenceObserveArtifactReplayOutputSchema = z.discriminatedUnion(
   'schemaVersion',
   [
     EvidenceObserveArtifactOutputV1Schema,
     EvidenceObserveArtifactOutputV2Schema,
     EvidenceObserveArtifactOutputV3Schema,
+    EvidenceObserveArtifactOutputV4Schema,
     EvidenceObserveArtifactOutputSchema,
   ],
 );
@@ -995,6 +1064,9 @@ export type EvidenceStandingChange = z.infer<
   typeof EvidenceStandingChangeSchema
 >;
 export type EvidenceDelta = z.infer<typeof EvidenceDeltaSchema>;
+export type EvidenceObserveArtifactInputV1 = z.infer<
+  typeof EvidenceObserveArtifactInputV1Schema
+>;
 export type EvidenceObserveArtifactInput = z.infer<
   typeof EvidenceObserveArtifactInputSchema
 >;
@@ -1009,6 +1081,9 @@ export type EvidenceObserveArtifactOutputV2 = z.infer<
 >;
 export type EvidenceObserveArtifactOutputV3 = z.infer<
   typeof EvidenceObserveArtifactOutputV3Schema
+>;
+export type EvidenceObserveArtifactOutputV4 = z.infer<
+  typeof EvidenceObserveArtifactOutputV4Schema
 >;
 export type EvidenceObserveArtifactReplayOutput = z.infer<
   typeof EvidenceObserveArtifactReplayOutputSchema

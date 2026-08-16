@@ -29,7 +29,26 @@ export interface PromptContract<TInput, TOutput> {
   readonly requiredCapabilities: Partial<ModelCapabilities>;
   readonly retention: 'none' | 'hash-only' | 'encrypted-payload';
   buildRequest(input: TInput, context: ContractBuildContext): ModelRequest;
+  /**
+   * Optional bounded repair request for a recoverably invalid response.
+   *
+   * ADR-0045 §5. Prompt authorship stays with the contract: core decides
+   * whether a repair is permitted and budgeted, never what it says. A contract
+   * without this method is never repaired and its repair budget goes unused.
+   *
+   * The issues are the pipeline's own, and the returned request must target the
+   * same schema as `buildRequest`.
+   */
+  buildRepairRequest?(
+    input: TInput,
+    context: ContractRepairContext,
+  ): ModelRequest;
   validateSemantics(output: TOutput, input: TInput): readonly SemanticIssue[];
+}
+
+export interface ContractRepairContext extends ContractBuildContext {
+  readonly attempt: number;
+  readonly issues: readonly SemanticIssue[];
 }
 
 export interface ContractRegistry {

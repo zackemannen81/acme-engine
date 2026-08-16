@@ -382,7 +382,7 @@ describe('Evidence Stage A PostgreSQL import', () => {
                   {
                     type: 'output_text',
                     text: JSON.stringify({
-                      schemaVersion: 'evidence-observe-artifact-output/4',
+                      schemaVersion: 'evidence-observe-artifact-output/5',
                       observations: [
                         {
                           kind: 'exhibit-assertion',
@@ -405,6 +405,16 @@ describe('Evidence Stage A PostgreSQL import', () => {
                             reason:
                               'The cited source line supplies no exact time.',
                           },
+                        },
+                      ],
+                      segmentCoverage: [
+                        {
+                          sourceSegmentId: 'line-000002-segment-0001',
+                          status: 'observations_extracted',
+                        },
+                        {
+                          sourceSegmentId: 'line-000003-segment-0001',
+                          status: 'observations_extracted',
                         },
                       ],
                     }),

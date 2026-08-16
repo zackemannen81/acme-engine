@@ -183,6 +183,98 @@ describe('Live path regressions (ACME-0131)', () => {
     }
   });
 
+  it('projects observations when the product revision is ahead of the engine', async () => {
+    const directory = await scratch('evidence-projection-import-ahead-');
+    const local = await createLocalEvidenceWorkbench({
+      dataFile: path.join(directory, 'product.json'),
+      seedMode: 'development',
+    });
+    try {
+      const before = await local.productRepository.caseSnapshot(
+        local.caseId,
+        local.workspaceId,
+      );
+      const source = before.sources[0];
+      if (source === undefined) throw new Error('The seed produced no source.');
+      const revisionBefore = before.workspaces.find(
+        (item) => item.workspaceId === local.workspaceId,
+      )?.evidenceRevision;
+      expect(revisionBefore).toBeGreaterThan(0);
+
+      const writes: string[] = [];
+      const repository = new Proxy(local.productRepository, {
+        get(target, property, receiver) {
+          const value = Reflect.get(target, property, receiver) as unknown as
+            ((...args: unknown[]) => unknown) | unknown;
+          if (typeof value !== 'function') return value;
+          const bound = (value as (...args: unknown[]) => unknown).bind(target);
+          if (property !== 'putObservations') return bound;
+          return (...args: unknown[]) => {
+            writes.push('putObservations');
+            return bound(...args);
+          };
+        },
+      }) as EvidenceProductRepository;
+
+      const worker = createEvidenceWorkbenchWorker({
+        repository,
+        clock: { now: () => new Date().toISOString() },
+        executor: {
+          observe() {
+            throw new Error('The import executor must not run here.');
+          },
+        },
+      });
+
+      const scope = {
+        caseId: local.caseId,
+        workspaceId: local.workspaceId,
+        boundAt: new Date().toISOString(),
+      };
+      const job = await worker.startLiveObservation(
+        {
+          schemaVersion: 'evidence-live-observation-command/1',
+          workspaceId: local.workspaceId,
+          modelId: 'test-only-model',
+          currency: null,
+          commandKey: 'acme-0136-product-ahead',
+          artifactVersionId: source.artifactVersionId,
+          actorRoster: [],
+          requestedBudget: { maxModelCalls: 1, costCeilingMinor: null },
+          confirmation: {},
+        },
+        {
+          async observe() {
+            return {
+              executionId: 'execution-acme-0136-ahead',
+              // One behind the product: the shape after two imports and one
+              // engine observation. The previous `!==` guard refused this.
+              evidenceRevision: Math.max(0, (revisionBefore ?? 1) - 1),
+              observations: [],
+              replayed: false,
+              actualModelCalls: 1,
+            };
+          },
+        },
+        scope,
+      );
+
+      const settled = await worker.wait(job.jobId, scope);
+      expect({
+        phase: settled.phase,
+        reasonCode: (settled as { readonly reasonCode?: string }).reasonCode,
+        message: settled.message,
+      }).toEqual({
+        phase: 'completed',
+        reasonCode: 'LIVE_OBSERVATION_COMPLETED',
+        message: expect.any(String),
+      });
+      expect(writes).toEqual(['putObservations']);
+    } finally {
+      await local.close();
+    }
+  });
+
   it('reads each case through its own evidence projection', async () => {
     const directory = await scratch('evidence-projection-scope-');
     const local = await createLocalEvidenceWorkbench({

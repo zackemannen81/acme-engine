@@ -26,7 +26,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-08-12
+Last updated: 2026-08-16
 
 ## Repository
 
@@ -423,9 +423,34 @@ the fixture. ACME-0134 implements its sections 2 to 4 — active observation
 contract `1.7.0` with a response-derived ceiling of 64, canonical text bounds
 of 16 MiB and 400,000 lines, and an assessment that proceeds from accepted
 observations without requiring a relation. Historical contract versions keep
-their own ceilings and replay byte-exact. Sections 5 and 6, repair calls and
-full-source coverage, are the next two tasks and are what turn a bounded batch
-into document coverage.
+their own ceilings and replay byte-exact. ACME-0135 implements section 5: the
+execution engine consumes `maxRepairCalls`, each live Evidence contract owns
+its repair request, and the observation, relation and assessment jobs budget
+one repair. A recoverably invalid response is corrected within budget instead
+of being paid for and discarded. ACME-0137 implements section 6: observation
+coverage is a windowed workflow. The planner splits a source into
+non-overlapping windows of at most 64 segments. Active
+`evidence.observe-artifact@1.8.0` input `/2` requires a `coverageWindow`; the
+provider sees only those segments and semantics refuse a window that omits a
+supplied segment or names one outside it. ACME-0138 versions the active
+contract to `1.9.0` output `/5`: coverage is a `segmentCoverage` ledger
+(`observations_extracted` | `no_observation`) and a segment may yield
+zero or many atomic observations. The prompt forbids invented coverage
+observations, extraction-time dedup and promoting reported speech to a
+world fact. Raw non-normalizable time stays in `temporalBound.reason`.
+Historical `@1.8.0` stays byte-exact. The live observation job iterates
+windows as separate bounded executions with per-window request keys so a
+committed window is not paid for again. A single window still cannot claim
+document coverage. Date-only temporal bounds and the 409
+ledger/relation/question views remain follow-ups.
+
+ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
+Observation of source-B produced 24 accepted fragments. Repair ran on
+relation and assessment and both still failed. Observation of source-A
+failed as `INVALID_REQUEST`. The observation ledger, relations and
+open-question views answer 409 when the product workspace revision is
+ahead of the engine projection. The frozen report is
+`docs/acceptance/ACME-0136-frozen-acceptance-report.md`. Result: FAIL.
 
 POC #1 has entered its live product acceptance phase. ACME-0129 is superseded
 before its acceptance run: it was frozen to prove live execution could happen

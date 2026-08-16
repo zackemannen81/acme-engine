@@ -42,6 +42,16 @@ import {
   type EvidenceStandingChange,
 } from '@acme/module-evidence';
 
+function recordedModelCalls(jobCount: number, incoming: unknown): number {
+  const extra =
+    typeof incoming === 'number' &&
+    Number.isSafeInteger(incoming) &&
+    incoming >= 0
+      ? incoming
+      : 0;
+  return Math.max(jobCount, extra);
+}
+
 export interface EvidenceObservationExecutor {
   observe(input: {
     readonly workspaceId: string;
@@ -83,18 +93,24 @@ export interface EvidenceLiveObservationExecutor {
   observe(input: {
     readonly command: EvidenceLiveObservationCommand;
     readonly signal: AbortSignal;
+    readonly onProgress?: (progress: {
+      readonly windowIndex: number;
+      readonly windowCount: number;
+      readonly actualModelCalls: number;
+      readonly lastExecutionId: string;
+    }) => void | Promise<void>;
   }): Promise<{
     readonly executionId: string;
     readonly evidenceRevision: number;
     readonly observations: readonly EvidenceObservation[];
     readonly replayed: boolean;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }>;
   settle?(input: {
     readonly jobId: string;
     readonly phase: 'completed' | 'failed';
     readonly reasonCode: string;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }): Promise<void>;
 }
 
@@ -108,13 +124,13 @@ export interface EvidenceLiveRelationExecutor {
     readonly openQuestions: readonly EvidenceOpenQuestion[];
     readonly standingChanges: readonly EvidenceStandingChange[];
     readonly replayed: boolean;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }>;
   settle?(input: {
     readonly jobId: string;
     readonly phase: 'completed' | 'failed';
     readonly reasonCode: string;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }): Promise<void>;
 }
 
@@ -126,13 +142,13 @@ export interface EvidenceLiveAssessmentExecutor {
     readonly executionId: string;
     readonly assessment: EvidenceAssessment;
     readonly replayed: boolean;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }>;
   settle?(input: {
     readonly jobId: string;
     readonly phase: 'completed' | 'failed';
     readonly reasonCode: string;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
   }): Promise<void>;
 }
 
@@ -222,7 +238,7 @@ export function createEvidenceWorkbenchWorker(options: {
         job,
         {
           phase: 'hydrating',
-          completedUnits: 1,
+          completedUnits: 0,
           message: 'Preparing the authorized source.',
         },
         scope,
@@ -230,9 +246,28 @@ export function createEvidenceWorkbenchWorker(options: {
       const executed = await executor.observe({
         command,
         signal: controller.signal,
+        async onProgress(progress) {
+          job = await update(
+            job,
+            {
+              phase: 'observing',
+              completedUnits: progress.windowIndex,
+              totalUnits: progress.windowCount,
+              message: `Observing coverage window ${String(progress.windowIndex)} of ${String(progress.windowCount)}.`,
+              actualModelCalls: progress.actualModelCalls,
+              executionId:
+                progress.lastExecutionId === ''
+                  ? job.executionId
+                  : progress.lastExecutionId,
+            },
+            scope,
+          );
+        },
       });
-      const cumulativeModelCalls: 0 | 1 =
-        job.actualModelCalls === 1 || executed.actualModelCalls === 1 ? 1 : 0;
+      const cumulativeModelCalls = recordedModelCalls(
+        job.actualModelCalls,
+        executed.actualModelCalls,
+      );
       if (controller.signal.aborted)
         return update(
           job,
@@ -249,7 +284,7 @@ export function createEvidenceWorkbenchWorker(options: {
         job,
         {
           phase: 'projecting',
-          completedUnits: 3,
+          completedUnits: job.totalUnits,
           message: 'Saving validated source-bound observations.',
           actualModelCalls: cumulativeModelCalls,
           executionId: executed.executionId,
@@ -265,10 +300,13 @@ export function createEvidenceWorkbenchWorker(options: {
       );
       if (workspace === undefined)
         throw new RangeError(`Unknown workspace ${command.workspaceId}.`);
-      // The guard runs before any product write. Observing first left refused
-      // projections with their observations already persisted under a
-      // workspace revision that never advanced, which is what wedges a case.
-      if (executed.evidenceRevision !== workspace.evidenceRevision)
+      // The guard runs before any product write. The engine is *ahead* of the
+      // product when earlier executions committed and were never projected —
+      // that is the ACME-0131 wedge, and it must still refuse. The product can
+      // be ahead of the engine after imports, which increment the workspace
+      // revision without an engine commit. Treating that as a collision made a
+      // two-document case unprojectable (ACME-0136).
+      if (executed.evidenceRevision > workspace.evidenceRevision)
         throw new EvidenceProductCommandCollisionError(
           `revision:${command.workspaceId}`,
         );
@@ -327,7 +365,7 @@ export function createEvidenceWorkbenchWorker(options: {
         job,
         {
           phase: 'completed',
-          completedUnits: 4,
+          completedUnits: job.totalUnits,
           message: 'Source observations are ready for review.',
           reasonCode: completedReason,
         },
@@ -355,8 +393,10 @@ export function createEvidenceWorkbenchWorker(options: {
           : typeof value.code === 'string'
             ? value.code
             : 'LIVE_OBSERVATION_FAILED';
-      const actualModelCalls: 0 | 1 =
-        job.actualModelCalls === 1 || value.actualModelCalls === 1 ? 1 : 0;
+      const actualModelCalls = recordedModelCalls(
+        job.actualModelCalls,
+        value.actualModelCalls,
+      );
       await executor
         .settle?.({
           jobId: job.jobId,
@@ -412,8 +452,10 @@ export function createEvidenceWorkbenchWorker(options: {
         command,
         signal: controller.signal,
       });
-      const calls: 0 | 1 =
-        job.actualModelCalls === 1 || executed.actualModelCalls === 1 ? 1 : 0;
+      const calls = recordedModelCalls(
+        job.actualModelCalls,
+        executed.actualModelCalls,
+      );
       if (controller.signal.aborted)
         return update(
           job,
@@ -515,8 +557,10 @@ export function createEvidenceWorkbenchWorker(options: {
           : typeof value.code === 'string'
             ? value.code
             : 'LIVE_RELATION_FAILED';
-      const calls: 0 | 1 =
-        job.actualModelCalls === 1 || value.actualModelCalls === 1 ? 1 : 0;
+      const calls = recordedModelCalls(
+        job.actualModelCalls,
+        value.actualModelCalls,
+      );
       await executor
         .settle?.({
           jobId: job.jobId,
@@ -572,8 +616,10 @@ export function createEvidenceWorkbenchWorker(options: {
         command,
         signal: controller.signal,
       });
-      const calls: 0 | 1 =
-        job.actualModelCalls === 1 || executed.actualModelCalls === 1 ? 1 : 0;
+      const calls = recordedModelCalls(
+        job.actualModelCalls,
+        executed.actualModelCalls,
+      );
       if (controller.signal.aborted)
         return update(
           job,
@@ -640,8 +686,10 @@ export function createEvidenceWorkbenchWorker(options: {
           : typeof value.code === 'string'
             ? value.code
             : 'LIVE_ASSESSMENT_FAILED';
-      const calls: 0 | 1 =
-        job.actualModelCalls === 1 || value.actualModelCalls === 1 ? 1 : 0;
+      const calls = recordedModelCalls(
+        job.actualModelCalls,
+        value.actualModelCalls,
+      );
       await executor
         .settle?.({
           jobId: job.jobId,
@@ -955,7 +1003,7 @@ export function createEvidenceWorkbenchWorker(options: {
                   modelId: command.modelId,
                   phase: 'queued',
                   completedUnits: 0,
-                  totalUnits: 4,
+                  totalUnits: 1,
                   message: 'Live observation queued.',
                   cancelRequested: false,
                   maxModelCalls: command.requestedBudget.maxModelCalls,

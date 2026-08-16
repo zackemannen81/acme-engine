@@ -1,5 +1,5 @@
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
   buildEvidenceSourceSegments,
   EvidenceObserveArtifactInputSchema,
@@ -11,18 +11,25 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '6173cbf3904994c0776f9e13c1d77c81ca585ba8568a08573c1c4c57360b3505' as const;
+  '83a0ae0b8bdb3e674a1fa40fc28b07376875a1f95e59d15f766cd2f60e19de6f' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
+  const artifactVersion = loadSourceArtifactVersion('DEV-T01', 1);
+  const produced = developmentObserveArtifactOutput();
   return EvidenceObserveArtifactInputSchema.parse({
-    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
-    artifactVersion: loadSourceArtifactVersion('DEV-T01', 1),
+    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2,
+    artifactVersion,
     actorRoster: [
       {
         actorKey: 'development-actor-nera-sol',
         allowedSourceLabels: ['Nera Sol'],
       },
     ],
+    coverageWindow: {
+      sourceSegmentIds: produced.observations.map(
+        (observation) => observation.sourceSegmentId,
+      ),
+    },
   });
 }
 
@@ -74,6 +81,20 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
           reason:
             'The statement gives no exact time for the simultaneous indicator and hatch state.',
         },
+      },
+    ],
+    segmentCoverage: [
+      {
+        sourceSegmentId: segmentId(
+          'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+        ),
+        status: 'observations_extracted',
+      },
+      {
+        sourceSegmentId: segmentId(
+          'Nera Sol: The indicator showed amber while the hatch was open.',
+        ),
+        status: 'observations_extracted',
       },
     ],
   });

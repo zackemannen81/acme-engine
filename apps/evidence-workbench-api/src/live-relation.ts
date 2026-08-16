@@ -43,6 +43,8 @@ import {
   evidenceObserveArtifactContractV5,
   evidenceObserveArtifactContractV6,
   evidenceObserveArtifactContractV7,
+  evidenceObserveArtifactContractV8,
+  evidenceObserveArtifactContractV9,
   evidenceProposeAssessmentContract,
   evidenceProposeAssessmentContractV1,
   evidenceRelateObservationsContract,
@@ -53,7 +55,11 @@ import {
   type EvidenceAuthorizedLiveRun,
   type EvidenceLiveCapability,
 } from './live.js';
-import { createEvidenceSingleCallGateway } from './live-observation.js';
+import {
+  createEvidenceSingleCallGateway,
+  EVIDENCE_LIVE_PROVIDER_CALL_CEILING,
+  EVIDENCE_LIVE_REPAIR_BUDGET,
+} from './live-observation.js';
 
 interface SnapshotExecutionRepository {
   snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
@@ -119,7 +125,7 @@ export function createEvidenceLiveRelationService(options: {
     readonly reasonCode: string;
     readonly resourceKind: 'case' | 'live-execution';
     readonly resourceId: string;
-    readonly actualModelCalls: 0 | 1;
+    readonly actualModelCalls: number;
     readonly command?: EvidenceCaseLiveRelationCommand;
     readonly authorization: EvidenceCaseAuthorizationContext;
     readonly audit: EvidenceArtifactReadAuditContext;
@@ -209,7 +215,7 @@ export function createEvidenceLiveRelationService(options: {
         )
         .sort((left, right) => left.revision - right.revision)
         .at(-1);
-      const calls: { value: 0 | 1 } = { value: 0 };
+      const calls: { value: number } = { value: 0 };
       const engine = createExecutionEngine({
         clock: options.clock,
         ids: options.engineIds,
@@ -222,6 +228,8 @@ export function createEvidenceLiveRelationService(options: {
           evidenceObserveArtifactContractV5,
           evidenceObserveArtifactContractV6,
           evidenceObserveArtifactContractV7,
+          evidenceObserveArtifactContractV8,
+          evidenceObserveArtifactContractV9,
           evidenceObserveArtifactContract,
           evidenceRelateObservationsContract,
           evidenceProposeAssessmentContractV1,
@@ -231,6 +239,7 @@ export function createEvidenceLiveRelationService(options: {
         gateway: createEvidenceSingleCallGateway({
           gateway: input.run.gateway,
           calls,
+          maxCalls: EVIDENCE_LIVE_PROVIDER_CALL_CEILING,
         }),
         memory: createMemoryEngine({ ids: options.engineIds }),
         state: createStateEngine(),
@@ -254,7 +263,7 @@ export function createEvidenceLiveRelationService(options: {
           policy: {
             timeoutMs: 120_000,
             maxModelCalls: 1,
-            maxRepairCalls: 0,
+            maxRepairCalls: EVIDENCE_LIVE_REPAIR_BUDGET,
             maxRevisionCalls: 0,
             ...(command.requestedBudget.costCeilingMinor === null
               ? {}
@@ -270,7 +279,7 @@ export function createEvidenceLiveRelationService(options: {
       if (result.status !== 'committed') {
         const error = new Error(result.error.code) as Error & {
           code: string;
-          actualModelCalls: 0 | 1;
+          actualModelCalls: number;
         };
         error.code = result.error.code;
         error.actualModelCalls = calls.value;
@@ -281,7 +290,7 @@ export function createEvidenceLiveRelationService(options: {
       } catch {
         const error = new Error(
           'LIVE_RELATION_PRODUCT_PROJECTION_INTERRUPTED',
-        ) as Error & { code: string; actualModelCalls: 0 | 1 };
+        ) as Error & { code: string; actualModelCalls: number };
         error.code = 'LIVE_RELATION_PRODUCT_PROJECTION_INTERRUPTED';
         error.actualModelCalls = calls.value;
         throw error;
