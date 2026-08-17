@@ -315,6 +315,14 @@ export function executionRepositoryConformance(
       // recoverable and the engine must refuse to resume.
       expect(state?.modelCalls[0]?.response).toBeUndefined();
       expect(state?.modelCalls[0]?.responseHash).toBe('response-hash');
+      // Content-free call metadata survives even when the response does not,
+      // so cost stays measurable without decrypting or retaining output.
+      const metadata = state?.modelCalls[0]?.callMetadata;
+      expect(metadata?.provider).toBe('fixture');
+      expect(metadata?.model).toBe('fixture');
+      expect(metadata?.finishReason).toBe('stop');
+      expect(metadata?.usage).toBeDefined();
+      expect(JSON.stringify(metadata)).not.toContain('cleartext-must-not-rest');
       expect(Object.isFrozen(state)).toBe(true);
     });
 

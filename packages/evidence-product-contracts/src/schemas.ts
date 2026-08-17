@@ -13,6 +13,7 @@ import {
 } from '@acme/module-evidence';
 import {
   EvidenceAuthorizationContextSchema,
+  EvidenceCaseDataPolicySchema,
   EvidenceCaseAuthorizationContextSchema,
 } from '@acme/evidence-auth';
 import {
@@ -46,6 +47,12 @@ export const EVIDENCE_IMPORT_COMMAND_SCHEMA_VERSION =
   'evidence-import-command/1' as const;
 export const EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION =
   'evidence-product-job/1' as const;
+export const EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION =
+  'evidence-product-job/2' as const;
+export const EVIDENCE_LIVE_RELATION_JOB_SCHEMA_VERSION =
+  'evidence-product-job/3' as const;
+export const EVIDENCE_LIVE_ASSESSMENT_JOB_SCHEMA_VERSION =
+  'evidence-product-job/4' as const;
 export const EVIDENCE_REVIEW_DECISION_SCHEMA_VERSION =
   'evidence-review-decision/1' as const;
 export const EVIDENCE_REVIEW_COMMAND_SCHEMA_VERSION =
@@ -116,7 +123,7 @@ export const EvidenceWorkspaceSchema = z
     schemaVersion: z.literal(EVIDENCE_WORKSPACE_SCHEMA_VERSION),
     workspaceId: EvidenceNonBlankStringSchema,
     label: EvidenceNonBlankStringSchema,
-    dataPolicy: z.literal('synthetic-only'),
+    dataPolicy: EvidenceCaseDataPolicySchema,
     evidenceRevision: z.number().int().nonnegative(),
     createdAt: EvidenceIsoTimestampSchema,
   })
@@ -160,6 +167,142 @@ export const EvidenceProductJobSchema = z
     path: ['completedUnits'],
     message: 'Completed units cannot exceed total units.',
   });
+
+export const EvidenceLiveObservationJobPhaseSchema = z.enum([
+  'queued',
+  'hydrating',
+  'observing',
+  'projecting',
+  'completed',
+  'failed',
+  'cancelled',
+  'refused',
+]);
+
+export const EvidenceLiveObservationJobSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION),
+    jobKind: z.literal('live-observation'),
+    jobId: EvidenceNonBlankStringSchema,
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    artifactVersionId: EvidenceNonBlankStringSchema,
+    task: z.literal('observe-artifact'),
+    modelId: EvidenceNonBlankStringSchema,
+    phase: EvidenceLiveObservationJobPhaseSchema,
+    completedUnits: z.number().int().nonnegative(),
+    totalUnits: z.number().int().positive(),
+    message: EvidenceNonBlankStringSchema,
+    cancelRequested: z.boolean(),
+    maxModelCalls: z.literal(1),
+    actualModelCalls: z.number().int().nonnegative(),
+    costCeilingMinor: z.number().int().nonnegative().nullable(),
+    currency: EvidenceNonBlankStringSchema.nullable(),
+    reasonCode: EvidenceNonBlankStringSchema.nullable(),
+    executionId: EvidenceNonBlankStringSchema.nullable(),
+    createdAt: EvidenceIsoTimestampSchema,
+    updatedAt: EvidenceIsoTimestampSchema,
+  })
+  .strict()
+  .refine((value) => value.completedUnits <= value.totalUnits, {
+    path: ['completedUnits'],
+    message: 'Completed units cannot exceed total units.',
+  });
+
+export const EvidenceLiveRelationJobSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_LIVE_RELATION_JOB_SCHEMA_VERSION),
+    jobKind: z.literal('live-relation'),
+    jobId: EvidenceNonBlankStringSchema,
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    artifactVersionId: z.literal('case-observation-set'),
+    observationIds: z.array(EvidenceNonBlankStringSchema).min(2),
+    task: z.literal('relate-observations'),
+    modelId: EvidenceNonBlankStringSchema,
+    phase: z.enum([
+      'queued',
+      'preparing',
+      'relating',
+      'projecting',
+      'completed',
+      'failed',
+      'cancelled',
+      'refused',
+    ]),
+    completedUnits: z.number().int().nonnegative(),
+    totalUnits: z.literal(4),
+    message: EvidenceNonBlankStringSchema,
+    cancelRequested: z.boolean(),
+    maxModelCalls: z.literal(1),
+    actualModelCalls: z.number().int().min(0).max(2),
+    costCeilingMinor: z.number().int().nonnegative().nullable(),
+    currency: EvidenceNonBlankStringSchema.nullable(),
+    reasonCode: EvidenceNonBlankStringSchema.nullable(),
+    executionId: EvidenceNonBlankStringSchema.nullable(),
+    createdAt: EvidenceIsoTimestampSchema,
+    updatedAt: EvidenceIsoTimestampSchema,
+  })
+  .strict()
+  .refine((value) => value.completedUnits <= value.totalUnits, {
+    path: ['completedUnits'],
+    message: 'Completed units cannot exceed total units.',
+  });
+
+export const EvidenceLiveAssessmentJobSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_LIVE_ASSESSMENT_JOB_SCHEMA_VERSION),
+    jobKind: z.literal('live-assessment'),
+    jobId: EvidenceNonBlankStringSchema,
+    workspaceId: EvidenceNonBlankStringSchema,
+    commandKey: EvidenceNonBlankStringSchema,
+    artifactVersionId: z.literal('case-assessment-set'),
+    sequence: z.number().int().positive(),
+    basisEvidenceRevision: z.number().int().nonnegative(),
+    observationIds: z.array(EvidenceNonBlankStringSchema).min(1),
+    relationIds: z.array(EvidenceNonBlankStringSchema),
+    openQuestionIds: z.array(EvidenceNonBlankStringSchema),
+    predecessorAssessmentVersionId: EvidenceNonBlankStringSchema.nullable(),
+    task: z.literal('propose-assessment'),
+    modelId: EvidenceNonBlankStringSchema,
+    phase: z.enum([
+      'queued',
+      'preparing',
+      'assessing',
+      'projecting',
+      'completed',
+      'failed',
+      'cancelled',
+      'refused',
+    ]),
+    completedUnits: z.number().int().nonnegative(),
+    totalUnits: z.literal(4),
+    message: EvidenceNonBlankStringSchema,
+    cancelRequested: z.boolean(),
+    maxModelCalls: z.literal(1),
+    actualModelCalls: z.number().int().min(0).max(2),
+    costCeilingMinor: z.number().int().nonnegative().nullable(),
+    currency: EvidenceNonBlankStringSchema.nullable(),
+    reasonCode: EvidenceNonBlankStringSchema.nullable(),
+    executionId: EvidenceNonBlankStringSchema.nullable(),
+    createdAt: EvidenceIsoTimestampSchema,
+    updatedAt: EvidenceIsoTimestampSchema,
+  })
+  .strict()
+  .refine((value) => value.completedUnits <= value.totalUnits, {
+    path: ['completedUnits'],
+    message: 'Completed units cannot exceed total units.',
+  });
+
+export const EvidenceAnyProductJobSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceProductJobSchema,
+    EvidenceLiveObservationJobSchema,
+    EvidenceLiveRelationJobSchema,
+    EvidenceLiveAssessmentJobSchema,
+  ],
+);
 
 export const EvidenceProductChangeSetSchema = z
   .object({
@@ -350,7 +493,7 @@ export const EvidenceProductSnapshotSchema = z
     openQuestions: z.array(EvidenceOpenQuestionSchema),
     assessments: z.array(EvidenceAssessmentSchema),
     changeSets: z.array(EvidenceProductChangeSetSchema).default([]),
-    jobs: z.array(EvidenceProductJobSchema),
+    jobs: z.array(EvidenceAnyProductJobSchema),
     reviewDecisions: z.array(EvidenceReviewDecisionRecordSchema),
     objectBindings: z.array(EvidenceCaseObjectBindingSchema).default([]),
     artifactRepresentations: z
@@ -377,7 +520,19 @@ export const EvidenceProductSnapshotSchema = z
 
 export type EvidenceWorkspace = z.infer<typeof EvidenceWorkspaceSchema>;
 export type EvidenceImportCommand = z.infer<typeof EvidenceImportCommandSchema>;
-export type EvidenceProductJob = z.infer<typeof EvidenceProductJobSchema>;
+export type EvidenceSyntheticProductJob = z.infer<
+  typeof EvidenceProductJobSchema
+>;
+export type EvidenceLiveObservationJob = z.infer<
+  typeof EvidenceLiveObservationJobSchema
+>;
+export type EvidenceLiveRelationJob = z.infer<
+  typeof EvidenceLiveRelationJobSchema
+>;
+export type EvidenceLiveAssessmentJob = z.infer<
+  typeof EvidenceLiveAssessmentJobSchema
+>;
+export type EvidenceProductJob = z.infer<typeof EvidenceAnyProductJobSchema>;
 export type EvidenceProductChangeSet = z.infer<
   typeof EvidenceProductChangeSetSchema
 >;

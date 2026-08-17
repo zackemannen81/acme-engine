@@ -1,5 +1,1558 @@
 # Journal
 
+## 2026-08-16 — ACME-0148 document parts
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0148
+- Change: a large import is still one artifact, but the stream now
+  lists deterministic parts (förhör / analys / ALL-CAPS / numbered
+  titles, otherwise ~2,500-word slices). Opening `?part=` returns only
+  that part. Live Analyze accepts `sourcePartId`. “Analyze next part”
+  starts the first part with no observations. The model does not choose
+  the cuts.
+- Why now: opening or analyzing D1/D2 as one document still loaded
+  every line and every window.
+- Verification: unit 800/800; typecheck, lint and docs clean.
+- Handoff: restart the workbench. Analyze one part at a time. Do not
+  recut the failed whole-document job.
+- Signature: Grok
+
+## 2026-08-16 — ACME-0147 three-mode default shell
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0147
+- Change: the workbench primary nav is Source stream, Claim, Stance and
+  Search. Default signed-in entry is the source stream. Stance groups
+  the review queue by source title and keeps integrity, assessment and
+  the legacy type views as secondary. Source review seats observations
+  under the block that contains their citation. Legacy `?view=` routes
+  remain.
+- Why now: ADR-0046's first version is three jobs, not twelve buttons.
+  0141 deferred the default-entry switch to this child.
+- Verification: unit 799/799; typecheck, lint and docs clean. No
+  browser tool was available; shell parse plus local blackbox cover the
+  HTML contract.
+- Handoff: ADR-0046 first version is complete (0139–0147). Restart the
+  workbench to pick up rules/3 and the new shell. Knowledge-time sort
+  and same-sentence identity collision remain follow-ups.
+- Signature: Grok
+
+## 2026-08-16 — ACME-0146 sentence-level source segments
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0146
+- Change: `evidence-source-structure-rules/3` emits one citable segment
+  per sentence inside paragraph and Q+A-answer blocks. The question
+  half of a Q+A pair stays one segment. Structural windows pack toward
+  800 words with the existing 64-segment coverage ceiling. Schema
+  `/1` and observe `@1.11.0` stay in place. Historical `@1.10.0`
+  request hashes remain byte-exact.
+- Why now: 0145 sized blocks, but a block was still one quote. Empty-
+  roster exhibit-assertions from the same paragraph were byte-identical
+  and Analyze refused the window.
+- Verification: unit 799/799; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0147 three-mode default shell. Two
+  propositions in one sentence with null actor and null time still
+  collapse.
+- Signature: Grok
+
+## 2026-08-16 — ACME-0145 oversized source-block split
+
+- Date: 2026-08-16
+- Author: Grok
+- Task: ACME-0145
+- Change: `evidence-source-structure-rules/2` splits oversized paragraph
+  units at sentence boundaries toward 150–350 words (soft 600) and never
+  splits a sentence or Q+A pair. Structural coverage windows default to
+  3 extractable segments; the line-segment window stays 64. Schema
+  `evidence-source-structure/1` and active observe `@1.11.0` stay in
+  place. Historical `@1.10.0` request hashes remain byte-exact.
+- Why now: Live Analyze of D1 refused as `MODEL_INVALID_RESPONSE` after
+  0142's merge-only planner left a 16k-word judicial extract as nine
+  huge segments. Same-segment null-actor exhibit-assertions then
+  collapsed to byte-identical candidates.
+- Verification: unit 798/798; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: new Analyze uses rules/2. Do not recut the failed D1 job.
+  Same-segment identity collision when actor and time are both null
+  remains a follow-up.
+- Signature: Grok
+
+## 2026-08-16 — ACME-0144 continuity and information exposure
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0144
+- Change: active `evidence.relate-observations@1.2.0` output `/2` accepts
+  continuity and exposure relation kinds. Historical `@1.1.0` stays
+  byte-exact. `changes_certainty` + `prompted_by` can represent X#1
+  unknown colour → X#2 maybe red Volvo after a question, without
+  deleting X#1. Claim groups list those kinds. No auto-`corroborates`.
+- Why now: ADR-0046 Pass 2/3 is a later job over frozen occurrences.
+- Verification: unit 795/795; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: ADR-0046 children 0139–0144 are implemented. Date-only
+  temporal bounds and the 409 views remain separate.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0143 claim surface
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0143
+- Change: added `evidence-claim-surface-view/1` and `GET /api/claims`.
+  Current occurrences group by relation scope or actor thread as unmerged
+  0140 cards. `?view=claim` opens the surface; sort is source time or
+  asserted event time. Compare-accounts is reachable from a person thread
+  that has a correction. No stored merge and no auto-`corroborates`.
+- Why now: ADR-0046 names Claim as the comparison job over occurrences.
+- Verification: unit 794/794; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0144 continuity and information exposure.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0142 source blocks and neighbour context
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0142
+- Change: added `evidence-source-structure/1` and active observe
+  `@1.11.0` input `/3` output `/6`. New analyzes derive Q+A / paragraph
+  blocks from canonical text, pin `sourceStructureId`, and may send
+  neighbour context. Semantics refuse a context-only citation.
+  Historical `@1.10.0` and line-segment contracts stay byte-exact.
+  Source review shows block headings.
+- Why now: ADR-0046 requires document-native units and context that is
+  not extractable, without recutting committed line-segment windows.
+- Verification: unit 793/793; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0143 claim surface.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0141 source stream as home
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0141
+- Change: `/api/text-imports` sorts by `acquiredAt` then `createdAt` then
+  `importId`. Documents is titled Source stream, shows ingest time and
+  observation/awaiting coverage, and opens on `?view=stream` as well as
+  `?view=documents`. Default entry stays overview.
+- Why now: ADR-0046 names the case/source stream as the chronology job.
+  Reviewers must walk ingest order and see coverage without opening Ledger.
+- Verification: unit 790/790; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0142 deterministic source blocks and neighbour
+  context.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0140 shared observation card
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0140
+- Change: added `evidence-observation-card/1` and
+  `buildEvidenceObservationCard`. Source review and the ledger embed the
+  same card. The browser renders quote, citation and standing from it.
+- Why now: ADR-0046 requires one card so three modes can share identity.
+- Verification: unit 788/788; conformance 78; integration 70; scenario 26.
+- Handoff: next child ACME-0141 source stream as home.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0139 empty-roster Pass 1
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0139
+- Change: active `evidence.observe-artifact@1.10.0` requires a null
+  actor when the roster is empty and refuses invented unresolved
+  candidate keys (`EVIDENCE_ACTOR_REQUIRES_ROSTER`). Historical `@1.9.0`
+  stays registered and byte-exact. Output remains `/5`.
+- Why now: live 1.9.0 jobs died on `EVIDENCE_ACTOR_CANDIDATES_MISMATCH`
+  against Stage A's empty roster. Pass 1 must not invent identities.
+- Verification: unit 788/788; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries and docs clean.
+- Handoff: next child ACME-0140 shared observation card. Restart the
+  workbench before a new live analyze so it loads `@1.10.0`.
+- Signature: Claude
+
+## 2026-08-16 — ADR-0046 source chronology and claim surfaces
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: none (direction record; no implementation child activated)
+- Change: accepted ADR-0046 and
+  `docs/design/evidence-workbench-source-and-claim-surfaces.md`. An
+  occurrence stays source-bound; comparison is a projection. Segmentation
+  follows the document. Observe is Pass 1. The UI is three jobs over one
+  card. Delivery is ACME-0139–0144, each stoppable and additive.
+- Why now: the dual-graph model was decided after 1.9.0 and the live
+  empty-roster refusal. The product definition already named the layers;
+  the surface and pipeline did not.
+- Verification: docs:check pending with this entry; no code change.
+- Handoff: charter ACME-0139 from the surfaces spec when implementation
+  should start. Do not pull 0140–0144 into that charter.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0138 atomic observation coverage
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0138
+- Change: split segment coverage from observation cardinality. Active
+  `evidence.observe-artifact@1.9.0` output `/5` requires `segmentCoverage`
+  (`observations_extracted` | `no_observation`) for every supplied window
+  segment. A segment may yield zero or many atomic observations. The
+  prompt forbids invented coverage observations, extraction-time dedup
+  and promoting reported speech to a world fact. Incomplete or relative
+  time stays in `temporalBound.reason` when normalization is `unknown`.
+  `@1.8.0` remains registered and byte-exact. The per-call observation
+  ceiling for `1.9.0` is 128; the window size stays 64.
+- Why now: `1.8.0` said "exactly one observation per segment", which
+  forced compression of multi-proposition lines and invented observations
+  for headings.
+- Verification: unit 787/787; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean.
+- Live/data handling: none. The running workbench process still serves
+  the previous build until restarted.
+- Handoff: restart the workbench before a new live analysis. Date-only
+  temporal bounds and the 409 views remain separate.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0137 full-source observation coverage
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0137
+- Change: implemented ADR-0045 §6. `planEvidenceObservationCoverage` splits
+  a source into non-overlapping windows of at most 64 segments. Active
+  `evidence.observe-artifact@1.8.0` takes input `/2` with a unique
+  `coverageWindow`; the provider sees only those segments. Semantics refuse
+  a window that omits a supplied segment or names one outside it. Two
+  distinct observations of the same supplied segment remain valid. The live
+  observation job iterates windows as separate executions under
+  `live-observe:{commandKey}:wNNNNN`, reports window *i* of *n*, and records
+  unbounded accumulated model calls. Offline seed/import attaches the
+  fixture window so scripted hashes stay pinned. Historical `@1.0.0`–
+  `@1.7.0` stay registered.
+- Why now: ACME-0136 produced 24 observations from source-B because the
+  1.7.0 prompt asked for a non-exhaustive 1–64 sample. Coverage is a
+  workflow, not a larger array.
+- Verification: unit 786/786; conformance 78; integration 70; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean.
+- Live/data handling: none. No provider call and no new acceptance run.
+- Handoff: date-only temporal bounds, the remaining 409 revision mismatch
+  on read views, and a later live acceptance are separate tasks.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0136 POC #1 outcome-blind acceptance
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0136
+- Change: ran the second outcome-blind acceptance on a fresh case. source-A
+  imported (3,521,477 canonical bytes). source-B observation produced 24
+  accepted fragments. Relation and assessment each consumed a recorded
+  repair call and still failed. source-A observation failed
+  `INVALID_REQUEST`. Ledger, relations and open-question views answered
+  409. Frozen result: FAIL.
+- Mid-run defect: a first probe on the shared volume collided because two
+  imports put the product revision ahead of the engine. The worker guard
+  now refuses only when the engine is ahead. The acceptance case was
+  created on an isolated database after that fix.
+- Cost: 6 calls, 5/6 reporting usage, 94,064 input + 13,861 output tokens,
+  provider cost unknown.
+- Live/data handling: two operator-supplied PDFs were extracted outside
+  ACME and imported as text. No source content entered Git. The sealed
+  judgment was opened only after freeze.
+- Handoff: ADR-0045 §6, date-only temporal bounds, the remaining 409
+  revision mismatch on read views, and source-A live analysis.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0135 bounded repair call
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0135
+- Change: implemented ADR-0045 §5. `resolveExecutionPolicy` admits a
+  non-negative `maxRepairCalls` while still requiring one primary call and
+  zero revision calls. The execution engine issues each repair as its own
+  recorded model call (`purpose: repair`, call key `repair:N`) when the
+  pipeline classifies a failure `repairable`, the contract offers
+  `buildRepairRequest`, and budget remains. The three live Evidence contracts
+  append the pipeline issues to the original request without changing the
+  primary request hash. Live observation, relation and assessment jobs now
+  set `maxRepairCalls: 1` and the provider gateway ceiling is two. Job and
+  audit `actualModelCalls` admit 0–2; the worker records the numeric count
+  instead of collapsing it to a boolean.
+- Why now: ACME-0133 paid for a relation response that failed semantic
+  validation as `repairable: true` and discarded it, which removed the
+  assessment and the run's domain result. The policy already declared the
+  budget; nothing consumed it.
+- Repair never fires on the ADR-0017 resume path. A recorded primary
+  response is completed from evidence; the provider is not contacted again.
+- Verification: unit 779/779; conformance 78; integration 69; scenario 26;
+  typecheck, lint, format, boundaries, docs and build clean. Focused gates
+  cover success-within-budget, exhaustion, non-repairable and resume. The
+  PostgreSQL journey was skipped: Docker daemon was not running and no
+  isolated `ACME_POSTGRES_*` was in the process environment.
+- Live/data handling: no provider call was made and no source content entered
+  Git.
+- Handoff: activate the POC #1 outcome-blind acceptance run on a fresh case.
+  Date-only temporal bounds and ADR-0045 §6 remain follow-ups. Re-run
+  `pnpm test:postgres` when Docker is available.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0134 real-material scale
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0134
+- Change: implemented ADR-0045 sections 2, 3 and 4. Active observation contract
+  `evidence.observe-artifact@1.7.0` raises the candidate ceiling from the
+  fixture-sized eight to a response-derived 64, in both prompt and schema.
+  Canonical text bounds rise from 2,097,152 bytes and 20,000 lines to
+  16,777,216 bytes and 400,000 lines, with the request body from 2,200,000 to
+  25,000,000. The live assessment no longer requires at least one relation.
+- Why now: ACME-0133 showed the model returned exactly eight candidates from a
+  100-page report because a ninth was forbidden, that a 1,915-page document was
+  refused outright, and that one refused relation removed the product's end
+  deliverable. None of those were defects; they were the product's own bounds,
+  calibrated against a seven-artifact synthetic corpus.
+- Replay: `1.0.0` through `1.6.0` keep the eight-candidate ceiling and their own
+  schemas, and `1.6.0` is now registered historically as
+  `evidenceObserveArtifactContractV7`. The active request hash moved from
+  `f86982f1…` to `9d0fa2b9…`, as expected for a new version. Six scripted
+  fixture hashes were recomputed against `1.7.0` rather than hand-edited, and
+  the integration resume gate now derives its hash from the fixture constant.
+- Blast radius: changing the active contract moved every scripted fixture that
+  pins its request hash. Seventeen gates failed at first and every one traced to
+  that single cause. The charter had assumed a contained constant change.
+- Verification: unit 768/768 across 121 files; conformance 78; integration 62;
+  scenario 26; typecheck, lint, boundaries, build, format, docs and diff clean;
+  `pnpm test:postgres` 37/37 on a disposable `postgres:15` created and removed
+  for this task.
+- Not delivered: the assessment-without-relations gate. The change is one
+  condition, covered by typecheck and the ADR, but the live assessment path has
+  no offline seam exercisable without a provider transport. The decoupling is
+  verified by inspection only, and that Definition-of-Done item was not met.
+- Live/data handling: no provider call was made and no source content entered
+  Git.
+- Handoff: ADR-0045 §5 repair calls in the execution engine plus non-zero repair
+  budgets in the live jobs. Then ADR-0045 §6, the full-source coverage
+  workflow, which is what actually turns a bounded batch into document
+  coverage.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0132 measured cost and optional campaign ceiling
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0132
+- Change: implemented ADR-0044's execution policy. The deployment call ceiling
+  is no longer a precondition for the live capability: absent now means the
+  deployment declines to cap the campaign, and `assertLiveDeploymentBudget`
+  validates it on its own. Per-execution bounding is untouched, so a run that
+  exceeds its confirmation is still refused and "this job made exactly one
+  call" stays auditable.
+- Discovery that shaped the task: `acme.model_calls` reserved `model`,
+  `provider` and `usage_json` columns and every row had all three `NULL`.
+  `applyModelCallRetention` returned only the response hash and, under
+  `encrypted-payload`, the sealed envelope, so provider, model and usage were
+  dropped in every retention mode. Measurement over that table was impossible,
+  and the token counts in earlier entries came from reading responses in
+  flight rather than from durable evidence. Removing the cap without landing
+  the measurement in the same change is refused by ADR-0044's own risk clause.
+- Retention now keeps `callMetadata` — provider, model, finish reason and usage
+  — under every mode including `none` and `hash-only`. It is operational
+  metadata, never output: gates assert the response text never appears in the
+  retained fields, and that `response_payload` stays `NULL` under `hash-only`
+  while the three columns become queryable.
+- Added `summarizeModelCallUsage`: a pure summary over recorded calls with
+  counts, token totals and provider-supplied cost. Absent usage reads as
+  `null`, never `0`, `callsReportingUsage` says how much of a set the totals
+  cover, and costs in differing currencies are refused rather than converted.
+  No pricing table: an estimate must not be reported as evidence.
+- Verification tiers are documented in `docs/CONTRIBUTING.md`. Only a POC
+  acceptance run may claim POC #1 works; ACME-0131 is the standing example of
+  a green offline suite over a product that mutated state in the wrong order.
+- Verification: unit 768/768 across 121 files, up from 759/120; conformance 78,
+  integration 62, scenario 26; typecheck, lint, boundaries, build, format, docs
+  and diff clean; `pnpm test:postgres` 37/37 on a disposable `postgres:15`
+  created and removed for this task. The shared execution-repository
+  conformance kit runs against PostgreSQL too, so all three adapters are proven
+  by one gate. A composition with no ceiling environment variables resolves and
+  reports `liveObservationMaxModelCalls: null`, where it previously refused.
+- Live/data handling: no provider call was made and no source content entered
+  Git. The seven calls already recorded predate this change and carry no
+  metadata; they cannot be measured retroactively.
+- Handoff: activate
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md) on
+  a fresh case. `summarizeModelCallUsage` has no operator surface yet; a CLI or
+  API report over it would make cost readable without a database client.
+- Signature: Claude
+
+## 2026-08-16 — ACME-0131 live path projection, scoping and session
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0131
+- Change: repaired the five defects the first sustained real browser session
+  exposed, all of them invisible to the offline suite. The worker now runs the
+  revision guard before any product write, so a refused projection leaves no
+  observations behind. The live observation job selects only the executing
+  run's records through `selectExecutionObservations`, instead of every ledger
+  record matching the artifact. The evidence projection resolves the requested
+  workspace instead of the globally latest snapshot. `/api/overview`,
+  `/api/integrity-report` and `GET /api/export-policy` resolve the requested
+  case instead of the composition default. The development authenticator
+  grants an upstream lifetime per sign-in and per refresh instead of one fixed
+  expiry for the whole process.
+- Isolation: three of the five were case-scoped reads resolving the
+  composition default. The revision guard and the `404` were masking them; had
+  either passed, one case's content would have rendered under another case's
+  heading. ADR-0036 isolation is now enforced by the read path itself.
+- Amendment: the overview/integrity-report/export-policy defect was added to
+  the frozen charter after discovery, recorded in its Charter Amendment Log as
+  in-goal rather than opened as a separate task.
+- Gates: every gate is load-bearing. Each fix was reverted individually,
+  rebuilt and re-run, and exactly its own gate failed with the original
+  symptom before being restored to green.
+- Verification: unit 759/759 across 120 files, up from 753/118; conformance 78,
+  integration 62, scenario 26; typecheck, lint, boundaries, build, format, docs
+  and diff clean; `pnpm test:postgres` 36/36 on a disposable `postgres:15`
+  created and removed for this task. On the running instance against real
+  PostgreSQL and MinIO, every case view for a real case answers `200`, where
+  four answered `409` and three answered `404` before.
+- Live/data handling: no provider call was made and no source content entered
+  Git. The `POC1-AUTO-UI` case stays wedged: its engine and product revisions
+  genuinely diverged, and these fixes stop new divergence rather than
+  rewriting recorded history. The acceptance run needs a fresh case.
+- Handoff: implement ADR-0044's retirement of the deployment call ceiling and
+  cost ceiling plus the three-tier suite separation, then activate
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md).
+  `GET /api/assessments` does not exist and the browser requests it; it should
+  either exist or stop being requested.
+- Signature: Claude
+
+## 2026-08-15 — ACME-0129 superseded; POC #1 enters live product acceptance
+
+- Date: 2026-08-15
+- Author: Claude
+- Task: ACME-0129 (Superseded) → ACME-0131 (Ready)
+- Decision: the premise of ACME-0129 is spent. It was frozen to prove live
+  execution could happen safely without uncontrolled spend; ACME-0111 through
+  ACME-0122 answered that, and ACME-0121 committed real source-bound
+  observations from a real call. What remained — six calls total, one shot,
+  never retry, no correction after a consumed call — was phase apparatus, and
+  keeping it meant testing an artificially handicapped variant of the product
+  rather than the product.
+- Phase change: [ADR-0044](adr/0044-poc1-live-product-acceptance-phase.md)
+  (Proposed) separates permanent guardrails from retired phase controls.
+  Retained: schema validation, fail-closed refusal, revision/integrity guards,
+  transactional mutation, idempotency, case isolation, audit trail,
+  provider-call logging and cost measurement, plus ADR-0040's invariants and
+  its conjunctive live tuple. Retired: the deployment call ceiling and cost
+  ceiling as preconditions, campaign-level call caps, and mock/in-memory
+  substrate as acceptable basis for a POC claim. Bounding one execution stays;
+  capping a campaign goes. Cost is governed by measurement over
+  `acme.model_calls`, not by refusal at a threshold.
+- Verification tiers: offline deterministic (mock, continuous, gates CI), live
+  integration (real PostgreSQL and object store, real provider), and POC
+  acceptance (real document through the whole product path). Only the third
+  may claim POC #1 works.
+- Findings that forced the change: the first sustained real browser session
+  wedged the product at evidence revision 2 against engine revision 5, and
+  exposed the worker writing observations before the guard that rejects the
+  projection, the observation job collecting by artifact rather than by
+  execution, and every session expiring fifteen minutes after process start
+  rather than after sign-in. Product state at discovery: 35 observations, one
+  `LIVE_OBSERVATION_COMPLETED`, two `MODEL_INVALID_RESPONSE`, four
+  `EVIDENCE_PRODUCT_COMMAND_COLLISION`.
+- Live/data handling: seven provider calls are recorded in `acme.model_calls`,
+  all made through the browser outside any charter. No call was made under
+  ACME-0129 and none was made by this documentation change. No source content
+  entered Git.
+- Handoff: ACME-0131 repairs the four defects offline. ADR-0044 needs explicit
+  acceptance before its retirement clauses are implemented. The acceptance run
+  is proposed in
+  [poc1-live-product-acceptance.md](backlog/poc1-live-product-acceptance.md)
+  and needs a fresh case; `POC1-AUTO-UI` is wedged and is not valid substrate.
+- Signature: Claude
+
+## 2026-08-15 — ACME-0130 case catalog request scoping
+
+- Date: 2026-08-15
+- Author: Claude
+- Task: ACME-0130
+- Change: corrective. `casePath` in the browser shell exempted the case catalog
+  by comparing the whole argument, query string included, against
+  `/api/cases`. The real call is `/api/cases?organizationId=…`, so the
+  exemption missed and the request was rewritten to
+  `/api/cases/<caseId>/cases?organizationId=…`. The exemption now matches
+  `URL.pathname`. No product behavior, contract, persistence or data authority
+  changed.
+- Impact: every authenticated session ended at that `404`. The case selector
+  stayed empty, the review queue never left `Loading…`, and a Stage A case
+  could be created but never opened, because creation posts to the separately
+  exempted `/api/organizations/:id/cases`.
+- Provenance: the defect entered with `9037ca1` (ACME-0093) and survived
+  ACME-0101's parse gate, which compiles the emitted module without exercising
+  the URLs it builds. The catalog is the only exempt shell request carrying a
+  query string; every other request was already correct.
+- Launcher: `startup-full_poc1-autoimport.ps1` now starts Node directly instead
+  of through `cmd.exe`/corepack/pnpm, so the recorded PID owns the port, and
+  passes `--env-file-if-exists=.env.local`, so the ignored credential file
+  reaches only the workbench process and the interactive prompt is a fallback.
+  A stale process previously survived a restart and the script's own
+  "already answering" guard then exited `0` with the old environment.
+- Verification: web and API suites 23/23; typecheck, lint, boundaries, build,
+  format, docs and diff checks passed; conformance 78, integration 62 and
+  scenario 26 passed; browser-observed `200` for the catalog, a case switch and
+  the Stage A Documents view. `pnpm test:unit` reported 752/753: `auth-blackbox`
+  exceeds its 5,000 ms bound under full-suite parallelism on a loaded machine
+  and passes in 566 ms alone. The identical failure reproduces with this
+  change stashed and rebuilt, so it is pre-existing and belongs to its own
+  charter.
+- Live/data handling: no provider call occurred, no source content entered Git
+  and the Stage A import form was left unsubmitted; its attestations are
+  operator statements.
+- Handoff: ACME-0129 remains the frozen active task, untouched by this work.
+  A shell request-path gate remains an open follow-up.
+- Signature: Claude
+
+## 2026-08-15 — ACME-0128 sorted assessment provider output
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0128
+- Change: identified the assessment contract's analogous schema/prompt gap
+  before another paid run, then activated
+  `evidence.propose-assessment@1.2.0` with explicit unique lexicographically
+  sorted set-like string-ID arrays. Output `/1`, semantics and identities are
+  unchanged; runtime coercion remains forbidden.
+- Replay identity: historical `@1.0.0` request hash is
+  `2532333356e475a2caa405aaa5eda3867e9682049262f9156590891dd6fd49a0`;
+  historical `@1.1.0` remains
+  `a7504dcf2ff5d33578688e9f73d2b3b76e21a7007d22460e094526d047e51c90`;
+  active `@1.2.0` is
+  `c4e140c6742d06ab038f87fd323eccc81d96fa52bcde85d5f5bf37a2c342fb48`.
+- Verification: focused contract/hash/replay/registry/composition tests 17/17;
+  typecheck, lint, boundaries and build passed; full default suites passed 753
+  unit, 78 conformance, 62 integration and 26 scenario tests; a fresh
+  disposable PostgreSQL 16 passed 36/36 and was removed; format, docs and diff
+  checks passed.
+- Live/data handling: no credential was loaded and no provider call occurred.
+- Handoff: archive ACME-0128, then freeze a separately bounded two-source live
+  reviewer/reassessment journey.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0127 sorted relation provider output
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0127
+- Change: activated `evidence.relate-observations@1.1.0` with explicit unique,
+  lexicographically sorted set-like identifier/rationale arrays and distinct
+  endpoints sorted by kind then id. Historical `@1.0.0` remains registered
+  byte-exact for replay; runtime coercion remains forbidden.
+- Identity: active request hash is
+  `1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f`;
+  historical `@1.0.0` remains
+  `9c4f7a883a6363d0a652f5d90e603e610d5969715069079ed1fdd5c3516815b0`.
+- Verification: focused contract/catalogue/hash/replay/composition tests 15/15;
+  typecheck, lint, boundaries and build passed; full default suites passed 752
+  unit, 78 conformance, 62 integration and 26 scenario tests; fresh PostgreSQL
+  passed 36/36; format, docs and diff checks passed.
+- Live/data handling: no credential was loaded and no provider call occurred.
+- Handoff: archive ACME-0127 and inspect the assessment prompt for the same
+  schema/prompt ordering dependency before freezing another bounded live run.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0126 superseded at relation schema boundary
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0126
+- Progress: D1 observation committed eight source-bound observations and the
+  authenticated reviewer wrote six accepts, one rejection and one unresolved
+  decision. The next real relation call returned complete output `/1` with
+  eight propositions, four relations and three open questions.
+- Refusal: two `triggeringObservationIds` arrays were unique but not lexical-
+  sorted. Strict schema validation emitted two `MODEL_RESPONSE_SCHEMA` issues;
+  zero relations/questions/assessments projected. Active relation prompt
+  `@1.0.0` does not state the schema's sorted-set wire requirement.
+- Usage: observation 66,819 + 708 = 67,527 tokens; relation 2,925 + 2,990 =
+  5,915. Two of six calls occurred; four never started and no retry occurred.
+- Safety: all containers/network/temp keys and D1/D2 text were removed. Both
+  PDFs and ignored `.env.local` are unchanged; no sensitive content entered Git.
+- Follow-up: version the relation prompt offline with explicit unique lexical
+  sorting for every set-like ID array, preserve historical replay, verify, then
+  freeze a separate live journey.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0125 typed source-view observation identity
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0125
+- Change: removed the live journey's handwritten source-view response type,
+  imported `EvidencePrimarySourceReviewView` and changed all observation
+  review/history targets to the public `observationVersionId` field. Product
+  API/view/runtime behavior is unchanged.
+- Verification: focused typecheck, lint, format, static identity search and
+  closed live gate; boundaries/build; 751 unit, 78 conformance, 62 integration
+  and 26 scenario tests; format, docs and diff.
+- Safety/follow-up: no source, credential or provider call occurred. Freeze a
+  new bounded Stage A live journey only from this green checkpoint.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0124 superseded after source-view mismatch
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0124
+- Preflight: D1/D2 parent and LF/NFC extraction hashes reproduced exactly;
+  fresh empty PostgreSQL, private MinIO, random mounted keys and signed S3
+  create/stat/read/list/delete passed.
+- Provider outcome: the first D1 observation job stopped normally at 66,818
+  input plus 491 output tokens. Eight output `/4` segment identifiers were
+  supplied, valid and unique; runtime derived eight exact quotes/locators and
+  committed one execution/document/commit plus eight observations.
+- Stop: the first reviewer POST supplied an undefined target because the new
+  harness expected `observationId` from a public source view that exposes
+  `observationVersionId`. The API refused 400. Zero review decisions, relations
+  or assessments wrote; five planned jobs never started.
+- Safety: no retry. Exact containers, network, D1/D2 temporary text and four
+  key/credential files were removed. Both PDFs and ignored `.env.local` are
+  unchanged; no source, secret or provider identifier entered Git.
+- Disposition: superseded rather than weakening its one-shot charter. Correct
+  the single view-contract field offline, run canonical gates and only then
+  freeze another bounded live journey.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0123 Stage A live reviewer harness
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0123
+- Change: added one opt-in live product gate over two exact external Stage A
+  inputs. It drives D1 observation/review/relation/question/assessment, process
+  restart, D2 observation/review/relation/reassessment and final restart using
+  authenticated case-first APIs, PostgreSQL, private S3 and mounted keys.
+- Product assertions: accept/reject/leave-unresolved decisions; exact source
+  citations; relations and open questions; citation-complete reviewed first
+  assessment; immutable stale predecessor after later evidence; reviewed
+  successor; persistent history; primary domain navigation without technical
+  audit. Six executions each request one call maximum and a nested minor-SEK
+  ceiling.
+- Verification: live gate compiles and skips closed; 15 focused safety tests;
+  fresh PostgreSQL journey 2/2; typecheck, lint, boundaries, build; 751 unit,
+  78 conformance, 62 integration and 26 scenario tests; format, docs and diff.
+  Lint caught one local non-null assertion, corrected before canonical gates.
+- Safety/follow-up: no source, credential or provider call occurred. Freeze a
+  separate bounded paid acceptance before supplying D1/D2 inputs.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0121 product success, process charter superseded
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0121
+- Outcome: the sole active `evidence.observe-artifact@1.6.0` call stopped
+  normally at 66,819 input plus 650 output tokens. All eight output `/4`
+  segment selections were supplied, valid and unique. Strict/semantic
+  validation passed; runtime derived all eight exact quotes and one-line
+  locators and durably wrote one committed execution, document and commit plus
+  eight observations.
+- Harness disposition: the product returned its established
+  `LIVE_OBSERVATION_COMPLETED` result. Vitest alone exited false on an obsolete
+  post-commit expected reason; offline child ACME-0122 corrected that assertion
+  and passed focused PostgreSQL plus every canonical gate without a provider
+  call.
+- Status: bounded product observation acceptance is proven. ACME-0121 is
+  nevertheless superseded because its frozen primary deliverable required a
+  recorded green Vitest invocation and its one allowed call was consumed; the
+  charter is not rewritten after the fact.
+- Safety: no retry. Exact PostgreSQL/MinIO containers, network, temporary
+  source and key files were removed. Original PDF and ignored `.env.local` are
+  unchanged; no source content, secret or provider identifier entered Git.
+- Follow-up: separately freeze remaining relation/assessment provider
+  acceptance and the primary reviewer journey; exhaustive coverage remains a
+  distinct workflow problem.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0122 terminal-code assertion correction
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0122 (child of ACME-0121)
+- Change: replaced the stale live-gate expectation
+  `LIVE_OBSERVATION_COMMITTED` with the worker's established
+  `LIVE_OBSERVATION_COMPLETED` and pinned the same reason in the existing
+  successful offline PostgreSQL Stage A journey. Worker behavior is unchanged.
+- Verification: focused fresh PostgreSQL 2/2; typecheck, lint, boundaries,
+  build; 751 unit, 78 conformance, 62 integration and 26 scenario tests;
+  format, docs and diff. Two unrelated initial blackbox timeouts passed
+  isolated 6/6 and on the exact full rerun 751/751.
+- Safety: no credential, source or provider/network call was used. The child is
+  archived and ACME-0121 restored for honest disposition of its consumed
+  process-level gate.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0121 paused for terminal-code child
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0121 / ACME-0122
+- Evidence: the sole bounded provider call stopped normally with 66,819 input
+  and 650 output tokens. All eight output `/4` segment selections were valid,
+  supplied and unique; runtime derived eight exact quotes/one-line locators and
+  durably wrote one committed execution, document and commit plus eight
+  observations.
+- Blocker: after the product job returned its established
+  `LIVE_OBSERVATION_COMPLETED` reason, the live Vitest gate alone failed because
+  it still expected obsolete `LIVE_OBSERVATION_COMMITTED`.
+- Disposition: no retry. ACME-0121 is paused with disposable state isolated;
+  bounded offline child ACME-0122 will align the assertion, verify it without
+  any provider access, then resume the parent for cleanup and completion.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0120 canonical UTC observation prompt
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0120
+- Summary: Versioned active `evidence.observe-artifact@1.6.0` without changing
+  output `/4` or ADR-0043 segment authority. The prompt now requires literal
+  `YYYY-MM-DDTHH:MM:SSZ` or three-digit millisecond UTC, forbids local,
+  minute-only and numeric-offset normalized values, and requires `unknown`.
+- Replay: historical `@1.5.0` request hash remains exact and all seven versions
+  resolve. Active development/evaluation hashes were re-pinned; observation
+  identities remain unchanged.
+- Verification: focused 23; typecheck, lint, boundaries, build; 751 unit, 78
+  conformance, 62 integration, 26 scenario; fresh PostgreSQL 36; format, docs
+  and diff. One known async teardown and one transient parallel PostgreSQL
+  fixture failure passed isolated and on exact clean full reruns.
+- Safety/follow-up: no provider call/source/credential access. Freeze a
+  separate one-call acceptance under the approved 200 SEK ceiling.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0119 superseded after temporal-format refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0119
+- Summary: Ran one separately frozen Stage A call against active
+  `evidence.observe-artifact@1.5.0` under the approved ACME credential and 200
+  SEK prepaid ceiling. Exactly one provider call occurred.
+- Preflight reproduced the unchanged parent/extraction hashes and passed clean
+  PostgreSQL, private MinIO, random mounted keys and signed S3 operations.
+- Provider result: stop, 66,775 input + 1,533 output = 68,308 total tokens;
+  eight output `/4` candidates. Every selected segment ID was valid, supplied,
+  existing and unique. Seven temporal bounds were `unknown`.
+- Refusal: candidate seven emitted `exact.at` as a 16-character local
+  date/time containing `T` but no seconds, UTC offset or terminal `Z`. Strict
+  schema validation emitted one `MODEL_RESPONSE_SCHEMA` issue. One encrypted
+  model call succeeded; zero engine documents, commits and observations wrote.
+- Safety: no retry/repair. Containers, network and exact temporary source,
+  credential and key state were removed; original PDF and ignored `.env.local`
+  are unchanged.
+- Disposition: segment quote authority held. This one-shot task is consumed;
+  version the prompt offline with literal canonical UTC seconds/`Z` grammar and
+  an `unknown` fallback before another acceptance.
+- Verification: content-free encrypted-response metadata and persistence
+  assertions; `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0118 runtime-derived observation quotes
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0118
+- Decision: ADR-0043 removes exact-quote authorship from the active provider
+  contract. Active `evidence.observe-artifact@1.5.0` output `/4` selects one
+  runtime-defined `sourceSegmentId`; runtime derives the entire exact quote and
+  its one-line locator.
+- Segmentation: canonical LF/NFC text becomes deterministic non-empty segments
+  that never cross a line and contain at most 500 Unicode code points. Long
+  lines split without normalization. Unknown identifiers refuse; duplicate
+  source text remains unambiguous because segment identity carries its line.
+- Replay/identity: `@1.0.0` through `@1.4.0` and outputs `/1` through `/3`
+  remain registered with unchanged pinned request hashes. Active development
+  and evaluation fixtures select segments, while runtime-derived quote,
+  locator and resulting synthetic observation identities remain unchanged.
+- Verification: focused segment/contract/schema/replay/fixture/engine/live-job
+  suite 34 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 751 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh disposable PostgreSQL 16
+  container; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 228
+  Markdown files; `git diff --check`.
+- Correction during verification: the first full unit run used stale built
+  fixture hashes after source hashes were re-pinned. Rebuilding package outputs
+  synchronized package consumers; focused failures and the exact full suite
+  then passed. No behavior was weakened.
+- Safety/follow-up: no provider call, real source or credential was accessed.
+  Freeze a separate one-call acceptance against active `@1.5.0` under the
+  approved 200 SEK monetary ceiling; a valid batch remains non-exhaustive.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0117 superseded after exact-quote refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0117
+- Summary: Ran one separately frozen Stage A provider gate against active
+  `evidence.observe-artifact@1.4.0` under the user-approved ACME credential and
+  200 SEK prepaid monetary ceiling. Exactly one provider call occurred.
+- Preflight: the unchanged 106,907-byte, 52-page parent PDF retained SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  pypdf 6.10.0 reproduced the 106,072-byte LF/NFC UTF-8 representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean PostgreSQL/MinIO and random mounted keys passed empty-database and
+  signed S3 create/stat/read/list/delete checks.
+- Provider result: `gpt-5.6-luna` returned stop, 36,920 input + 1,633 output =
+  38,553 total tokens and eight complete strict output `/3` candidates. Two
+  temporal bounds were `unknown`; no invalid normalized temporal value recurred.
+- Refusal: only three quotes occurred exactly once. Four other candidates
+  compressed content across canonical line boundaries while changing
+  whitespace and/or punctuation, and one also changed alphanumeric content.
+  Semantic validation emitted five `EVIDENCE_QUOTE_NOT_FOUND` issues. The
+  encrypted model call succeeded, while zero engine documents, execution
+  commits and product observations were written.
+- Safety: no retry or repair ran. Both containers, their network and the exact
+  source/credential/key temp directory were removed; original PDF and ignored
+  `.env.local` are unchanged. No source, key, payload or provider identifier
+  entered the repository.
+- Disposition: this one-call charter is consumed and superseded. A wire-level
+  one-line string does not prove canonical line membership. The next offline
+  task must decide an additive segment-selection/runtime-derived-quote contract
+  or an equivalently strict design while retaining historical replay.
+- Verification: content-free PostgreSQL call/error/commit/observation checks;
+  encrypted-response metadata audit; `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0116 single-line observation candidates
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0116
+- Summary: Corrected both bounded provider-shape defects exposed by ACME-0115.
+  Active `evidence.observe-artifact@1.4.0` now emits output
+  `evidence-observe-artifact-output/3`; each exact quote must be one canonical
+  source line and no more than 500 characters.
+- Temporal boundary: the active prompt permits exact, range or approximate
+  normalized time only when the same exact quote contains a complete calendar
+  date and clock. A clock without that date must be `unknown`; the existing
+  strict UTC ISO schema remains unchanged for normalized values.
+- Replay: historical contracts `@1.0.0` through `@1.3.0` and outputs `/1`
+  through `/2` remain registered and byte-exact. Their pinned request hashes
+  are unchanged. Active synthetic locators and observation identities also
+  remain unchanged because runtime exact-match locator derivation was not
+  altered.
+- Verification: focused contract/schema/wire/replay/fixture/engine/live-job
+  suite 34 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 751 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh disposable PostgreSQL 16
+  container; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 225
+  Markdown files; `git diff --check`. The container was removed.
+- Safety/follow-up: this task made no provider call and accessed neither the
+  real source nor credentials. Freeze a separate one-call acceptance against
+  active `@1.4.0` under the already approved 200 SEK monetary ceiling; token
+  usage remains a separate measured quantity.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0115 superseded after temporal schema refusal
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0115
+- Summary: Ran one separately frozen Stage A provider gate against active
+  `evidence.observe-artifact@1.3.0` under the user-approved ACME credential and
+  200 SEK prepaid monetary ceiling. Exactly one provider call occurred.
+- Preflight: the unchanged 106,907-byte, 52-page parent PDF retained SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  pypdf 6.10.0 reproduced the 106,072-byte LF/NFC UTF-8 representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean PostgreSQL/MinIO and random mounted keys passed empty-database and
+  signed S3 create/stat/read/delete checks.
+- Provider result: `gpt-5.6-luna` returned stop, 36,871 input + 2,266 output =
+  39,137 total tokens and six complete strict-JSON candidates.
+- Refusal: candidate six supplied a range with two eight-character clock
+  strings visible in its quote but no complete date, `T` or `Z`; output `/2`
+  requires full UTC ISO values. Strict schema validation emitted two
+  `MODEL_RESPONSE_SCHEMA` issues before semantic locator validation. Four
+  quotes were exact/unique; two long multi-line candidates preserved text only
+  after whitespace normalization and were not treated as exact.
+- Safety: the execution stored one encrypted succeeded model call but zero
+  engine documents and zero product observations. No retry/repair ran. Both
+  `--rm` containers, their network and the exact source/key/credential temp
+  directory were removed; original PDF and ignored `.env.local` are unchanged.
+- Disposition: this one-call charter is consumed and superseded. The next
+  offline contract must require short single-line verbatim quotes and require
+  temporal `unknown` unless each normalized value's full date and clock occur
+  inside that quote. Historical replay must remain exact.
+- Verification: content-free PostgreSQL call/commit/issue assertions;
+  `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0114 runtime-derived observation locators
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0114
+- Summary: Implemented ADR-0042 after ACME-0113 proved that a model can select
+  verbatim quotes yet still miscount canonical source lines. Active
+  `evidence.observe-artifact@1.3.0` now uses output
+  `evidence-observe-artifact-output/2` with no locator fields.
+- Authority: runtime performs an ordinal search over canonical LF/NFC text,
+  accepts only one exact occurrence and derives inclusive start/end lines
+  before locator identity, observation identity, invariants or projection.
+  Absent and duplicate quotes refuse; no fuzzy repair exists.
+- Replay: historical `@1.0.0`, `@1.1.0` and bounded `@1.2.0` request builders,
+  hashes and output `/1` remain registered and interpretable. Their hashes are
+  respectively `743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004`,
+  `29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae`
+  and `50a18aa90d3f50ce82902642262731596bcf9eeb9e4e83ba1de65355be3e3db6`.
+- Active fixtures: provider schema retains one-to-eight bounds and 8,192 output
+  tokens while omitting `startLine`/`endLine`. Deterministic development and
+  evaluation request hashes were re-pinned; derived synthetic locators and
+  observation identities remain unchanged.
+- Verification: focused suite 33 tests; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; exact `pnpm test` — 750 unit, 78 conformance, 62
+  integration and 26 scenario; `pnpm build`; `pnpm test:postgres` — 36 tests
+  against a fresh PostgreSQL 15 container; `pnpm format:check`;
+  `pnpm docs:check`; `git diff --check`.
+- PostgreSQL correction: the first gate passed 35/36 and identified one stale
+  injected active-provider fixture still returning `/1`. After changing only
+  that fixture to active `/2`, its file passed 2/2 and the full fresh gate
+  passed 36/36. All temporary containers were removed.
+- Safety/follow-up: ACME-0114 made no network/provider call and used no source
+  or credential. A separately frozen real-provider acceptance remains, and a
+  successful batch still cannot imply exhaustive document coverage.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0113 superseded after bounded provider call
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0113
+- Summary: Ran the separately frozen Stage A gate once against active
+  `evidence.observe-artifact@1.2.0` under the user-approved ACME key and 200 SEK
+  prepaid monetary ceiling. The first Vitest command used the default config,
+  found no live test and made no call; the corrected live config made exactly
+  one provider call.
+- Preflight: reverified the 106,907-byte, 52-page parent PDF SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`.
+  pypdf 6.10.0 LF/NFC extraction reproduced a 106,072-byte strict UTF-8
+  representation SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`.
+  Clean loopback PostgreSQL/MinIO and random mounted keys passed health, empty
+  database and signed S3 create/stat/read/delete/removal checks.
+- Provider result: `gpt-5.6-luna` returned `finishReason = stop`, 36,900 input
+  plus 2,340 output = 39,240 total tokens. The encrypted response was complete
+  strict JSON with six candidates, so ACME-0112 resolved truncation.
+- Semantic result: every candidate quote occurred verbatim in the source, but
+  every model-authored line range was offset. Five starts were two lines late
+  and one was four lines late; end offsets were one to three. The bounded
+  pipeline emitted six `EVIDENCE_QUOTE_BINDING_FAILED` issues. One encrypted
+  model-call record succeeded, while the execution failed with zero engine
+  documents and zero product observations.
+- Safety/cleanup: no retry or repair ran. Both `--rm` containers, their Docker
+  network and the exact temporary directory containing source, credentials and
+  keys were removed. The original PDF and ignored `.env.local` remain
+  unchanged; no content, key or provider identifier entered the repo.
+- Disposition: this one-call charter is consumed and superseded. The next
+  offline task must preserve historical replay while deriving canonical line
+  locators from uniquely occurring exact quotes instead of trusting model-
+  authored line numbers. A successful batch will still not prove exhaustive
+  full-document coverage.
+- Verification: live gate reached the expected fail-closed semantic refusal;
+  content-free PostgreSQL assertions confirmed one call/zero commits;
+  `pnpm docs:check`; `git diff --check`.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0112 bounded observation candidate contract
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0112
+- Summary: Corrected the exact offline contract defect exposed by ACME-0111.
+  Active `evidence.observe-artifact@1.2.0` now requests a deliberately
+  non-exhaustive reviewer batch of one to eight observation candidates and
+  rejects a ninth candidate at runtime and on the lowered wire schema.
+- Replay: historical synthetic `@1.0.0` and source-neutral `@1.1.0` builders
+  and request hashes remain unchanged and are registered alongside the active
+  contract at every composition root that can resume retained evidence.
+- Budget boundary: the active request uses the gateway's existing bounded
+  8,192-output-token capability. That per-call output limit remains distinct
+  from the externally enforced 200 SEK prepaid monetary ceiling.
+- Architecture: ADR-0041 records that a successful batch is not a completeness
+  claim. Full-source coverage requires a separately designed deterministic
+  segmentation/coverage workflow; no hidden retry, pagination or multi-call
+  behavior was introduced.
+- Verification: focused contract/lowering/fixture/engine/live-composition suite
+  31 tests; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`; exact
+  `pnpm test` — 748 unit, 78 conformance, 62 integration and 26 scenario;
+  `pnpm test:postgres` — 36 tests against a fresh PostgreSQL 15 container;
+  `pnpm build`; `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+  An initial full-suite teardown rejection was isolated to the existing
+  asynchronous workbench cleanup; that file passed 9/9 alone and the exact
+  full gate then passed cleanly.
+- Safety: ACME-0112 made no provider or network model call and did not access
+  credentials or source documents. No live/source artifact entered the repo.
+- Follow-up: freeze a separate one-call real-provider acceptance under the
+  existing approved monetary pot; a successful bounded batch still will not
+  prove exhaustive document coverage.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0111 superseded after one fail-closed provider call
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0111
+- Summary: Activated the isolated Stage A real-provider gate after the user
+  approved reuse of an ACME-specific ignored `OPENAI_API_KEY`. The prepaid pot
+  is a 200 SEK monetary ceiling; the configured `20000` value means minor SEK
+  units (öre), not tokens. This task additionally limited its exact execution
+  to one provider call.
+- Preflight: reverified D1's 106,907-byte parent PDF and SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`;
+  prepared a fresh 106,072-byte LF/NFC UTF-8 representation with SHA-256
+  `2a2dccd63566dcd6a96347a486088238ab62cad8d83e7b9e943f636511848bb4`;
+  verified 52 non-empty pages and no NUL/replacement character. The fresh
+  representation is not claimed byte-identical to ACME-0106's removed temp
+  representation.
+- Hosted-equivalent gate: clean loopback PostgreSQL and private MinIO were
+  composed with random task-local credential, artifact-KEK and durable payload
+  key files. The repository's signed S3 adapter passed create/stat/read/delete,
+  and PostgreSQL began with zero public tables.
+- Provider result: exactly one OpenAI `gpt-5.6-luna` call reached the provider.
+  It used 36,874 input and 2,048 output tokens (38,922 total), returned
+  `incomplete/max_output_tokens`, and retained an encrypted candidate that
+  began as JSON but ended before its closing delimiter. The bounded pipeline
+  reported `MODEL_INVALID_RESPONSE` at parse. No repair/retry ran.
+- Safety result: one source and one failed product job existed transiently,
+  but there were zero engine commits and zero observations. No source content,
+  credential, provider payload or provider response id entered Git/docs. Both
+  `--rm` containers and the exact temp directory were removed; the original
+  PDF and ignored `.env.local` remain untouched.
+- Disposition: the one-shot charter cannot rerun after consuming its only
+  allowed provider call, so ACME-0111 is superseded. Activate ACME-0112 to
+  version a bounded observation count and output budget offline; a later
+  frozen one-call acceptance remains within the same external prepaid ceiling.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0110 Stage A live assessment and reassessment
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0110
+- Summary: Completed the Stage A engineering journey through human-reviewed
+  reassessment. Active assessment contract `@1.1.0` accepts source-complete
+  typed input `/2`; historical `@1.0.0` and identifier-only `/1` remain
+  registered for replay with sealed synthetic outputs unchanged.
+- Product path: additive case/internal commands, `evidence-product-job/4` and
+  security audit `/4` drive a case-admin-only, one-call assessment job. The API
+  derives accepted current observations/relations, open questions, sequence,
+  predecessor, workspace and principal server-side. The provider receives exact
+  typed source/locator/quote evidence; the browser supplies none.
+- Commit/recovery: engine output remains an untrusted candidate. Product
+  projection stores the validated assessment and case binding only after engine
+  commit and deliberately leaves evidence revision unchanged. A post-engine
+  fault stored no product assessment; full composition restart reused encrypted
+  response evidence, preserved the assessment identity and made no second call.
+- Revision correction: Stage A import already advances product revision for a
+  new source. Live observation had advanced it again while the engine counted
+  that source once, preventing a current assessment basis. Observation now
+  verifies/reuses the import revision; relation then advances engine/product
+  together. Later import/observation makes the predecessor due for attention.
+- Reviewer proof: the PostgreSQL journey accepts observations and relation,
+  proposes/resumes assessment v1, records human acceptance, imports and observes
+  another Stage A source, shows v1 attention, proposes v2 with immutable
+  predecessor linkage and records a separate human acceptance. Budget,
+  credential-shaped payload and foreign-case attempts refuse before transport;
+  audit remains content-free.
+- Verification: focused module/web/API suite 11 passed; focused Stage A
+  PostgreSQL suite 2 passed; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`;
+  `pnpm test` — 745 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm test:postgres` — 36 tests on a fresh database; `pnpm build`;
+  `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+- Follow-up/blocker: engineering is complete, but the explicitly budgeted real
+  provider acceptance cannot run without an `OPENAI_API_KEY` and approved spend
+  ceiling. Stage B and every broader class remain closed.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0109 superseded before implementation
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0109
+- Summary: Superseded the newly frozen live-assessment charter before changing
+  code. Its Definition of Done incorrectly required assessment projection to
+  advance the product `evidenceRevision`.
+- Reason: the accepted assessment contract deliberately leaves evidence
+  revision unchanged. An assessment records `basisEvidenceRevision`; advancing
+  that revision merely because the assessment was proposed would make the new
+  assessment stale immediately and break the existing attention/re-review
+  semantics.
+- Follow-up: activate ACME-0110 with the same bounded outcome but require an
+  atomic assessment projection at unchanged product evidence revision. The
+  engine transaction still advances its internal state revision normally.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0108 Stage A live relation job
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0108
+- Summary: Added the second callable Stage A provider operation. Additive
+  case/internal command contracts, `evidence-product-job/3` and live security
+  audit `/3` bind one authorized case, a sorted set of at least two current
+  observations, one model and a literal one-call budget.
+- Server authority: the authenticated case-first API derives workspace,
+  principal, current observations and activated Stage A source authority from
+  one authorized product snapshot. The browser supplies only command identity,
+  confirmation and budget; evidence, source text, state and credentials cannot
+  be supplied by the caller.
+- Product path: the existing strict `relate-observations` task validates model
+  output through the durable encrypted-payload engine. After engine commit, one
+  atomic repository operation stores typed relations, open questions, scoped
+  standing changes, case bindings and exactly one evidence-revision advance.
+  The primary browser launches/polls the job and exposes the committed result
+  through the existing relation/open-question views; timeline stays a pure
+  observation projection.
+- Recovery: an injected interruption after engine commit left no relations,
+  questions or product revision. Reopening the complete PostgreSQL composition
+  and resubmitting the exact command reused retained provider evidence, wrote
+  identical content-derived identities and completed with one cumulative
+  transport call.
+- Refusal/isolation: excess budget, credential-shaped payload and a sibling
+  case with no eligible observations all refused before transport. Refusal,
+  start, failure and completion audits remained content-free and did not echo
+  source text or credential material.
+- Verification: focused web/API/file suite 11 passed; focused PostgreSQL Stage
+  A suite 2 passed; `pnpm typecheck`; `pnpm lint`; `pnpm boundaries`;
+  `pnpm test` — 745 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm test:postgres` — 36 tests on a fresh database; `pnpm build`;
+  `pnpm format:check`; `pnpm docs:check`; `git diff --check`. Two initial full
+  local attempts hit existing Test UI/auth timing-teardown flakes; affected
+  tests passed alone and the exact full rerun passed. No paid call ran.
+- Follow-up: add the live assessment job and complete primary assessment
+  review plus late-evidence reassessment. Explicitly budgeted real-provider
+  acceptance still requires a process credential and approved spend ceiling.
+  Stage B and every broader data class remain closed.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0107 Stage A live observation job
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0107
+- Summary: Implemented the first callable Stage A provider operation. Additive
+  case/internal command contracts and `evidence-product-job/2` bind one
+  activated source, one model and a literal one-call budget. Live security
+  audit `/2` records start, completion, failure and refusal without content.
+- Compatibility: `evidence.observe-artifact@1.1.0` replaces the synthetic-only
+  wording with source-neutral wording while preserving semantics. Historical
+  `@1.0.0` remains registered for replay, and deterministic fixture request
+  hashes were intentionally re-pinned for the active contract.
+- Product path: the authenticated case-first API requires server-derived
+  `case-admin` / `live-model.run`, scans credential-shaped payloads and passes
+  exact confirmation/source authority into the closed capability. Canonical
+  source text is hydrated through the audited artifact service; neither source,
+  workspace nor principal may come from the browser. The primary source card
+  exposes analysis only when the complete live capability exists.
+- Commit boundary and recovery: the worker projects validated observations and
+  advances evidence revision only after the durable engine commit. An injected
+  interruption after provider success left zero product observations; a full
+  PostgreSQL composition restart reused encrypted retained response evidence,
+  completed the same job with identical observation identity and made no
+  second transport call.
+- Refusal/isolation: excess budget, credential-shaped command and a known
+  source id under a sibling case all refused before transport; the sibling case
+  returned non-disclosing 404. Three refusal audits plus started/failed/
+  completed audits contained no source text, quote, provider body or
+  credential.
+- Live acceptance entry: added an isolated `tests/live` Stage A product gate
+  requiring exact live opt-in, hosted PostgreSQL/S3/key configuration,
+  operator-supplied source provenance and an explicit one-call cost ceiling.
+  It skipped in this checkpoint because no `OPENAI_API_KEY` was present; spend
+  was zero.
+- Verification: focused observation/module/API/auth/browser tests 24 passed;
+  PostgreSQL Stage A tests 2 passed; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; `pnpm test` — 745 unit, 78 conformance, 62 integration,
+  26 scenario; `pnpm test:postgres` — 36 tests against a fresh database;
+  `pnpm build`; `pnpm format:check`; `pnpm docs:check`; `git diff --check`.
+  An initial full PostgreSQL run reused targeted-test data and was invalidated;
+  it exposed and corrected a pre-existing first-workspace ordering assumption
+  before the clean run passed.
+- Follow-up: implement live relation/timeline/open-question and assessment jobs,
+  then execute the primary review and late-evidence reassessment journey. The
+  real paid observation acceptance needs a process credential and explicit
+  run ceiling. Stage B and all broader data classes remain closed.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0106 Stage A judicial text import
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0106
+- Summary: Implemented the first real-source product path authorized by
+  ADR-0040. `evidence-create-case-command/2` adds an explicit immutable case
+  data policy, while `evidence-text-import-metadata/2` and
+  `evidence-text-import-record/2` bind only
+  `stage-a-anonymized-judicial-text/1` to operator/provider attestations and
+  exact external-source provenance. Existing synthetic `/1` commands and
+  records remain unchanged.
+- Trust boundary: case policy and import class must match. `source.import` is
+  case-admin-only. Stage A case creation and import refuse unless the API was
+  composed with ACME-0105's complete `evidence-poc1-live/1` capability;
+  credentials, client flags and organization roles cannot activate it. The
+  default composition remains synthetic/scripted.
+- Product path: authenticated API/browser controls create Stage A cases, paste
+  operator-prepared strict UTF-8 text and collect parent PDF digest/byte length,
+  acquisition reference and pypdf extraction version/page count. Imported
+  exact and LF/NFC canonical bytes remain separately encrypted immutable
+  representations. The parent PDF is never ingested.
+- Persistence/isolation: file reopening preserves the additive Stage A product
+  record/provenance; PostgreSQL preserves product plus identity through a full
+  composition restart. Adversarial tests refuse both policy/class directions,
+  credential-shaped metadata and capability-free activation, while a sibling
+  case reveals no imports.
+- Real-source acceptance: fully rendered and visually inspected every page of
+  the two operator-supplied PDFs (52 + 23 pages), then extracted outside Git
+  with `pypdf 6.10.0; default; LF-page-separator/1`. D1 parent SHA-256
+  `f271fb518b31f6f6ff0ae80b740c078f383b3d44dbdceea43a5ca216c3920fd4`
+  produced extracted SHA-256
+  `4771c61b3b7080ae6b82de8e3dab0c74d82b8d22ba387787e9c0658bf698364a`;
+  D2 parent SHA-256
+  `7a7188fb8ce18d0d952e6d4a342753817b3c57fdb788290c9f142df4dfac3633`
+  produced extracted SHA-256
+  `9a12bcf574a42cc07d89dc82b8443de52d6f9efbf78fc14d53d41668480607c7`.
+  Both imported through the authenticated Stage A API into disposable
+  PostgreSQL and reopened with byte-identical records and source hashes.
+  Provider calls: zero. The disposable database was removed; temporary
+  renders/extracts were sent to the recycle bin; original PDFs remain intact.
+- Verification: focused Stage A/auth/browser suite 20 tests; `pnpm typecheck`;
+  `pnpm lint`; `pnpm boundaries`; `pnpm test` — 745 unit, 78 conformance, 62
+  integration, 26 scenario; `pnpm test:postgres` — 35 tests on a clean
+  disposable `postgres:15`; `pnpm build`; `pnpm format:check`;
+  `pnpm docs:check`; `git diff --check`. One auth blackbox timed out only while
+  the build ran concurrently; it passed alone and the full serial rerun passed.
+- Spend: none. No live provider call was made.
+- Follow-up: add the bounded case-first live evidence job, confirmation/audit,
+  restart-safe provider execution and primary observation→relation→assessment
+  reviewer/reassessment journey over these imported Stage A sources. Stage B
+  FUP and all other source classes remain independently closed.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0105 Evidence live composition boundary
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0105
+- Summary: Implemented the first runtime checkpoint after ADR-0040. The
+  Evidence hosted composition can now create a closed
+  `evidence-poc1-live/1` capability, but only after hosted mode, durable
+  PostgreSQL, live provider configuration, deployment ceilings and a mounted
+  durable payload key all validate. Default/local execution remains the
+  scripted gateway and no product route can invoke live yet.
+- Shared boundary: added pure leaf package `@acme/live-safety` for recursive
+  credential-field refusal, explicit environment opt-in, environment-only
+  credential resolution and nested run/confirmation/deployment budget checks.
+  The Domain Test UI now reuses those primitives without changing its
+  `acme-live-confirmation/1` public behavior.
+- Evidence boundary: added strict `evidence-live-confirmation/1` with exact
+  case binding and no actor field. `live-model.run` is denied to organization
+  roles, case-viewer and case-reviewer and granted only to case-admin. The
+  capability releases an OpenAI gateway only when that server-derived context,
+  a matching confirmation and an attested `authorized-external`
+  `stage-a-anonymized-judicial-text/1` source are present together.
+- Durable retention: live-enabled PostgreSQL composition reads a base64
+  32-byte key from `ACME_EVIDENCE_PAYLOAD_KEY_FILE`, uses its stable configured
+  id and refuses an absent/invalid/ephemeral key. Credentials alone activate
+  nothing, startup makes no provider call and serialized capability metadata
+  contains no credential.
+- Proof: a fully authorized run reached the existing OpenAI Responses adapter
+  through an injected transport; every mixed profile refused before transport,
+  and the default composition exposed only the scripted gateway with zero
+  invocations.
+- Verification: focused suites 39 tests; `pnpm typecheck`; `pnpm lint`;
+  `pnpm boundaries`; `pnpm test` — 742 unit, 78 conformance, 62 integration,
+  26 scenario; `pnpm build`; `pnpm format:check`; `pnpm docs:check` — 212
+  Markdown files; `git diff --check`. The first `pnpm test:postgres` correctly
+  refused without configuration; a disposable `postgres:15` was then started
+  on an isolated port and all 34 PostgreSQL tests passed from a clean database.
+  The container was stopped and removed afterward.
+- Spend: none. No live provider call was made.
+- Follow-up: version the Stage A data/import provenance contract and add the
+  authenticated live job/API/browser path with content-free audit. That path
+  must use this capability rather than constructing a gateway directly.
+- Signature: Codex
+
+## 2026-08-15 — ACME-0104 POC #1 live product applicability (ADR-0040)
+
+- Date: 2026-08-15
+- Author: Codex
+- Task: ACME-0104
+- Summary: Accepted ADR-0040, the applicability decision that advances the
+  Evidence Integrity Workbench from a synthetic-only implementation phase to
+  one bounded Stage A live proof without weakening its permanent evidence,
+  review, security or case-isolation rules. Documentation-only; the runtime
+  still rejects real-source import and composes the scripted gateway.
+- Permanent invariants: candidate-not-truth, immutable exact
+  source/version/locator provenance, append-only coexistence of versions and
+  review decisions, typed relations and temporal uncertainty, persistent
+  citation-complete assessments, visible late-evidence attention,
+  deny-by-default case isolation and the L5 conclusion prohibition apply to
+  every profile.
+- Phase-local controls: the seven/eight fixed corpus, sealed hashes,
+  `synthetic-only` policy, synthetic authority attestation and deterministic
+  scripted gateway continue to govern the existing test profile and offline
+  gates. They are no longer misclassified as universal product invariants.
+- Stage A authority: exactly `stage-a-anonymized-judicial-text/1` — authorized
+  real judicial text already anonymized/redacted before import, constrained by
+  the existing strict UTF-8 mechanics and encrypted artifact boundary. Text
+  prepared outside ACME from a PDF records parent digest and extraction
+  identity; ACME does not gain a PDF import path. Stage B FUP material and all
+  broader/sensitive classes remain closed.
+- Live invariant: `evidence-poc1-live/1` must machine-check the conjunction of
+  durable PostgreSQL, live provider, authorized-external source origin and
+  authenticated/configured authorized-live execution. Credentials or a
+  deployment label cannot activate it, and any mock/in-memory/fixture mixture
+  refuses.
+- Real material: the operator supplied two anonymized judicial PDFs outside
+  the repository. Read-only inspection found 52 and 23 text-bearing pages,
+  101,732 and 39,786 extracted characters, and no empty extraction page. No
+  source bytes or extracted content entered Git. They are ready for the later
+  operator-prepared-text provenance/import checkpoint.
+- Verification: `pnpm docs:check` — 210 Markdown files; `pnpm format:check`;
+  `git diff --check` clean; manual link, terminology and applicability review.
+  Historical ADRs were not edited. Code/test gates were not run because this
+  charter changed only documentation and `AGENTS.md`.
+- Spend: none. No provider call was made.
+- Follow-up: implement ADR-0039 and ADR-0040 as a typed fail-closed live
+  composition, then add the Stage A contract/import path and real primary
+  reviewer journey. Stage B is independent and must not block that sequence.
+- Signature: Codex
+
+## 2026-08-14 — ACME-0103 PostgreSQL restart test modernized to case-first
+
+- Date: 2026-08-14
+- Author: Claude
+- Task: ACME-0103
+- Summary: CI's PostgreSQL job failed with `expected 404 to be 201`. The
+  restart durability test had gone stale against ADR-0036 case-first routing
+  and nothing had ever executed it. Fixed and verified against a real server.
+- This is the first session in which `pnpm test:postgres` actually ran. Every
+  prior journal entry — ACME-0098, ACME-0100, ACME-0101 — recorded it as
+  refused for want of a configured server, and said so rather than claiming a
+  result. The operator started Docker, so the gap could finally be closed:
+  34 tests, 6 files, against `postgres:15` from a freshly created database
+  matching the CI service. A disposable container was used; the operator's
+  Supabase stack was never touched by test migrations.
+- Origin, checked rather than assumed: the guard that 404s `/api/reviews`
+  without a case prefix came in `9037ca1`, before ACME-0099 and ACME-0100.
+  Commit `756042b` only appended two prefixes to the same list. The test has
+  been broken since `9037ca1`, invisibly, because the suite never ran.
+- The first plausible cause was not the only one. Removing `/api/reviews` from
+  the guard locally still gave 404: the test reviewed an observation under
+  `first.workspaceId` while its change set bound that observation to a separate
+  `durableWorkspaceId`. Two independent staleness bugs behind one assertion,
+  and stopping at the first would have produced a fix that still failed.
+- The separate workspace turned out to be deliberate. Startup adopts unbound
+  objects of the composition's workspace into its case, so the original test
+  parked the golden E-A01 assessment in a workspace the composition did not
+  manage. ADR-0036 then closed that door: reconciliation requires every
+  workspace to own exactly one case, so a parked workspace fails on restart.
+  With both routes blocked, the fix had to change what the assessment cites
+  rather than where it lives — it now cites this case's single observation.
+- Assertions changed deliberately: `evidence-review-decision/2` to `/3`, and
+  `authenticated-session` to `authenticated-case-session`. That is a real
+  change in what is proven, and it is the correct one — the legacy `/2` path is
+  unreachable and implements the caller-supplied `workspaceId` pattern
+  ADR-0036 exists to forbid.
+- Reported rather than fixed: `POST /api/reviews` still carries a
+  `requestCaseId === null` branch reading `command.workspaceId` from the body.
+  The guard makes it unreachable, so it is dead code implementing a forbidden
+  pattern. Removing it is a separate charter; leaving it means whoever next
+  touches the guard could revive it.
+- A second, unrelated flake surfaced and was addressed: the full default suite
+  intermittently failed `compares corrected and later accounts…` at 17s against
+  the default 5s timeout, while passing at 4.3s on an idle machine. It is
+  load-sensitive rather than a regression, but 4.3s against a 5s bound will
+  flake in CI, so it now carries an explicit 30s timeout like its sibling.
+- Not addressed, and worth naming: an ENOENT race in
+  `tests/integration/test-ui-workbench.test.ts` around `workspace/jobs/*.json`
+  appeared once under the same load. It is a real latent flake and is recorded
+  as a follow-up rather than quietly ignored.
+- Verification: `pnpm test:postgres` — 34 tests from a clean database;
+  `pnpm test` — 728 unit (115 files), 78 conformance, 62 integration, 26
+  scenario; `pnpm typecheck`; `pnpm lint`; `pnpm format:check`; `pnpm build`;
+  `pnpm docs:check`; `git diff --check` clean.
+- Spend: none.
+- Signature: Claude
+
+## 2026-08-14 — ACME-0102 workbench live model boundary (ADR-0039)
+
+- Date: 2026-08-14
+- Author: Claude
+- Task: ACME-0102
+- Summary: Accepted ADR-0039, which decides how the Evidence Integrity
+  Workbench may call a live model provider. Documentation-only; the product
+  still composes the scripted mock gateway and no live call is possible until
+  the implementation task lands.
+- Why the decision was needed at all: the workbench composes
+  `createScriptedModelGateway` with responses pinned to request hashes of the
+  seven fixed artifacts, and Stage 5 ingestion runs no model. Any document
+  outside the sealed corpus yields zero observations, so relations, timeline,
+  contradictions and assessment are all unreachable for new material. That is
+  structural, not a gap in coverage.
+- The four pre-freeze answers were carried into the ADR with their reasoning
+  rather than as bare rulings, so a later decision can argue against them.
+- **A new `evidence-live-confirmation/1` rather than reusing ADR-0023's.** The
+  existing document carries a free-text `confirmer`; ADR-0035 exists precisely
+  so a browser payload cannot choose the acting identity, and reusing the field
+  would have quietly undone that. Its `caseCount` also means "test-plan cases"
+  and collides with the product's evidence `caseId`. The new document binds
+  `caseId`, so a live authorization cannot leave the ADR-0036 boundary. The
+  pure primitives — forbidden-credential scan, budget assertion, typed refusal
+  reasons — are shared rather than duplicated.
+- **Confirmation is not authorization.** Worth stating separately because it is
+  the easiest thing to get wrong: the confirmation is a cost and intent gate,
+  access stays with ADR-0035 policy and ADR-0036 membership. A new
+  deny-by-default `live-model.run` action, case-admin only, gates the capability
+  itself, and an unauthorized principal gets `404` so live cannot be used to
+  probe case existence.
+- **Two ceilings, not one.** The confirmation declares a run ceiling; a
+  deployment ceiling in configuration caps it and no route may raise it. Retry
+  and repair calls count as calls. Exhaustion terminates the run, and because
+  execution events stay candidates until the state transaction commits, a
+  terminated run leaves no canonical evidence and no revision increment.
+- **`encrypted-payload` retention.** `hash-only` would degrade `replayVerify`
+  to `unavailable` and forfeit ADR-0017 resume — paying a second time on
+  interruption and losing a proof the product already asserts. The cost is that
+  payloads become durable content records, acceptable under `synthetic-only`
+  and explicitly revisited at Slice 9. It also surfaced a concrete consequence:
+  the local composition's payload key is ephemeral per process, so a hosted
+  deployment must supply a durable key or silently lose replay after restart.
+- **All three tasks live.** Restricting to `observe-artifact` buys no safety,
+  because the trust pipeline is gateway-independent: the same validation,
+  prohibited-authority refusals and source-binding gates run whichever gateway
+  produced the candidate. It would only remove everything past extraction. Cost
+  is the risk that actually changes, and the budget is what handles it.
+- Verification: `pnpm docs:check` — 208 Markdown files; `pnpm format:check`;
+  `git diff --check` clean; diff confirmed to contain no `.ts`, schema or
+  `package.json` change. Typecheck, lint and the test suites were not re-run
+  because nothing outside `docs/` changed.
+- Docs: ADR-0039 added and indexed; the technical specification's deferred
+  decision marked decided; `SYSTEMDOC` and `CURRENT_STATUS` synchronized;
+  ACME-0102 archived.
+- Spend: none. No live provider call was made by this task, which is the
+  boundary it decides.
+- Follow-ups: implement ADR-0039 as a separately frozen task against its
+  section 10 gates. Cumulative per-principal budget accounting is deferred.
+  Retention is revisited at Slice 9, and the durable payload key folds into
+  ADR-0037's open KEK question. Slice 9 itself remains closed.
+- Signature: Claude
+
+## 2026-08-12 — Local workbench evidence-projection mismatch (diagnosis, no code change)
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: none active; discovery recorded in `docs/backlog/`
+- Summary: The operator reported several pages showing `Workspace evidence
+  revision does not match the supplied Evidence projection.` Diagnosed and
+  reproduced; no code change was kept, because the right fix is an
+  architecture choice that needs its own charter.
+- Cause: the local file composition persists the product store to
+  `.local/evidence-workbench/*.json` but builds the ACME ledger with
+  `createInMemoryExecutionRepository`. The seed import runs only when the
+  product store has no sources or observations, so a restart against an
+  existing file skips it and leaves the ledger empty. `evidenceProjection()`
+  then returns revision 0 against a file recording revision N, and every
+  builder calling `requireProjectionRevision` throws — observation ledger,
+  compare accounts, relations, timeline and open questions. Work queue, source
+  review, assessment, search, overview and the integrity report do not project
+  domain state and keep working, which is why only some pages failed.
+- Reproduced deterministically with two starts against one data file:
+  development seed `product=1 projection=1 -> ok` then
+  `product=1 projection=0 -> throws`; evaluation seed the same at revision 5.
+- Attempted and backed out: a startup refusal naming the file and the remedy.
+  It broke a supported flow — `local-blackbox.test.ts` deliberately restarts
+  against an existing product file to prove import and redaction records
+  survive, reading the repository directly without serving a projecting view.
+  Bending that test to fit the guard would have been the wrong trade, so the
+  guard was reverted in full rather than kept.
+- Also relevant: the workbench README already states the ledger is
+  "deliberately" in memory and instructs using a fresh product file per
+  session. The behaviour is intended; what is missing is any signal when the
+  instruction is not followed. That makes this a design gap, not a defect, and
+  therefore backlog rather than a corrective task.
+- Recorded: `docs/backlog/local-workbench-durable-ledger.md` with three
+  options — durable SQLite ledger for the local composition (recommended),
+  startup refusal with an explicit opt-out, or rebuilding the projection from
+  the product store (rejected on sight: state is reducer-owned).
+- Operator action taken: backed up and removed `.local/evidence-workbench` so
+  the running instance seeds fresh. The backup is in this session's scratchpad,
+  not in the repository.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm test` — 728 unit, 78 conformance, 62 integration, 26 scenario;
+  `pnpm build`; `pnpm docs:check`; `git diff --check` clean. The working tree
+  carries no code change from this diagnosis.
+- Signature: Claude
+
+## 2026-08-12 — ACME-0101 browser shell parse failure (corrective)
+
+- Date: 2026-08-12
+- Author: Claude
+- Task: ACME-0101
+- Summary: The operator reported that sign-in did not work and mentioned a
+  JavaScript error. The browser client was not partly broken — it was entirely
+  dead. The rendered module contained an unterminated string literal, and a
+  parse error anywhere in a module means none of it runs, so no handler was
+  ever bound, including the sign-in form's.
+- Root cause: `apps/evidence-workbench-web/src/index.ts` renders the whole
+  client from one TypeScript template literal, and `draftRedaction` was written
+  as `.join('\n')`. Inside a template literal `\n` is an escape the literal
+  consumes, so the served JavaScript carried a real line break inside a
+  single-quoted string. The fix is `.join('\\n')`.
+- Reproduced rather than reasoned about: started the local workbench, read
+  `Uncaught SyntaxError: Invalid or unexpected token` from the browser console,
+  extracted the served module and ran `node --check` on it to get the exact
+  offending line. After the fix a clean tab logs only the expected `401` from
+  the unauthenticated `/api/session` probe — which is the call that renders the
+  sign-in form.
+- Not mine, and worth stating plainly: the defect entered with ACME-0097's
+  Documents/redaction view and shipped through ACME-0098, ACME-0099 and
+  ACME-0100. Every one of those tasks ran a green shell test. The test only
+  asserted `toContain` substrings, which pass happily while every button in the
+  product is dead. That is the real lesson here: the shell had no gate that
+  could observe whether its output was valid JavaScript at all.
+- The new gate compiles the emitted module with `new vm.Script` and never runs
+  it, wrapping it in an async arrow because the module uses top-level await. It
+  was proven load-bearing: reintroducing `.join('\n')` fails it, restoring the
+  fix passes it. A scan for other template-consumed escapes in the shell found
+  none.
+- Verification: `pnpm typecheck`; `pnpm lint`; `pnpm format:check`;
+  `pnpm boundaries`; `pnpm test` — 728 unit (115 files, up from 727), 78
+  conformance, 62 integration, 26 scenario; `pnpm build`; `pnpm docs:check`;
+  `git diff --check` clean.
+- Not verified: sign-in end to end. Completing the form means entering a
+  password, which I do not do; the operator can, with the synthetic-only
+  development credential documented in the workbench API README. Everything up
+  to that point — module parses, form renders, no console error — is checked.
+- Spend: none.
+- Follow-ups: a real browser-driven smoke test of sign-in would be its own
+  charter. The shell remains one large unchecked template literal; the parse
+  gate now bounds the worst failure mode but not logic errors inside it.
+- Signature: Claude
+
 ## 2026-08-12 — ACME-0100 assessment output and export operations complete
 
 - Date: 2026-08-12

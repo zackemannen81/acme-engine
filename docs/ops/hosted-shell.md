@@ -74,6 +74,15 @@ bucket does not authorize arbitrary ingestion.
 | `ACME_ARTIFACT_KEK_MANIFEST` | Mounted JSON keyring manifest used during rotation |
 | `ACME_ARTIFACT_KEK_ID` | Active KEK id |
 | `ACME_ARTIFACT_KEK_VERSION` | Active positive KEK version |
+| `ACME_EVIDENCE_LIVE=1` | Explicitly opt in to the Stage A composition |
+| `ACME_EVIDENCE_COMPOSITION_PROFILE=evidence-poc1-live/1` | Select the only authorized Stage A profile |
+| `ACME_EVIDENCE_LIVE_MODEL` | Exact OpenAI model id reserved for the later live job |
+| `OPENAI_API_KEY` | Environment-only provider credential; never accepted by API/browser payloads |
+| `ACME_EVIDENCE_PAYLOAD_KEY_FILE` | Mounted base64 32-byte execution-payload key, stable across restart |
+| `ACME_EVIDENCE_PAYLOAD_KEY_ID` | Versioned payload-key id |
+| `ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS` | Positive deployment model-call ceiling |
+| `ACME_EVIDENCE_LIVE_COST_CEILING_MINOR` | Optional non-negative deployment cost ceiling in minor units |
+| `ACME_EVIDENCE_LIVE_CURRENCY` | Required exactly when a cost ceiling is configured |
 
 Public signup is an Auth-service operator setting and must remain disabled.
 Rotate the product session key only with an explicit session-invalidation plan;
@@ -86,7 +95,11 @@ staging reconciliation, key rotation, deletion and backup/restore verification.
 
 See [deploy/evidence-workbench/README.md](../../deploy/evidence-workbench/README.md).
 
-## Synthetic-only
+## Data authority
 
-Hosted composition does not widen product authority. Data policy remains
-`synthetic-only`. Non-synthetic paths require slice 9 governance.
+The default composition and existing cases remain `synthetic-only`. Only the
+complete `evidence-poc1-live/1` composition exposes creation/import for
+`stage-a-anonymized-judicial-text/1`, and only a case admin may import. The
+operator prepares strict UTF-8 text outside ACME and supplies parent PDF digest,
+byte length, page count and extraction identity; the PDF itself is refused.
+Stage B, arbitrary classes and provider execution remain closed.

@@ -27,18 +27,40 @@ export const EVIDENCE_STATE_SCHEMA_VERSION = 'evidence-state/1' as const;
 export const EVIDENCE_DELTA_SCHEMA_VERSION = 'evidence-delta/1' as const;
 export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION =
   'evidence-observe-artifact-input/1' as const;
-export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2 =
+  'evidence-observe-artifact-input/2' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3 =
+  'evidence-observe-artifact-input/3' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-observe-artifact-output/1' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V2 =
+  'evidence-observe-artifact-output/2' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3 =
+  'evidence-observe-artifact-output/3' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V4 =
+  'evidence-observe-artifact-output/4' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V5 =
+  'evidence-observe-artifact-output/5' as const;
+export const EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION =
+  'evidence-observe-artifact-output/6' as const;
+export const EVIDENCE_SEGMENT_COVERAGE_STATUS = [
+  'observations_extracted',
+  'no_observation',
+] as const;
 export const EVIDENCE_RELATE_OBSERVATIONS_INPUT_SCHEMA_VERSION =
   'evidence-relate-observations-input/1' as const;
-export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
+export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION_V1 =
   'evidence-relate-observations-output/1' as const;
+export const EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION =
+  'evidence-relate-observations-output/2' as const;
 export const EVIDENCE_BUILD_TIMELINE_INPUT_SCHEMA_VERSION =
   'evidence-build-timeline-input/1' as const;
 export const EVIDENCE_BUILD_TIMELINE_OUTPUT_SCHEMA_VERSION =
   'evidence-build-timeline-output/1' as const;
 export const EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION =
   'evidence-propose-assessment-input/1' as const;
+export const EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION_V2 =
+  'evidence-propose-assessment-input/2' as const;
 export const EVIDENCE_PROPOSE_ASSESSMENT_OUTPUT_SCHEMA_VERSION =
   'evidence-propose-assessment-output/1' as const;
 export const EVIDENCE_MEMORY_SCHEMA_VERSION = 'evidence-memory/1' as const;
@@ -279,7 +301,7 @@ export const EvidenceEventOccurrenceSchema = z
   })
   .strict();
 
-export const EvidenceRelationKindSchema = z.enum([
+export const EVIDENCE_RELATION_KIND_V1 = [
   'supports',
   'contradicts',
   'qualifies',
@@ -287,6 +309,24 @@ export const EvidenceRelationKindSchema = z.enum([
   'duplicate',
   'correction',
   'unresolved',
+] as const;
+export const EVIDENCE_CONTINUITY_RELATION_KIND = [
+  'repeats',
+  'adds_detail',
+  'changes_certainty',
+  'retracts',
+  'omits_previous_detail',
+] as const;
+export const EVIDENCE_EXPOSURE_RELATION_KIND = [
+  'prompted_by',
+  'exposed_to_before',
+  'asked_after',
+] as const;
+export const EvidenceRelationKindV1Schema = z.enum(EVIDENCE_RELATION_KIND_V1);
+export const EvidenceRelationKindSchema = z.enum([
+  ...EVIDENCE_RELATION_KIND_V1,
+  ...EVIDENCE_CONTINUITY_RELATION_KIND,
+  ...EVIDENCE_EXPOSURE_RELATION_KIND,
 ]);
 
 export const EvidenceRelationEndpointSchema = z
@@ -554,11 +594,105 @@ export const EvidenceActorRosterEntrySchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactInputSchema = z
+export const EvidenceObserveArtifactInputV1Schema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION),
     artifactVersion: SourceArtifactVersionSchema,
     actorRoster: z.array(EvidenceActorRosterEntrySchema),
+  })
+  .strict();
+
+export const EvidenceObservationCoverageWindowSchema = z
+  .object({
+    sourceSegmentIds: z
+      .array(z.string().regex(/^line-[0-9]{6}-segment-[0-9]{4}$/u))
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        if (new Set(values).size !== values.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage window segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
+const EvidenceWindowSourceSegmentIdSchema = z
+  .string()
+  .regex(
+    /^(?:line-[0-9]{6}-segment-[0-9]{4}|block-[0-9]{6}-segment-[0-9]{4})$/u,
+  );
+
+function uniqueSegmentIds(
+  values: readonly string[],
+  context: z.RefinementCtx,
+  message: string,
+): void {
+  if (new Set(values).size !== values.length) {
+    context.addIssue({
+      code: 'custom',
+      message,
+    });
+  }
+}
+
+export const EvidenceObservationCoverageWindowV3Schema = z
+  .object({
+    sourceSegmentIds: z
+      .array(EvidenceWindowSourceSegmentIdSchema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        uniqueSegmentIds(
+          values,
+          context,
+          'Coverage window segment ids must be unique.',
+        );
+      }),
+    contextSegmentIds: z
+      .array(EvidenceWindowSourceSegmentIdSchema)
+      .max(16)
+      .superRefine((values, context) => {
+        uniqueSegmentIds(
+          values,
+          context,
+          'Context segment ids must be unique.',
+        );
+      })
+      .optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const extractable = new Set(value.sourceSegmentIds);
+    for (const id of value.contextSegmentIds ?? []) {
+      if (extractable.has(id)) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            'Context segment ids must not overlap the extractable window.',
+        });
+      }
+    }
+  });
+
+export const EvidenceObserveArtifactInputV2Schema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V2),
+    artifactVersion: SourceArtifactVersionSchema,
+    actorRoster: z.array(EvidenceActorRosterEntrySchema),
+    coverageWindow: EvidenceObservationCoverageWindowSchema,
+  })
+  .strict();
+
+export const EvidenceObserveArtifactInputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3),
+    artifactVersion: SourceArtifactVersionSchema,
+    actorRoster: z.array(EvidenceActorRosterEntrySchema),
+    coverageWindow: EvidenceObservationCoverageWindowV3Schema,
+    sourceStructureId: EvidenceSha256Schema,
   })
   .strict();
 
@@ -614,7 +748,7 @@ const temporalCandidate = z.discriminatedUnion('kind', [
     .strict(),
 ]);
 
-export const EvidenceStatementOccurrenceCandidateSchema = z
+export const EvidenceStatementOccurrenceCandidateV1Schema = z
   .object({
     kind: z.literal('statement-occurrence'),
     startLine: z.number().int().positive(),
@@ -625,7 +759,7 @@ export const EvidenceStatementOccurrenceCandidateSchema = z
   })
   .strict();
 
-export const EvidenceExhibitAssertionCandidateSchema = z
+export const EvidenceExhibitAssertionCandidateV1Schema = z
   .object({
     kind: z.literal('exhibit-assertion'),
     startLine: z.number().int().positive(),
@@ -636,9 +770,117 @@ export const EvidenceExhibitAssertionCandidateSchema = z
   })
   .strict();
 
-export const EvidenceObserveArtifactOutputSchema = z
+export const EvidenceObserveArtifactOutputV1Schema = z
   .object({
-    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V1,
+    ),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV1Schema,
+        EvidenceExhibitAssertionCandidateV1Schema,
+      ]),
+    ),
+  })
+  .strict();
+
+export const EvidenceStatementOccurrenceCandidateV2Schema = z
+  .object({
+    kind: z.literal('statement-occurrence'),
+    exactQuote: EvidenceNonBlankStringSchema,
+    actorReference: actorReferenceCandidate,
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceExhibitAssertionCandidateV2Schema = z
+  .object({
+    kind: z.literal('exhibit-assertion'),
+    exactQuote: EvidenceNonBlankStringSchema,
+    sourceActorReference: actorReferenceCandidate.nullable(),
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputV2Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V2,
+    ),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV2Schema,
+        EvidenceExhibitAssertionCandidateV2Schema,
+      ]),
+    ),
+  })
+  .strict();
+
+export const EvidenceSingleLineExactQuoteSchema =
+  EvidenceNonBlankStringSchema.max(500).regex(
+    /^[^\r\n]+$/u,
+    'Exact quote must be one canonical source line.',
+  );
+
+export const EvidenceStatementOccurrenceCandidateV3Schema = z
+  .object({
+    kind: z.literal('statement-occurrence'),
+    exactQuote: EvidenceSingleLineExactQuoteSchema,
+    actorReference: actorReferenceCandidate,
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceExhibitAssertionCandidateV3Schema = z
+  .object({
+    kind: z.literal('exhibit-assertion'),
+    exactQuote: EvidenceSingleLineExactQuoteSchema,
+    sourceActorReference: actorReferenceCandidate.nullable(),
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputV3Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V3,
+    ),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV3Schema,
+        EvidenceExhibitAssertionCandidateV3Schema,
+      ]),
+    ),
+  })
+  .strict();
+
+export const EvidenceSourceSegmentIdSchema = z
+  .string()
+  .regex(/^line-[0-9]{6}-segment-[0-9]{4}$/u);
+
+export const EvidenceStatementOccurrenceCandidateSchema = z
+  .object({
+    kind: z.literal('statement-occurrence'),
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
+    actorReference: actorReferenceCandidate,
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceExhibitAssertionCandidateSchema = z
+  .object({
+    kind: z.literal('exhibit-assertion'),
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
+    sourceActorReference: actorReferenceCandidate.nullable(),
+    temporalBound: temporalCandidate.nullable(),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputV4Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V4,
+    ),
     observations: z.array(
       z.discriminatedUnion('kind', [
         EvidenceStatementOccurrenceCandidateSchema,
@@ -647,6 +889,96 @@ export const EvidenceObserveArtifactOutputSchema = z
     ),
   })
   .strict();
+
+export const EvidenceSegmentCoverageEntrySchema = z
+  .object({
+    sourceSegmentId: EvidenceSourceSegmentIdSchema,
+    status: z.enum(EVIDENCE_SEGMENT_COVERAGE_STATUS),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactOutputV5Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION_V5,
+    ),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateSchema,
+        EvidenceExhibitAssertionCandidateSchema,
+      ]),
+    ),
+    segmentCoverage: z
+      .array(EvidenceSegmentCoverageEntrySchema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        const ids = values.map(({ sourceSegmentId }) => sourceSegmentId);
+        if (new Set(ids).size !== ids.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage ledger segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
+const EvidenceStructuredSourceSegmentIdSchema = z
+  .string()
+  .regex(
+    /^(?:line-[0-9]{6}-segment-[0-9]{4}|block-[0-9]{6}-segment-[0-9]{4})$/u,
+  );
+
+const EvidenceStatementOccurrenceCandidateV6Schema =
+  EvidenceStatementOccurrenceCandidateSchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+const EvidenceExhibitAssertionCandidateV6Schema =
+  EvidenceExhibitAssertionCandidateSchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+const EvidenceSegmentCoverageEntryV6Schema =
+  EvidenceSegmentCoverageEntrySchema.extend({
+    sourceSegmentId: EvidenceStructuredSourceSegmentIdSchema,
+  });
+
+export const EvidenceObserveArtifactOutputSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION),
+    observations: z.array(
+      z.discriminatedUnion('kind', [
+        EvidenceStatementOccurrenceCandidateV6Schema,
+        EvidenceExhibitAssertionCandidateV6Schema,
+      ]),
+    ),
+    segmentCoverage: z
+      .array(EvidenceSegmentCoverageEntryV6Schema)
+      .min(1)
+      .max(64)
+      .superRefine((values, context) => {
+        const ids = values.map(({ sourceSegmentId }) => sourceSegmentId);
+        if (new Set(ids).size !== ids.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Coverage ledger segment ids must be unique.',
+          });
+        }
+      }),
+  })
+  .strict();
+
+export const EvidenceObserveArtifactReplayOutputSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceObserveArtifactOutputV1Schema,
+    EvidenceObserveArtifactOutputV2Schema,
+    EvidenceObserveArtifactOutputV3Schema,
+    EvidenceObserveArtifactOutputV4Schema,
+    EvidenceObserveArtifactOutputV5Schema,
+    EvidenceObserveArtifactOutputSchema,
+  ],
+);
 
 export const EvidenceRelateObservationsInputSchema = z
   .object({
@@ -690,6 +1022,16 @@ export const EvidenceRelationComparableScopeCandidateSchema = z
   })
   .strict();
 
+export const EvidenceRelationCandidateV1Schema = z
+  .object({
+    relationKind: EvidenceRelationKindV1Schema,
+    endpoints: z.array(EvidenceRelationEndpointSchema).min(2),
+    comparableScope: EvidenceRelationComparableScopeCandidateSchema,
+    rationaleCode: EvidenceNonBlankStringSchema,
+    rationale: EvidenceNonBlankStringSchema,
+  })
+  .strict();
+
 export const EvidenceRelationCandidateSchema = z
   .object({
     relationKind: EvidenceRelationKindSchema,
@@ -718,6 +1060,18 @@ export const EvidenceOpenQuestionCandidateSchema = z
         'An open question must cite at least one observation or relation.',
     },
   );
+
+export const EvidenceRelateObservationsOutputV1Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_RELATE_OBSERVATIONS_OUTPUT_SCHEMA_VERSION_V1,
+    ),
+    propositions: z.array(EvidencePropositionCandidateSchema),
+    events: z.array(EvidenceEventCandidateSchema),
+    relations: z.array(EvidenceRelationCandidateV1Schema),
+    openQuestions: z.array(EvidenceOpenQuestionCandidateSchema),
+  })
+  .strict();
 
 export const EvidenceRelateObservationsOutputSchema = z
   .object({
@@ -754,7 +1108,7 @@ export const EvidenceBuildTimelineOutputSchema = z
   })
   .strict();
 
-export const EvidenceProposeAssessmentInputSchema = z
+export const EvidenceProposeAssessmentInputV1Schema = z
   .object({
     schemaVersion: z.literal(EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION),
     workspaceId: EvidenceNonBlankStringSchema,
@@ -766,6 +1120,55 @@ export const EvidenceProposeAssessmentInputSchema = z
     predecessorAssessmentVersionId: EvidenceDerivedIdSchema.nullable(),
   })
   .strict();
+
+export const EvidenceProposeAssessmentInputV2Schema = z
+  .object({
+    schemaVersion: z.literal(
+      EVIDENCE_PROPOSE_ASSESSMENT_INPUT_SCHEMA_VERSION_V2,
+    ),
+    workspaceId: EvidenceNonBlankStringSchema,
+    sequence: z.number().int().positive(),
+    basisEvidenceRevision: z.number().int().nonnegative(),
+    acceptedObservations: z.array(EvidenceObservationSchema).min(1),
+    acceptedRelations: z.array(EvidenceRelationSchema),
+    acceptedOpenQuestions: z.array(EvidenceOpenQuestionSchema),
+    predecessorAssessmentVersionId: EvidenceDerivedIdSchema.nullable(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    for (const [path, ids] of [
+      [
+        'acceptedObservations',
+        value.acceptedObservations.map((item) => item.observationId),
+      ],
+      [
+        'acceptedRelations',
+        value.acceptedRelations.map((item) => item.relationId),
+      ],
+      [
+        'acceptedOpenQuestions',
+        value.acceptedOpenQuestions.map((item) => item.openQuestionId),
+      ],
+    ] as const) {
+      if (
+        new Set(ids).size !== ids.length ||
+        ids.some((id, index) => index > 0 && (ids[index - 1] as string) > id)
+      )
+        context.addIssue({
+          code: 'custom',
+          path: [path],
+          message: 'Accepted evidence must be unique and sorted by identity.',
+        });
+    }
+  });
+
+export const EvidenceProposeAssessmentInputSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceProposeAssessmentInputV1Schema,
+    EvidenceProposeAssessmentInputV2Schema,
+  ],
+);
 
 export const EvidenceProposeAssessmentOutputSchema = z
   .object({
@@ -822,14 +1225,41 @@ export type EvidenceStandingChange = z.infer<
   typeof EvidenceStandingChangeSchema
 >;
 export type EvidenceDelta = z.infer<typeof EvidenceDeltaSchema>;
+export type EvidenceObserveArtifactInputV1 = z.infer<
+  typeof EvidenceObserveArtifactInputV1Schema
+>;
+export type EvidenceObserveArtifactInputV2 = z.infer<
+  typeof EvidenceObserveArtifactInputV2Schema
+>;
 export type EvidenceObserveArtifactInput = z.infer<
   typeof EvidenceObserveArtifactInputSchema
 >;
 export type EvidenceObserveArtifactOutput = z.infer<
   typeof EvidenceObserveArtifactOutputSchema
 >;
+export type EvidenceObserveArtifactOutputV1 = z.infer<
+  typeof EvidenceObserveArtifactOutputV1Schema
+>;
+export type EvidenceObserveArtifactOutputV2 = z.infer<
+  typeof EvidenceObserveArtifactOutputV2Schema
+>;
+export type EvidenceObserveArtifactOutputV3 = z.infer<
+  typeof EvidenceObserveArtifactOutputV3Schema
+>;
+export type EvidenceObserveArtifactOutputV4 = z.infer<
+  typeof EvidenceObserveArtifactOutputV4Schema
+>;
+export type EvidenceObserveArtifactOutputV5 = z.infer<
+  typeof EvidenceObserveArtifactOutputV5Schema
+>;
+export type EvidenceObserveArtifactReplayOutput = z.infer<
+  typeof EvidenceObserveArtifactReplayOutputSchema
+>;
 export type EvidenceRelateObservationsInput = z.infer<
   typeof EvidenceRelateObservationsInputSchema
+>;
+export type EvidenceRelateObservationsOutputV1 = z.infer<
+  typeof EvidenceRelateObservationsOutputV1Schema
 >;
 export type EvidenceRelateObservationsOutput = z.infer<
   typeof EvidenceRelateObservationsOutputSchema
@@ -842,6 +1272,9 @@ export type EvidenceBuildTimelineOutput = z.infer<
 >;
 export type EvidenceProposeAssessmentInput = z.infer<
   typeof EvidenceProposeAssessmentInputSchema
+>;
+export type EvidenceProposeAssessmentInputV1 = z.infer<
+  typeof EvidenceProposeAssessmentInputV1Schema
 >;
 export type EvidenceProposeAssessmentOutput = z.infer<
   typeof EvidenceProposeAssessmentOutputSchema

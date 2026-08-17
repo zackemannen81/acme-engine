@@ -1,4 +1,5 @@
 import { canonicalJson, sha256 } from '@acme/core';
+import { assertNoLiveCredentialFields } from '@acme/live-safety';
 import {
   EvidenceSecurityAuditEventSchema,
   type EvidenceArtifactRepresentation,
@@ -10,8 +11,6 @@ import type {
 } from './artifact-service.js';
 import {
   EVIDENCE_REDACTION_TRANSFORMATION_VERSION,
-  EVIDENCE_SYNTHETIC_ATTESTATION_VERSION,
-  EVIDENCE_SYNTHETIC_TEXT_DATA_CLASS,
   EvidenceRedactionDraftSchema,
   EvidenceRedactionLogSchema,
   EvidenceTextImportMetadataSchema,
@@ -85,6 +84,7 @@ export function createEvidenceIngestionService(options: {
     resourceKind: 'case' | 'artifact-representation',
     resourceId: string,
     afterDigest: string | null,
+    importReasonCode?: string,
   ) =>
     options.repository.appendSecurityAudit(
       EvidenceSecurityAuditEventSchema.parse({
@@ -97,7 +97,7 @@ export function createEvidenceIngestionService(options: {
         outcome: 'succeeded',
         reasonCode:
           action === 'import.activated'
-            ? 'SYNTHETIC_TEXT_IMPORT_ACTIVATED'
+            ? (importReasonCode ?? 'SYNTHETIC_TEXT_IMPORT_ACTIVATED')
             : action === 'redaction.draft'
               ? 'REDACTION_DRAFT_SAVED'
               : 'REDACTION_APPLIED',
@@ -116,6 +116,7 @@ export function createEvidenceIngestionService(options: {
 
   return {
     async importText(input) {
+      assertNoLiveCredentialFields(input.metadata);
       const metadata = EvidenceTextImportMetadataSchema.parse(input.metadata);
       const validated = validateEvidenceTextImport(
         input.bytes,
@@ -125,6 +126,17 @@ export function createEvidenceIngestionService(options: {
         input.scope.caseId,
         input.scope.workspaceId,
       );
+      const importWorkspace = snapshot.workspaces.find(
+        (item) => item.workspaceId === input.scope.workspaceId,
+      );
+      if (importWorkspace === undefined)
+        throw new Error('IMPORT_WORKSPACE_MISSING');
+      const expectedDataPolicy =
+        metadata.schemaVersion === 'evidence-text-import-metadata/1'
+          ? 'synthetic-only'
+          : 'stage-a-authorized-judicial-text';
+      if (importWorkspace.dataPolicy !== expectedDataPolicy)
+        throw new Error('IMPORT_DATA_POLICY_MISMATCH');
       const commandDigest = sha256(
         canonicalJson({
           metadata: metadata as never,
@@ -236,7 +248,10 @@ export function createEvidenceIngestionService(options: {
       if (original === undefined) throw new Error('ORIGINAL_ACTIVATION_FAILED');
       const stagedAt = options.clock.now();
       const stagingRecord = EvidenceTextImportRecordSchema.parse({
-        schemaVersion: 'evidence-text-import-record/1',
+        schemaVersion:
+          metadata.schemaVersion === 'evidence-text-import-metadata/1'
+            ? 'evidence-text-import-record/1'
+            : 'evidence-text-import-record/2',
         importId:
           existingImport?.importId ??
           `text-import-${sha256(canonicalJson({ caseId: input.scope.caseId, commandKey: metadata.commandKey }))}`,
@@ -247,8 +262,11 @@ export function createEvidenceIngestionService(options: {
         artifactVersionId: source.artifactVersionId,
         commandKey: metadata.commandKey,
         commandDigest,
-        dataClass: EVIDENCE_SYNTHETIC_TEXT_DATA_CLASS,
-        attestationVersion: EVIDENCE_SYNTHETIC_ATTESTATION_VERSION,
+        dataClass: metadata.dataClass,
+        attestationVersion: metadata.attestationVersion,
+        ...(metadata.schemaVersion === 'evidence-text-import-metadata/1'
+          ? {}
+          : { sourceProvenance: metadata.sourceProvenance }),
         originalRepresentationId: original.representationId,
         canonicalRepresentationId:
           existingImport?.canonicalRepresentationId ??
@@ -323,6 +341,9 @@ export function createEvidenceIngestionService(options: {
         'case',
         input.scope.caseId,
         validated.canonicalSha256,
+        metadata.schemaVersion === 'evidence-text-import-metadata/1'
+          ? 'SYNTHETIC_TEXT_IMPORT_ACTIVATED'
+          : 'STAGE_A_JUDICIAL_TEXT_IMPORT_ACTIVATED',
       );
       return record;
     },

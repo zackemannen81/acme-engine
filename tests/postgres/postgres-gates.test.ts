@@ -119,6 +119,93 @@ async function acceptAndCommit(
 }
 
 describe('ADR-0033 postgres gates', () => {
+  it('keeps provider, model and usage queryable without retaining output', async () => {
+    // ADR-0044 governs cost by measurement. `hash-only` retains no response,
+    // so these columns are the only place a query can read what a call cost.
+    const schema = randomSchema('acme_usage');
+    schemas.push(schema);
+    await migratePostgresSchema({ pool, schema, appliedAt });
+    const repository = createPostgresExecutionRepository({
+      pool,
+      schema,
+      ids: countingIds(),
+    });
+    // Accepted but not committed: a terminal execution cannot be mutated.
+    await repository.accept({
+      executionId: 'exec-usage',
+      request: {
+        requestKey: 'exec-usage',
+        namespace: 'gates',
+        task: 'observe',
+        entityId: 'entity-1',
+        expectedRevision: 0,
+        input: { executionId: 'exec-usage' },
+        model: { profile: 'fixture' },
+      },
+      requestFingerprint: 'fp-exec-usage',
+      inputHash: 'input-exec-usage',
+      contract: { id: 'gate.observe', version: '1.0.0' },
+      contractFingerprint: 'contract-fp',
+      effectivePolicy: {
+        timeoutMs: 1000,
+        maxModelCalls: 1,
+        maxRepairCalls: 0,
+        maxRevisionCalls: 0,
+        retention: 'hash-only',
+      },
+      createdAt: timestamp,
+    });
+    await repository.reserveModelCall({
+      modelCallId: 'call-usage',
+      executionId: 'exec-usage',
+      callKey: 'model:0',
+      attempt: 1,
+      purpose: 'primary',
+      selection: { profile: 'fixture' },
+      requestHash: 'request-hash',
+      startedAt: timestamp,
+    });
+    await repository.completeModelCall({
+      modelCallId: 'call-usage',
+      response: {
+        provider: 'openai',
+        model: 'gpt-5.6-luna',
+        receivedAt: timestamp,
+        finishReason: 'stop',
+        text: '{"secret":"must-not-rest"}',
+        usage: { inputTokens: 66_819, outputTokens: 650 },
+        metadata: {},
+      },
+      responseHash: 'response-hash',
+      completedAt: timestamp,
+    });
+
+    const row = await pool.query<{
+      provider: string | null;
+      model: string | null;
+      usage_json: string | null;
+      response_payload: string | null;
+    }>(
+      `SELECT provider, model, usage_json, response_payload
+         FROM ${schema}.model_calls WHERE model_call_id = $1`,
+      ['call-usage'],
+    );
+    const call = row.rows[0];
+    expect(call?.provider).toBe('openai');
+    expect(call?.model).toBe('gpt-5.6-luna');
+    expect(JSON.parse(call?.usage_json ?? '{}')).toEqual({
+      inputTokens: 66_819,
+      outputTokens: 650,
+    });
+    expect(call?.response_payload).toBeNull();
+
+    const stored = await pool.query<{ record_json: string }>(
+      `SELECT record_json FROM ${schema}.model_calls WHERE model_call_id = $1`,
+      ['call-usage'],
+    );
+    expect(stored.rows[0]?.record_json ?? '').not.toContain('must-not-rest');
+  });
+
   it('two concurrent drains lease disjoint outbox sets', async () => {
     const schema = randomSchema('acme_lease');
     schemas.push(schema);

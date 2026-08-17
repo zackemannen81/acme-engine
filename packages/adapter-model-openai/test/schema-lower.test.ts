@@ -122,6 +122,31 @@ describe('lowerStrictStructuredOutputSchema', () => {
     expect(items.anyOf).toHaveLength(2);
   });
 
+  it('preserves bounded array cardinality on the provider wire', () => {
+    const lowered = lowerStrictStructuredOutputSchema({
+      type: 'object',
+      properties: {
+        observations: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 8,
+          items: { type: 'string' },
+        },
+      },
+      required: ['observations'],
+      additionalProperties: false,
+    }) as {
+      properties: {
+        observations: { minItems: number; maxItems: number };
+      };
+    };
+
+    expect(lowered.properties.observations).toMatchObject({
+      minItems: 1,
+      maxItems: 8,
+    });
+  });
+
   it('refuses a plain oneOf without distinct const discriminators', () => {
     expect(() =>
       lowerStrictStructuredOutputSchema({

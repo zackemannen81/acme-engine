@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-12
+Last updated: 2026-08-16
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -32,8 +32,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{index.ts,local.ts,local-main.ts}
-│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,local-blackbox.test.ts,secret-scan.test.ts}
+│   │   ├── src/{index.ts,live.ts,live-observation.ts,live-relation.ts,live-assessment.ts,local.ts,local-main.ts,text-import-list.ts}
+│   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-coverage-windows.test.ts,live-path-regressions.test.ts,live-repair-budget.test.ts,local-blackbox.test.ts,secret-scan.test.ts,text-import-list.test.ts,artifact-config.test.ts}
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -156,6 +156,12 @@ acme-engine/
 │   │       ├── gateway.test.ts
 │   │       ├── schema-lower.test.ts
 │   │       └── transport-fetch.test.ts
+│   ├── live-safety/
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/live-safety.test.ts
 │   ├── adapter-sqlite/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -223,6 +229,7 @@ acme-engine/
 │   │   │   ├── memory.ts
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
+│   │   │   ├── model-call-usage.ts
 │   │   │   ├── model-request-hash.ts
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
@@ -355,6 +362,9 @@ acme-engine/
 │   │   │   ├── canonical-text.ts
 │   │   │   ├── catalogue.ts
 │   │   │   ├── contracts/observe-artifact.ts
+│   │   │   ├── contracts/repair.ts
+│   │   │   ├── coverage.ts
+│   │   │   ├── source-structure.ts
 │   │   │   ├── correction.ts
 │   │   │   ├── identity.ts
 │   │   │   ├── immutable.ts
@@ -366,9 +376,12 @@ acme-engine/
 │   │   │   ├── tasks/observe-artifact.ts
 │   │   │   └── validation.ts
 │   │   └── test/
+│   │       ├── coverage.test.ts
+│   │       ├── source-structure.test.ts
 │   │       ├── identity-and-schemas.test.ts
 │   │       ├── memory-and-module.test.ts
 │   │       ├── observe-artifact.test.ts
+│   │       ├── repair.test.ts
 │   │       └── state.test.ts
 │   ├── module-narrative/
 │   │   ├── package.json
@@ -469,6 +482,9 @@ acme-engine/
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
+│   │   ├── execution-repair.test.ts
+│   │   ├── evidence-coverage-windows.test.ts
+│   │   ├── evidence-observe-engine.test.ts
 │   │   ├── scenario-live-offline.test.ts
 │   │   ├── test-ui-launch.test.ts
 │   │   ├── test-ui-live-launch.test.ts
@@ -552,6 +568,14 @@ acme-engine/
 │   │   ├── 0036-evidence-case-management-and-isolation.md
 │   │   ├── 0037-evidence-secure-artifact-foundation.md
 │   │   ├── 0038-bounded-text-ingestion-and-immutable-redaction.md
+│   │   ├── 0039-evidence-workbench-live-model-boundary.md
+│   │   ├── 0040-poc-1-live-product-applicability.md
+│   │   ├── 0041-bounded-observation-candidate-batches.md
+│   │   ├── 0042-runtime-derived-observation-locators.md
+│   │   ├── 0043-runtime-derived-observation-quotes.md
+│   │   ├── 0044-poc1-live-product-acceptance-phase.md
+│   │   ├── 0045-real-material-scale-and-recovery.md
+│   │   ├── 0046-source-chronology-and-claim-projection.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -597,6 +621,7 @@ acme-engine/
 │   │   ├── evidence-integrity-workbench-product-completion-plan.md
 │   │   ├── evidence-integrity-workbench-product-definition.md
 │   │   ├── evidence-integrity-workbench-technical-specification.md
+│   │   ├── evidence-workbench-source-and-claim-surfaces.md
 │   │   ├── first-poc-application-discovery.md
 │   │   ├── gap-resolution-plan.md
 │   │   ├── narrative-module-build-and-test-plan.md
@@ -702,6 +727,10 @@ acme-engine/
 │   ├── presentations/
 │   │   ├── narrative-module-build-and-test-plan.docx
 │   │   └── research-module-build-and-test-plan.docx
+│   ├── acceptance/
+│   │   ├── ACME-0133-frozen-acceptance-report.md
+│   │   ├── ACME-0136-frozen-acceptance-report.md
+│   │   └── ACME-0136-post-freeze-comparison.md
 │   ├── CONTRIBUTING.md
 │   ├── CURRENT_STATUS.md
 │   ├── CURRENT_TASK.md
@@ -725,6 +754,7 @@ acme-engine/
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
 ├── README.md
+├── startup-full_poc1-autoimport.ps1
 ├── tsconfig.json
 ├── tsconfig.tests.json
 ├── vitest.config.ts
@@ -770,6 +800,9 @@ content remains intentionally omitted here.
   preflight refusal for unlowerable constructs. A `fetch` transport is
   published from the separate `./transport-fetch` entry point, so the default
   surface stays network-free.
+- `@acme/live-safety`: pure provider-neutral credential-field refusal,
+  explicit opt-in, environment-credential and nested budget primitives shared
+  by live application surfaces. It performs no I/O and owns no authorization.
 - `@acme/adapter-sqlite`: durable WAL-mode aggregate repository with ordered
   checksum-verified migrations and a `BEGIN IMMEDIATE` Unit of Work.
   `better-sqlite3` is its only external runtime dependency.
@@ -816,10 +849,10 @@ content remains intentionally omitted here.
   synthetic text-import/redaction records and security audit, separate from
   the ACME ledger. PostgreSQL migration v5 owns the Stage 5 tables.
 - `@acme/evidence-views`: pure registered primary work-queue, source-review,
-  observation-ledger, account-comparison, relation-review, timeline and open-
-  question view contracts/builders plus gated technical provenance/replay
-  views, assessment/review-history primary views, stable citations and the
-  vocabulary guard.
+  observation-ledger, account-comparison, claim-surface, relation-review,
+  timeline and open-question view contracts/builders plus gated technical
+  provenance/replay views, assessment/review-history primary views, stable
+  citations and the vocabulary guard.
 - `@acme/evidence-testing`: exact synthetic corpus plus manifest/open/sealed
   truth loaders, deterministic golden builder, identity vectors, the `DEV-T01`
   mock fixture, truth-free deterministic evaluation candidates and product/view
@@ -861,7 +894,58 @@ content remains intentionally omitted here.
   ACME-0095 adds encrypted artifact hydration, product security audit and
   case-admin artifact inspection, re-wrap and revisioned deletion. ACME-0097
   adds the Documents import view, immutable redaction draft/apply flow and
-  restart-safe case-first records.
+  restart-safe case-first records. ACME-0141 sorts that list as the source
+  stream (`text-import-list.ts`) and shows ingest time plus observation
+  coverage; `?view=stream` aliases Documents. ACME-0143 adds
+  `GET /api/claims` and `?view=claim`. ACME-0144 versions relate to
+  `@1.2.0` with continuity and exposure kinds. ACME-0105 adds the closed
+  `evidence-poc1-live/1` capability: strict case confirmation, case-admin-only
+  authority, Stage A source-origin guard, hosted PostgreSQL and durable payload
+  key are required before an OpenAI gateway can be released. ACME-0106 adds
+  capability-gated Stage A case creation and authenticated text import with
+  parent-PDF/extraction provenance. ACME-0107 adds
+  `src/live-observation.ts`, additive live command/job/audit contracts and one
+  authenticated browser/API `observe-artifact` job with durable resume.
+  ACME-0108 adds `src/live-relation.ts`, a capability-gated browser/API
+  `relate-observations` job and atomic relation/open-question projection with
+  no-second-call restart. ACME-0110 adds `src/live-assessment.ts`, source-
+  complete assessment input, live job/audit contracts and the primary review/
+  late-evidence/reassessment proof. ADR-0041/ACME-0112 version the active
+  observation prompt to a bounded candidate batch with an
+  8,192-token output bound while keeping historical versions registered.
+  ACME-0137 adds `coverage.ts`, input `/2` and live window iteration so
+  full-source observation is a workflow over 64-segment windows.
+  ACME-0147 switches the browser shell to Source stream / Claim / Stance
+  / Search, defaults signed-in entry to the stream, and seats source
+  observations under their block. ACME-0148 lists derived source parts
+  as stream cards and scopes source review plus live Analyze to one
+  part.
+  ACME-0142 adds `source-structure.ts` and active observe `@1.11.0` input
+  `/3` so new analyzes use document-native blocks plus neighbour context.
+  ACME-0145 versions those rules to `/2` so oversized paragraphs split at
+  sentence bounds toward 150–350 words. ACME-0146 versions them to `/3`
+  so paragraph and Q+A-answer blocks emit one segment per sentence and
+  structural windows pack toward 800 words (cap 64).
+  ACME-0138 versions active observe to `@1.9.0` output `/5` with a
+  `segmentCoverage` ledger and `0..N` atomic observations per segment.
+  ADR-0042/ACME-0114 then activate `@1.3.0` output `/2`, remove provider line
+  fields, derive unique exact-quote locators in runtime and retain all three
+  historical contracts for replay.
+  ACME-0116 adds active `@1.4.0` output `/3` with short single-line quote bounds
+  and date-less temporal `unknown` instructions while retaining `@1.3.0`.
+  ACME-0117 records that strict one-line provider output is still not canonical
+  source authority: five of eight candidates failed exact binding, so the next
+  offline contract must make runtime-defined bounded segments authoritative.
+  ADR-0043/ACME-0118 implement that active `@1.5.0` output `/4` contract and
+  retain `@1.0.0`–`@1.4.0` for replay.
+  ACME-0120 adds prompt-only active `@1.6.0` canonical UTC grammar and retains
+  `@1.5.0` exactly.
+  ACME-0121 records the first committed real-provider observation batch under
+  `@1.6.0`; ACME-0122 aligns the live and PostgreSQL success-code assertions
+  with the worker's established `LIVE_OBSERVATION_COMPLETED` result.
+  `tests/live/evidence-stage-a-reviewer-journey.test.ts` is ACME-0123's
+  fail-closed two-source Stage A domain-journey gate; it requires explicit
+  live authority and never enters the default test suite.
 - `tooling/typescript/`: shared strict ESM compiler configuration.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
@@ -895,6 +979,10 @@ through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 stays
 single-execute by decision (ADR-0023). A non-authority workbench mock lives
 under `docs/concepts_sandbox/temp/`.
 
+`docs/design/evidence-workbench-source-and-claim-surfaces.md` is the accepted
+ADR-0046 implementation and UX sequence (ACME-0139–0144). It is direction;
+children are not started until chartered.
+
 `docs/design/evidence-integrity-workbench-technical-specification.md` is the
 normative POC #1 implementation plan. Slices 0–8 are delivered; ACME-0087 and
 corrective child ACME-0089 completed Slice 5's source-bound assessment journey.
@@ -903,15 +991,38 @@ organization-membership and deny-by-default role architecture; ACME-0091
 implements it in the new auth packages and Evidence workbench apps. The
 approved later sequence is
 recorded in
-`docs/design/evidence-integrity-workbench-product-completion-plan.md`; it does
-not authorize any non-synthetic data path.
+`docs/design/evidence-integrity-workbench-product-completion-plan.md`; ADR-0040
+is the separate authority for the sole Stage A class.
 
 ADR-0036 decides the Stage 3 case/workspace management and isolation boundary:
 case-first product routes, explicit case roles, immutable case-object ownership
 and same-organization isolation proofs over uniquely bound internal workspaces.
 ACME-0093 implements it and remains synthetic-only. ADR-0037/ACME-0095 add the
-secure artifact foundation for existing synthetic sources; bounded ingestion,
-redaction and non-synthetic authority remain later tasks.
+secure artifact foundation, ACME-0097 adds bounded synthetic ingestion and
+redaction, and ACME-0106 adds only ADR-0040's Stage A import class.
+
+ADR-0040 distinguishes permanent Evidence Workbench invariants from the
+synthetic/test phase controls. It authorizes one bounded Stage A anonymized
+judicial text class. ACME-0105 implements its fail-closed PostgreSQL/live-
+provider/external-source/authorized-execution capability and ACME-0106 adds the
+case/import/browser data path. ACME-0107 opens the bounded observation
+operation and ACME-0108 opens bounded relation/open-question analysis over its
+committed observations. ACME-0110 completes the Stage A engineering journey
+through reviewed assessment and reassessment. ADR-0041/ACME-0112 define the
+observation operation as one bounded non-exhaustive candidate batch after the
+first provider acceptance attempt failed closed. ADR-0042/ACME-0114 move
+canonical locator authority from model output into exact runtime derivation;
+ACME-0116 then bounds active quotes to one short source line and tightens the
+temporal generation rule. ACME-0117 proves that the provider can still compress
+or alter text inside that wire shape. ADR-0043/ACME-0118 implement the
+deterministic successor: provider output selects one runtime-defined segment ID
+and runtime derives the immutable quote/locator. Stage B remains closed.
+ACME-0127 versions the active relation prompt to `@1.1.0` so strict sorted-set
+and endpoint-order rules are explicit, while the historical `@1.0.0` contract
+remains registered byte-exact for replay.
+ACME-0128 similarly versions active assessment to `@1.2.0` with explicit
+sorted-set output rules and retains both `@1.0.0` and `@1.1.0` byte-exact for
+replay.
 
 `docs/design/gap-resolution-plan.md` (ACME-0056) inventories every Persistent
 Gaps item (G01–G19), groups them into work packages with ordered steps and ADR

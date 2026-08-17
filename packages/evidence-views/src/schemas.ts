@@ -14,6 +14,8 @@ export const EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION =
   'evidence-primary-observation-ledger-view/1' as const;
 export const EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION =
   'evidence-primary-account-comparison-view/1' as const;
+export const EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION =
+  'evidence-claim-surface-view/1' as const;
 export const EVIDENCE_PRIMARY_RELATION_REVIEW_VIEW_SCHEMA_VERSION =
   'evidence-primary-relation-review-view/1' as const;
 export const EVIDENCE_PRIMARY_TIMELINE_VIEW_SCHEMA_VERSION =
@@ -39,6 +41,34 @@ const CitationSchema = z
     endLine: z.number().int().positive(),
   })
   .strict();
+
+export const EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION =
+  'evidence-observation-card/1' as const;
+
+export const EvidenceObservationCardSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION),
+    observationVersionId: EvidenceNonBlankStringSchema,
+    kind: z.enum(['statement-occurrence', 'exhibit-assertion']),
+    exactQuote: EvidenceNonBlankStringSchema,
+    sourceTitle: EvidenceNonBlankStringSchema,
+    sourceTimeDisplay: EvidenceNonBlankStringSchema.nullable(),
+    citation: CitationSchema,
+    reviewStanding: z.enum([
+      'awaiting-review',
+      'accepted',
+      'rejected',
+      'unresolved',
+      'revision-requested',
+    ]),
+    assertedEventTimeDisplay: EvidenceNonBlankStringSchema.nullable(),
+    relationCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export type EvidenceObservationCard = z.infer<
+  typeof EvidenceObservationCardSchema
+>;
 
 const ReviewStandingSchema = z.enum([
   'awaiting-review',
@@ -179,6 +209,19 @@ export const EvidencePrimarySourceReviewViewSchema = z
             })
             .strict(),
         ),
+        blocks: z
+          .array(
+            z
+              .object({
+                blockId: EvidenceNonBlankStringSchema,
+                kind: z.enum(['qa-pair', 'paragraph', 'heading']),
+                heading: EvidenceNonBlankStringSchema,
+                startLine: z.number().int().positive(),
+                endLine: z.number().int().positive(),
+              })
+              .strict(),
+          )
+          .default([]),
       })
       .strict(),
     heading: z.literal('Source review'),
@@ -222,6 +265,7 @@ export const EvidencePrimarySourceReviewViewSchema = z
               'request-revision',
             ]),
           ),
+          card: EvidenceObservationCardSchema,
         })
         .strict(),
     ),
@@ -265,6 +309,7 @@ export const EvidencePrimaryObservationLedgerViewSchema = z
             'corrected-version',
             'independent-source',
           ]),
+          card: EvidenceObservationCardSchema,
         })
         .strict(),
     ),
@@ -344,6 +389,35 @@ export type EvidencePrimaryAccountComparisonView = z.infer<
   typeof EvidencePrimaryAccountComparisonViewSchema
 >;
 
+export const EvidenceClaimSurfaceViewSchema = z
+  .object({
+    schemaVersion: z.literal(EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION),
+    workspaceId: EvidenceNonBlankStringSchema,
+    heading: z.literal('Claim'),
+    explanation: z.literal(
+      'Occurrences are grouped by a shared aspect. Cards stay separate; overlap is visible and is not a stored merge.',
+    ),
+    sort: z.enum(['source-time', 'event-time']),
+    groups: z.array(
+      z
+        .object({
+          groupId: EvidenceNonBlankStringSchema,
+          kind: z.enum(['relation-scope', 'actor-thread']),
+          subject: EvidenceNonBlankStringSchema,
+          aspect: EvidenceNonBlankStringSchema,
+          comparePath: EvidenceNonBlankStringSchema.nullable(),
+          relationKinds: z.array(EvidenceNonBlankStringSchema),
+          cards: z.array(EvidenceObservationCardSchema).min(1),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export type EvidenceClaimSurfaceView = z.infer<
+  typeof EvidenceClaimSurfaceViewSchema
+>;
+
 export const EvidencePrimaryRelationReviewViewSchema = z
   .object({
     schemaVersion: z.literal(
@@ -372,6 +446,14 @@ export const EvidencePrimaryRelationReviewViewSchema = z
             duplicate: z.number().int().nonnegative(),
             correction: z.number().int().nonnegative(),
             unresolved: z.number().int().nonnegative(),
+            repeats: z.number().int().nonnegative().default(0),
+            adds_detail: z.number().int().nonnegative().default(0),
+            changes_certainty: z.number().int().nonnegative().default(0),
+            retracts: z.number().int().nonnegative().default(0),
+            omits_previous_detail: z.number().int().nonnegative().default(0),
+            prompted_by: z.number().int().nonnegative().default(0),
+            exposed_to_before: z.number().int().nonnegative().default(0),
+            asked_after: z.number().int().nonnegative().default(0),
           })
           .strict(),
         unresolvedActorRelations: z.number().int().nonnegative(),
@@ -391,6 +473,14 @@ export const EvidencePrimaryRelationReviewViewSchema = z
             'duplicate',
             'correction',
             'unresolved',
+            'repeats',
+            'adds_detail',
+            'changes_certainty',
+            'retracts',
+            'omits_previous_detail',
+            'prompted_by',
+            'exposed_to_before',
+            'asked_after',
           ]),
           endpoints: z.array(
             z

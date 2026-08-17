@@ -131,6 +131,8 @@ describe('Evidence authorization policy', () => {
         'review.decide',
         'assessment.propose',
         'synthetic-fixture.run',
+        'source.import',
+        'live-model.run',
         'job.cancel',
         'technical-audit.read',
         'case.metadata.manage',
@@ -146,10 +148,40 @@ describe('Evidence authorization policy', () => {
       'case.lifecycle.manage',
       'case-membership.manage',
       'case.create',
+      'source.import',
+      'live-model.run',
     ] as const)
       expect(isEvidenceCaseActionAllowed(role, action)).toBe(
         allowed.includes(action as never),
       );
+  });
+
+  it('grants live-model.run only to case-admin', () => {
+    expect(isEvidenceCaseActionAllowed('case-viewer', 'live-model.run')).toBe(
+      false,
+    );
+    expect(isEvidenceCaseActionAllowed('case-reviewer', 'live-model.run')).toBe(
+      false,
+    );
+    expect(isEvidenceCaseActionAllowed('case-admin', 'live-model.run')).toBe(
+      true,
+    );
+    for (const role of ['viewer', 'reviewer', 'organization-admin'] as const)
+      expect(isEvidenceActionAllowed(role, 'live-model.run')).toBe(false);
+  });
+
+  it('grants source.import only to case-admin', () => {
+    expect(isEvidenceCaseActionAllowed('case-viewer', 'source.import')).toBe(
+      false,
+    );
+    expect(isEvidenceCaseActionAllowed('case-reviewer', 'source.import')).toBe(
+      false,
+    );
+    expect(isEvidenceCaseActionAllowed('case-admin', 'source.import')).toBe(
+      true,
+    );
+    for (const role of ['viewer', 'reviewer', 'organization-admin'] as const)
+      expect(isEvidenceActionAllowed(role, 'source.import')).toBe(false);
   });
 
   it('requires explicit case membership even for organization admins', () => {

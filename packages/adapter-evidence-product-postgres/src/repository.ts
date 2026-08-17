@@ -1538,6 +1538,130 @@ export function createPostgresEvidenceProductRepository(options: {
       });
     },
 
+    async commitRelationProjection(input) {
+      const relations = input.relations.map((value) =>
+        EvidenceRelationSchema.parse(value),
+      );
+      const questions = input.openQuestions.map((value) =>
+        EvidenceOpenQuestionSchema.parse(value),
+      );
+      const changeSet = EvidenceProductChangeSetSchema.parse(input.changeSet);
+      return withWrite(pool, async (client) => {
+        const workspaceResult = await client.query<{ record_json: string }>(
+          `SELECT record_json FROM ${s}.workspaces WHERE workspace_id = $1 FOR UPDATE`,
+          [input.workspaceId],
+        );
+        const row = workspaceResult.rows[0];
+        if (row === undefined)
+          throw new RangeError(`Unknown workspace ${input.workspaceId}.`);
+        const workspace = EvidenceWorkspaceSchema.parse(
+          JSON.parse(row.record_json),
+        );
+        if (
+          workspace.evidenceRevision !== input.expectedRevision ||
+          input.nextRevision !== input.expectedRevision + 1
+        )
+          throw new EvidenceProductCommandCollisionError(
+            `revision:${input.workspaceId}`,
+          );
+        for (const value of relations) {
+          const existing = await client.query<{ record_json: string }>(
+            `SELECT record_json FROM ${s}.relations WHERE relation_id = $1`,
+            [value.relationId],
+          );
+          const stored = existing.rows[0];
+          if (
+            stored !== undefined &&
+            !same(
+              EvidenceRelationSchema.parse(JSON.parse(stored.record_json)),
+              value,
+            )
+          )
+            throw new EvidenceProductCommandCollisionError(value.relationId);
+          await client.query(
+            `INSERT INTO ${s}.relations (relation_id, record_json)
+             VALUES ($1, $2) ON CONFLICT (relation_id) DO NOTHING`,
+            [value.relationId, canonicalJson(value as never)],
+          );
+        }
+        for (const value of questions) {
+          const existing = await client.query<{ record_json: string }>(
+            `SELECT record_json FROM ${s}.open_questions WHERE open_question_id = $1`,
+            [value.openQuestionId],
+          );
+          const stored = existing.rows[0];
+          if (
+            stored !== undefined &&
+            !same(
+              EvidenceOpenQuestionSchema.parse(JSON.parse(stored.record_json)),
+              value,
+            )
+          )
+            throw new EvidenceProductCommandCollisionError(
+              value.openQuestionId,
+            );
+          await client.query(
+            `INSERT INTO ${s}.open_questions (open_question_id, record_json)
+             VALUES ($1, $2) ON CONFLICT (open_question_id) DO NOTHING`,
+            [value.openQuestionId, canonicalJson(value as never)],
+          );
+        }
+        const existingChange = await client.query<{ record_json: string }>(
+          `SELECT record_json FROM ${s}.change_sets
+             WHERE workspace_id = $1 AND command_key = $2`,
+          [changeSet.workspaceId, changeSet.commandKey],
+        );
+        const storedChange = existingChange.rows[0];
+        if (
+          storedChange !== undefined &&
+          !same(
+            EvidenceProductChangeSetSchema.parse(
+              JSON.parse(storedChange.record_json),
+            ),
+            changeSet,
+          )
+        )
+          throw new EvidenceProductCommandCollisionError(changeSet.commandKey);
+        await client.query(
+          `INSERT INTO ${s}.change_sets (
+             workspace_id, command_key, to_evidence_revision, record_json
+           ) VALUES ($1, $2, $3, $4)
+           ON CONFLICT (workspace_id, command_key) DO NOTHING`,
+          [
+            changeSet.workspaceId,
+            changeSet.commandKey,
+            changeSet.changeSet.toEvidenceRevision,
+            canonicalJson(changeSet as never),
+          ],
+        );
+        const updated = EvidenceWorkspaceSchema.parse({
+          ...workspace,
+          evidenceRevision: input.nextRevision,
+        });
+        await client.query(
+          `UPDATE ${s}.workspaces SET record_json = $2 WHERE workspace_id = $1`,
+          [input.workspaceId, canonicalJson(updated as never)],
+        );
+        await insertCaseObjectBindings(client, s, [
+          ...bindingsFor(
+            input.scope,
+            'relation',
+            relations as unknown as Record<string, unknown>[],
+          ),
+          ...bindingsFor(
+            input.scope,
+            'open-question',
+            questions as unknown as Record<string, unknown>[],
+          ),
+          ...bindingsFor(input.scope, 'change-set', [
+            changeSet as unknown as Record<string, unknown>,
+          ]),
+        ]);
+        await validateCaseScope(client, input.scope);
+        return clone(updated);
+      });
+    },
+
     async putAssessments(assessments, scope) {
       const values = assessments.map((value) =>
         EvidenceAssessmentSchema.parse(value),

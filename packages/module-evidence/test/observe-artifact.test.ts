@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalJson,
   computeModelRequestHash,
+  createContractRegistry,
   sha256,
   type ExecutionReadContext,
   type StateProjectionInput,
@@ -12,9 +13,26 @@ import {
   EVIDENCE_DELTA_SCHEMA_VERSION,
   deriveEvidenceArtifactVersionId,
   deriveEvidenceContentHash,
+  buildEvidenceSourceSegments,
   evidenceLineCount,
+  locateUniqueEvidenceQuote,
   evidenceModule,
   evidenceObserveArtifactContract,
+  evidenceObserveArtifactContractV1,
+  evidenceObserveArtifactContractV2,
+  evidenceObserveArtifactContractV3,
+  evidenceObserveArtifactContractV4,
+  evidenceObserveArtifactContractV5,
+  EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE,
+  EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
+  evidenceObserveArtifactContractV6,
+  evidenceObserveArtifactContractV7,
+  evidenceObserveArtifactContractV8,
+  evidenceObserveArtifactContractV9,
+  evidenceObserveArtifactContractV10,
+  evidenceObserveArtifactContractV11,
+  deriveEvidenceSourceStructure,
+  evidenceCoverageWindowForSource,
   evidenceObserveArtifactTask,
   evidenceStateInvariants,
   initialEvidenceState,
@@ -22,8 +40,13 @@ import {
   type EvidenceDelta,
   type EvidenceObserveArtifactInput,
   type EvidenceObserveArtifactOutput,
+  type EvidenceObserveArtifactOutputV1,
+  type EvidenceObserveArtifactOutputV3,
   type EvidenceState,
 } from '../src/index.js';
+
+const ACTIVE_OBSERVE_REQUEST_HASH =
+  '1b871ef4678c0a73d00d92b7fc3d39c651fae13f2e267666702ec644cdb0b047';
 
 const text = [
   'Synthetic development transcript — Rillford Annex',
@@ -43,33 +66,48 @@ const artifactIdentity = {
   locatorScheme: 'line-range-1' as const,
   predecessorVersionId: null,
 };
-const input: EvidenceObserveArtifactInput = {
-  schemaVersion: 'evidence-observe-artifact-input/1',
-  artifactVersion: {
-    schemaVersion: 'evidence-source-artifact-version/1',
-    ...artifactIdentity,
-    artifactVersionId: deriveEvidenceArtifactVersionId(artifactIdentity),
-    title: 'Synthetic development transcript — Rillford Annex',
-    lineCount: evidenceLineCount(text),
-    correctionReason: null,
-    text,
+const artifactVersion = {
+  schemaVersion: 'evidence-source-artifact-version/1' as const,
+  ...artifactIdentity,
+  artifactVersionId: deriveEvidenceArtifactVersionId(artifactIdentity),
+  title: 'Synthetic development transcript — Rillford Annex',
+  lineCount: evidenceLineCount(text),
+  correctionReason: null,
+  text,
+};
+const actorRoster = [
+  {
+    actorKey: 'development-actor-nera-sol',
+    allowedSourceLabels: ['Nera Sol'],
   },
-  actorRoster: [
-    {
-      actorKey: 'development-actor-nera-sol',
-      allowedSourceLabels: ['Nera Sol'],
-    },
-  ],
+];
+const lineWindow = {
+  sourceSegmentIds: [...evidenceCoverageWindowForSource(text).sourceSegmentIds],
+};
+const inputV2 = {
+  schemaVersion: 'evidence-observe-artifact-input/2' as const,
+  artifactVersion,
+  actorRoster,
+  coverageWindow: lineWindow,
+};
+const input: EvidenceObserveArtifactInput = {
+  schemaVersion: 'evidence-observe-artifact-input/3',
+  artifactVersion,
+  actorRoster,
+  coverageWindow: lineWindow,
+  sourceStructureId: deriveEvidenceSourceStructure(text).structureId,
+};
+const historicalInput = {
+  schemaVersion: 'evidence-observe-artifact-input/1' as const,
+  artifactVersion,
+  actorRoster: input.actorRoster,
 };
 const output: EvidenceObserveArtifactOutput = {
-  schemaVersion: 'evidence-observe-artifact-output/1',
+  schemaVersion: 'evidence-observe-artifact-output/6',
   observations: [
     {
       kind: 'statement-occurrence',
-      startLine: 4,
-      endLine: 4,
-      exactQuote:
-        'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+      sourceSegmentId: 'line-000004-segment-0001',
       actorReference: {
         status: 'resolved',
         sourceLabel: 'Nera Sol',
@@ -85,10 +123,7 @@ const output: EvidenceObserveArtifactOutput = {
     },
     {
       kind: 'statement-occurrence',
-      startLine: 6,
-      endLine: 6,
-      exactQuote:
-        'Nera Sol: The indicator showed amber while the hatch was open.',
+      sourceSegmentId: 'line-000006-segment-0001',
       actorReference: {
         status: 'resolved',
         sourceLabel: 'Nera Sol',
@@ -103,6 +138,38 @@ const output: EvidenceObserveArtifactOutput = {
       },
     },
   ],
+  segmentCoverage: [
+    {
+      sourceSegmentId: 'line-000004-segment-0001',
+      status: 'observations_extracted',
+    },
+    {
+      sourceSegmentId: 'line-000006-segment-0001',
+      status: 'observations_extracted',
+    },
+  ],
+};
+const historicalOutputV3: EvidenceObserveArtifactOutputV3 = {
+  schemaVersion: 'evidence-observe-artifact-output/3',
+  observations: output.observations.map((candidate, index) => {
+    const { sourceSegmentId: _sourceSegmentId, ...domainCandidate } = candidate;
+    void _sourceSegmentId;
+    return {
+      ...domainCandidate,
+      exactQuote:
+        index === 0
+          ? 'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.'
+          : 'Nera Sol: The indicator showed amber while the hatch was open.',
+    };
+  }),
+};
+const legacyOutput: EvidenceObserveArtifactOutputV1 = {
+  schemaVersion: 'evidence-observe-artifact-output/1',
+  observations: historicalOutputV3.observations.map((candidate, index) => ({
+    ...candidate,
+    startLine: index === 0 ? 4 : 6,
+    endLine: index === 0 ? 4 : 6,
+  })),
 };
 
 function context(
@@ -151,7 +218,7 @@ function projection(
   };
 }
 
-describe('evidence.observe-artifact@1.0.0', () => {
+describe('evidence.observe-artifact', () => {
   it('builds a deterministic strict request with a frozen request hash', async () => {
     const projected = await evidenceObserveArtifactTask.project(
       input,
@@ -161,20 +228,538 @@ describe('evidence.observe-artifact@1.0.0', () => {
       executionId: 'ignored-by-contract',
       now: '2026-08-11T11:00:00.000Z',
     });
-    expect(computeModelRequestHash(request)).toBe(
-      '743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004',
+    expect(computeModelRequestHash(request)).toBe(ACTIVE_OBSERVE_REQUEST_HASH);
+    expect(typeof evidenceObserveArtifactContract.buildRepairRequest).toBe(
+      'function',
     );
+    const repaired = evidenceObserveArtifactContract.buildRepairRequest?.(
+      projected,
+      {
+        executionId: 'ignored-by-contract',
+        now: '2026-08-11T11:00:00.000Z',
+        attempt: 1,
+        issues: [
+          {
+            code: 'EVIDENCE_OPEN_QUESTION_RELATION_UNKNOWN',
+            path: ['openQuestions', 0],
+            message: 'fixture',
+            severity: 'error',
+          },
+        ],
+      },
+    );
+    if (repaired === undefined)
+      throw new Error('Expected a contract-owned repair request.');
+    expect(computeModelRequestHash(repaired)).not.toBe(
+      ACTIVE_OBSERVE_REQUEST_HASH,
+    );
+    expect(repaired.output).toEqual(request.output);
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV6.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-segment-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('827587d11888c53edeef458499ce6c2a409b611f9be9cd10f706512654c11081');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV8.buildRequest(historicalInput, {
+          executionId: 'ignored-by-contract',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('9d0fa2b9bb28b5d86a4b03cebbf4f5e0704e28ee362d834d029604f4ac4fa229');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV5.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-single-line-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('f99652e8d7eee64f02ad931ecfc0ba34543a12aa38d8ef2aef6a8eb4a589314f');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV4.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-runtime-locator-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('44164c736c8882f8a4218c9f833abb703bcdd1346e2a653e10cb1f4011b8bb47');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV3.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-bounded-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('50a18aa90d3f50ce82902642262731596bcf9eeb9e4e83ba1de65355be3e3db6');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV2.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-source-neutral-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('29cdf2eebf1f5c51c5dc618aac573a10f6eea8d526e9f40d6a8621a31bd871ae');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV1.buildRequest(historicalInput, {
+          executionId: 'execution-evidence-observe-legacy',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('743b53be2522deae2f2507ca9f153e4b0ecdb9f2af1693288713ee1689449004');
     expect(request.output.mode).toBe('json');
+    expect(request.maxOutputTokens).toBe(8192);
+    expect(JSON.stringify(request.messages[0]?.content[0])).not.toContain(
+      'non-exhaustive reviewer candidate batch',
+    );
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('Select one supplied sourceSegmentId'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('one coverage window'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('segmentCoverage'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('no_observation'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('If the actor roster is empty'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('role context'),
+    });
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV9.buildRequest(inputV2, {
+          executionId: 'ignored-by-contract',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('e3cf4b2385146eed01298e03fd1269ddc908784143cc76f4b41df2ef1171ba97');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV10.buildRequest(inputV2, {
+          executionId: 'ignored-by-contract',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('63887a9a15702412870714b1bc851d696e5bfd8b2dd18ff351f8005eb5594ca5');
+    expect(
+      computeModelRequestHash(
+        evidenceObserveArtifactContractV11.buildRequest(inputV2, {
+          executionId: 'ignored-by-contract',
+          now: '2026-08-11T11:00:00.000Z',
+        }),
+      ),
+    ).toBe('df8be8fcfb40f5e9609c7c03f063995b354c7b714122f90bc764d2e06219f3e6');
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('shows only a clock time'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('never join segments'),
+    });
+    expect(request.messages[0]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('YYYY-MM-DDTHH:MM:SSZ'),
+    });
+    const jsonSchema = request.output.jsonSchema as {
+      readonly properties?: {
+        readonly observations?: {
+          readonly minItems?: number;
+          readonly maxItems?: number;
+        };
+      };
+    };
+    expect(jsonSchema.properties?.observations).toMatchObject({
+      minItems: 0,
+      maxItems: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
+    });
+    expect(JSON.stringify(request.output.jsonSchema)).not.toMatch(
+      /startLine|endLine|exactQuote/u,
+    );
+    expect(request.messages[1]?.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('line-000004-segment-0001'),
+    });
     expect(Object.isFrozen(request)).toBe(true);
+  });
+
+  it('accepts up to the active candidate ceiling and refuses one more', () => {
+    const candidate = output.observations[0];
+    if (candidate === undefined) throw new Error('Missing fixture candidate.');
+    const legacyCandidate = legacyOutput.observations[0];
+    if (legacyCandidate === undefined)
+      throw new Error('Missing legacy fixture candidate.');
+    // The active ceiling is response-derived (ADR-0045 §2), not the historical
+    // fixture-sized eight. Historical versions keep their own ceiling below.
+    const coverage = [
+      {
+        sourceSegmentId: candidate.sourceSegmentId,
+        status: 'observations_extracted' as const,
+      },
+    ];
+    for (const count of [
+      0,
+      1,
+      8,
+      EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC,
+    ]) {
+      expect(
+        evidenceObserveArtifactContract.outputSchema.safeParse({
+          schemaVersion: 'evidence-observe-artifact-output/6',
+          observations: Array.from({ length: count }, () => candidate),
+          segmentCoverage: coverage,
+        }).success,
+      ).toBe(true);
+    }
+    expect(
+      evidenceObserveArtifactContract.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/6',
+        observations: Array.from(
+          { length: EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC + 1 },
+          () => candidate,
+        ),
+        segmentCoverage: coverage,
+      }).success,
+    ).toBe(false);
+    expect(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ACTIVE * 54).toBeLessThan(
+      8192 * 0.75,
+    );
+    expect(EVIDENCE_OBSERVATION_CANDIDATE_BATCH_MAX_ATOMIC * 54).toBeLessThan(
+      8192,
+    );
+    expect(
+      evidenceObserveArtifactContractV2.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/1',
+        observations: Array.from({ length: 9 }, () => legacyCandidate),
+      }).success,
+    ).toBe(true);
+    expect(
+      evidenceObserveArtifactContractV3.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/1',
+        observations: Array.from({ length: 9 }, () => legacyCandidate),
+      }).success,
+    ).toBe(false);
+    expect(
+      evidenceObserveArtifactContract.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/4',
+        observations: [legacyCandidate],
+        segmentCoverage: coverage,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects active quote authorship and malformed segment ids while historical v5 remains replayable', () => {
+    const candidate = output.observations[0];
+    if (candidate === undefined) throw new Error('Missing fixture candidate.');
+    for (const sourceSegmentId of ['missing', 'line-1-segment-1']) {
+      expect(
+        evidenceObserveArtifactContract.outputSchema.safeParse({
+          schemaVersion: 'evidence-observe-artifact-output/6',
+          observations: [{ ...candidate, sourceSegmentId }],
+          segmentCoverage: [
+            {
+              sourceSegmentId: candidate.sourceSegmentId,
+              status: 'observations_extracted',
+            },
+          ],
+        }).success,
+      ).toBe(false);
+    }
+    expect(
+      evidenceObserveArtifactContract.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/6',
+        observations: [{ ...candidate, exactQuote: 'provider text' }],
+        segmentCoverage: [
+          {
+            sourceSegmentId: candidate.sourceSegmentId,
+            status: 'observations_extracted',
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    const historical = historicalOutputV3.observations[0];
+    expect(
+      evidenceObserveArtifactContractV5.outputSchema.safeParse({
+        schemaVersion: 'evidence-observe-artifact-output/3',
+        observations: [{ ...historical, exactQuote: 'first line' }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('keeps all twelve observation contract versions resolvable for replay', () => {
+    const registry = createContractRegistry([
+      evidenceObserveArtifactContractV1,
+      evidenceObserveArtifactContractV2,
+      evidenceObserveArtifactContractV3,
+      evidenceObserveArtifactContractV4,
+      evidenceObserveArtifactContractV5,
+      evidenceObserveArtifactContractV6,
+      evidenceObserveArtifactContractV7,
+      evidenceObserveArtifactContractV8,
+      evidenceObserveArtifactContractV9,
+      evidenceObserveArtifactContractV10,
+      evidenceObserveArtifactContractV11,
+      evidenceObserveArtifactContract,
+    ]);
+    expect(
+      registry
+        .list()
+        .filter(({ id }) => id === 'evidence.observe-artifact')
+        .map(({ version }) => version),
+    ).toEqual([
+      '1.0.0',
+      '1.1.0',
+      '1.10.0',
+      '1.11.0',
+      '1.2.0',
+      '1.3.0',
+      '1.4.0',
+      '1.5.0',
+      '1.6.0',
+      '1.7.0',
+      '1.8.0',
+      '1.9.0',
+    ]);
+    for (const contract of [
+      evidenceObserveArtifactContractV1,
+      evidenceObserveArtifactContractV2,
+      evidenceObserveArtifactContractV3,
+      evidenceObserveArtifactContractV4,
+      evidenceObserveArtifactContractV5,
+      evidenceObserveArtifactContractV6,
+      evidenceObserveArtifactContractV7,
+      evidenceObserveArtifactContractV8,
+      evidenceObserveArtifactContractV9,
+      evidenceObserveArtifactContractV10,
+      evidenceObserveArtifactContractV11,
+      evidenceObserveArtifactContract,
+    ]) {
+      expect(registry.get(contract.ref)).toBe(contract);
+    }
   });
 
   it('accepts the two source-bound development observations', () => {
     expect(
-      evidenceObserveArtifactContract.validateSemantics(output, input),
+      evidenceObserveArtifactContract.validateSemantics(output, {
+        ...input,
+        coverageWindow: {
+          sourceSegmentIds: output.observations.map(
+            (observation) => observation.sourceSegmentId,
+          ),
+        },
+      }),
     ).toEqual([]);
   });
 
-  it('rejects quote, kind, actor merge, invented time and prohibited conclusions', () => {
+  it('refuses a coverage window that omits a supplied segment', () => {
+    const codes = evidenceObserveArtifactContract
+      .validateSemantics(output, input)
+      .map(({ code }) => code);
+    expect(codes).toContain('EVIDENCE_COVERAGE_WINDOW_INCOMPLETE');
+  });
+
+  it('accepts two distinct observations of the same supplied segment', () => {
+    const first = output.observations[0];
+    if (first === undefined) {
+      throw new Error('Expected a development observation.');
+    }
+    const doubled: EvidenceObserveArtifactOutput = {
+      schemaVersion: 'evidence-observe-artifact-output/6',
+      observations: [
+        first,
+        {
+          ...first,
+          temporalBound: {
+            kind: 'unknown',
+            role: 'claimed-event-time',
+            reason: 'A second fact from the same source segment.',
+          },
+        },
+      ],
+      segmentCoverage: [
+        {
+          sourceSegmentId: first.sourceSegmentId,
+          status: 'observations_extracted',
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract.validateSemantics(doubled, {
+        ...input,
+        coverageWindow: { sourceSegmentIds: [first.sourceSegmentId] },
+      }),
+    ).toEqual([]);
+  });
+
+  it('accepts an empty-roster exhibit with a null actor and refuses invented keys', () => {
+    const emptyRosterInput: EvidenceObserveArtifactInput = {
+      ...input,
+      actorRoster: [],
+      artifactVersion: {
+        ...input.artifactVersion,
+        kind: 'structured-exhibit-text',
+      },
+      coverageWindow: {
+        sourceSegmentIds: ['line-000001-segment-0001'],
+      },
+    };
+    const exhibit: EvidenceObserveArtifactOutput = {
+      schemaVersion: 'evidence-observe-artifact-output/6',
+      observations: [
+        {
+          kind: 'exhibit-assertion',
+          sourceSegmentId: 'line-000001-segment-0001',
+          sourceActorReference: null,
+          temporalBound: null,
+        },
+      ],
+      segmentCoverage: [
+        {
+          sourceSegmentId: 'line-000001-segment-0001',
+          status: 'observations_extracted',
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract.validateSemantics(
+        exhibit,
+        emptyRosterInput,
+      ),
+    ).toEqual([]);
+    const invented: EvidenceObserveArtifactOutput = {
+      ...exhibit,
+      observations: [
+        {
+          kind: 'exhibit-assertion',
+          sourceSegmentId: 'line-000001-segment-0001',
+          sourceActorReference: {
+            status: 'unresolved',
+            sourceLabel: 'Nera Sol',
+            sourceRole: 'operator-label',
+            candidateActorKeys: ['invented-actor'],
+          },
+          temporalBound: null,
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract
+        .validateSemantics(invented, emptyRosterInput)
+        .map(({ code }) => code),
+    ).toContain('EVIDENCE_ACTOR_REQUIRES_ROSTER');
+  });
+
+  it('accepts a heading segment as no_observation', () => {
+    const headingId = 'line-000001-segment-0001';
+    const first = output.observations[0];
+    if (first === undefined) {
+      throw new Error('Expected a development observation.');
+    }
+    expect(
+      evidenceObserveArtifactContract.validateSemantics(
+        {
+          schemaVersion: 'evidence-observe-artifact-output/6',
+          observations: [first],
+          segmentCoverage: [
+            {
+              sourceSegmentId: first.sourceSegmentId,
+              status: 'observations_extracted',
+            },
+            { sourceSegmentId: headingId, status: 'no_observation' },
+          ],
+        },
+        {
+          ...input,
+          coverageWindow: {
+            sourceSegmentIds: [first.sourceSegmentId, headingId],
+          },
+        },
+      ),
+    ).toEqual([]);
+  });
+
+  it('keeps historical locator-bearing output interpretable for replay', async () => {
+    const result = await evidenceObserveArtifactTask.interpret(
+      legacyOutput,
+      input,
+      context(),
+    );
+    expect(
+      result.memories.map(({ value }) => {
+        const candidate = value as {
+          locator: { startLine: number; endLine: number };
+        };
+        return candidate.locator;
+      }),
+    ).toEqual([
+      expect.objectContaining({ startLine: 4, endLine: 4 }),
+      expect.objectContaining({ startLine: 6, endLine: 6 }),
+    ]);
+  });
+
+  it('builds stable bounded single-line segments and retains historical quote lookup', () => {
+    expect(buildEvidenceSourceSegments(text)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceSegmentId: 'line-000004-segment-0001',
+          exactQuote:
+            'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+          startLine: 4,
+          endLine: 4,
+        }),
+      ]),
+    );
+    const long = buildEvidenceSourceSegments(`a\n${'😀'.repeat(501)}\n   `);
+    expect(
+      long.map(({ sourceSegmentId, exactQuote }) => ({
+        sourceSegmentId,
+        length: [...exactQuote].length,
+      })),
+    ).toEqual([
+      { sourceSegmentId: 'line-000001-segment-0001', length: 1 },
+      { sourceSegmentId: 'line-000002-segment-0001', length: 500 },
+      { sourceSegmentId: 'line-000002-segment-0002', length: 1 },
+    ]);
+    expect(
+      locateUniqueEvidenceQuote(
+        text,
+        'Interviewer: What did the indicator and hatch show?',
+      ),
+    ).toEqual({
+      status: 'unique',
+      startLine: 5,
+      endLine: 5,
+    });
+    expect(
+      locateUniqueEvidenceQuote(
+        text,
+        'Interviewer: What did the indicator and hatch show?\nNera Sol: The indicator showed amber while the hatch was open.',
+      ),
+    ).toEqual({ status: 'unique', startLine: 5, endLine: 6 });
+    expect(locateUniqueEvidenceQuote(text, 'not present')).toEqual({
+      status: 'absent',
+    });
+    expect(locateUniqueEvidenceQuote('same\nsame', 'same')).toEqual({
+      status: 'ambiguous',
+      occurrenceCount: 2,
+    });
+  });
+
+  it('rejects unknown segments, kind, actor merge, invented time and prohibited conclusions', () => {
     const ambiguousInput: EvidenceObserveArtifactInput = {
       ...input,
       actorRoster: [
@@ -198,18 +783,22 @@ describe('evidence.observe-artifact@1.0.0', () => {
       );
     }
     const bad: EvidenceObserveArtifactOutput = {
-      schemaVersion: 'evidence-observe-artifact-output/1',
+      schemaVersion: 'evidence-observe-artifact-output/6',
       observations: [
         {
-          ...first,
           kind: 'exhibit-assertion',
-          exactQuote: 'Nera Sol: quote not present',
+          sourceSegmentId: first.sourceSegmentId,
           sourceActorReference: first.actorReference,
           temporalBound: {
             kind: 'exact',
             role: 'claimed-event-time',
             at: '2026-03-12T14:11:00Z',
           },
+        },
+        {
+          ...first,
+          sourceSegmentId: 'line-999999-segment-0001',
+          temporalBound: null,
         },
         {
           ...second,
@@ -220,6 +809,16 @@ describe('evidence.observe-artifact@1.0.0', () => {
           },
         },
       ],
+      segmentCoverage: [
+        {
+          sourceSegmentId: first.sourceSegmentId,
+          status: 'observations_extracted',
+        },
+        {
+          sourceSegmentId: second.sourceSegmentId,
+          status: 'observations_extracted',
+        },
+      ],
     };
     const codes = evidenceObserveArtifactContract
       .validateSemantics(bad, ambiguousInput)
@@ -227,12 +826,61 @@ describe('evidence.observe-artifact@1.0.0', () => {
     expect(codes).toEqual(
       expect.arrayContaining([
         'EVIDENCE_OBSERVATION_KIND_MISMATCH',
-        'EVIDENCE_QUOTE_BINDING_FAILED',
+        'EVIDENCE_SOURCE_SEGMENT_NOT_FOUND',
         'EVIDENCE_ACTOR_AMBIGUITY_MUST_REMAIN_UNRESOLVED',
         'EVIDENCE_TEMPORAL_VALUE_NOT_SOURCE_BOUND',
         'EVIDENCE_PROHIBITED_CONCLUSION',
       ]),
     );
+    const repeatedText = `${input.artifactVersion.text}\nNera Sol: I reached the greenhouse hatch between 14:00 and 14:10.`;
+    const repeatedInput: EvidenceObserveArtifactInput = {
+      ...input,
+      artifactVersion: {
+        ...input.artifactVersion,
+        text: repeatedText,
+        lineCount: input.artifactVersion.lineCount + 1,
+      },
+      coverageWindow: {
+        sourceSegmentIds: output.observations.map(
+          (observation) => observation.sourceSegmentId,
+        ),
+      },
+      sourceStructureId:
+        deriveEvidenceSourceStructure(repeatedText).structureId,
+    };
+    expect(
+      evidenceObserveArtifactContract.validateSemantics(output, repeatedInput),
+    ).toEqual([]);
+  });
+
+  it('refuses an observation that only cites a neighbour-context segment', () => {
+    const first = output.observations[0];
+    const second = output.observations[1];
+    if (first === undefined || second === undefined) {
+      throw new Error('Expected development observations.');
+    }
+    const contextOnly: EvidenceObserveArtifactInput = {
+      ...input,
+      coverageWindow: {
+        sourceSegmentIds: [first.sourceSegmentId],
+        contextSegmentIds: [second.sourceSegmentId],
+      },
+    };
+    const citingContext: EvidenceObserveArtifactOutput = {
+      schemaVersion: 'evidence-observe-artifact-output/6',
+      observations: [second],
+      segmentCoverage: [
+        {
+          sourceSegmentId: first.sourceSegmentId,
+          status: 'no_observation',
+        },
+      ],
+    };
+    expect(
+      evidenceObserveArtifactContract
+        .validateSemantics(citingContext, contextOnly)
+        .map(({ code }) => code),
+    ).toContain('EVIDENCE_CONTEXT_SEGMENT_NOT_EXTRACTABLE');
   });
 
   it('commits a source plus two observations in one evidence revision', async () => {
@@ -260,6 +908,17 @@ describe('evidence.observe-artifact@1.0.0', () => {
       'current',
     ]);
     expect(evidenceStateInvariants(next, before)).toEqual([]);
+    expect(
+      result.memories.map(({ value }) => {
+        const candidate = value as {
+          locator: { startLine: number; endLine: number };
+        };
+        return candidate.locator;
+      }),
+    ).toEqual([
+      expect.objectContaining({ startLine: 4, endLine: 4 }),
+      expect.objectContaining({ startLine: 6, endLine: 6 }),
+    ]);
   });
 
   it('keeps a duplicate replay at the same evidence revision', async () => {

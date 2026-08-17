@@ -88,6 +88,34 @@ session-encryption key and uses secure cookies behind the exact configured
 HTTPS public origin. See
 [`docs/ops/hosted-shell.md`](../../docs/ops/hosted-shell.md).
 
+## POC #1 live composition capability
+
+The default and local compositions remain scripted/mock-only. ACME-0105 adds a
+closed hosted capability for ADR-0039/0040; startup makes no provider call and
+there is not yet a product route that can invoke it. Enabling the capability
+requires every setting below:
+
+| Setting | Required value |
+| --- | --- |
+| `ACME_EVIDENCE_LIVE` | `1`, `true` or `yes` |
+| `ACME_EVIDENCE_COMPOSITION_PROFILE` | `evidence-poc1-live/1` |
+| `ACME_HOSTED` | `1` |
+| `ACME_PERSISTENCE` | `postgres` with the usual PostgreSQL settings |
+| `ACME_EVIDENCE_LIVE_MODEL` | Non-empty provider model id |
+| `OPENAI_API_KEY` | Environment-only provider credential |
+| `ACME_EVIDENCE_PAYLOAD_KEY_FILE` | Mounted file containing one base64-encoded 32-byte key |
+| `ACME_EVIDENCE_PAYLOAD_KEY_ID` | Stable non-secret key id |
+| `ACME_EVIDENCE_LIVE_MAX_MODEL_CALLS` | Positive deployment ceiling |
+| `ACME_EVIDENCE_LIVE_COST_CEILING_MINOR` | Optional non-negative integer |
+| `ACME_EVIDENCE_LIVE_CURRENCY` | Required exactly when the cost ceiling is set |
+
+A key, credential or live-looking environment name alone activates nothing.
+File persistence, mock gateway metadata, an ephemeral payload key or non-hosted
+mode refuses startup before provider contact. Even after startup, the capability
+releases a gateway only for a case-bound `evidence-live-confirmation/1`, a
+server-derived case-admin `live-model.run` authorization and an attested
+`stage-a-anonymized-judicial-text/1` source with `authorized-external` origin.
+
 The browser lists and selects accessible cases and organization administrators
 can create a synthetic case. Evidence requests use `/api/cases/:caseId/...`;
 the browser never supplies the internal workspace or actor authority. Case
@@ -101,7 +129,9 @@ are same-origin/CSRF protected administrative operations. Hosted object and key
 configuration is documented in
 [`docs/ops/evidence-artifact-operations.md`](../../docs/ops/evidence-artifact-operations.md).
 
-Known limitations: synthetic text only, no PDF/DOCX/OCR/media ingestion, no
-live model provider and no non-synthetic authority. The local
-file composition uses one in-process worker; hosted composition adds
-PostgreSQL durability but does not widen data authority.
+Known limitations: the callable product workflow is still synthetic text only;
+there is no PDF/DOCX/OCR/media ingestion and no live job/API/browser route yet.
+The local file composition uses one in-process worker. Hosted composition can
+now validate and hold the closed live capability, but it cannot widen data
+authority or contact the provider without the still-unimplemented authorized
+Stage A job path.

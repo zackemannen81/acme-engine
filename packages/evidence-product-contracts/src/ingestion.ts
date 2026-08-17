@@ -18,75 +18,153 @@ export const EVIDENCE_SYNTHETIC_TEXT_DATA_CLASS =
   'synthetic-utf8-plain-text/1' as const;
 export const EVIDENCE_SYNTHETIC_ATTESTATION_VERSION =
   'evidence-synthetic-attestation/1' as const;
-export const EVIDENCE_TEXT_IMPORT_MAX_BYTES = 2_097_152;
-export const EVIDENCE_TEXT_IMPORT_MAX_LINES = 20_000;
+export const EVIDENCE_STAGE_A_TEXT_DATA_CLASS =
+  'stage-a-anonymized-judicial-text/1' as const;
+export const EVIDENCE_STAGE_A_ATTESTATION_VERSION =
+  'evidence-stage-a-source-attestation/1' as const;
+/**
+ * Sized for real investigation files, not for the synthetic corpus.
+ *
+ * ADR-0045 §3. ACME-0133 refused a 1,915-page document at 3,521,477 canonical
+ * bytes over 74,469 lines, which is ordinary for the material this product
+ * exists to serve. Admitting a document is not a claim that one model call can
+ * analyse it; coverage is ADR-0045 §6.
+ */
+export const EVIDENCE_TEXT_IMPORT_MAX_BYTES = 16_777_216;
+export const EVIDENCE_TEXT_IMPORT_MAX_LINES = 400_000;
+/** Unchanged: one enormous line is malformed extraction, not a large file. */
 export const EVIDENCE_TEXT_IMPORT_MAX_LINE_SCALARS = 16_384;
 export const EVIDENCE_REDACTION_REPLACEMENT_VERSION =
   'evidence-redaction-token/1' as const;
 export const EVIDENCE_REDACTION_TRANSFORMATION_VERSION =
   'evidence-redaction-transform/1' as const;
 
-export const EvidenceTextImportMetadataSchema = z
-  .object({
+const EvidenceTextImportIntentSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('create') }).strict(),
+  z
+    .object({
+      kind: z.literal('new-version'),
+      logicalArtifactId: NonBlank,
+      predecessorVersionId: NonBlank,
+      correctionReason: z.literal('transcription-correction'),
+      expectedArtifactRevision: z.number().int().nonnegative(),
+    })
+    .strict(),
+]);
+
+const EvidenceTextImportMetadataBaseSchema = z.object({
+  commandKey: NonBlank,
+  intent: EvidenceTextImportIntentSchema,
+  title: NonBlank.max(500),
+  artifactKind: EvidenceArtifactKindSchema,
+  declaredMediaType: z
+    .string()
+    .regex(/^text\/plain(?:\s*;\s*charset=utf-8)?$/iu),
+});
+
+export const EvidenceSyntheticTextImportMetadataSchema =
+  EvidenceTextImportMetadataBaseSchema.extend({
     schemaVersion: z.literal('evidence-text-import-metadata/1'),
-    commandKey: NonBlank,
-    intent: z.discriminatedUnion('kind', [
-      z.object({ kind: z.literal('create') }).strict(),
-      z
-        .object({
-          kind: z.literal('new-version'),
-          logicalArtifactId: NonBlank,
-          predecessorVersionId: NonBlank,
-          correctionReason: z.literal('transcription-correction'),
-          expectedArtifactRevision: z.number().int().nonnegative(),
-        })
-        .strict(),
-    ]),
-    title: NonBlank.max(500),
-    artifactKind: EvidenceArtifactKindSchema,
-    declaredMediaType: z
-      .string()
-      .regex(/^text\/plain(?:\s*;\s*charset=utf-8)?$/iu),
     dataClass: z.literal(EVIDENCE_SYNTHETIC_TEXT_DATA_CLASS),
     attestationVersion: z.literal(EVIDENCE_SYNTHETIC_ATTESTATION_VERSION),
     syntheticAuthorityAttested: z.literal(true),
+  }).strict();
+
+export const EvidenceExternalSourceProvenanceSchema = z
+  .object({
+    schemaVersion: z.literal('evidence-external-source-provenance/1'),
+    sourceKind: z.literal('judicial-document'),
+    externalSourceRef: NonBlank.max(1_000),
+    acquiredAt: IsoTimestamp,
+    parentContainer: z
+      .object({
+        kind: z.literal('pdf'),
+        sha256: Sha256,
+        byteLength: z.number().int().positive(),
+      })
+      .strict(),
+    extraction: z
+      .object({
+        method: z.literal('pypdf-text-extraction'),
+        version: NonBlank.max(100),
+        extractedAt: IsoTimestamp,
+        pageCount: z.number().int().positive(),
+      })
+      .strict(),
   })
   .strict();
 
-export const EvidenceTextImportRecordSchema = z
-  .object({
+export const EvidenceStageATextImportMetadataSchema =
+  EvidenceTextImportMetadataBaseSchema.extend({
+    schemaVersion: z.literal('evidence-text-import-metadata/2'),
+    dataClass: z.literal(EVIDENCE_STAGE_A_TEXT_DATA_CLASS),
+    attestationVersion: z.literal(EVIDENCE_STAGE_A_ATTESTATION_VERSION),
+    anonymizationAttested: z.literal(true),
+    operatorAuthorityAttested: z.literal(true),
+    providerTransmissionAuthorized: z.literal(true),
+    sourceProvenance: EvidenceExternalSourceProvenanceSchema,
+  }).strict();
+
+export const EvidenceTextImportMetadataSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceSyntheticTextImportMetadataSchema,
+    EvidenceStageATextImportMetadataSchema,
+  ],
+);
+
+const EvidenceTextImportRecordBaseSchema = z.object({
+  importId: NonBlank,
+  organizationId: NonBlank,
+  caseId: NonBlank,
+  workspaceId: NonBlank,
+  logicalArtifactId: NonBlank,
+  artifactVersionId: NonBlank,
+  commandKey: NonBlank,
+  commandDigest: Sha256,
+  originalRepresentationId: NonBlank,
+  canonicalRepresentationId: NonBlank,
+  originalSha256: Sha256,
+  canonicalSha256: Sha256,
+  originalByteLength: z.number().int().positive(),
+  canonicalByteLength: z.number().int().positive(),
+  principalRef: NonBlank,
+  policyVersion: NonBlank,
+  state: z.enum([
+    'queued',
+    'validating',
+    'staging',
+    'activated',
+    'cancelled',
+    'refused',
+  ]),
+  reasonCode: NonBlank.nullable(),
+  createdAt: IsoTimestamp,
+  updatedAt: IsoTimestamp,
+});
+
+export const EvidenceSyntheticTextImportRecordSchema =
+  EvidenceTextImportRecordBaseSchema.extend({
     schemaVersion: z.literal('evidence-text-import-record/1'),
-    importId: NonBlank,
-    organizationId: NonBlank,
-    caseId: NonBlank,
-    workspaceId: NonBlank,
-    logicalArtifactId: NonBlank,
-    artifactVersionId: NonBlank,
-    commandKey: NonBlank,
-    commandDigest: Sha256,
     dataClass: z.literal(EVIDENCE_SYNTHETIC_TEXT_DATA_CLASS),
     attestationVersion: z.literal(EVIDENCE_SYNTHETIC_ATTESTATION_VERSION),
-    originalRepresentationId: NonBlank,
-    canonicalRepresentationId: NonBlank,
-    originalSha256: Sha256,
-    canonicalSha256: Sha256,
-    originalByteLength: z.number().int().positive(),
-    canonicalByteLength: z.number().int().positive(),
-    principalRef: NonBlank,
-    policyVersion: NonBlank,
-    state: z.enum([
-      'queued',
-      'validating',
-      'staging',
-      'activated',
-      'cancelled',
-      'refused',
-    ]),
-    reasonCode: NonBlank.nullable(),
-    createdAt: IsoTimestamp,
-    updatedAt: IsoTimestamp,
-  })
-  .strict();
+  }).strict();
+
+export const EvidenceStageATextImportRecordSchema =
+  EvidenceTextImportRecordBaseSchema.extend({
+    schemaVersion: z.literal('evidence-text-import-record/2'),
+    dataClass: z.literal(EVIDENCE_STAGE_A_TEXT_DATA_CLASS),
+    attestationVersion: z.literal(EVIDENCE_STAGE_A_ATTESTATION_VERSION),
+    sourceProvenance: EvidenceExternalSourceProvenanceSchema,
+  }).strict();
+
+export const EvidenceTextImportRecordSchema = z.discriminatedUnion(
+  'schemaVersion',
+  [
+    EvidenceSyntheticTextImportRecordSchema,
+    EvidenceStageATextImportRecordSchema,
+  ],
+);
 
 export const EvidenceRedactionReasonSchema = z.enum([
   'personal-data',

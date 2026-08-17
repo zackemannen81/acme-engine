@@ -1503,14 +1503,19 @@ export class SqliteExecutionRepository implements ExecutionRepository {
            status = ?, error_json = ?, completed_at = ?
        WHERE model_call_id = ?`,
       [
-        record.response?.provider ?? null,
-        record.response?.model ?? null,
+        // Content-free call metadata is retained under every retention mode,
+        // so these columns stay queryable when the response itself does not
+        // rest in plaintext.
+        record.response?.provider ?? record.callMetadata?.provider ?? null,
+        record.response?.model ?? record.callMetadata?.model ?? null,
         record.responseHash ?? null,
         record.response === undefined ? null : this.#json(record.response),
         record.response?.providerResponseId ?? null,
-        record.response === undefined
-          ? null
-          : this.#json(record.response.usage),
+        record.response !== undefined
+          ? this.#json(record.response.usage)
+          : record.callMetadata !== undefined
+            ? this.#json(record.callMetadata.usage)
+            : null,
         this.#json(record),
         record.status,
         record.error === undefined ? null : this.#json(record.error),

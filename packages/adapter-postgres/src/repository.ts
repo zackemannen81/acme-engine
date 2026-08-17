@@ -1779,14 +1779,19 @@ export class PostgresExecutionRepository implements ExecutionRepository {
            status = $8, error_json = $9, completed_at = $10
        WHERE model_call_id = $11`,
       [
-        record.response?.provider ?? null,
-        record.response?.model ?? null,
+        // Content-free call metadata is retained under every retention mode,
+        // so these columns stay queryable when the response itself does not
+        // rest in plaintext.
+        record.response?.provider ?? record.callMetadata?.provider ?? null,
+        record.response?.model ?? record.callMetadata?.model ?? null,
         record.responseHash ?? null,
         record.response === undefined ? null : this.#json(record.response),
         record.response?.providerResponseId ?? null,
-        record.response === undefined
-          ? null
-          : this.#json(record.response.usage),
+        record.response !== undefined
+          ? this.#json(record.response.usage)
+          : record.callMetadata !== undefined
+            ? this.#json(record.callMetadata.usage)
+            : null,
         this.#json(record),
         record.status,
         record.error === undefined ? null : this.#json(record.error),

@@ -14,12 +14,15 @@ import type {
 } from '@acme/module-evidence';
 import {
   buildEvidenceTimelineEntries,
+  deriveEvidenceSourceStructure,
   evidenceAttentionTier,
   EvidenceStateSchema,
   pairEvidenceCorrectionObservations,
 } from '@acme/module-evidence';
 
 import {
+  EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION,
+  EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ACCOUNT_COMPARISON_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_ASSESSMENT_VIEW_SCHEMA_VERSION,
   EVIDENCE_PRIMARY_OBSERVATION_LEDGER_VIEW_SCHEMA_VERSION,
@@ -31,6 +34,8 @@ import {
   EVIDENCE_PRIMARY_WORK_QUEUE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_PROVENANCE_VIEW_SCHEMA_VERSION,
   EVIDENCE_TECHNICAL_REPLAY_VIEW_SCHEMA_VERSION,
+  EvidenceClaimSurfaceViewSchema,
+  EvidenceObservationCardSchema,
   EvidencePrimaryAccountComparisonViewSchema,
   EvidencePrimaryAssessmentViewSchema,
   EvidencePrimaryObservationLedgerViewSchema,
@@ -42,6 +47,8 @@ import {
   EvidencePrimaryWorkQueueViewSchema,
   EvidenceTechnicalProvenanceViewSchema,
   EvidenceTechnicalReplayViewSchema,
+  type EvidenceClaimSurfaceView,
+  type EvidenceObservationCard,
   type EvidencePrimaryAccountComparisonView,
   type EvidencePrimaryAssessmentView,
   type EvidencePrimaryObservationLedgerView,
@@ -95,6 +102,44 @@ function sourceActor(observation: EvidenceObservation) {
   return observation.kind === 'statement-occurrence'
     ? observation.actorReference
     : observation.sourceActorReference;
+}
+
+function relationCount(
+  snapshot: EvidenceProductSnapshot,
+  observationId: string,
+): number {
+  return snapshot.relations.filter((relation) =>
+    relation.endpoints.some(
+      (endpoint) =>
+        endpoint.kind === 'observation' && endpoint.id === observationId,
+    ),
+  ).length;
+}
+
+export function buildEvidenceObservationCard(input: {
+  readonly observation: EvidenceObservation;
+  readonly source: SourceArtifactVersion;
+  readonly snapshot: EvidenceProductSnapshot;
+}): EvidenceObservationCard {
+  const { observation, source, snapshot } = input;
+  const temporal = observation.temporalBound;
+  return EvidenceObservationCardSchema.parse({
+    schemaVersion: EVIDENCE_OBSERVATION_CARD_SCHEMA_VERSION,
+    observationVersionId: observation.observationId,
+    kind: observation.kind,
+    exactQuote: observation.exactQuote,
+    sourceTitle: source.title,
+    sourceTimeDisplay: null,
+    citation: citation(source, observation),
+    reviewStanding: standing(
+      effectiveReviewDecision(
+        snapshot.reviewDecisions,
+        observation.observationId,
+      ),
+    ),
+    assertedEventTimeDisplay: temporal === null ? null : timeDisplay(temporal),
+    relationCount: relationCount(snapshot, observation.observationId),
+  });
 }
 
 function citation(
@@ -666,12 +711,27 @@ export function buildEvidencePrimarySourceReviewView(input: {
   readonly workspaceId: string;
   readonly artifactVersionId: string;
   readonly snapshot: EvidenceProductSnapshot;
+  readonly sourcePartId?: string;
 }): EvidencePrimarySourceReviewView {
   const snapshot = structuredClone(input.snapshot);
   requireWorkspace(snapshot, input.workspaceId);
   const source = requireSource(snapshot, input.artifactVersionId);
+  const structure = deriveEvidenceSourceStructure(source.text);
+  const part =
+    input.sourcePartId === undefined
+      ? undefined
+      : structure.parts.find((item) => item.partId === input.sourcePartId);
+  if (input.sourcePartId !== undefined && part === undefined) {
+    throw new RangeError('Source part is unavailable.');
+  }
   const observations = snapshot.observations
     .filter((value) => value.artifactVersionId === source.artifactVersionId)
+    .filter(
+      (value) =>
+        part === undefined ||
+        (value.locator.startLine >= part.startLine &&
+          value.locator.startLine <= part.endLine),
+    )
     .sort(
       (left, right) =>
         left.locator.startLine - right.locator.startLine ||
@@ -713,6 +773,11 @@ export function buildEvidencePrimarySourceReviewView(input: {
           'leave-unresolved',
           'request-revision',
         ] as const,
+        card: buildEvidenceObservationCard({
+          observation,
+          source,
+          snapshot,
+        }),
       };
     });
   return detached(
@@ -722,7 +787,8 @@ export function buildEvidencePrimarySourceReviewView(input: {
       source: {
         artifactVersionId: source.artifactVersionId,
         logicalArtifactId: source.logicalArtifactId,
-        title: source.title,
+        title:
+          part === undefined ? source.title : `${source.title} · ${part.title}`,
         kind: source.kind,
         versionOrdinal: source.versionOrdinal,
         contentHash: source.contentHash,
@@ -730,8 +796,27 @@ export function buildEvidencePrimarySourceReviewView(input: {
         lines: (() => {
           const lines = source.text.split('\n');
           if (lines.at(-1) === '') lines.pop();
-          return lines.map((text, index) => ({ lineNumber: index + 1, text }));
+          return lines
+            .map((text, index) => ({ lineNumber: index + 1, text }))
+            .filter(
+              (line) =>
+                part === undefined ||
+                (line.lineNumber >= part.startLine &&
+                  line.lineNumber <= part.endLine),
+            );
         })(),
+        blocks: structure.blocks
+          .filter(
+            (block) =>
+              part === undefined || part.blockIds.includes(block.blockId),
+          )
+          .map((block) => ({
+            blockId: block.blockId,
+            kind: block.kind,
+            heading: block.heading,
+            startLine: block.startLine,
+            endLine: block.endLine,
+          })),
       },
       heading: 'Source review',
       observations,
@@ -785,6 +870,11 @@ export function buildEvidencePrimaryObservationLedgerView(input: {
             : successorIds.has(source.artifactVersionId)
               ? ('original-version' as const)
               : ('independent-source' as const),
+        card: buildEvidenceObservationCard({
+          observation,
+          source,
+          snapshot,
+        }),
       };
     })
     .sort(
@@ -950,6 +1040,14 @@ export function buildEvidencePrimaryRelationReviewView(input: {
     duplicate: 0,
     correction: 0,
     unresolved: 0,
+    repeats: 0,
+    adds_detail: 0,
+    changes_certainty: 0,
+    retracts: 0,
+    omits_previous_detail: 0,
+    prompted_by: 0,
+    exposed_to_before: 0,
+    asked_after: 0,
   };
   let unresolvedActorRelations = 0;
   let awaitingReview = 0;
@@ -1166,6 +1264,165 @@ export function buildEvidenceTechnicalProvenanceView(input: {
       contractFingerprint: input.contractFingerprint,
       operationDigest: input.operationDigest,
       retainedCallAvailable: input.retainedCallAvailable,
+    }),
+  );
+}
+
+export function buildEvidenceClaimSurfaceView(input: {
+  readonly workspaceId: string;
+  readonly snapshot: EvidenceProductSnapshot;
+  readonly evidenceState: EvidenceState;
+  readonly sort?: 'source-time' | 'event-time';
+}): EvidenceClaimSurfaceView {
+  const snapshot = structuredClone(input.snapshot);
+  const state = EvidenceStateSchema.parse(structuredClone(input.evidenceState));
+  const workspace = requireWorkspace(snapshot, input.workspaceId);
+  requireProjectionRevision(workspace.evidenceRevision, state);
+  const sort = input.sort ?? 'source-time';
+  const standings = standingMap(state);
+  const sources = new Map(
+    snapshot.sources.map((source) => [source.artifactVersionId, source]),
+  );
+  const current = snapshot.observations.filter((observation) => {
+    const value = standings.get(observation.observationId);
+    return value === 'current' || value === 'contested';
+  });
+  const cardsById = new Map(
+    current.map((observation) => {
+      const source = sources.get(observation.artifactVersionId);
+      if (source === undefined) {
+        throw new RangeError(
+          `Missing source for ${observation.observationId}.`,
+        );
+      }
+      return [
+        observation.observationId,
+        {
+          observation,
+          source,
+          card: buildEvidenceObservationCard({
+            observation,
+            source,
+            snapshot,
+          }),
+        },
+      ];
+    }),
+  );
+  const sortCards = (
+    items: readonly {
+      readonly observation: EvidenceObservation;
+      readonly source: SourceArtifactVersion;
+      readonly card: EvidenceObservationCard;
+    }[],
+  ) =>
+    [...items].sort((left, right) => {
+      const leftKey =
+        sort === 'event-time'
+          ? (left.card.assertedEventTimeDisplay ??
+            left.card.sourceTimeDisplay ??
+            '')
+          : (left.card.sourceTimeDisplay ?? left.source.title);
+      const rightKey =
+        sort === 'event-time'
+          ? (right.card.assertedEventTimeDisplay ??
+            right.card.sourceTimeDisplay ??
+            '')
+          : (right.card.sourceTimeDisplay ?? right.source.title);
+      return (
+        leftKey.localeCompare(rightKey) ||
+        left.card.citation.display.localeCompare(right.card.citation.display) ||
+        left.observation.observationId.localeCompare(
+          right.observation.observationId,
+        )
+      );
+    });
+  const groups: EvidenceClaimSurfaceView['groups'] = [];
+  const scopeBuckets = new Map<string, Set<string>>();
+  for (const relation of snapshot.relations) {
+    if (state.currentRelationVersionIds.includes(relation.relationId) === false)
+      continue;
+    const key = `${relation.comparableScope.subject}\u0000${relation.comparableScope.aspect}`;
+    const bucket = scopeBuckets.get(key) ?? new Set<string>();
+    for (const endpoint of relation.endpoints) {
+      if (endpoint.kind === 'observation' && cardsById.has(endpoint.id))
+        bucket.add(endpoint.id);
+    }
+    scopeBuckets.set(key, bucket);
+  }
+  for (const [key, ids] of [...scopeBuckets.entries()].sort(([left], [right]) =>
+    left.localeCompare(right),
+  )) {
+    if (ids.size === 0) continue;
+    const [subject = 'unscoped', aspect = 'aspect'] = key.split('\u0000');
+    const items = sortCards(
+      [...ids].flatMap((id) => {
+        const value = cardsById.get(id);
+        return value === undefined ? [] : [value];
+      }),
+    );
+    const relationKinds = [
+      ...new Set(
+        snapshot.relations
+          .filter(
+            (relation) =>
+              `${relation.comparableScope.subject}\u0000${relation.comparableScope.aspect}` ===
+                key &&
+              state.currentRelationVersionIds.includes(relation.relationId),
+          )
+          .map((relation) => relation.relationKind),
+      ),
+    ].sort();
+    groups.push({
+      groupId: `scope:${subject}:${aspect}`,
+      kind: 'relation-scope',
+      subject,
+      aspect,
+      comparePath: null,
+      relationKinds,
+      cards: items.map(({ card }) => card),
+    });
+  }
+  const actorBuckets = new Map<string, Set<string>>();
+  for (const observation of current) {
+    const actor = sourceActor(observation);
+    if (actor === null) continue;
+    const bucket = actorBuckets.get(actor.sourceLabel) ?? new Set<string>();
+    bucket.add(observation.observationId);
+    actorBuckets.set(actor.sourceLabel, bucket);
+  }
+  for (const [label, ids] of [...actorBuckets.entries()].sort(
+    ([left], [right]) => left.localeCompare(right),
+  )) {
+    if (ids.size === 0) continue;
+    const items = sortCards(
+      [...ids].flatMap((id) => {
+        const value = cardsById.get(id);
+        return value === undefined ? [] : [value];
+      }),
+    );
+    const hasCorrection = items.some(
+      ({ source }) => source.predecessorVersionId !== null,
+    );
+    groups.push({
+      groupId: `actor:${label}`,
+      kind: 'actor-thread',
+      subject: label,
+      aspect: 'person thread',
+      comparePath: hasCorrection ? '/api/accounts/compare' : null,
+      relationKinds: [],
+      cards: items.map(({ card }) => card),
+    });
+  }
+  return detached(
+    EvidenceClaimSurfaceViewSchema.parse({
+      schemaVersion: EVIDENCE_CLAIM_SURFACE_VIEW_SCHEMA_VERSION,
+      workspaceId: input.workspaceId,
+      heading: 'Claim',
+      explanation:
+        'Occurrences are grouped by a shared aspect. Cards stay separate; overlap is visible and is not a stored merge.',
+      sort,
+      groups,
     }),
   );
 }

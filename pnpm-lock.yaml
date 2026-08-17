@@ -120,6 +120,9 @@ importers:
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
+      '@acme/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
@@ -147,6 +150,9 @@ importers:
       '@acme/evidence-workbench-worker':
         specifier: workspace:*
         version: link:../evidence-workbench-worker
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../../packages/live-safety
       '@acme/module-evidence':
         specifier: workspace:*
         version: link:../../packages/module-evidence
@@ -172,27 +178,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/module-evidence
 
-  apps/mcp-server:
-    dependencies:
-      '@acme/adapter-memory':
-        specifier: workspace:*
-        version: link:../../packages/adapter-memory
-      '@acme/adapter-model-mock':
-        specifier: workspace:*
-        version: link:../../packages/adapter-model-mock
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@acme/module-narrative':
-        specifier: workspace:*
-        version: link:../../packages/module-narrative
-      '@acme/module-research':
-        specifier: workspace:*
-        version: link:../../packages/module-research
-      '@acme/provenance-states':
-        specifier: workspace:*
-        version: link:../../packages/provenance-states
-
   apps/test-ui:
     dependencies:
       '@acme/adapter-memory':
@@ -207,6 +192,9 @@ importers:
       '@acme/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../../packages/live-safety
       '@acme/module-narrative':
         specifier: workspace:*
         version: link:../../packages/module-narrative
@@ -418,6 +406,9 @@ importers:
       '@acme/evidence-auth':
         specifier: workspace:*
         version: link:../evidence-auth
+      '@acme/live-safety':
+        specifier: workspace:*
+        version: link:../live-safety
       '@acme/module-evidence':
         specifier: workspace:*
         version: link:../module-evidence
@@ -462,6 +453,8 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/live-safety: {}
+
   packages/module-evidence:
     dependencies:
       '@acme/core':
@@ -480,18 +473,6 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
-  packages/module-personal:
-    dependencies:
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../core
-      '@acme/provenance-states':
-        specifier: workspace:*
-        version: link:../provenance-states
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
-
   packages/module-research:
     dependencies:
       '@acme/core':
@@ -500,12 +481,6 @@ importers:
       zod:
         specifier: 4.4.3
         version: 4.4.3
-
-  packages/provenance-states:
-    dependencies:
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../core
 
   packages/testing:
     dependencies:

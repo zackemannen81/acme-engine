@@ -18,6 +18,8 @@ export const EvidenceProductActionSchema = z.enum([
   'review.decide',
   'assessment.propose',
   'synthetic-fixture.run',
+  'source.import',
+  'live-model.run',
   'job.cancel',
   'technical-audit.read',
   'organization-membership.manage',
@@ -40,6 +42,10 @@ export const EvidenceCaseStatusSchema = z.enum([
   'active',
   'archived',
 ]);
+export const EvidenceCaseDataPolicySchema = z.enum([
+  'synthetic-only',
+  'stage-a-authorized-judicial-text',
+]);
 
 export const EvidenceCaseSchema = z
   .object({
@@ -50,7 +56,7 @@ export const EvidenceCaseSchema = z
     title: NonBlank.max(200),
     caseReference: NonBlank.max(100).nullable(),
     metadata: z.record(NonBlank.max(64), z.string().max(500)).default({}),
-    dataPolicy: z.literal('synthetic-only'),
+    dataPolicy: EvidenceCaseDataPolicySchema,
     status: EvidenceCaseStatusSchema,
     revision: z.number().int().nonnegative(),
     createdAt: Timestamp,
@@ -203,6 +209,9 @@ export type EvidenceOrganizationRole = z.infer<
 >;
 export type EvidenceCaseRole = z.infer<typeof EvidenceCaseRoleSchema>;
 export type EvidenceCaseStatus = z.infer<typeof EvidenceCaseStatusSchema>;
+export type EvidenceCaseDataPolicy = z.infer<
+  typeof EvidenceCaseDataPolicySchema
+>;
 export type EvidenceCase = z.infer<typeof EvidenceCaseSchema>;
 export type EvidenceCaseMembership = z.infer<
   typeof EvidenceCaseMembershipSchema

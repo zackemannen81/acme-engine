@@ -33,8 +33,9 @@ attention, deterministic ZIP and full product path. Pre-late E-A01 has no
 open-question references; post-import E-A02 retains all three sealed questions.
 ADR-0035/ACME-0091, ADR-0036/ACME-0093 and ADR-0037/ACME-0095 subsequently
 deliver authenticated principals, case isolation and the secure artifact
-foundation for the fixed synthetic corpus. Slice 9 readiness remains
-separately activatable.
+foundation for the fixed synthetic corpus. ADR-0040 now accepts the first
+separately activatable Slice 9 class and live-product profile; neither is
+implemented yet.
 ADR-0038 additionally decides and ACME-0097 implements one bounded synthetic
 UTF-8 plain-text import class and immutable redacted derivatives. Excluded
 formats and non-synthetic material remain refused.
@@ -415,9 +416,9 @@ The first contract catalogue is:
 | Capability | Task / contract | Role | Earliest slice |
 | --- | --- | --- | --- |
 | Observe one source artifact | `evidence.observe-artifact@1.0.0` | analyzer, model-backed | 1 |
-| Propose normalized meanings, relations and questions over accepted observations | `evidence.relate-observations@1.0.0` | analyzer, model-backed | 3 |
+| Propose normalized meanings, relations and questions over accepted observations | `evidence.relate-observations@1.1.0` (active; historical `@1.0.0` retained for replay) | analyzer, model-backed | 3 |
 | Build temporal entries | `evidence.build-timeline@1.0.0` | transformer, deterministic | 4 |
-| Propose an assessment document | `evidence.propose-assessment@1.0.0` | producer, model-backed | 5 |
+| Propose an assessment document | `evidence.propose-assessment@1.2.0` (active; historical `@1.0.0` and `@1.1.0` retained for replay) | producer, model-backed | 5 |
 
 The last three identifiers are reserved by this specification but are not
 published until their own slice implements and verifies them. Artifact import,
@@ -468,22 +469,29 @@ Interpretation performs, in order:
 
 ### 6.3 Later task boundaries
 
-`evidence.relate-observations@1.0.0` accepts explicit current observation ids
+Active `evidence.relate-observations@1.1.0` accepts explicit current observation ids
 and their immutable source-bound values. It may propose `PropositionCandidate`,
 `EventOccurrence`, `EvidenceRelation` and `OpenQuestion` candidates. Every
 relation output contains all endpoints, an exact comparable scope, a rationale
 code and an abstention path. It cannot modify or forget an endpoint.
+All set-like identifier/rationale arrays must be unique and lexicographically
+sorted; relation endpoints must be distinct and sorted by kind then id. The
+historical `@1.0.0` prompt remains registered byte-exact for replay and runtime
+validation never repairs or reorders an unvalidated provider response.
 
 `evidence.build-timeline@1.0.0` is pure and model-free. It orders exact bounds,
 then non-overlapping ranges, and otherwise emits ambiguity bands. Approximate
 and unknown items retain those labels. Equal sort keys fall back to stable
 evidence id. The task never creates a more precise bound.
 
-`evidence.propose-assessment@1.0.0` accepts only explicitly listed accepted
+Active `evidence.propose-assessment@1.2.0` accepts only explicitly listed accepted
 observation, proposition, event, relation and open-question ids. It produces a
 candidate `evidence-assessment/1` document with cited support, cited conflict,
 uncertainty rationale and basis evidence revision. Unknown citations, missing
 uncertainty or prohibited conclusions block the document.
+Every set-like string-ID array must be unique and lexicographically sorted.
+Historical `@1.0.0` and `@1.1.0` remain registered byte-exact for replay, and
+runtime validation never repairs or reorders an unvalidated response.
 
 ### 6.4 Memory policy
 
@@ -1225,10 +1233,11 @@ Documentation: all new authority and residual risks before ingestion.
 | Object-storage vendor and database/object consistency | **Decided by [ADR-0037](../adr/0037-evidence-secure-artifact-foundation.md) and implemented by ACME-0095.** Immutable application-encrypted objects use staged verification across PostgreSQL and filesystem/S3-compatible storage. |
 | Supabase Auth, Storage, Realtime or Studio | Auth is implemented by ACME-0091. ACME-0095 uses only the server-side S3-compatible Storage interface for private ciphertext. Realtime and Studio remain unused. |
 | Hosting platform, topology and region | Deferred to slice 8 charter. |
-| Live model and budget | Deferred to a gated slice; mocks remain default. |
+| Live model and budget | **Decided by [ADR-0039](../adr/0039-evidence-workbench-live-model-boundary.md); composition foundation implemented by ACME-0105.** A versioned case-bound confirmation, environment-only credentials, a run ceiling capped by a deployment ceiling and durable `encrypted-payload` key are enforced before a closed OpenAI capability exists. Mocks remain default; job/API audit and callable execution are the next increment. |
 | Bounded synthetic text ingestion and immutable redaction | **Implemented by ACME-0097 under [ADR-0038](../adr/0038-bounded-text-ingestion-and-immutable-redaction.md).** Strict UTF-8 browser import, encrypted original/canonical objects, durable file/PostgreSQL records and immutable redacted derivatives are synthetic-only. |
 | PDF/OCR/audio/video/media locators | Outside V1; new schemas, validation and threat analysis required. |
-| Any non-synthetic data path | Blocked by ADR-0028 until slice 9 authority exists. |
+| Stage A anonymized real judicial UTF-8 text | **Accepted by [ADR-0040](../adr/0040-poc-1-live-product-applicability.md); composition guard implemented by ACME-0105; import path implemented by ACME-0106.** Versioned case/import records preserve exact outside-PDF provenance, encrypted original/canonical text and case ownership. API/browser activation requires the live capability. Provider execution remains the next increment. |
+| Stage B FUP or any other non-synthetic data path | Blocked until a later data-class ADR supplies explicit authority. |
 | Dynamic discovery, workflow runtime and vector retrieval | Deferred until measured need; not part of this product plan. |
 
 No future choice may weaken the Primary Product Rule, source-binding gates or
@@ -1239,7 +1248,7 @@ security and validation review.
 
 | Specification invariant | Authority |
 | --- | --- |
-| Synthetic text only; no real/criminal-offence data | ADR-0028 and product definition |
+| Synthetic default plus only the bounded Stage A judicial-text class; no Stage B or arbitrary real data | ADR-0028, ADR-0040 and product definition |
 | Seven logical artifacts in eight versions and partition separation | ACME-0076 accepted charter and this specification |
 | UTF-8/LF/NFC, line locators and exact substring binding | ACME-0076 accepted charter; ADR-0030 identity decision |
 | Model is candidate generator only | Project brief, ADR-0010, ADR-0028 |

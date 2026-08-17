@@ -1075,6 +1075,99 @@ export function createFileEvidenceProductRepository(options: {
         };
       });
     },
+    async commitRelationProjection(input) {
+      const relations = input.relations.map((value) =>
+        EvidenceRelationSchema.parse(value),
+      );
+      const questions = input.openQuestions.map((value) =>
+        EvidenceOpenQuestionSchema.parse(value),
+      );
+      const changeSet = EvidenceProductChangeSetSchema.parse(input.changeSet);
+      return mutate((snapshot) => {
+        const workspace = snapshot.workspaces.find(
+          ({ workspaceId }) => workspaceId === input.workspaceId,
+        );
+        if (
+          workspace === undefined ||
+          workspace.evidenceRevision !== input.expectedRevision ||
+          input.nextRevision !== input.expectedRevision + 1
+        )
+          throw new EvidenceProductCommandCollisionError(
+            `revision:${input.workspaceId}`,
+          );
+        const relationMap = new Map(
+          snapshot.relations.map((value) => [value.relationId, value]),
+        );
+        for (const value of relations) {
+          const existing = relationMap.get(value.relationId);
+          if (existing !== undefined && !same(existing, value))
+            throw new EvidenceProductCommandCollisionError(value.relationId);
+          relationMap.set(value.relationId, existing ?? value);
+        }
+        const questionMap = new Map(
+          snapshot.openQuestions.map((value) => [value.openQuestionId, value]),
+        );
+        for (const value of questions) {
+          const existing = questionMap.get(value.openQuestionId);
+          if (existing !== undefined && !same(existing, value))
+            throw new EvidenceProductCommandCollisionError(
+              value.openQuestionId,
+            );
+          questionMap.set(value.openQuestionId, existing ?? value);
+        }
+        const existingChangeSet = snapshot.changeSets.find(
+          (value) =>
+            value.workspaceId === changeSet.workspaceId &&
+            value.commandKey === changeSet.commandKey,
+        );
+        if (
+          existingChangeSet !== undefined &&
+          !same(existingChangeSet, changeSet)
+        )
+          throw new EvidenceProductCommandCollisionError(changeSet.commandKey);
+        const updatedWorkspace = EvidenceWorkspaceSchema.parse({
+          ...workspace,
+          evidenceRevision: input.nextRevision,
+        });
+        let next = {
+          ...snapshot,
+          workspaces: snapshot.workspaces.map((value) =>
+            value.workspaceId === input.workspaceId ? updatedWorkspace : value,
+          ),
+          relations: [...relationMap.values()].sort((a, b) =>
+            a.relationId.localeCompare(b.relationId),
+          ),
+          openQuestions: [...questionMap.values()].sort((a, b) =>
+            a.openQuestionId.localeCompare(b.openQuestionId),
+          ),
+          changeSets:
+            existingChangeSet === undefined
+              ? [...snapshot.changeSets, changeSet].sort(
+                  (a, b) =>
+                    a.changeSet.toEvidenceRevision -
+                      b.changeSet.toEvidenceRevision ||
+                    a.commandKey.localeCompare(b.commandKey),
+                )
+              : snapshot.changeSets,
+        };
+        next = attachBindings(
+          next,
+          input.scope,
+          'relation',
+          relations as unknown as Record<string, unknown>[],
+        );
+        next = attachBindings(
+          next,
+          input.scope,
+          'open-question',
+          questions as unknown as Record<string, unknown>[],
+        );
+        next = attachBindings(next, input.scope, 'change-set', [
+          changeSet as unknown as Record<string, unknown>,
+        ]);
+        return { value: updatedWorkspace, snapshot: next };
+      });
+    },
     async putAssessments(assessments, scope) {
       const values = assessments.map((value) =>
         EvidenceAssessmentSchema.parse(value),

@@ -26,7 +26,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-08-12
+Last updated: 2026-08-16
 
 ## Repository
 
@@ -226,8 +226,10 @@ There is currently:
   event, relation, question, assessment, state, delta, observe-contract and
   relate-contract schemas; named ADR-0030 content-derived identities;
   source-binding validation; compact pure state; reducer/invariants; domain
-  memory policy; deterministic `evidence.observe-artifact@1.0.0` and
-  `evidence.relate-observations@1.0.0`; ADR-0032 correction-occurrence pairing;
+  memory policy; active bounded `evidence.observe-artifact@1.3.0` with runtime-
+  derived locators, historical replay-compatible `@1.0.0`–`@1.2.0`, and active
+  deterministic `evidence.relate-observations@1.1.0` with byte-exact historical
+  `@1.0.0` replay; ADR-0032 correction-occurrence pairing;
   and contest projection for scoped `contradicts` relations
 - `@acme/evidence-testing` with the exact seven-artifact/eight-version
   `rillford-annex-review-1` synthetic corpus, manifest, scratch/development
@@ -400,14 +402,315 @@ versioned review contracts. New decisions use authenticated server-derived
 principals while temporary `unauthenticated-local` history remains immutable.
 The approved completion and later-product sequence is recorded in
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
-Non-synthetic paths remain unimplemented (slice 9 governance).
+Only ADR-0040's bounded Stage A judicial-text path is implemented; all other
+non-synthetic classes remain unauthorized.
 
 ## Active Work
 
-Stage 8 is complete (ACME-0100). Nothing is in progress. Stages 1–8 of the
-product completion plan are delivered. Stage 9 non-synthetic readiness stays
-closed and needs its own ADR and qualified review before any task may activate
-it.
+ACME-0133 ran the first outcome-blind acceptance against two real investigation
+documents and returned FAIL. The integrity machinery held throughout — exact
+canonical hashes, exact source binding, atomic projection, idempotent review,
+fail-closed refusals, measured cost — but the product produced no usable domain
+result, and none of the reasons were defects. A 1,915-page document was refused
+at ingest, one call returned exactly eight candidates because eight was the
+schema maximum, one refused relation removed the assessment entirely, and no
+observation carried a temporal bound. Every one of those numbers was calibrated
+against the synthetic corpus. The frozen report is
+`docs/acceptance/ACME-0133-frozen-acceptance-report.md`.
+
+ADR-0045 accepts the consequence: bounds are sized for the material, not for
+the fixture. ACME-0134 implements its sections 2 to 4 — active observation
+contract `1.7.0` with a response-derived ceiling of 64, canonical text bounds
+of 16 MiB and 400,000 lines, and an assessment that proceeds from accepted
+observations without requiring a relation. Historical contract versions keep
+their own ceilings and replay byte-exact. ACME-0135 implements section 5: the
+execution engine consumes `maxRepairCalls`, each live Evidence contract owns
+its repair request, and the observation, relation and assessment jobs budget
+one repair. A recoverably invalid response is corrected within budget instead
+of being paid for and discarded. ACME-0137 implements section 6: observation
+coverage is a windowed workflow. The planner splits a source into
+non-overlapping windows of at most 64 segments. Active
+`evidence.observe-artifact@1.8.0` input `/2` requires a `coverageWindow`; the
+provider sees only those segments and semantics refuse a window that omits a
+supplied segment or names one outside it. ACME-0138 versions the active
+contract to `1.9.0` output `/5`: coverage is a `segmentCoverage` ledger
+(`observations_extracted` | `no_observation`) and a segment may yield
+zero or many atomic observations. The prompt forbids invented coverage
+observations, extraction-time dedup and promoting reported speech to a
+world fact. Raw non-normalizable time stays in `temporalBound.reason`.
+Historical `@1.8.0` stays byte-exact. The live observation job iterates
+windows as separate bounded executions with per-window request keys so a
+committed window is not paid for again. A single window still cannot claim
+document coverage. Date-only temporal bounds and the 409
+ledger/relation/question views remain follow-ups.
+
+ADR-0046 accepts the surface and pipeline direction: source chronology
+and claim projection are two graphs over the same immutable occurrence.
+Segmentation follows the document, not the event timeline. Observe is
+Pass 1 only. The reviewer surface is three jobs (case/source stream,
+claim, stance), not a type inventory. The specification and child
+sequence ACME-0139–0144 are
+`docs/design/evidence-workbench-source-and-claim-surfaces.md`. Nothing
+in that sequence is implemented until a child is chartered. ACME-0139 implements Pass 1 empty-roster: active observe `@1.10.0` requires
+a null actor when the roster is empty and refuses invented unresolved
+keys. Historical `@1.9.0` stays byte-exact. ACME-0140 adds `evidence-observation-card/1`. Source review and the
+ledger embed the same card; the browser renders quote, citation and
+standing from it. ACME-0141 sorts `/api/text-imports` by acquired/ingest
+time and titles Documents as Source stream with coverage badges;
+`?view=stream` aliases that surface. ACME-0147 makes Source stream,
+Claim, Stance and Search the primary nav; default signed-in entry is
+the source stream. Stance groups the review queue by source title.
+Source review seats observations under their block. Legacy `?view=`
+routes remain. ACME-0142 adds
+`evidence-source-structure/1` under `evidence-source-structure-rules/3`
+and active observe `@1.11.0` input `/3`
+output `/6`: new analyzes use document-native blocks plus optional
+neighbour context, and context-only citations are refused. Oversized
+paragraphs split at sentence boundaries toward 150–350 words (soft
+600); Q+A is not split. Paragraph and answer blocks emit one segment
+per sentence. Structural windows pack toward 800 words, cap 64.
+Historical `@1.10.0` stays byte-exact. ACME-0143 adds the read-only claim surface:
+`evidence-claim-surface-view/1` groups current occurrences by relation
+scope or actor thread as unmerged 0140 cards; `?view=claim` opens it.
+ACME-0144 adds relate `@1.2.0` continuity and exposure kinds
+(`changes_certainty`, `prompted_by`, and siblings). Historical `@1.1.0`
+stays byte-exact. The X#1 → X#2 colour example can be represented
+without deleting X#1. ADR-0046 children 0139–0144 are implemented.
+ACME-0145 versions source-structure rules to `/2` so a long exhibit is
+not one window of giant paragraphs. ACME-0146 versions them to `/3` so
+a paragraph yields one citable sentence per segment and 0..N
+observations can carry distinct runtime quotes. ACME-0148 projects
+heading-titled and word-budget source parts onto the stream so a
+judicial extract can be opened and analyzed one part at a time.
+
+ACME-0136 ran the second outcome-blind acceptance. source-A now imports.
+Observation of source-B produced 24 accepted fragments. Repair ran on
+relation and assessment and both still failed. Observation of source-A
+failed as `INVALID_REQUEST`. The observation ledger, relations and
+open-question views answer 409 when the product workspace revision is
+ahead of the engine projection. The frozen report is
+`docs/acceptance/ACME-0136-frozen-acceptance-report.md`. Result: FAIL.
+
+POC #1 has entered its live product acceptance phase. ACME-0129 is superseded
+before its acceptance run: it was frozen to prove live execution could happen
+safely without uncontrolled spend, and that question is answered. ADR-0044
+(Proposed) records the change. It keeps schema validation, fail-closed refusal,
+revision and integrity guards, transactional mutation, idempotency, case
+isolation, audit trail, provider-call logging and cost measurement, and retires
+the deployment call ceiling and cost ceiling as preconditions, campaign-level
+call caps, and mock or in-memory substrate as a basis for a POC claim. Bounding
+one execution remains; capping a campaign does not. Cost is governed by
+measurement over `acme.model_calls`. Verification separates into an offline
+deterministic suite, a live integration suite and a POC acceptance run, and
+only the last may claim POC #1 works.
+
+ACME-0131 repaired the five defects that first sustained real browser session
+exposed, none of which the offline suite could reach. The worker now runs the
+revision guard before any product write; the live observation job selects only
+the executing run's records; the evidence projection, case overview, integrity
+report and export policy all resolve the requested case instead of the
+composition default; and the development authenticator grants an upstream
+lifetime per sign-in rather than one fixed expiry per process. Three of the
+five were case-scoped reads resolving the default workspace, so ADR-0036
+isolation is now enforced by the read path itself rather than by the guards
+that were masking it. Every gate was proven load-bearing by reverting each fix
+individually. On the running instance every case view for a real case answers
+`200`, where four answered `409` and three answered `404` before.
+
+ACME-0132 then implemented that policy. The deployment call ceiling is no
+longer a precondition: absent means the deployment declines to cap the
+campaign, while per-execution bounding is untouched, so a run exceeding its
+confirmation is still refused. Cost became measurable in the same change,
+because it had not been: `acme.model_calls` reserved `model`, `provider` and
+`usage_json` columns and every row had all three `NULL`, since retention
+dropped that metadata in every mode. Completed calls now retain content-free
+`callMetadata` under `none`, `hash-only` and `encrypted-payload` alike, proven
+on all three adapters by the shared conformance kit, with gates asserting that
+no response text joins it. `summarizeModelCallUsage` summarizes recorded calls
+without inventing anything: absent usage reads as `null` rather than `0`, the
+summary says how much of a set its totals cover, and costs in differing
+currencies are refused rather than converted. The verification tiers are
+documented in `docs/CONTRIBUTING.md`, and only a POC acceptance run may claim
+POC #1 works.
+
+The `POC1-AUTO-UI` case remains wedged at product evidence revision 2 against
+engine revision 5. That divergence is recorded history; the fixes prevent new
+divergence rather than rewriting it, so the acceptance run needs a fresh case.
+Next is ADR-0044's retirement of the deployment call ceiling and cost ceiling
+plus the three-tier suite separation, then the acceptance run proposed in
+`docs/backlog/poc1-live-product-acceptance.md`.
+
+Stages 1–8 of the product completion plan are delivered. ACME-0102 accepted
+ADR-0039, the workbench live model boundary. ADR-0040 now accepts one bounded
+Stage A class, `stage-a-anonymized-judicial-text/1`, and the fail-closed
+`evidence-poc1-live/1` profile. ACME-0105 implements the shared live-safety
+primitives, Evidence confirmation parser, case-admin-only `live-model.run` and
+the closed hosted capability. It requires durable PostgreSQL, hosted mode, a
+live provider, a mounted durable payload key and deployment ceilings before it
+exists; it releases a gateway only after case-bound authorization and Stage A
+source authority. ACME-0106 adds `evidence-create-case-command/2`,
+`evidence-text-import-metadata/2` and `evidence-text-import-record/2`, with
+case-admin-only `source.import`, exact parent-PDF/extraction provenance and
+encrypted authenticated API/browser import. Stage A case creation/import is
+visible only when that capability exists. ACME-0107 adds the first callable
+live operation: a case-first `observe-artifact` job hydrates the selected
+canonical representation server-side, enforces exact case/source/budget
+confirmation and projects validated source-bound observations only after the
+durable execution commits. ACME-0108 adds a second case-first live job that
+derives current observations entirely from the authorized product snapshot,
+executes `relate-observations` once and atomically projects typed relations,
+open questions, standing changes and one evidence-revision advance. The
+ACME-0110 assessment job selects accepted current typed evidence server-side,
+uses source-complete assessment input `/2`, preserves historical `/1` replay
+and projects a validated assessment without changing evidence revision. The
+primary product path now covers human review, later-evidence attention and an
+immutable reviewed successor assessment. The default engine remains the
+scripted mock and exposes none of the live routes or browser controls.
+
+Stage A import activation proves the complete ADR-0040 composition tuple:
+durable PostgreSQL, configured live provider, authorized-external source origin
+and authorized-live execution. ACME-0106 proved two operator-supplied documents
+through encrypted PostgreSQL import and full restart with zero provider calls.
+ACME-0107 proves the observation path with an injected Responses transport: a
+fault after provider success leaves no product observations, and a full
+PostgreSQL composition restart completes from encrypted retained provider
+evidence without a second call. ACME-0108 proves the same boundary for relation
+analysis: refusal paths make zero calls, a fault after engine commit leaves no
+partial product projection, and a full composition restart completes from the
+retained response with the same relation/question identities and one cumulative
+call. ACME-0110 proves the assessment boundary plus review/reassessment across
+another imported and observed Stage A source. It also corrects Stage A revision
+alignment: import owns the source evidence revision, observation verifies and
+reuses it, and relation supplies the next shared engine/product revision.
+ACME-0111 reached OpenAI once under a one-call run and deployment gate plus the
+user's 200 SEK prepaid monetary ceiling. The 52-page source produced an
+incomplete candidate at the active contract's 2,048-output-token limit; strict
+JSON parsing failed, and the fail-closed path left zero engine commits and zero
+product observations. ADR-0041/ACME-0112 now add active
+`evidence.observe-artifact@1.2.0`: one to eight explicitly non-exhaustive
+reviewer candidates, provider-wire `minItems`/`maxItems` and an 8,192-output-
+token request. Both earlier contracts remain exact replay registrations.
+ACME-0113 then made the separately frozen fresh call: OpenAI completed strict
+JSON with six candidates and did not hit the new output bound. Every exact
+quote occurred verbatim in the source, but all six model-authored line ranges
+were offset, so semantic quote/locator binding correctly refused the batch and
+left zero engine documents and zero product observations. The next dependency
+was ADR-0042/ACME-0114. Active `evidence.observe-artifact@1.3.0` output `/2`
+removes line fields from the provider schema, validates that each exact quote
+occurs exactly once in the canonical artifact and derives inclusive line
+locators in runtime before identity or projection. Historical `@1.0.0`–
+`@1.2.0` output `/1` remains exact for replay. ACME-0115's fresh `@1.3.0` call
+then returned complete strict JSON with six candidates, but schema validation
+refused one time-only range (two eight-character clock values rather than full
+UTC ISO timestamps). Four quotes were exact/unique; two long multi-line quotes
+matched source only after whitespace normalization and remained correctly
+unbound. Zero engine documents and product observations committed. The next
+offline dependency was ACME-0116. Active `evidence.observe-artifact@1.4.0`
+output `/3` limits exact quotes to one canonical source line and 500 characters
+and explicitly instructs `unknown` unless complete dates and clocks are visible
+in that quote. Historical `@1.0.0`–`@1.3.0` remain exact for replay. ACME-0117
+then made one fresh `@1.4.0` call: output `/3` was complete strict JSON with
+eight candidates and no invalid temporal normalization, but only three quotes
+occurred exactly once. Four of the remaining candidates compressed text across
+canonical line boundaries while changing whitespace and/or punctuation; one
+also changed alphanumeric content. Semantic validation reported five
+`EVIDENCE_QUOTE_NOT_FOUND` issues and committed zero engine documents and zero
+product observations. A provider-wire one-line string does not prove canonical
+line membership. ADR-0043/ACME-0118 resolve that dependency additively. Active
+`evidence.observe-artifact@1.5.0` output `/4` contains `sourceSegmentId` rather
+than quote text. Runtime presents deterministic non-empty, single-line source
+segments of at most 500 Unicode code points, accepts only a supplied identifier
+and derives the entire exact quote plus locator from that immutable segment.
+Historical `@1.0.0`–`@1.4.0` and outputs `/1`–`/3` remain exact for replay.
+Full-source coverage still needs a separate segmentation/coverage workflow.
+ACME-0119's sole fresh `@1.5.0` call returned eight output `/4` candidates;
+all selected segment IDs existed and were unique, so ADR-0043's quote boundary
+held. Strict schema validation refused candidate seven because `exact.at` was a
+16-character local date/time with `T` but no seconds, offset or terminal `Z`.
+The other seven temporal bounds were `unknown`. One encrypted call succeeded;
+zero engine documents, commits and product observations were written. The next
+offline dependency is a prompt version that states the exact canonical UTC
+seconds/`Z` grammar and requires `unknown` when it cannot be emitted.
+ACME-0120 implements that dependency as active
+`evidence.observe-artifact@1.6.0`, still output `/4`. The prompt literally
+requires `YYYY-MM-DDTHH:MM:SSZ` or three-digit millisecond UTC, forbids local,
+minute-only and numeric-offset normalized values, and requires `unknown`
+instead. Historical `@1.5.0` remains byte-exact and registered.
+ACME-0121 then made one fresh `@1.6.0` call. It stopped normally after 66,819
+input and 650 output tokens with eight valid, supplied and unique output `/4`
+segment selections. Strict and semantic validation passed; runtime derived all
+eight exact quotes and one-line locators and durably wrote one committed
+execution, document and commit plus eight product observations. The product
+job returned `LIVE_OBSERVATION_COMPLETED`; the Vitest process alone exited
+false because its post-commit assertion still expected the obsolete
+`LIVE_OBSERVATION_COMMITTED`. ACME-0122 aligns that assertion and pins the
+successful reason in an offline PostgreSQL journey. The active observation
+contract therefore has real-provider product evidence, but the consumed
+ACME-0121 process-level charter is superseded rather than rewritten.
+ACME-0123 adds the remaining opt-in two-source Stage A reviewer acceptance
+harness without adding another mock proof. It drives six separately one-call-
+bounded observation/relation/assessment jobs across D1, restart, D2 and final
+restart; exercises accept/reject/unresolved review; requires relations, open
+questions, citation-complete assessments, stale predecessor history and a
+reviewed successor; and asserts that the primary domain shell works while
+technical audit stays unavailable. The harness is fully green offline and no
+provider call has run through it yet.
+ACME-0124 consumed the harness's first job only. D1 again produced one
+committed `@1.6.0` batch with eight valid unique segment selections and eight
+runtime-derived observations. The first reviewer request then failed closed
+before any later provider job because ACME-0123 read `observationId` from the
+primary source view instead of its public `observationVersionId` field. Zero
+review decisions, relations or assessments wrote. The one-shot task was not
+retried and all disposable state was removed; a bounded offline harness
+correction is the next dependency.
+ACME-0125 completes that dependency: the harness now consumes the exported
+`EvidencePrimarySourceReviewView` type and uses its
+`observationVersionId` for review/history routes. The handwritten response
+shape is gone, so this mismatch is compile-time visible. All canonical offline
+gates pass; no provider call occurred. A new separately frozen live journey is
+the next dependency.
+ACME-0126 then passed D1 observation plus all eight reviewer decisions (six
+accepted, one rejected, one unresolved) and reached the real relation model.
+That call returned eight propositions, four relation candidates and three open
+questions, but two otherwise valid unique triggering-observation ID arrays
+were not lexicographically sorted. Strict output `/1` requires sorted unique
+sets; the active `@1.0.0` prompt never states that wire rule. Schema validation
+failed closed, zero relations/questions/assessments wrote and four later calls
+never started. A replay-compatible relation prompt version is the next offline
+dependency.
+ACME-0127 completes that dependency without changing output `/1` or runtime
+semantics. Active `evidence.relate-observations@1.1.0` explicitly requires
+unique lexicographically sorted set-like string arrays and distinct relation
+endpoints sorted by kind then id. Historical `@1.0.0` remains byte-exact and
+registered for replay; both request hashes are pinned and all canonical gates
+pass without a provider call. A separately frozen live journey remains.
+ACME-0128 closes the adjacent assessment risk before spending. Active
+`evidence.propose-assessment@1.2.0` explicitly requires unique,
+lexicographically sorted set-like string-ID arrays. Historical `@1.0.0` and
+`@1.1.0` remain byte-exact and registered for replay; all three request hashes
+are pinned and canonical gates, including fresh PostgreSQL 36/36, pass without
+a provider call. A separately frozen live journey remains.
+Stage B FUP material, arbitrary ingestion and excluded formats stay closed.
+The remaining readiness evidence and later-class prerequisites are gathered in
+[`docs/backlog/slice-9-prerequisite-checklist.md`](backlog/slice-9-prerequisite-checklist.md).
+
+ACME-0130 corrected a second defect that made the browser client unusable past
+sign-in. The shell's `casePath` exempted the case catalog by comparing the whole
+argument, query string included, against `/api/cases`, so the real
+`/api/cases?organizationId=…` call was rewritten into a case-scoped path and
+answered `404`. The case selector stayed empty and no case could be opened,
+although case creation kept working through its separately exempted route. The
+exemption now matches `URL.pathname`. The defect entered with ACME-0093 and
+passed through ACME-0101's parse gate, which compiles the emitted module without
+exercising the URLs it builds. No product behavior, contract, persistence or
+data authority changed.
+
+ACME-0101 corrected a defect that made the browser client unusable: the shell
+rendered an unterminated string literal, so the whole module failed to parse
+and no handler was bound, including sign-in. It entered with ACME-0097 and
+shipped undetected through ACME-0098 to ACME-0100 because the shell test only
+matched substrings in the rendered HTML. The shell test now compiles the
+emitted browser module.
 
 ACME-0100 implements Stage 8. `buildEvidenceAssessmentOutputDocument` resolves
 one reviewed assessment into a citation-complete document and refuses anything
@@ -451,6 +754,86 @@ redaction and Slice 9 readiness.
 
 ### Recent completed work (summary)
 
+- **ACME-0112 through ACME-0118:** Versioned the observation contract as a
+  bounded one-to-eight non-exhaustive batch with 8,192 output tokens while
+  retaining historical replay. The subsequent sole real call returned
+  complete strict JSON with six verbatim source quotes, proving truncation was
+  removed, but every model-authored line range was offset. Runtime semantic
+  validation refused all six and committed nothing. ADR-0042/ACME-0114 now
+  remove locator fields from active output `/2`, require one exact source
+  occurrence and derive canonical line ranges in runtime while retaining all
+  historical request/output contracts for replay. ACME-0115's subsequent sole
+  call exposed time-only normalized ranges and two whitespace-normalized long
+  multi-line quotes; strict schema/exact binding again committed nothing.
+  ACME-0116 adds active `@1.4.0` output `/3` with provider-wire single-line/
+  500-character quote constraints and an explicit full-date temporal rule.
+  ACME-0117 returned complete strict output with eight candidates and avoided
+  the temporal schema defect, but five one-line strings were not verbatim
+  canonical source substrings. Exact runtime binding again refused the whole
+  batch and committed nothing. ADR-0043/ACME-0118 now remove quote text from
+  active output `/4`: the provider selects a runtime-defined bounded segment
+  and runtime derives quote, line locator and identity while preserving all
+  five historical contracts.
+- **ACME-0110:** Completed the Stage A engineering journey through reviewed
+  reassessment. Additive source-complete assessment input, command/job/audit
+  contracts and browser/API/worker execution preserve historical synthetic
+  replay, one-call encrypted resume and product evidence revision. PostgreSQL
+  proof covers refusal, post-engine interruption, process restart, human review,
+  later evidence attention and an immutable reviewed successor. ACME-0109 was
+  superseded before code because its charter incorrectly required assessment
+  proposal to advance evidence revision.
+- **ACME-0108:** Added the bounded Stage A live relation job. The authenticated
+  case-first API derives all current observations and source authority on the
+  server, executes the existing strict relation task once, and atomically
+  projects relations, open questions, standing changes and one revision. The
+  primary browser can launch and poll the job; PostgreSQL restart proof covers
+  post-engine interruption, retained-response resume and stable identities
+  without a second provider call. Real paid acceptance remains external.
+- **ACME-0107:** Added the bounded Stage A live observation job. Additive
+  command/job/audit contracts, authenticated case-first API, source-analysis
+  browser control and durable worker enforce one call, content-free control
+  records and server-side source/identity resolution. Injected-transport and
+  PostgreSQL restart proofs cover refusal, budget, case isolation, post-commit
+  interruption and zero-call resume. Live assessment and the real paid
+  acceptance remain subsequent dependencies.
+- **ACME-0106:** Implemented bounded Stage A judicial-text import. Added
+  additive case/import/provenance contracts, case-policy matching,
+  case-admin-only source import, capability-gated API/browser controls and
+  file/PostgreSQL restart/isolation proofs. A disposable PostgreSQL acceptance
+  imported two fully inspected operator-supplied PDFs as prepared UTF-8 text,
+  retained their parent and extracted hashes, reopened identical records and
+  sources, and made zero provider calls. PDF bytes and extracted text never
+  entered Git.
+- **ACME-0105:** Implemented the fail-closed POC #1 live composition boundary.
+  `@acme/live-safety` now supplies credential, opt-in and nested-budget
+  primitives shared with the Domain Test UI. The Evidence API adds strict
+  `evidence-live-confirmation/1`, the four-part live resolver, durable hosted
+  payload-key configuration and an OpenAI gateway factory released only after
+  case-admin/source authority. The callable job/browser path remains next.
+- **ACME-0104:** Accepted ADR-0040. It distinguishes permanent
+  evidence/security/review invariants from synthetic-phase controls, authorizes
+  only anonymized real judicial UTF-8 text for Stage A, separates later Stage B
+  FUP material and requires a typed four-part live composition that fails
+  closed. This documentation checkpoint does not implement or activate the
+  live path.
+- **ACME-0103:** Corrective. Modernized the PostgreSQL restart durability test
+  to ADR-0036 case-first routing after CI surfaced it as broken. The breakage
+  dated from `9037ca1` and had been invisible because no session had ever run
+  `pnpm test:postgres`; this task ran it against a real `postgres:15` for the
+  first time — 34 tests from a clean database, covering migration v7 and the
+  export-policy and export-audit write paths. Also bounded a load-sensitive
+  timeout flake in the local blackbox suite. No product behavior changed.
+- **ACME-0102:** Accepted ADR-0039, the workbench live model boundary. It fixes
+  a case-bound `evidence-live-confirmation/1` with no actor field,
+  environment-only credentials, a run ceiling capped by a deployment ceiling,
+  `encrypted-payload` retention, content-free live audit, failure semantics and
+  the refusal matrix the implementation must prove. All three evidence tasks
+  are permitted live because the trust pipeline is gateway-independent. It is
+  documentation-only, grants no data authority and leaves Slice 9 closed.
+- **ACME-0101:** Corrective. Repaired the browser shell's unterminated string
+  literal, which had made the entire client fail to parse, and added a gate
+  that compiles the emitted module instead of only matching substrings in it.
+  No product behavior, contract or data authority changed.
 - **ACME-0100:** Implemented Stage 8. Added the `evidence-assessment-output/1`
   document and four deterministic renderers (JSON, Markdown, DOCX, PDF) with no
   new dependency, a per-case export policy with a format allowlist,
@@ -967,3 +1350,15 @@ Ordering, dependencies and activatable slices live in
   SQLite store (Q1), CLI `quality list|inspect|judge` (Q2), pure
   `acme-view-quality-evaluation/1` (Q3), and live-model judge outside the
   sync harness with offline injected-transport proof (Q4).
+- **Local workbench is single-session.** The local file composition persists the
+  product store but keeps its ACME execution ledger in memory, so restarting
+  against an existing product file leaves the evidence projection at revision 0
+  while the file records revision N. Every state-projecting view — observation
+  ledger, compare accounts, relations, timeline, open questions — then fails
+  with `Workspace evidence revision does not match the supplied Evidence
+  projection.` Work queue, source review, assessment, search, case overview and
+  the Case Integrity Report are unaffected. Workaround: delete
+  `.local/evidence-workbench` before a new session. Proposal and options:
+  [`docs/backlog/local-workbench-durable-ledger.md`](backlog/local-workbench-durable-ledger.md).
+  The hosted PostgreSQL composition has a durable ledger and does not exhibit
+  this.

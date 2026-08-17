@@ -1,6 +1,0 @@
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"example","version":"0.0.0"}}}
-{"jsonrpc":"2.0","method":"notifications/initialized"}
-{"jsonrpc":"2.0","id":2,"method":"tools/list"}
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"acme_execute_task","arguments":{"namespace":"narrative","task":"observe-document","entityId":"demo-story","requestKey":"demo-observe-1","expectedRevision":0,"input":{"documentKey":"demo-chapter-1","title":"The Signal Tower","text":"Mira tells Ion that her eyes are green. Light never crosses the ridge at night."}}}}
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"acme_read_entity","arguments":{"namespace":"narrative","entityId":"demo-story","task":"observe-document","expectedRevision":1}}}
-{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"acme_verify_execution","arguments":{"executionId":"execution_c811bbd1d883a70fdac5700dd6216bfe4e7c39fcd8d35f47748bf17866183c1e"}}}

@@ -1,5 +1,7 @@
 export * from './canonical-text.js';
 export * from './correction.js';
+export * from './coverage.js';
+export * from './source-structure.js';
 export * from './catalogue.js';
 export * from './attention.js';
 export * from './export.js';
@@ -7,6 +9,7 @@ export * from './contracts/build-timeline.js';
 export * from './contracts/observe-artifact.js';
 export * from './contracts/propose-assessment.js';
 export * from './contracts/relate-observations.js';
+export * from './contracts/repair.js';
 export * from './identity.js';
 export * from './memory-policy.js';
 export * from './module.js';

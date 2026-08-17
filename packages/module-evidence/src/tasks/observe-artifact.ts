@@ -12,6 +12,8 @@ import {
 } from '@acme/core';
 
 import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
+import { locateUniqueEvidenceQuote } from '../canonical-text.js';
+import { resolveEvidenceStructuredSourceSegment } from '../source-structure.js';
 import {
   EvidenceCorrectionPairingError,
   pairEvidenceCorrectionObservations,
@@ -36,14 +38,14 @@ import {
   EvidenceDeltaSchema,
   EvidenceMemoryValueSchema,
   EvidenceObserveArtifactInputSchema,
-  EvidenceObserveArtifactOutputSchema,
+  EvidenceObserveArtifactReplayOutputSchema,
   EvidenceStateSchema,
   SourceArtifactVersionSchema,
   type EvidenceActorReference,
   type EvidenceDelta,
   type EvidenceMemoryValue,
   type EvidenceObserveArtifactInput,
-  type EvidenceObserveArtifactOutput,
+  type EvidenceObserveArtifactReplayOutput,
   type EvidenceObservation,
   type EvidenceState,
   type EvidenceTemporalBound,
@@ -70,7 +72,7 @@ function readState(
   return EvidenceStateSchema.parse(context.state.value);
 }
 
-type Candidate = EvidenceObserveArtifactOutput['observations'][number];
+type Candidate = EvidenceObserveArtifactReplayOutput['observations'][number];
 
 type ActorCandidate =
   | {
@@ -131,17 +133,53 @@ function observation(
   input: EvidenceObserveArtifactInput,
 ): EvidenceObservation {
   const artifactVersionId = input.artifactVersion.artifactVersionId;
+  const selectedSegment =
+    'sourceSegmentId' in candidate
+      ? resolveEvidenceStructuredSourceSegment(
+          input.artifactVersion.text,
+          candidate.sourceSegmentId,
+        )
+      : undefined;
+  if ('sourceSegmentId' in candidate && selectedSegment === undefined) {
+    throw new AcmeError({
+      code: 'DOMAIN_INVALID_RESULT',
+      message: 'Active observation source segment does not exist.',
+      stage: 'interpreting',
+      retryable: false,
+    });
+  }
+  const exactQuote =
+    'exactQuote' in candidate
+      ? candidate.exactQuote
+      : (selectedSegment?.exactQuote as string);
+  const lineRange =
+    'startLine' in candidate && 'endLine' in candidate
+      ? { startLine: candidate.startLine, endLine: candidate.endLine }
+      : selectedSegment !== undefined
+        ? {
+            startLine: selectedSegment.startLine,
+            endLine: selectedSegment.endLine,
+          }
+        : locateUniqueEvidenceQuote(input.artifactVersion.text, exactQuote);
+  if ('status' in lineRange && lineRange.status !== 'unique') {
+    throw new AcmeError({
+      code: 'DOMAIN_INVALID_RESULT',
+      message: 'Active observation quote does not have one canonical locator.',
+      stage: 'interpreting',
+      retryable: false,
+    });
+  }
   const locatorId = deriveEvidenceLocatorId({
     artifactVersionId,
-    startLine: candidate.startLine,
-    endLine: candidate.endLine,
+    startLine: lineRange.startLine,
+    endLine: lineRange.endLine,
   });
   const locator = {
     schemaVersion: EVIDENCE_LOCATOR_SCHEMA_VERSION,
     locatorId,
     artifactVersionId,
-    startLine: candidate.startLine,
-    endLine: candidate.endLine,
+    startLine: lineRange.startLine,
+    endLine: lineRange.endLine,
   } as const;
   const temporal = temporalBound(
     candidate.temporalBound,
@@ -162,7 +200,7 @@ function observation(
     kind: candidate.kind,
     artifactVersionId,
     locatorId,
-    exactQuote: candidate.exactQuote,
+    exactQuote,
     sourceActorReference: sourceActor,
     temporalBound: temporal,
   });
@@ -174,7 +212,7 @@ function observation(
           observationId,
           artifactVersionId,
           locator,
-          exactQuote: candidate.exactQuote,
+          exactQuote,
           actorReference: sourceActor as EvidenceActorReference,
           temporalBound: temporal,
         }
@@ -184,7 +222,7 @@ function observation(
           observationId,
           artifactVersionId,
           locator,
-          exactQuote: candidate.exactQuote,
+          exactQuote,
           sourceActorReference: sourceActor,
           temporalBound: temporal,
         },
@@ -315,12 +353,13 @@ function correctionStandingChanges(
 }
 
 function interpretOutput(
-  output: EvidenceObserveArtifactOutput,
+  output: EvidenceObserveArtifactReplayOutput,
   input: EvidenceObserveArtifactInput,
   context: ExecutionReadContext<EvidenceState>,
 ): ModuleResult<EvidenceDelta> {
   const validatedInput = EvidenceObserveArtifactInputSchema.parse(input);
-  const validatedOutput = EvidenceObserveArtifactOutputSchema.parse(output);
+  const validatedOutput =
+    EvidenceObserveArtifactReplayOutputSchema.parse(output);
   const state = readState(context);
   const observations = validatedOutput.observations.map((candidate) =>
     observation(candidate, validatedInput),
@@ -471,7 +510,7 @@ function projectEvidenceState(
 export const evidenceObserveArtifactTask = defineTask<
   EvidenceObserveArtifactInput,
   EvidenceObserveArtifactInput,
-  EvidenceObserveArtifactOutput,
+  EvidenceObserveArtifactReplayOutput,
   EvidenceState,
   EvidenceDelta
 >({

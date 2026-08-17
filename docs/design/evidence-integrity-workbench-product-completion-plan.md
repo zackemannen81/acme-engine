@@ -2,23 +2,87 @@
 
 Status: Approved delivery direction
 
-Date: 2026-08-12
+Date: 2026-08-15
 
-Current task: none active. Stages 1–8 are delivered; Stage 9 remains gated.
+Current checkpoint: ACME-0122 corrected the live observation terminal-code
+assertion after ACME-0121 produced the first committed Stage A provider
+observation batch. Stages 1–8 are
+delivered; ADR-0040 accepts
+bounded Stage A authority, ACME-0105 delivers its fail-closed composition
+capability, ACME-0106 delivers authenticated import/browser activation and
+ACME-0107/0108 deliver restart-safe live observation and relation jobs, and
+ACME-0110 completes live assessment plus reviewer/reassessment engineering.
+ACME-0111 reached the real provider once and proved fail-closed handling of an
+incomplete candidate. ADR-0041/ACME-0112 resolve the exposed output dependency
+with a replay-compatible one-to-eight candidate batch and 8,192-token active
+contract. ACME-0113's one fresh call completed strict JSON with six verbatim
+quotes but failed closed because every model-authored line locator was offset.
+ADR-0042/ACME-0114 implement deterministic unique-quote locator derivation in
+active `@1.3.0` output `/2`. ACME-0115 returned complete JSON but failed schema
+on a time-only range; two long multi-line quotes also normalized whitespace.
+ACME-0116 now implements active `@1.4.0` output `/3` with single-line/
+500-character quote bounds and the full-date temporal `unknown` rule. ACME-0117
+returned eight complete strict candidates and no invalid temporal value, but
+five one-line strings were not verbatim canonical source substrings; exact
+runtime validation committed nothing. An offline additive contract must move
+quote authority to deterministic runtime-defined bounded source segments before
+another separately frozen acceptance. ADR-0043/ACME-0118 now implement active
+`@1.5.0` output `/4`: provider candidates select a segment identifier and
+runtime derives its complete exact quote and locator while retaining all
+historical contracts. Another separately frozen acceptance remains.
+ACME-0119 selected eight valid runtime segments but failed strict schema on one
+minute-precision local timestamp without seconds or terminal `Z`; an explicit
+canonical-UTC prompt version remains before another acceptance.
+ACME-0120 implements active `@1.6.0` with literal seconds/terminal-`Z` grammar
+and mandatory `unknown` fallback. ACME-0121 then returned eight valid unique
+segment selections and committed eight runtime-derived observations. Its
+product job completed, but a stale post-commit reason-code expectation made
+Vitest false; ACME-0122 corrects that assertion offline. Relation/assessment
+provider acceptance and the primary reviewer journey remain separate.
+ACME-0123 now makes that remaining journey executable as one fail-closed
+two-source live gate with six individually one-call-bounded jobs, two restarts
+and domain-only acceptance assertions. It is verified offline; the paid run
+remains separately gated.
+ACME-0124's first D1 job committed eight valid observations, but the journey
+stopped before review because the harness addressed the source view's
+observation version with the wrong field name. Five jobs never started and no
+retry occurred. A minimal offline harness correction now precedes a new gate.
+ACME-0125 completes that correction by binding the harness to the exported
+public source-review view type and its `observationVersionId`; canonical gates
+are green and a separately frozen new live run remains.
+ACME-0126 passed D1 observation/reviewer decisions and reached relations. Its
+complete provider response proposed four relations and three questions, but
+two unique trigger-ID arrays violated the schema's unstated lexical-sort rule.
+Strict validation projected nothing. Version the relation prompt offline and
+retain historical replay before another gate.
+ACME-0127 completes that checkpoint: active relation `@1.1.0` explicitly states
+all set-like array and endpoint ordering requirements, historical `@1.0.0`
+remains byte-exact for replay, and the complete offline gate set is green.
+ACME-0128 then closes the same predictable assessment risk before spending:
+active assessment `@1.2.0` states every strict set-like string-ID ordering rule,
+while historical `@1.0.0` and `@1.1.0` remain byte-exact for replay.
 
 ## Purpose and Authority
 
 This plan records the agreed sequence from the current synthetic Evidence
-Integrity Workbench to a complete product proof and, later, a security-gated
-non-synthetic pilot. It supplements but does not supersede ADR-0028, the
+Integrity Workbench to a complete product proof and a bounded Stage A live
+proof. It supplements but does not supersede ADR-0028, ADR-0040, the
 accepted product definition or the normative technical specification.
+ADR-0046 and
+`evidence-workbench-source-and-claim-surfaces.md` now decide how origin
+and claim reach the surface after `@1.9.0`; that sequence is ACME-0139–
+0144 and is not implemented by this completion plan.
 
 Stage 2 is implemented by ACME-0091 under ADR-0035. ADR-0036 now decides the
 Stage 3 case/workspace management and isolation boundary, and ACME-0093
 implements it end to end. ADR-0037/ACME-0095 now implement secure object
-storage for the fixed synthetic corpus. Arbitrary ingestion and Slice 9 still
-require their own frozen tasks and decisions. No real,
-confidential, privileged, identifiable or criminal-offence data is authorized.
+storage for the fixed synthetic corpus. ADR-0040 now authorizes only
+`stage-a-anonymized-judicial-text/1`; ACME-0106 implements its fail-closed
+operator-prepared text import, ACME-0107 opens bounded observation and
+ACME-0108 opens bounded relation/open-question analysis over committed current
+observations.
+Stage B FUP, arbitrary ingestion, confidential, privileged, identifiable and
+criminal-offence data remain unauthorized.
 
 ## Current Product Reality
 
@@ -53,7 +117,8 @@ Slice 5 is accepted and archived.
 | 6. Reviewer operations and navigation | Assignment, re-assignment, waiting/reviewed status, rationales, comments/history, safe bulk actions and corpus-scale search/filter/navigation. | Complete (ACME-0098); synthetic-only. |
 | 7. Case overview and integrity report | A case-first dashboard and deterministic Case Integrity Report expose what needs attention and link every material item to immutable source evidence. | Complete (ACME-0099); pure projection, synthetic-only. |
 | 8. Assessment output and operations | Authorized deterministic PDF/DOCX/structured outputs, export audit, backup/restore and operational controls. | Complete (ACME-0100); synthetic-only, no new data authority. |
-| 9. Non-synthetic readiness | A qualified review may authorize one bounded new data class after every prerequisite is proven. | Slice 9 ADR; never automatic activation. |
+| 9A. POC #1 Stage A live proof | Import authorized anonymized judicial UTF-8 text, run live evidence tasks and complete the primary reviewer/reassessment journey durably. | Engineering complete through ACME-0110. ACME-0111/0113/0115/0117/0119 exposed bounded contract defects; ADR-0041–0043 and ACME-0112/0114/0116/0118/0120 corrected them. ACME-0121 committed observations; ACME-0123 adds the two-source harness and ACME-0125 types its source view. ACME-0126 passed D1 observation/review, then relation `/1` refused two unique but unsorted trigger-ID arrays. ACME-0127 activates relation `@1.1.0`; ACME-0128 proactively activates assessment `@1.2.0` with the same explicit sorted-set rule and historical replay. A separately frozen new live gate remains. |
+| 9B. Later source classes | Consider FUP or other materially more sensitive sources independently. | New data-class ADR required; never activated by Stage A. |
 
 Stages are ordered security boundaries, not one large implementation task.
 Every stage needs one or more separately frozen charters. Discoveries do not
@@ -164,9 +229,8 @@ because the frozen ACME-0099 charter did not list them:
 
 ## Slice 9 Data-class Direction
 
-The Slice 9 ADR should define a deny-by-default classification ladder rather
-than authorize "real case data" as one category. A candidate progression for
-qualified review is:
+ADR-0040 establishes a deny-by-default classification ladder rather than
+authorizing "real case data" as one category. The progression is:
 
 1. synthetic material;
 2. public or explicitly licensed non-confidential text with no personal,
@@ -176,18 +240,19 @@ qualified review is:
 4. identifiable or otherwise sensitive material only under later, stricter
    authority.
 
-The first Slice 9 decision should authorize at most one bounded class, purpose,
-organization, region, provider path and retention period. It must document
-lawful basis and data rights, processor/geography terms, access control,
-retention/deletion, incident response, provider handling, redaction/export
-policy and the DPIA determination. Criminal-offence and privileged data remain
-blocked until specifically reviewed and authorized.
+The first Slice 9 decision authorizes only anonymized real judicial UTF-8 text
+already under operator control for this POC. ADR-0040 fixes the live provider,
+durable PostgreSQL, external-source provenance, authorized execution and
+encrypted-payload boundary. Remaining deployment/operational evidence must be
+made executable during implementation. Criminal-offence, privileged, Stage B
+FUP and broader data remain blocked until separately reviewed and authorized.
 
 ## Activation and Completion Rules
 
-- ACME-0087 must complete and archive before a Slice 9 task is activated.
-- Product-security prerequisites may be designed after ACME-0087, but no
-  non-synthetic path opens until their executable gates pass.
+- ACME-0087 is complete and archived; ADR-0040 supplies Stage A authority.
+- Stage A case/import paths open only when the typed live composition and its
+  executable gates pass; bounded observation, relation and assessment jobs are
+  callable through the primary review/reassessment journey.
 - The Primary Product Rule, source-binding invariants and prohibited authority
   remain unchanged.
 - Case Integrity Report work is a later product task and is explicitly outside

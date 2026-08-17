@@ -114,6 +114,8 @@ function createRepository(): EvidenceProductRepository {
       (await repo()).putRelations(relations, scope),
     putOpenQuestions: async (openQuestions, scope) =>
       (await repo()).putOpenQuestions(openQuestions, scope),
+    commitRelationProjection: async (input) =>
+      (await repo()).commitRelationProjection(input),
     putAssessments: async (assessments, scope) =>
       (await repo()).putAssessments(assessments, scope),
     putChangeSet: async (changeSet, scope) =>

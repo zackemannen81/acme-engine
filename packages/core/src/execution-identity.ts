@@ -120,9 +120,14 @@ export function resolveExecutionPolicy(
   ) {
     invalid('policy.retention is invalid.');
   }
-  if (maxModelCalls !== 1 || maxRepairCalls !== 0 || maxRevisionCalls !== 0) {
+  // One primary call and no revision calls remain the Milestone 1 bound.
+  // ADR-0045 §5 admits a bounded repair budget: the engine implements the
+  // repair call it already declared, so a recoverably invalid response is
+  // corrected within budget rather than paid for and discarded. Repair is
+  // budgeted separately from the primary call and never loops.
+  if (maxModelCalls !== 1 || maxRevisionCalls !== 0) {
     invalid(
-      'Milestone 1 requires exactly one model call and zero repair/revision calls.',
+      'An execution allows exactly one model call and zero revision calls.',
       { maxModelCalls, maxRepairCalls, maxRevisionCalls },
     );
   }

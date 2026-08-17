@@ -31,6 +31,7 @@
     "@acme/adapter-evidence-auth-supabase": "workspace:*",
     "@acme/adapter-memory": "workspace:*",
     "@acme/adapter-model-mock": "workspace:*",
+    "@acme/adapter-model-openai": "workspace:*",
     "@acme/adapter-postgres": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/evidence-auth": "workspace:*",
@@ -41,6 +42,7 @@
     "@acme/evidence-views": "workspace:*",
     "@acme/evidence-workbench-web": "workspace:*",
     "@acme/evidence-workbench-worker": "workspace:*",
+    "@acme/live-safety": "workspace:*",
     "@acme/module-evidence": "workspace:*"
   },
   "devDependencies": {

@@ -34,6 +34,12 @@ import {
   type EvidenceArtifactReadAuditContext,
   type EvidenceArtifactService,
   EvidenceTextImportMetadataSchema,
+  EvidenceCaseLiveObservationCommandSchema,
+  type EvidenceCaseLiveObservationCommand,
+  EvidenceCaseLiveRelationCommandSchema,
+  type EvidenceCaseLiveRelationCommand,
+  EvidenceCaseLiveAssessmentCommandSchema,
+  type EvidenceCaseLiveAssessmentCommand,
   EvidenceRedactionOperationSchema,
   type EvidenceIngestionService,
   EvidenceBulkReviewCommandSchema,
@@ -69,6 +75,7 @@ import {
 } from '@acme/evidence-auth';
 import {
   buildEvidencePrimaryAssessmentView,
+  buildEvidenceClaimSurfaceView,
   buildEvidencePrimaryAccountComparisonView,
   buildEvidencePrimaryObservationLedgerView,
   buildEvidencePrimaryOpenQuestionsView,
@@ -82,7 +89,33 @@ import {
 } from '@acme/evidence-views';
 import { renderEvidenceWorkbenchShell } from '@acme/evidence-workbench-web';
 import type { EvidenceWorkbenchWorker } from '@acme/evidence-workbench-worker';
-import type { EvidenceState } from '@acme/module-evidence';
+import {
+  deriveEvidenceSourceStructure,
+  planEvidenceStructuralObservationCoverage,
+  type EvidenceState,
+} from '@acme/module-evidence';
+import { assertNoLiveCredentialFields } from '@acme/live-safety';
+
+import {
+  EvidenceLiveObservationRefused,
+  type EvidenceLiveObservationService,
+} from './live-observation.js';
+import {
+  EvidenceLiveRelationRefused,
+  type EvidenceLiveRelationService,
+} from './live-relation.js';
+import {
+  EvidenceLiveAssessmentRefused,
+  type EvidenceLiveAssessmentService,
+} from './live-assessment.js';
+import { sortTextImportsBySourceTime } from './text-import-list.js';
+
+export * from './live.js';
+export {
+  compareTextImportsBySourceTime,
+  sortTextImportsBySourceTime,
+  textImportSourceTime,
+} from './text-import-list.js';
 
 function zCaseStatus(value: string): 'active' | 'archived' {
   if (value === 'active' || value === 'archived') return value;
@@ -184,9 +217,15 @@ export function createEvidenceWorkbenchApi(options: {
     'recordDeniedRead' | 'recordExport' | 'rewrap' | 'delete'
   >;
   readonly ingestion?: EvidenceIngestionService;
+  readonly stageA?: { readonly enabled: boolean };
+  readonly liveObservation?: EvidenceLiveObservationService;
+  readonly liveRelation?: EvidenceLiveRelationService;
+  readonly liveAssessment?: EvidenceLiveAssessmentService;
   readonly lateEvidenceCommand?: EvidenceImportCommand;
   readonly technicalAudit?: { readonly enabled: boolean };
-  readonly evidenceProjection?: () => EvidenceState | Promise<EvidenceState>;
+  readonly evidenceProjection?: (
+    workspaceId: string,
+  ) => EvidenceState | Promise<EvidenceState>;
   readonly technicalAuditSource?: (caseId: string) => {
     readonly caseId: string;
     readonly domainObjectId: string;
@@ -385,6 +424,15 @@ export function createEvidenceWorkbenchApi(options: {
               workspaceId,
               artifactReadAudit,
             );
+      const defaultWorkspaceId = async (): Promise<string> => {
+        if (requestCaseId === null) return options.workspaceId;
+        const evidenceCase = (
+          await options.auth.repository.snapshot()
+        ).cases.find((item) => item.caseId === requestCaseId);
+        if (evidenceCase === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        return evidenceCase.workspaceId;
+      };
       if (request.method === 'GET' && url.pathname === '/health') {
         send(response, 200, {
           status: 'ok',
@@ -480,6 +528,27 @@ export function createEvidenceWorkbenchApi(options: {
         });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/api/capabilities') {
+        const rawToken = cookie(request, options.auth.cookieName);
+        if (rawToken === null) throw new EvidenceAuthenticationError();
+        await options.auth.sessions.resolve(rawToken);
+        send(response, 200, {
+          schemaVersion: 'evidence-product-capabilities/1',
+          stageAImport: options.stageA?.enabled === true,
+          liveObservation: options.liveObservation !== undefined,
+          liveRelation: options.liveRelation !== undefined,
+          liveAssessment: options.liveAssessment !== undefined,
+          liveObservationModel:
+            options.liveObservation?.deployment.model ?? null,
+          liveObservationMaxModelCalls:
+            options.liveObservation?.deployment.maxModelCalls ?? null,
+          liveObservationCostCeilingMinor:
+            options.liveObservation?.deployment.costCeilingMinor ?? null,
+          liveObservationCurrency:
+            options.liveObservation?.deployment.currency ?? null,
+        });
+        return;
+      }
       if (request.method === 'DELETE' && url.pathname === '/auth/session') {
         requireSameOrigin();
         const rawToken = cookie(request, options.auth.cookieName);
@@ -536,6 +605,18 @@ export function createEvidenceWorkbenchApi(options: {
         organizationCasesMatch?.[1] !== undefined
       ) {
         const organizationId = decodeURIComponent(organizationCasesMatch[1]);
+        const command = EvidenceCreateCaseCommandSchema.parse(
+          await body(request),
+        );
+        if (
+          command.schemaVersion === 'evidence-create-case-command/2' &&
+          command.dataPolicy === 'stage-a-authorized-judicial-text' &&
+          options.stageA?.enabled !== true
+        )
+          throw new EvidenceAuthorizationError(
+            403,
+            'STAGE_A_IMPORT_CAPABILITY_REQUIRED',
+          );
         const authorization = await requireOrganizationAuthorized(
           organizationId,
           'case.create',
@@ -549,7 +630,7 @@ export function createEvidenceWorkbenchApi(options: {
             productRepository: options.repository,
             authorization,
             organizationId,
-            command: EvidenceCreateCaseCommandSchema.parse(await body(request)),
+            command,
             clock: options.clock,
           }),
         );
@@ -688,6 +769,7 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/work-queue',
           '/api/observations',
           '/api/accounts',
+          '/api/claims',
           '/api/relations',
           '/api/timeline',
           '/api/open-questions',
@@ -695,6 +777,9 @@ export function createEvidenceWorkbenchApi(options: {
           '/api/assessments',
           '/api/reviews',
           '/api/imports',
+          '/api/live-observations',
+          '/api/live-relations',
+          '/api/live-assessments',
           '/api/jobs',
           '/api/technical',
           '/api/export-policy',
@@ -875,7 +960,7 @@ export function createEvidenceWorkbenchApi(options: {
       }
       if (request.method === 'GET' && url.pathname === '/api/work-queue') {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
@@ -908,11 +993,13 @@ export function createEvidenceWorkbenchApi(options: {
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/overview') {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
           200,
-          buildEvidenceCaseOverview(await scopedSnapshot(options.workspaceId)),
+          buildEvidenceCaseOverview(await scopedSnapshot(workspaceId)),
         );
         return;
       }
@@ -920,13 +1007,13 @@ export function createEvidenceWorkbenchApi(options: {
         request.method === 'GET' &&
         url.pathname === '/api/integrity-report'
       ) {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         send(
           response,
           200,
-          buildEvidenceCaseIntegrityReport(
-            await scopedSnapshot(options.workspaceId),
-          ),
+          buildEvidenceCaseIntegrityReport(await scopedSnapshot(workspaceId)),
         );
         return;
       }
@@ -1218,19 +1305,39 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryObservationLedgerView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/text-imports') {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         const snapshot = await scopedSnapshot(workspaceId);
         send(response, 200, {
           schemaVersion: 'evidence-text-import-list/1',
-          imports: snapshot.textImports,
+          imports: sortTextImportsBySourceTime(snapshot.textImports).map(
+            (item) => {
+              const source = snapshot.sources.find(
+                (value) => value.artifactVersionId === item.artifactVersionId,
+              );
+              return {
+                ...item,
+                parts:
+                  source === undefined
+                    ? []
+                    : deriveEvidenceSourceStructure(source.text).parts.map(
+                        (part) => ({
+                          partId: part.partId,
+                          title: part.title,
+                          startLine: part.startLine,
+                          endLine: part.endLine,
+                        }),
+                      ),
+              };
+            },
+          ),
           redactionDrafts: snapshot.redactionDrafts,
           redactionLogs: snapshot.redactionLogs,
         });
@@ -1239,27 +1346,40 @@ export function createEvidenceWorkbenchApi(options: {
       if (request.method === 'POST' && url.pathname === '/api/text-imports') {
         if (requestCaseId === null || options.ingestion === undefined)
           throw new EvidenceAuthorizationError(404, 'Not found.');
-        const payload = (await boundedJsonBody(request, 2_200_000)) as Record<
+        const payload = (await boundedJsonBody(request, 25_000_000)) as Record<
           string,
           unknown
         >;
         const metadata = EvidenceTextImportMetadataSchema.parse(
           payload.metadata,
         );
+        if (
+          metadata.schemaVersion === 'evidence-text-import-metadata/2' &&
+          options.stageA?.enabled !== true
+        )
+          throw new EvidenceAuthorizationError(
+            403,
+            'STAGE_A_IMPORT_CAPABILITY_REQUIRED',
+          );
         if (typeof payload.text !== 'string')
           throw new SyntaxError('text is required.');
-        const authorization = await requireAuthorized(
-          'synthetic-fixture.run',
-          options.workspaceId,
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          metadata.schemaVersion === 'evidence-text-import-metadata/2'
+            ? 'source.import'
+            : 'synthetic-fixture.run',
           true,
         );
-        if (!('caseId' in authorization) || artifactReadAudit === undefined)
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const record = await options.ingestion.importText({
           organizationId: authorization.organizationId,
           scope: {
             caseId: requestCaseId,
-            workspaceId: authorization.workspaceId as string,
+            workspaceId: authorization.workspaceId,
             boundAt: options.clock.now(),
           },
           metadata,
@@ -1369,6 +1489,28 @@ export function createEvidenceWorkbenchApi(options: {
         send(response, 201, log);
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/api/claims') {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
+        if (options.evidenceProjection === undefined)
+          throw new RangeError('Claim projection is unavailable.');
+        const sort =
+          url.searchParams.get('sort') === 'event-time'
+            ? 'event-time'
+            : 'source-time';
+        send(
+          response,
+          200,
+          buildEvidenceClaimSurfaceView({
+            workspaceId,
+            snapshot: await scopedSnapshot(workspaceId),
+            evidenceState: await options.evidenceProjection(workspaceId),
+            sort,
+          }),
+        );
+        return;
+      }
       if (
         request.method === 'GET' &&
         url.pathname === '/api/accounts/compare'
@@ -1389,7 +1531,7 @@ export function createEvidenceWorkbenchApi(options: {
             changedAccountLogicalArtifactIds:
               changed.length === 0 ? ['EVAL-T02'] : changed,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1406,7 +1548,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryRelationReviewView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1437,7 +1579,7 @@ export function createEvidenceWorkbenchApi(options: {
           buildEvidencePrimaryOpenQuestionsView({
             workspaceId,
             snapshot: await scopedSnapshot(workspaceId),
-            evidenceState: await options.evidenceProjection(),
+            evidenceState: await options.evidenceProjection(workspaceId),
           }),
         );
         return;
@@ -1580,11 +1722,13 @@ export function createEvidenceWorkbenchApi(options: {
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/export-policy') {
-        await requireAuthorized('workspace.read', options.workspaceId);
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? options.workspaceId;
+        await requireAuthorized('workspace.read', workspaceId);
         if (requestCaseId === null)
           throw new EvidenceAuthorizationError(404, 'Not found.');
         const policy = resolveEvidenceExportPolicy(
-          await scopedSnapshot(options.workspaceId),
+          await scopedSnapshot(workspaceId),
           requestCaseId,
         );
         send(response, 200, {
@@ -1761,10 +1905,57 @@ export function createEvidenceWorkbenchApi(options: {
         });
         return;
       }
+      // The coverage plan is deterministic and model-free: it is the same
+      // planner the live observation job runs, so a reviewer can be told the
+      // exact bounded call count before confirming instead of asserting a
+      // ceiling by hand.
+      const coveragePlanMatch =
+        /^\/api\/sources\/([^/]+)\/coverage-plan$/u.exec(url.pathname);
+      if (request.method === 'GET' && coveragePlanMatch?.[1] !== undefined) {
+        const workspaceId =
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
+        await requireAuthorized('workspace.read', workspaceId);
+        const snapshot = await scopedSnapshot(workspaceId);
+        const artifactVersionId = decodeURIComponent(coveragePlanMatch[1]);
+        const source = snapshot.sources.find(
+          (item) => item.artifactVersionId === artifactVersionId,
+        );
+        if (source === undefined) {
+          send(response, 404, 'Not found.');
+          return;
+        }
+        const sourcePartId = url.searchParams.get('part');
+        try {
+          const windows = planEvidenceStructuralObservationCoverage(
+            source.text,
+            sourcePartId === null ? {} : { partId: sourcePartId },
+          );
+          const emergencyCallCeiling =
+            options.liveObservation?.deployment.maxModelCalls ?? null;
+          send(response, 200, {
+            schemaVersion: 'evidence-source-coverage-plan/1',
+            artifactVersionId,
+            sourcePartId,
+            windowCount: windows.length,
+            plannedModelCalls: windows.length,
+            emergencyCallCeiling,
+            withinEmergencyCeiling:
+              emergencyCallCeiling === null ||
+              windows.length <= emergencyCallCeiling,
+          });
+        } catch (error) {
+          if (error instanceof RangeError) {
+            send(response, 404, 'Source part is unavailable.');
+            return;
+          }
+          throw error;
+        }
+        return;
+      }
       const sourceMatch = /^\/api\/sources\/([^/]+)$/u.exec(url.pathname);
       if (request.method === 'GET' && sourceMatch?.[1] !== undefined) {
         const workspaceId =
-          url.searchParams.get('workspaceId') ?? options.workspaceId;
+          url.searchParams.get('workspaceId') ?? (await defaultWorkspaceId());
         await requireAuthorized('workspace.read', workspaceId);
         const snapshot = await scopedSnapshot(workspaceId);
         const artifactVersionId = decodeURIComponent(sourceMatch[1]);
@@ -1776,15 +1967,28 @@ export function createEvidenceWorkbenchApi(options: {
           send(response, 404, 'Not found.');
           return;
         }
-        send(
-          response,
-          200,
-          buildEvidencePrimarySourceReviewView({
-            workspaceId,
-            artifactVersionId,
-            snapshot,
-          }),
-        );
+        const sourcePartId = url.searchParams.get('part');
+        try {
+          send(
+            response,
+            200,
+            buildEvidencePrimarySourceReviewView({
+              workspaceId,
+              artifactVersionId,
+              snapshot,
+              ...(sourcePartId === null ? {} : { sourcePartId }),
+            }),
+          );
+        } catch (error) {
+          if (
+            error instanceof RangeError &&
+            error.message === 'Source part is unavailable.'
+          ) {
+            send(response, 404, 'Source part is unavailable.');
+            return;
+          }
+          throw error;
+        }
         return;
       }
       if (request.method === 'POST' && url.pathname === '/api/imports') {
@@ -1801,6 +2005,177 @@ export function createEvidenceWorkbenchApi(options: {
           true,
         );
         send(response, 202, await options.worker.start(command));
+        return;
+      }
+      if (
+        request.method === 'POST' &&
+        url.pathname === '/api/live-observations'
+      ) {
+        if (requestCaseId === null || options.liveObservation === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveObservationCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveObservationCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveObservation.refuse({
+            reasonCode: 'LIVE_OBSERVATION_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live observation command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveObservation.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveObservationRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
+        return;
+      }
+      if (request.method === 'POST' && url.pathname === '/api/live-relations') {
+        if (requestCaseId === null || options.liveRelation === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveRelationCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveRelationCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveRelation.refuse({
+            reasonCode: 'LIVE_RELATION_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live relation command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveRelation.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveRelationRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
+        return;
+      }
+      if (
+        request.method === 'POST' &&
+        url.pathname === '/api/live-assessments'
+      ) {
+        if (requestCaseId === null || options.liveAssessment === undefined)
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const raw = await boundedJsonBody(request, 100_000);
+        const authorization = await requireCaseAuthorized(
+          requestCaseId,
+          'live-model.run',
+          true,
+        );
+        if (
+          authorization.workspaceId === null ||
+          artifactReadAudit === undefined
+        )
+          throw new EvidenceAuthorizationError(404, 'Not found.');
+        const scope = {
+          caseId: requestCaseId,
+          workspaceId: authorization.workspaceId,
+          boundAt: options.clock.now(),
+        };
+        let command: EvidenceCaseLiveAssessmentCommand;
+        try {
+          assertNoLiveCredentialFields(raw);
+          command = EvidenceCaseLiveAssessmentCommandSchema.parse(raw);
+        } catch (error) {
+          await options.liveAssessment.refuse({
+            reasonCode: 'LIVE_ASSESSMENT_COMMAND_INVALID',
+            authorization,
+            audit: artifactReadAudit,
+            scope,
+          });
+          throw new SyntaxError(
+            error instanceof Error
+              ? error.message
+              : 'Live assessment command is invalid.',
+            { cause: error },
+          );
+        }
+        try {
+          send(
+            response,
+            202,
+            await options.liveAssessment.start({
+              command,
+              authorization,
+              audit: artifactReadAudit,
+              scope,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof EvidenceLiveAssessmentRefused)
+            throw new EvidenceAuthorizationError(error.status, error.reason);
+          throw error;
+        }
         return;
       }
       if (
@@ -1963,7 +2338,9 @@ export function createEvidenceWorkbenchApi(options: {
             response.write(`data: ${encoded}\n\n`);
             last = encoded;
           }
-          if (['completed', 'failed', 'cancelled'].includes(job.phase))
+          if (
+            ['completed', 'failed', 'cancelled', 'refused'].includes(job.phase)
+          )
             response.end();
           else
             setTimeout(() => {
@@ -2061,56 +2438,6 @@ export function createEvidenceWorkbenchApi(options: {
   });
 }
 
-/**
- * Ports the WHATWG URL standard marks as bad. `fetch` refuses a URL on any of
- * them with `Error: bad port`, so a server bound to one is reachable by a raw
- * socket but not by any client the workbench actually uses.
- *
- * This matters because `listen(0, ...)` takes whatever the operating system
- * hands out. The default ephemeral ranges happen to sit above this list —
- * 49152+ on Windows, 32768+ on Linux — but the range is configurable, and a
- * machine tuned to start at 1024 allocates straight through it. The failure is
- * then intermittent, machine-specific and invisible in CI.
- */
-export const FETCH_BLOCKED_PORTS: ReadonlySet<number> = Object.freeze(
-  new Set([
-    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79,
-    87, 95, 101, 102, 103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135,
-    137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530, 531,
-    532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993, 995, 1719, 1720,
-    1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667,
-    6668, 6669, 6679, 6697, 10080,
-  ]),
-);
-
-const EPHEMERAL_BIND_ATTEMPTS = 32;
-
-async function bindOnce(
-  server: Server,
-  port: number,
-  host: string,
-): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, host, () => {
-      server.off('error', reject);
-      resolve();
-    });
-  });
-}
-
-async function releasePort(server: Server): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error === undefined || error === null) {
-        resolve();
-        return;
-      }
-      reject(error);
-    });
-  });
-}
-
 export async function listenEvidenceWorkbenchApi(
   server: Server,
   options: { readonly host?: string; readonly port?: number } = {},
@@ -2120,37 +2447,20 @@ export async function listenEvidenceWorkbenchApi(
   readonly url: string;
 }> {
   const host = options.host ?? '127.0.0.1';
-  const requestedPort = options.port ?? 8790;
-  const ephemeral = requestedPort === 0;
-
-  // An explicitly chosen bad port is a caller mistake worth naming now rather
-  // than as an opaque `fetch failed` at the first request.
-  if (!ephemeral && FETCH_BLOCKED_PORTS.has(requestedPort)) {
-    throw new Error(
-      `Port ${String(requestedPort)} is blocked by the URL standard, so fetch cannot reach it.`,
-    );
-  }
-
-  const attempts = ephemeral ? EPHEMERAL_BIND_ATTEMPTS : 1;
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    await bindOnce(server, requestedPort, host);
-    const address = server.address();
-    if (address === null || typeof address === 'string') {
-      throw new Error('Workbench did not bind a TCP port.');
-    }
-    if (!FETCH_BLOCKED_PORTS.has(address.port)) {
-      return {
-        host,
-        port: address.port,
-        url: `http://${host}:${String(address.port)}/`,
-      };
-    }
-    // The operating system handed out a port fetch will not accept. Give it
-    // back and ask again; ephemeral allocation is sequential, so the next one
-    // differs.
-    await releasePort(server);
-  }
-  throw new Error(
-    `Could not obtain a usable ephemeral port in ${String(attempts)} attempts.`,
-  );
+  const port = options.port ?? 8790;
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+  const address = server.address();
+  if (address === null || typeof address === 'string')
+    throw new Error('Workbench did not bind a TCP port.');
+  return {
+    host,
+    port: address.port,
+    url: `http://${host}:${String(address.port)}/`,
+  };
 }

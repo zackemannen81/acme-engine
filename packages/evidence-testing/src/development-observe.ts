@@ -1,6 +1,8 @@
 import {
-  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
+  EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
   EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
+  buildEvidenceSourceSegments,
+  deriveEvidenceSourceStructure,
   EvidenceObserveArtifactInputSchema,
   EvidenceObserveArtifactOutputSchema,
   type EvidenceObserveArtifactInput,
@@ -10,31 +12,48 @@ import {
 import { loadSourceArtifactVersion } from './corpus.js';
 
 export const EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH =
-  '8cc5010d6e142a8eae9686d18fa7eab0e2d413a5bfa207db3bf45b127f06f5fe' as const;
+  'f94acaf93edb52425d575367c5338327ccd3904555d6f4a7abfe605fdd8e0c69' as const;
 
 export function developmentObserveArtifactInput(): EvidenceObserveArtifactInput {
+  const artifactVersion = loadSourceArtifactVersion('DEV-T01', 1);
+  const produced = developmentObserveArtifactOutput();
   return EvidenceObserveArtifactInputSchema.parse({
-    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION,
-    artifactVersion: loadSourceArtifactVersion('DEV-T01', 1),
+    schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_INPUT_SCHEMA_VERSION_V3,
+    artifactVersion,
     actorRoster: [
       {
         actorKey: 'development-actor-nera-sol',
         allowedSourceLabels: ['Nera Sol'],
       },
     ],
+    coverageWindow: {
+      sourceSegmentIds: produced.observations.map(
+        (observation) => observation.sourceSegmentId,
+      ),
+    },
+    sourceStructureId: deriveEvidenceSourceStructure(artifactVersion.text)
+      .structureId,
   });
 }
 
 export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutput {
+  const source = loadSourceArtifactVersion('DEV-T01', 1);
+  const segmentId = (exactQuote: string): string => {
+    const segment = buildEvidenceSourceSegments(source.text).find(
+      (item) => item.exactQuote === exactQuote,
+    );
+    if (segment === undefined)
+      throw new Error('Development quote is not one complete source segment.');
+    return segment.sourceSegmentId;
+  };
   return EvidenceObserveArtifactOutputSchema.parse({
     schemaVersion: EVIDENCE_OBSERVE_ARTIFACT_OUTPUT_SCHEMA_VERSION,
     observations: [
       {
         kind: 'statement-occurrence',
-        startLine: 4,
-        endLine: 4,
-        exactQuote:
+        sourceSegmentId: segmentId(
           'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+        ),
         actorReference: {
           status: 'resolved',
           sourceLabel: 'Nera Sol',
@@ -50,10 +69,9 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
       },
       {
         kind: 'statement-occurrence',
-        startLine: 6,
-        endLine: 6,
-        exactQuote:
+        sourceSegmentId: segmentId(
           'Nera Sol: The indicator showed amber while the hatch was open.',
+        ),
         actorReference: {
           status: 'resolved',
           sourceLabel: 'Nera Sol',
@@ -66,6 +84,20 @@ export function developmentObserveArtifactOutput(): EvidenceObserveArtifactOutpu
           reason:
             'The statement gives no exact time for the simultaneous indicator and hatch state.',
         },
+      },
+    ],
+    segmentCoverage: [
+      {
+        sourceSegmentId: segmentId(
+          'Nera Sol: I reached the greenhouse hatch between 14:00 and 14:10.',
+        ),
+        status: 'observations_extracted',
+      },
+      {
+        sourceSegmentId: segmentId(
+          'Nera Sol: The indicator showed amber while the hatch was open.',
+        ),
+        status: 'observations_extracted',
       },
     ],
   });

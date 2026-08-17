@@ -58,7 +58,8 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   organization-membership and deny-by-default role architecture is
   implemented. New review decisions use authenticated server-derived
   principals; legacy `unauthenticated-local` records remain immutable.
-  Every non-synthetic data path remains unimplemented and gated by Slice 9.
+  Stage A is the sole implemented non-synthetic data path; every other class
+  remains unimplemented and gated by later authority.
   ADR-0037's secure artifact foundation is implemented for the fixed synthetic
   corpus: immutable canonical representations are application-encrypted behind
   filesystem/S3-compatible ports, keys stay in versioned mounted secret files,
@@ -71,7 +72,15 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   ACME-0097 implements that boundary through case-first authenticated API and
   browser flows, encrypted staged representations, durable import/redaction
   records, deterministic retry identities and file/PostgreSQL persistence.
-  PDF/DOCX/OCR/media and every non-synthetic class remain refused.
+  PDF/DOCX/OCR/media remain refused. ADR-0040 authorizes one distinct POC #1
+  Stage A class, `stage-a-anonymized-judicial-text/1`; ACME-0105 implements its
+  fail-closed live capability and ACME-0106 implements case/API/browser import
+  of operator-prepared text with exact outside-PDF provenance. ACME-0107 adds
+  one restart-safe live observation job with primary browser navigation, and
+  ACME-0108 adds the corresponding restart-safe relation/open-question job
+  over server-derived current observations. ACME-0110 adds source-complete live
+  assessment plus the primary review/late-evidence/reassessment journey. The
+  product never ingests the PDF container.
   ADR-0036's case boundary is implemented: opaque public cases own unique
   internal workspaces, explicit case memberships control content access,
   immutable case-object bindings scope repository/worker/API traversal, and
@@ -86,8 +95,14 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   byte-deterministic JSON, Markdown, DOCX and PDF with no new dependency, a
   per-case export policy, append-only export-audit records for every release
   and refusal, and a product backup manifest with fail-closed restore
-  verification. Stages 1–8 are complete. Stage 9 non-synthetic readiness
-  remains closed and cannot activate by implication.
+  verification. Stages 1–8 are complete. ADR-0040 supplies the explicit Stage
+  A Slice 9 authority without authorizing Stage B FUP material, arbitrary
+  ingestion or activation by implication. ACME-0105 implements the typed
+  fail-closed live composition capability and durable payload-key boundary;
+  Stage A case creation, import, live observation and live relation analysis
+  require that capability. The Stage A engineering journey is complete through
+  reviewed reassessment; an explicitly budgeted real-provider acceptance
+  remains external evidence before the POC is fully accepted.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.
@@ -148,6 +163,15 @@ architecture boundary.
   contract it describes.
 - Use an ADR for decisions that constrain multiple packages, public
   contracts, persistence, compatibility, security or future migrations.
+
+Live-call policy:
+- Execution budget must follow the planned bounded operation, not impose an arbitrary per-job call count.
+- When the system can deterministically derive the number of model calls from immutable input, coverage windows and the selected execution plan, that derived count is the normal execution bound.
+- The user-facing confirmation should report the planned execution, including the expected number of model calls and measurable usage/cost information where available.
+- A separate emergency hard ceiling may exist only as protection against unexpected loops, planner defects or runaway execution. It must not prevent a valid bounded plan merely because the plan requires more than one model call.
+- Missing usage or cost data must remain unknown; it must not be interpreted as zero.
+- Cost control must not become a substitute for correctness testing during an explicitly authorized POC acceptance run.
+- Do not spend more execution/reasoning effort deciding whether to perform a known bounded model operation than the operation itself reasonably costs.
 
 ### Pause or Handoff
 

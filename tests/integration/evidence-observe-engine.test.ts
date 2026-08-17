@@ -16,8 +16,8 @@ import {
   type ModelGateway,
 } from '../../packages/core/src/index.js';
 import {
-  EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
   developmentObserveArtifactInput,
+  EVIDENCE_DEVELOPMENT_OBSERVE_REQUEST_HASH,
   developmentObserveArtifactOutput,
 } from '../../packages/evidence-testing/src/index.js';
 import {
@@ -89,7 +89,7 @@ describe('Evidence observe execution reliability', () => {
             tools: false,
             vision: false,
             maxInputTokens: 32_000,
-            maxOutputTokens: 4_096,
+            maxOutputTokens: 8_192,
           },
         },
       ],

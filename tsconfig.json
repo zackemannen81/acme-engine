@@ -2,6 +2,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/live-safety"
+    },
+    {
       "path": "./packages/evidence-artifacts"
     },
     {
@@ -68,19 +71,10 @@
       "path": "./packages/evidence-views"
     },
     {
-      "path": "./packages/module-personal"
-    },
-    {
-      "path": "./packages/provenance-states"
-    },
-    {
       "path": "./packages/testing"
     },
     {
       "path": "./apps/cli"
-    },
-    {
-      "path": "./apps/mcp-server"
     },
     {
       "path": "./apps/test-ui"

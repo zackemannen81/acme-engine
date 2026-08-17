@@ -1043,11 +1043,85 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
     enforceResponseBudgets(response, policy);
 
     await this.#stage(executionId, attemptNumber, 'validating', now);
-    const pipeline = this.#pipeline.process(
+    let pipeline = this.#pipeline.process(
       response,
       resolved.contract,
       validatedContractInput,
     );
+
+    // ADR-0045 §5: a recoverably invalid response is repaired within its
+    // budget instead of being paid for and discarded. Each repair is its own
+    // recorded model call. Repair never fires on the ADR-0017 resume path,
+    // which completes from recorded evidence and must not contact the
+    // provider, and never fires for a contract that offers no repair request.
+    let repairsUsed = 0;
+    while (
+      !pipeline.ok &&
+      pipeline.repairable &&
+      resumption?.recordedResponse === undefined &&
+      resolved.contract.buildRepairRequest !== undefined &&
+      repairsUsed < policy.maxRepairCalls
+    ) {
+      repairsUsed += 1;
+      const repairCallKey = `repair:${String(repairsUsed)}`;
+      const repairRequest = validateModelRequest(
+        resolved.contract.buildRepairRequest(validatedContractInput, {
+          executionId,
+          now,
+          attempt: repairsUsed,
+          issues: pipeline.issues,
+        }),
+      );
+      const repairCallId = this.#nextCallId();
+      await this.#repository.reserveModelCall({
+        modelCallId: repairCallId,
+        executionId,
+        callKey: repairCallKey,
+        attempt: repairsUsed,
+        purpose: 'repair',
+        selection: request.model,
+        requestHash: computeModelRequestHash(repairRequest, this.#hashing),
+        startedAt: now,
+      });
+      await this.#stage(executionId, attemptNumber, 'calling-model', now);
+      let repaired: NormalizedModelResponse;
+      try {
+        repaired = validateNormalizedModelResponse(
+          await this.#gateway.generate(repairRequest, {
+            executionId,
+            callKey: repairCallKey,
+            selection: request.model,
+            requiredCapabilities: resolved.contract.requiredCapabilities,
+            timeoutMs: policy.timeoutMs,
+            signal: callSignal ?? new AbortController().signal,
+          }),
+        );
+      } catch (error) {
+        const data = errorData(error, 'calling-model');
+        await this.#repository.failModelCall({
+          modelCallId: repairCallId,
+          error: data,
+          ambiguous: false,
+          completedAt: now,
+        });
+        throw new AcmeError(data);
+      }
+      await this.#repository.completeModelCall({
+        modelCallId: repairCallId,
+        response: repaired,
+        responseHash: computeModelResponseHash(repaired, this.#hashing),
+        completedAt: now,
+      });
+      response = repaired;
+      enforceResponseBudgets(response, policy);
+      await this.#stage(executionId, attemptNumber, 'validating', now);
+      pipeline = this.#pipeline.process(
+        response,
+        resolved.contract,
+        validatedContractInput,
+      );
+    }
+
     if (!pipeline.ok) {
       throw invalid(
         'MODEL_INVALID_RESPONSE',
@@ -1056,6 +1130,7 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
         {
           pipelineStage: pipeline.stage,
           repairable: pipeline.repairable,
+          repairCalls: repairsUsed,
           issues: pipeline.issues as unknown as JsonValue,
         },
       );

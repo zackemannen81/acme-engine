@@ -1,7 +1,7 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-08-09
+Last updated: 2026-08-15
 
 ## Identity
 
@@ -170,8 +170,10 @@ Its implementation-ready plan is
 with Evidence identity/placement fixed by ADR-0030 and the reviewer/view
 boundary fixed by ADR-0031.
 
-It operates over a fixed synthetic evidence corpus and helps a non-adjudicative
-reviewer establish what each source contains, where an observation occurs, how
+Its delivered test profile operates over a fixed synthetic evidence corpus.
+ADR-0040 accepts a bounded POC #1 live profile over authorized, anonymized real
+judicial UTF-8 source text. Both help a non-adjudicative reviewer establish
+what each source contains, where an observation occurs, how
 accounts and artifacts relate, what the timeline permits, what remains
 uncertain and which questions remain unanswered. Every material assessment
 must traverse back to accepted source-bound evidence and an exact locator.
@@ -180,9 +182,10 @@ The POC keeps source observations, expressed propositions, evidence relations,
 versioned assessments and legal conclusions at separate authority levels. It
 must not determine credibility, guilt, liability, legal sufficiency,
 admissibility or privilege; give tailored legal advice; automate a high-impact
-decision; or process real confidential, privileged or criminal-offence
-personal data. Human review is mandatory before an assessment becomes
-shareable, and human acceptance does not make an assessment legally true.
+decision; or process confidential, privileged or criminal-offence personal
+data under the Stage A authority. Human review is mandatory before an
+assessment becomes shareable, and human acceptance does not make an assessment
+legally true.
 
 The product remains outside `packages/core`. Evidence meaning belongs to a new
 domain module; product workflow belongs to an application; provider,
@@ -214,7 +217,69 @@ authenticated-principal and organization-authorization architecture:
 self-hosted Supabase Auth behind a product-API BFF, opaque server-side sessions
 and deny-by-default product roles. ACME-0091 implements this boundary across
 the hosted composition, browser and durable identity/session store. The
-product remains synthetic-only. The approved later sequencing plan is
+default callable product remains synthetic-only. ADR-0040 authorizes a
+distinct Stage A live profile, ACME-0105 implements its closed composition
+capability and ACME-0106 implements the versioned case/import contract plus
+authenticated browser path for operator-prepared anonymized judicial text.
+ACME-0107 implements the first restart-safe live observation job and ACME-0108
+adds restart-safe relation/open-question analysis over those committed
+observations. ACME-0110 completes source-complete live assessment, review and
+late-evidence reassessment. ACME-0111's first provider call failed closed on an
+incomplete unbounded observation response; ADR-0041/ACME-0112 add a replay-
+compatible one-to-eight candidate batch and 8,192-token contract. ACME-0113's
+fresh call completed strict JSON but exposed offset model-authored line
+locators; ADR-0042/ACME-0114 now remove those fields from active output and
+derive canonical ranges from uniquely occurring exact quotes before a fresh
+real-provider acceptance. ACME-0115 then exposed long multi-line whitespace
+normalization and time-only ranges; ACME-0116 adds active `@1.4.0` output `/3`
+with one-line/500-character quote bounds and a full-date temporal prompt rule.
+ACME-0117's sole fresh call passed strict output and avoided the temporal
+schema defect, but exact runtime binding refused five of eight provider-authored
+one-line quotes because they were not verbatim canonical source substrings.
+The next offline contract must move quote authority to runtime-defined bounded
+source segments while retaining historical replay. ADR-0043/ACME-0118 now do
+so in active `@1.5.0` output `/4`: the provider selects a deterministic segment
+identifier and runtime derives the full exact quote and one-line locator.
+ACME-0119 then proved eight real-provider segment selections valid, but failed
+closed on one local minute-precision timestamp lacking seconds and `Z`.
+ACME-0120 adds active `@1.6.0` with literal canonical-UTC grammar and mandatory
+`unknown` fallback while preserving output `/4` and historical replay.
+ACME-0121's sole fresh call then passed strict and semantic validation: eight
+valid unique segment selections became eight runtime-derived, durably committed
+observations. The product completed with its established
+`LIVE_OBSERVATION_COMPLETED` reason; a stale post-commit live-test expectation
+made only the Vitest process false. ACME-0122 corrects that assertion offline.
+This is bounded observation acceptance, not exhaustive coverage or proof of
+the later live relation/assessment journey.
+ACME-0123 adds a fail-closed, two-source live acceptance harness for that
+remaining journey: six individually one-call-bounded product jobs span review,
+relations/questions, assessment, restart, later evidence, stale history,
+reassessment and final restart. It is green offline; a separately frozen paid
+acceptance remains.
+ACME-0124 proved the first D1 job again but exposed one harness-only contract
+mismatch before review: the primary source view publishes
+`observationVersionId`, not the internal-record name `observationId`. The API
+failed closed; only one of six calls occurred. Correct the harness offline
+before another separately frozen live journey.
+ACME-0125 applies that exact offline correction and makes TypeScript enforce
+the public source-review view identity; all canonical gates pass without a
+provider call.
+ACME-0126 then completed D1 observation and accept/reject/unresolved review but
+failed closed on relation output: two open-question trigger-ID arrays were
+unique yet unsorted, a strict schema rule absent from the `@1.0.0` prompt. A
+replay-compatible prompt version is required before another live journey.
+ACME-0127 supplies that version as active
+`evidence.relate-observations@1.1.0`: its prompt states lexical uniqueness and
+ordering for every set-like string array plus kind/id endpoint ordering.
+Historical `@1.0.0` stays byte-exact for replay, all canonical offline gates
+pass and no provider call occurred. The next live journey remains separately
+bounded and frozen.
+ACME-0128 proactively closes the identical assessment wire risk: active
+`evidence.propose-assessment@1.2.0` states unique lexicographic ordering for
+every strict set-like string-ID array, while historical `@1.0.0` and `@1.1.0`
+remain byte-exact for replay. Canonical gates pass without a provider call.
+The approved
+later sequencing plan is
 [`evidence-integrity-workbench-product-completion-plan.md`](design/evidence-integrity-workbench-product-completion-plan.md).
 ADR-0036 and ACME-0093 add explicit cases, participants, case-first product
 navigation, durable object ownership and same-organization cross-case
@@ -226,8 +291,14 @@ case snapshot in which every reported row names its exact source-bound
 observations. ACME-0100 adds Stage 8: deterministic JSON/Markdown/DOCX/PDF
 assessment output from one citation-complete document, a per-case export policy,
 append-only export audit and product backup/restore verification. Stages 1–8 are
-delivered. Slice 9 non-synthetic readiness remains a separate later task and no
-non-synthetic data path is authorized.
+delivered. ADR-0040 accepts the first Slice 9 class:
+`stage-a-anonymized-judicial-text/1`. ACME-0105 now enforces the fail-closed
+versioned live-profile tuple: durable PostgreSQL, live provider,
+authorized-external source origin and authorized-live execution. Stage A case
+creation/import now requires that capability and stores exact external PDF
+provenance without ingesting the PDF. The bounded observation and relation
+routes can invoke the provider under the same one-call/case/budget boundary;
+Stage B FUP material and every broader data path remain unauthorized.
 
 ADR-0038 decides the bounded Stage 5 workflow without widening that authority,
 and ACME-0097 implements it end to end.
@@ -235,7 +306,8 @@ Only strict, size-limited synthetic UTF-8 plain text is eligible; accepted
 imports preserve exact original bytes and create a separate LF/NFC canonical
 representation. Redaction creates a new immutable version from exact UTF-8
 byte ranges and an append-only content-free log. PDF/DOCX/OCR/media and all
-non-synthetic data remain prohibited pending Slice 9.
+non-synthetic data remain prohibited on this synthetic import contract. Stage
+A requires its separate ADR-0040 contract and live profile.
 
 ADR-0037 now decides the next secure artifact foundation: immutable
 original/canonical representations, application envelope encryption, a

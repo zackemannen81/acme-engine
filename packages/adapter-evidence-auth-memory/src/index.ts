@@ -35,10 +35,20 @@ export function createDeterministicEvidenceAuthenticator(options: {
     readonly subject: string;
     readonly displayLabel: string;
   }[];
-  readonly expiresAt: string;
+  /**
+   * A fixed timestamp, or a function evaluated at every sign-in and refresh.
+   * A fixed value expires every session the process ever issues at the same
+   * instant, including sessions created after it has passed, so a composition
+   * whose lifetime exceeds it must supply the function form.
+   */
+  readonly expiresAt: string | (() => string);
 }): EvidenceCredentialAuthenticator & { readonly signOuts: string[] } {
   const signOuts: string[] = [];
   const sessions = new Map<string, EvidenceUpstreamSession>();
+  const expiry = () =>
+    typeof options.expiresAt === 'string'
+      ? options.expiresAt
+      : options.expiresAt();
   const create = (
     subject: string,
     displayLabel: string,
@@ -46,7 +56,7 @@ export function createDeterministicEvidenceAuthenticator(options: {
     const session: EvidenceUpstreamSession = {
       accessToken: `access-${subject}`,
       refreshToken: `refresh-${subject}`,
-      expiresAt: options.expiresAt,
+      expiresAt: expiry(),
       issuer: options.issuer,
       subject,
       sessionId: `upstream-${subject}`,
@@ -68,7 +78,12 @@ export function createDeterministicEvidenceAuthenticator(options: {
     async refresh(refreshToken) {
       const session = sessions.get(refreshToken);
       if (session === undefined) throw new Error('Invalid refresh token.');
-      return session;
+      const refreshed: EvidenceUpstreamSession = {
+        ...session,
+        expiresAt: expiry(),
+      };
+      sessions.set(refreshToken, refreshed);
+      return refreshed;
     },
     async signOut(accessToken) {
       signOuts.push(accessToken);

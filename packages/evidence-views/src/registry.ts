@@ -20,6 +20,11 @@ export const EVIDENCE_VIEW_REGISTRY = Object.freeze([
     defaultPath: '/accounts/compare',
   },
   {
+    schemaVersion: 'evidence-claim-surface-view/1',
+    classification: 'primary-domain',
+    defaultPath: '/claims',
+  },
+  {
     schemaVersion: 'evidence-primary-relation-review-view/1',
     classification: 'primary-domain',
     defaultPath: '/relations',
