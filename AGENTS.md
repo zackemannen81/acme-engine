@@ -103,6 +103,20 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   require that capability. The Stage A engineering journey is complete through
   reviewed reassessment; an explicitly budgeted real-provider acceptance
   remains external evidence before the POC is fully accepted.
+- ADR-0047 is accepted. Real-source acceptance runs invalidated the Evidence
+  *application* domain model, so it is replaced by `Case`, `Artifact`,
+  `SourcePart`, `Chain`, `ChainInstance`, `ObservationOccurrence`, `Claim`,
+  `Relation`, `Review`/`Standing` and `ConsensusProjection`, normatively
+  specified in
+  `docs/design/evidence-workbench-v2-domain-specification.md` together with the
+  V1 boundary, the P1–P3 proof journeys, the defect-classification rules and
+  binding regression requirements R-01–R-10 / W-01–W-03. None of it is
+  implemented yet. The delivered workbench under `apps/evidence-workbench-*` is
+  frozen as a diagnostic reference: only maintenance preserving its diagnostic
+  value is permitted there, chartered separately and never bundled with new
+  work. Engine, persistence, artifact security, authorization, case isolation
+  and the live model boundary carry forward unchanged, and no data authority
+  changes.
 
 ## Start Here
 This repo is docs-first. The active task always starts in `docs/CURRENT_TASK.md`.

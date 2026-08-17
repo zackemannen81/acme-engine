@@ -1072,6 +1072,118 @@ normative product boundary is
 [`evidence-integrity-workbench-product-definition.md`](design/evidence-integrity-workbench-product-definition.md).
 Research Synthesis is the intended POC #2 but is not active.
 
+**Application-layer status.** [ADR-0047](adr/0047-evidence-application-model-reset.md)
+replaces the Evidence *application* domain model after real-source acceptance
+runs invalidated it, and freezes the delivered application
+(`apps/evidence-workbench-api`, `apps/evidence-workbench-web` and their evidence
+packages) as a diagnostic reference. The replacement model — `Case`, `Artifact`,
+`SourcePart`, `Chain`, `ChainInstance`, `ObservationOccurrence`, `Claim`,
+`Relation`, `Review`/`Standing`, `ConsensusProjection` — is normative in
+[`evidence-workbench-v2-domain-specification.md`](design/evidence-workbench-v2-domain-specification.md)
+and is not yet implemented. Everything described below the application layer —
+engine, persistence, artifact security, authorization, case isolation and the
+live model boundary — is carried forward unchanged, and no data authority
+changes. Only maintenance that preserves the frozen application's diagnostic
+value is permitted there; ACME-0149 is the first and so far only such change,
+replacing a fixed `Maximum model calls: 1` confirmation with the planner's own
+bounded call count from a read-only case-scoped `coverage-plan` route.
+
+**Implemented V2 layer.** `@acme/module-evidence-v2` implements
+`Artifact → SourcePart → CitableUnit` as `evidence-v2-source-structure/1`. The
+derivation is pure, total and offline: it reads no repository, no artifact
+store and no clock, consults no model, and depends only on canonical text plus
+`evidence-v2-source-structure-rules/1`. Parts partition every line exactly once
+and are size-bounded. Unique quote binding is an emission precondition rather
+than a later validation — a unit whose text repeats inside its own line range
+absorbs its predecessor until it binds, and failing that widens to its whole
+line range where uniqueness holds by construction — so no consumer can spend a
+provider call on a unit that cannot be located. Parts carry a deterministic
+`index-or-front-matter` / `substantive` character from dot-leader density, and a
+part's title is a label carrying the line it came from on a type that exposes no
+date and no subject identity. `verifyEvidenceV2SourceStructure` proves coverage,
+containment and binding against the original text independently of the
+derivation, and `createEvidenceV2SourceIndex` gives constant-time lookup so the
+structure is derived once. The package depends on nothing and a
+`pnpm boundaries` rule forbids it from importing the frozen application.
+
+The same package implements the second layer as `evidence-v2-chain/1`:
+`SourcePart → Chain → ChainInstance`. Document identity and time are read from
+the body's labelled fields — `Hörd person`, `Förhörsdatum`, `Förhör påbörjat`,
+`Diarienr` — each with provenance to the exact line, pinned by
+`evidence-v2-chain-rules/1`. The part title is never consulted, because in real
+material the header line opening a part is the trailing header of the preceding
+document. `proposeEvidenceV2Chains` is deterministic and offline: parts sharing
+a normalized subject and case file reference form one chain, a part with no
+identity that follows a document continues it, and a part with neither an
+identity nor an open document is reported unassigned rather than placed. An
+index or front-matter part is never placed and closes the open document.
+`instanceSourceTime` is typed `exact` / `range` / `unknown` with no zone
+asserted and no conversion performed. `deriveEvidenceV2ChainState` folds
+append-only `assign` / `unassign` / `set-primary` decisions over the proposal:
+a decision beats a proposal, two decided claims on one part without supersession
+produce a named conflict rather than a silently chosen winner, and nothing is
+mutated or deleted.
+
+**Operable V2 application.** `@acme/evidence-v2-contracts` fixes the stored
+records — case, artifact, structure, chain proposal, chain decision — and one
+repository port. `@acme/adapter-evidence-v2-postgres` implements that port in
+its own PostgreSQL schema with versioned migrations over the shared
+`@acme/adapter-postgres` helpers, keeping proposed and effective memberships in
+separate tables so a decision provably cannot rewrite the proposal.
+`apps/evidence-workbench-v2-api` composes pool, object store, KEK ring and
+repository, stores canonical text through the shared ADR-0037 envelope, derives
+structure and chains exactly once inside the import transaction, and serves
+bounded JSON and HTML for cases, parts, a part's exact source lines, chains, one
+chain's ordered instances and appended membership decisions.
+`apps/evidence-workbench-v2-web` renders those pages as plain server-rendered
+HTML. A chain view reflects effective membership, so a reviewer's correction is
+visible where it was made. No read path re-derives anything.
+
+**V2 authentication and authorization.** ACME-0153 wired the shared identity
+machinery in without adding a model. `@acme/adapter-evidence-auth-postgres`
+persists principals, organization and case memberships and sessions in their own
+schema; `createEvidenceSessionService` issues the session cookie, the CSRF token
+and the encrypted upstream session; `authorizeEvidenceCaseAction` decides every
+case-scoped read and write. Sign-in, sign-out and session read are the only
+unauthenticated routes besides `/health`. Case creation registers the identity
+case and an owning `case-admin` membership in the same operation, and the case
+list is scoped to the principal's memberships. A principal without membership
+receives 404 rather than 403 on every case-scoped route, so a case's existence
+is not disclosed (ADR-0036). Credentials come from a development authenticator;
+a real upstream identity provider is unwired.
+
+**V2 observation.** ACME-0154 added the first V2 export,
+`evidence-v2-observe/1` ([ADR-0048](adr/0048-evidence-v2-observe-contract.md)).
+One execution observes one **window** — an ordered set of at most 24 citable
+units, at most 800 quoted words, drawn from one source part of one chain
+instance, with no prior instance, no other actor's statement and no neighbour
+context. For each unit it judges evidential the model returns a unit id, a kind
+and the time span the unit itself states — constrained on the wire to a calendar
+value, because a live run returned the word `då` for one and the product typed it
+into a bound. The product derives the typed temporal bound from that span, and
+the occurrence's **quote and locator come from the cited unit**, never from the
+response, so model prose cannot become the record (ADR-0043's principle restated
+for units already proven uniquely bindable).
+Coverage is derived from stored rows rather than demanded of the model, and an
+empty response is valid.
+
+`createEvidenceV2Extractor` in `apps/evidence-workbench-v2-api` composes
+`@acme/core`'s `createExecutionEngine` unchanged with `evidenceV2Module`. It
+plans the windows, states the exact bounded call count before spending anything,
+executes one engine call per outstanding window keyed by a content-derived
+request key, and persists each window's occurrences **in the same step that
+commits it**. A failed window fails alone: it is recorded with its failure code,
+the run stops there, and everything already committed stays committed and
+visible. Re-running executes only windows with no committed execution, so a paid
+window is never paid for twice. An emergency ceiling guards a runaway only; it is
+not the user-facing bound. Retained request and response payloads are encrypted
+under a key of their own, separate from the session key, and ephemeral when the
+deployment supplies none.
+
+An occurrence is canonical evidence under the authority ladder, not accepted
+evidence: review and standing do not exist yet, and neither do claims, relations
+or consensus projection.
+
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-
 world or legal truth. Its authority ladder separates immutable source artifact

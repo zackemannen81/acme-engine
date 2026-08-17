@@ -49,6 +49,10 @@ const evidenceBrowserAuthFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/apps/evidence-workbench-web/src/forbidden-auth.ts',
 );
+const v2FrozenModelFixturePath = path.join(
+  repoRoot,
+  'tooling/boundaries/fixtures/packages/module-evidence-v2/src/forbidden-frozen-model.ts',
+);
 const sealedTruthFixturePath = path.join(
   repoRoot,
   'tooling/boundaries/fixtures/packages/module-fixture/src/forbidden-sealed-truth.ts',
@@ -180,10 +184,14 @@ verifyForbiddenFixture(
   'evidence-browser-uses-product-api-not-auth-or-database',
 );
 verifyForbiddenFixture(
+  v2FrozenModelFixturePath,
+  'v2-application-does-not-depend-on-the-frozen-workbench',
+);
+verifyForbiddenFixture(
   sealedTruthFixturePath,
   'sealed-evaluation-truth-stays-out-of-prompts',
 );
 
 process.stdout.write(
-  'Dependency graph, core vocabulary, and forbidden core/evaluation/module/cross-module/provider/driver/test-ui/sealed-truth fixture checks passed.\n',
+  'Dependency graph, core vocabulary, and forbidden core/evaluation/module/cross-module/provider/driver/test-ui/sealed-truth/v2-frozen-model fixture checks passed.\n',
 );

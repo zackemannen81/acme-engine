@@ -52,6 +52,14 @@ Application surfaces:
   makes the citable unit a sentence (`rules/3`). ACME-0147 switches the
   default shell to Source stream / Claim / Stance / Search.
 
+- [`evidence-workbench-v2-domain-specification.md`](evidence-workbench-v2-domain-specification.md)
+  — proposed domain model, supported flow, V1 boundary, acceptance journeys and
+  binding regression knowledge for the replacement Evidence application under
+  [`ADR-0047`](../adr/0047-evidence-application-model-reset.md). Normative: the
+  ADR is accepted and its §10 decisions are taken. It replaces the surface
+  decided by ADR-0046 and inherits the product definition's authority ladder and
+  immutable boundaries unchanged. Implementation is not activated by it.
+
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
   continued through ACME-0053: the gate freezes are accepted in

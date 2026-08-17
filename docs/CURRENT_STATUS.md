@@ -1,5 +1,136 @@
 # Current Status
 
+## Open: real-source acceptance blocked, application model being replaced
+
+The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder
+did not complete any of the three intended product journeys. The failures are
+above the engine boundary and are recorded in the journal entry of the same
+date. In summary:
+
+- 126 of 246 source parts (51 %) cannot be analysed, because 259 of 92,141
+  structured segments cannot bind uniquely inside their own locator range and a
+  single such segment aborts the whole job non-retryably;
+- observations project only after whole-job success, so committed coverage
+  windows are discarded when a later window fails;
+- product workspace `evidenceRevision` counts imports while engine
+  `EvidenceState.evidenceRevision` counts canonical-evidence deltas; five
+  reviewer views require them to be equal, so any case with more analysed
+  windows than imports becomes unreadable and its surfaces disagree;
+- part titles systematically name a different document than the part body in
+  this material, so displayed interview dates are wrong while line-level
+  provenance stays exact.
+
+The acceptance case for that run is retained wedged as failure evidence and must
+not be repaired.
+
+[ADR-0047](adr/0047-evidence-application-model-reset.md) is accepted. The
+Evidence *application* domain model is replaced and the delivered workbench is
+frozen as a diagnostic reference. The replacement model, V1 boundary, proof
+journeys and binding regression requirements are normative in
+[the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
+
+The replacement is being built layer by layer below, and no task is active.
+Nothing below this section is retracted by the decision: the engine,
+persistence, artifact security, authorization, case isolation and live model
+boundary carry forward unchanged, and no data authority changes. Stage A remains
+the only authorized non-synthetic class and Stage B stays closed.
+
+Only maintenance preserving the frozen application's diagnostic value is
+permitted there. ACME-0149 is the first and so far only such change: the analyze
+confirmation reports the planner's derived bounded call count from a read-only
+case-scoped `coverage-plan` route instead of a fixed `Maximum model calls: 1`.
+
+ACME-0150 delivered the first V2 layer: `@acme/module-evidence-v2` derives
+source parts and citable units from canonical text, pure, total and offline,
+with no dependency on anything. Measured over the real 74,469-line `source-A`
+text: 650 parts, 29,971 citable units, **zero** that cannot bind uniquely inside
+their own line range, against 259 non-bindable units and 126 of 246 unanalysable
+parts under the frozen rules. All 944 dot-leader index lines fall inside parts
+classified `index-or-front-matter`. Derivation is a single 88 ms pass and 29,971
+lookups take 3 ms, against the frozen application's re-derivation per lookup that
+blocked its event loop for up to 64 s per window. R-01, R-02's title half, R-03
+and R-10's package half are retired as design properties.
+
+ACME-0151 added the second layer, `evidence-v2-chain/1`: source parts organize
+into longitudinal chains whose subject and instance time come from the document
+body's labelled fields, never from a part title, with append-only membership
+decisions and a pure fold to the effective state. Measured over the same real
+binder: 650 parts propose **351 chains** and 467 instances with 5 unassigned
+parts, deterministically, in 21 ms. The Hussein Ammouri chain holds 13
+instances ordered by body date, each resolving to its exact source line, and
+three of them span several parts. The part titled `Förhör med Ammouri,
+HUSSEIN; 2007-04-25` sits in the `Ammouri, Allia` chain because its body
+reports a different person — which is the other half of R-02 paid off.
+
+ACME-0152 made those two layers operable. `@acme/evidence-v2-contracts`,
+`@acme/adapter-evidence-v2-postgres`, `apps/evidence-workbench-v2-api` and
+`apps/evidence-workbench-v2-web` persist a case, an artifact whose canonical
+text is encrypted in an object store through the shared ADR-0037 envelope, and
+the structure and chain proposal derived exactly once at import. A plain
+server-rendered surface walks Case → Source → Chain → Instance → exact source
+lines, every list bounded at 100 rows.
+
+Recorded on a fresh PostgreSQL database and a fresh MinIO bucket with the real
+`source-A` text: import 1,205 ms, canonical SHA-256 matching, 74,469 lines, 650
+parts and 351 chains persisted; after a process restart every read comes from
+PostgreSQL. The Hussein chain shows its 13 instances in body-date order, the
+part titled `Förhör med Ammouri, HUSSEIN; 2007-04-25` opens under
+`Ammouri, Allia`, and appending one membership decision moves it while the
+stored proposal (645 rows) and structure (650 rows) stay md5-identical.
+
+ACME-0153 closed that gap. The V2 app now authenticates every route and every
+page except sign-in and `/health`, using the shared `@acme/evidence-auth`
+session service with its cookie, CSRF token and encrypted upstream session, on
+a durable PostgreSQL identity schema. Case-scoped access goes through
+`authorizeEvidenceCaseAction`, case creation registers the identity case and an
+owning membership in the same operation, and the case list is scoped to
+membership. Measured in the recorded run: a second principal receives **404 on
+all six case-scoped routes and on the import write**, and sees an empty case
+list; an unauthenticated request gets 401, a write without CSRF 401, a
+cross-origin write 403, and sign-out invalidates the session.
+
+ACME-0154 produced the first V2 evidence. `evidence-v2-observe/1`
+([ADR-0048](adr/0048-evidence-v2-observe-contract.md)) sends one bounded window
+of at most 24 citable units and at most 800 quoted words; the model returns only
+a unit id, a kind and the time span the unit states, and **the occurrence's quote
+and locator are taken from the cited unit**, so no model wording can enter the
+record. The two failures that killed the frozen extractor are designed out rather
+than tuned: there is no coverage field to enumerate (R-04), and each window's
+occurrences are persisted in the same step that commits it (R-05). Window
+identity is content-derived, so a re-run executes only windows with no committed
+execution. `@acme/core` was used unchanged, which is the first live evidence for
+ADR-0047 §9's proof obligation.
+
+Recorded on a fresh database and bucket with the real binder, through the
+product's own authenticated routes: the smallest Hussein instance planned **2**
+bounded calls, spent **2**, committed both windows and produced **27
+occurrences** in 11.8 s; **0 of 27** quotes fail to appear verbatim in their own
+source lines and **0 of 27** stored temporal bounds are anything but a calendar
+value; the ledger holds 2 calls with 2,438 input and 1,255 output tokens, both
+responses retained AES-256-GCM encrypted under a ledger key that is separate from
+the session key; provider cost was reported as unknown, not zero. Re-running the
+same instance planned **0** calls, spent 0, and left the ledger at 2. The
+instance page renders all 27.
+
+Four defects were found only by that run: a structured-output schema name
+containing `/`, an unsupported `temperature`, a model-typed temporal bound the
+model could not fill, and — the one that reached the record — the Swedish word
+`då` ("then") returned as a stated time and typed into a temporal bound. A stated
+time is now constrained to a calendar value in the output schema, so a vague
+reference becomes `null` while the unit's own words stay verbatim. A fifth was
+found by reading the composition root: the ledger's retained payloads were keyed
+with the session key, and now have a key of their own. Each has an offline test.
+
+Remaining limitations: an occurrence is canonical evidence, not accepted
+evidence — review and standing do not exist yet, and neither do claims,
+relations or consensus projection. Extraction is Pass 1 with no neighbour context
+and no actor roster. Credentials still come from a development authenticator, so
+a real upstream identity provider is unwired. `pnpm test:postgres` has two
+pre-existing frozen-app failures unrelated to the V2 work, recorded in
+[the backlog](backlog/postgres-gate-test-hygiene.md).
+
+## Delivered
+
 Stage 8 assessment output and export operations are implemented: a reviewed
 assessment renders as deterministic JSON, Markdown, DOCX and PDF from one
 citation-complete document, every reference resolving to an exact artifact
