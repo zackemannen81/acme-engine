@@ -181,6 +181,9 @@ importers:
       '@acme/adapter-evidence-v2-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-v2-postgres
+      '@acme/adapter-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-memory
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres

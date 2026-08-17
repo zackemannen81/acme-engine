@@ -6,6 +6,7 @@ import {
 } from '@acme/adapter-postgres';
 import type {
   EvidenceV2ArtifactRecord,
+  EvidenceV2ExtractionWindowState,
   EvidenceV2CaseRecord,
   EvidenceV2ChainDetail,
   EvidenceV2ImportWrite,
@@ -19,6 +20,7 @@ import {
   type EvidenceV2ChainDecision,
   type EvidenceV2ChainMembership,
   type EvidenceV2ChainProposal,
+  type EvidenceV2Occurrence,
   type EvidenceV2SourcePart,
 } from '@acme/module-evidence-v2';
 import type { Pool, QueryResultRow } from 'pg';
@@ -62,6 +64,7 @@ async function insertBatched(
   table: string,
   columns: readonly string[],
   rows: readonly (readonly (string | number | boolean | null)[])[],
+  onConflict = '',
 ): Promise<void> {
   for (let start = 0; start < rows.length; start += INSERT_BATCH) {
     const batch = rows.slice(start, start + INSERT_BATCH);
@@ -75,7 +78,7 @@ async function insertBatched(
       return `(${placeholders.join(', ')})`;
     });
     await client.query(
-      `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${tuples.join(', ')}`,
+      `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${tuples.join(', ')} ${onConflict}`,
       values,
     );
   }
@@ -522,6 +525,108 @@ export function createEvidenceV2PostgresRepository(
     },
 
     readEffectiveMemberships: readEffective,
+
+    async putOccurrences(artifactId, instanceKey, occurrences) {
+      if (occurrences.length === 0) return;
+      await withPostgresDriverErrors(async () => {
+        await withWriteTransaction(pool, async (client) => {
+          // An occurrence is content-identified and immutable, so re-seeing one
+          // is the same record rather than an update.
+          await insertBatched(
+            client,
+            `${schema}.occurrences`,
+            [
+              'artifact_id',
+              'occurrence_id',
+              'instance_key',
+              'part_id',
+              'unit_id',
+              'start_line',
+              'end_line',
+              'window_id',
+              'execution_id',
+              'record_json',
+            ],
+            occurrences.map((occurrence) => [
+              artifactId,
+              occurrence.occurrenceId,
+              instanceKey,
+              occurrence.partId,
+              occurrence.unitId,
+              occurrence.startLine,
+              occurrence.endLine,
+              occurrence.windowId,
+              occurrence.executionId,
+              JSON.stringify(occurrence),
+            ]),
+            'ON CONFLICT (artifact_id, occurrence_id) DO NOTHING',
+          );
+        });
+      });
+    },
+
+    async listOccurrences(artifactId, instanceKey, request) {
+      return page(
+        `${schema}.occurrences`,
+        'WHERE artifact_id = $1 AND instance_key = $2',
+        [artifactId, instanceKey],
+        'start_line, occurrence_id',
+        request,
+        (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Occurrence,
+      );
+    },
+
+    async putExtractionWindow(state: EvidenceV2ExtractionWindowState) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.extraction_windows
+             (artifact_id, instance_key, window_id, part_id, status,
+              unit_count, occurrence_count, execution_id, failure_code, decided_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           ON CONFLICT (artifact_id, instance_key, window_id) DO UPDATE SET
+             status = EXCLUDED.status,
+             occurrence_count = EXCLUDED.occurrence_count,
+             execution_id = EXCLUDED.execution_id,
+             failure_code = EXCLUDED.failure_code,
+             decided_at = EXCLUDED.decided_at`,
+          [
+            state.artifactId,
+            state.instanceKey,
+            state.windowId,
+            state.partId,
+            state.status,
+            state.unitCount,
+            state.occurrenceCount,
+            state.executionId,
+            state.failureCode,
+            state.decidedAt,
+          ],
+        );
+      });
+    },
+
+    async readExtractionWindows(artifactId, instanceKey) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT * FROM ${schema}.extraction_windows
+         WHERE artifact_id = $1 AND instance_key = $2 ORDER BY window_id`,
+        [artifactId, instanceKey],
+      );
+      return rows.map((row) => ({
+        artifactId: String(row['artifact_id']),
+        instanceKey: String(row['instance_key']),
+        windowId: String(row['window_id']),
+        partId: String(row['part_id']),
+        status: row['status'] === 'committed' ? 'committed' : 'failed',
+        unitCount: toNumber(row['unit_count']),
+        occurrenceCount: toNumber(row['occurrence_count']),
+        executionId:
+          typeof row['execution_id'] === 'string' ? row['execution_id'] : null,
+        failureCode:
+          typeof row['failure_code'] === 'string' ? row['failure_code'] : null,
+        decidedAt: String(row['decided_at']),
+      }));
+    },
 
     async appendChainDecision(artifactId, decision: EvidenceV2ChainDecision) {
       await withPostgresDriverErrors(async () => {

@@ -12,6 +12,7 @@ import type {
   EvidenceArtifactRepresentation,
 } from '@acme/evidence-artifacts';
 import type {
+  EvidenceV2Occurrence,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
   EvidenceV2ChainMembership,
@@ -21,6 +22,7 @@ import type {
 } from '@acme/module-evidence-v2';
 
 export type {
+  EvidenceV2Occurrence,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
   EvidenceV2ChainMembership,
@@ -111,6 +113,26 @@ export interface EvidenceV2ChainSummary {
 }
 
 /**
+ * One window's extraction outcome.
+ *
+ * Stored per window so a partially complete extraction is a fact a reviewer can
+ * see — committed, outstanding or failed with its reason — rather than a job
+ * that silently produced nothing (R-05).
+ */
+export interface EvidenceV2ExtractionWindowState {
+  readonly artifactId: string;
+  readonly instanceKey: string;
+  readonly windowId: string;
+  readonly partId: string;
+  readonly status: 'committed' | 'failed';
+  readonly unitCount: number;
+  readonly occurrenceCount: number;
+  readonly executionId: string | null;
+  readonly failureCode: string | null;
+  readonly decidedAt: string;
+}
+
+/**
  * The one port the V2 application stores through.
  *
  * `readEffectiveMemberships` returns the fold of the stored proposal and the
@@ -158,6 +180,23 @@ export interface EvidenceV2Repository {
   readEffectiveMemberships(
     artifactId: string,
   ): Promise<readonly EvidenceV2ChainMembership[]>;
+
+  /** Idempotent: an occurrence is content-identified and immutable. */
+  putOccurrences(
+    artifactId: string,
+    instanceKey: string,
+    occurrences: readonly EvidenceV2Occurrence[],
+  ): Promise<void>;
+  listOccurrences(
+    artifactId: string,
+    instanceKey: string,
+    page: EvidenceV2PageRequest,
+  ): Promise<EvidenceV2Page<EvidenceV2Occurrence>>;
+  putExtractionWindow(state: EvidenceV2ExtractionWindowState): Promise<void>;
+  readExtractionWindows(
+    artifactId: string,
+    instanceKey: string,
+  ): Promise<readonly EvidenceV2ExtractionWindowState[]>;
 
   appendChainDecision(
     artifactId: string,

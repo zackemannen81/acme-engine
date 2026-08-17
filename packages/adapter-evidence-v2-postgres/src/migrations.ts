@@ -109,5 +109,38 @@ export function buildEvidenceV2Migrations(
         )`,
       ]),
     }),
+    Object.freeze({
+      version: 2,
+      name: 'evidence-v2-occurrences',
+      statements: Object.freeze([
+        `CREATE TABLE ${s}.occurrences (
+          artifact_id text NOT NULL REFERENCES ${s}.artifacts(artifact_id),
+          occurrence_id text NOT NULL,
+          instance_key text NOT NULL,
+          part_id text NOT NULL,
+          unit_id text NOT NULL,
+          start_line integer NOT NULL,
+          end_line integer NOT NULL,
+          window_id text NOT NULL,
+          execution_id text NOT NULL,
+          record_json text NOT NULL,
+          PRIMARY KEY (artifact_id, occurrence_id)
+        )`,
+        `CREATE INDEX occurrences_by_instance ON ${s}.occurrences (artifact_id, instance_key, start_line)`,
+        `CREATE TABLE ${s}.extraction_windows (
+          artifact_id text NOT NULL REFERENCES ${s}.artifacts(artifact_id),
+          instance_key text NOT NULL,
+          window_id text NOT NULL,
+          part_id text NOT NULL,
+          status text NOT NULL,
+          unit_count integer NOT NULL,
+          occurrence_count integer NOT NULL,
+          execution_id text,
+          failure_code text,
+          decided_at text NOT NULL,
+          PRIMARY KEY (artifact_id, instance_key, window_id)
+        )`,
+      ]),
+    }),
   ]);
 }

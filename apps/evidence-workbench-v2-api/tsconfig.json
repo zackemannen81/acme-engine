@@ -23,6 +23,9 @@
       "path": "../../packages/adapter-evidence-v2-postgres"
     },
     {
+      "path": "../../packages/adapter-memory"
+    },
+    {
       "path": "../../packages/adapter-postgres"
     },
     {
