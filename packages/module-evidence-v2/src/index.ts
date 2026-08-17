@@ -1,4 +1,48 @@
 export {
+  EVIDENCE_V2_DELTA_SCHEMA_VERSION,
+  EVIDENCE_V2_NAMESPACE,
+  EVIDENCE_V2_OCCURRENCE_MEMORY_TYPE,
+  EVIDENCE_V2_STATE_SCHEMA_VERSION,
+  EvidenceV2DeltaSchema,
+  EvidenceV2ObserveTaskInputSchema,
+  EvidenceV2StateSchema,
+  evidenceV2Module,
+  evidenceV2ModuleForRegistry,
+  type EvidenceV2Delta,
+  type EvidenceV2ObserveTaskInput,
+  type EvidenceV2State,
+} from './module.js';
+export {
+  EVIDENCE_V2_OBSERVE_CONTRACT_ID,
+  EVIDENCE_V2_OBSERVE_CONTRACT_VERSION,
+  EVIDENCE_V2_OBSERVE_INPUT_SCHEMA_VERSION,
+  EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_VERSION,
+  EvidenceV2ObserveInputSchema,
+  EvidenceV2ObserveOutputSchema,
+  evidenceV2ObserveContract,
+  type EvidenceV2ObserveInput,
+  type EvidenceV2ObserveOutput,
+} from './observe-contract.js';
+export {
+  EVIDENCE_V2_WINDOW_MAX_UNITS,
+  EVIDENCE_V2_WINDOW_TARGET_WORDS,
+  deriveEvidenceV2WindowRequestKey,
+  planEvidenceV2ObserveWindows,
+  type EvidenceV2ObserveWindow,
+  type EvidenceV2WindowPart,
+  type EvidenceV2WindowUnit,
+} from './observe-window.js';
+export {
+  EVIDENCE_V2_OCCURRENCE_SCHEMA_VERSION,
+  EvidenceV2OccurrenceKindSchema,
+  EvidenceV2OccurrenceSchema,
+  EvidenceV2TemporalBoundSchema,
+  deriveEvidenceV2OccurrenceId,
+  type EvidenceV2Occurrence,
+  type EvidenceV2OccurrenceKind,
+  type EvidenceV2TemporalBound,
+} from './occurrence.js';
+export {
   EVIDENCE_V2_CHAIN_RULE_VERSION,
   EVIDENCE_V2_CHAIN_SCHEMA_VERSION,
   deriveEvidenceV2ChainState,

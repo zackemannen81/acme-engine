@@ -178,9 +178,9 @@ an instance surface that shows each occurrence against its exact source lines.
 
 ## Checklist
 
-- [ ] Write ADR-0048 and index it.
-- [ ] Contract: window input, strict output schema, semantic validation.
-- [ ] Window planner over stored parts and units, with a stated call count.
+- [x] Write ADR-0048 and index it.
+- [x] Contract: window input, strict output schema, semantic validation.
+- [x] Window planner over stored parts and units, with a stated call count.
 - [ ] Engine composition, including the mock gateway for tests.
 - [ ] Per-window commit and projection.
 - [ ] Resume: execute only outstanding windows.
@@ -207,6 +207,43 @@ an instance surface that shows each occurrence against its exact source lines.
 - Expected spend is single-digit provider calls for one instance. The planner
   states the exact number before the run.
 
+## Progress Checkpoint — 2026-08-16
+
+Roughly half the charter is delivered and verified. The half that remains is the
+half that proves R-04 and R-05 end to end, so nothing here should be read as the
+extractor working.
+
+**Delivered and tested (17 new unit tests, 858 total):**
+
+- [ADR-0048](adr/0048-evidence-v2-observe-contract.md), accepted and indexed.
+- `evidence-v2-observe/1` in `@acme/module-evidence-v2`: input and output
+  schemas, the prompt, a bounded repair that restates only the refusals, and
+  every ADR-0048 §5 refusal — unit outside the window, unit cited twice,
+  untyped temporal bound in either direction.
+- The R-04 fix is now structural and asserted: the output schema has no
+  coverage field, so the model cannot be asked to enumerate what it skipped. An
+  empty answer is valid.
+- The window planner: at most 24 units, an 800-word target, total coverage of
+  the supplied units in order, and a content-derived request key so a resumed
+  extraction addresses the same execution.
+- `ObservationOccurrence` with content-derived identity, and the module's
+  `interpret` proven to build the record from the cited **unit** — quote and
+  locator — never from the response.
+- The V2 domain module runs on the **unchanged** `@acme/core` engine: state,
+  delta, reducer, immutability invariants, and a memory policy that ignores an
+  occurrence it has already seen. No change inside `packages/core` was needed,
+  which is the first evidence for ADR-0047 §9's proof obligation.
+
+**Not started:**
+
+- The extractor that composes the engine and executes an instance's windows,
+  including per-window commit (R-05) and resume (ADR-0048 §7).
+- Occurrence persistence, routes and the instance surface.
+- The injected mid-job failure and resume tests, the PostgreSQL gate test, and
+  the recorded live run.
+
+No provider call has been made by this task.
+
 ## Charter Amendment Log
 
 Only non-semantic corrections are allowed after `Ready`.
@@ -231,13 +268,20 @@ Only non-semantic corrections are allowed after `Ready`.
 
 ## Handoff and Follow-ups
 
-- Current state: charter frozen at `Ready`. Implementation has not started.
-- Next recommended step: implement against the checklist, ADR first.
-- Blockers: none.
+- Current state: **In Progress, paused at a clean boundary.** The contract,
+  window planner, occurrence type and domain module are delivered, formatted,
+  linted and tested; the extractor and everything downstream of it are not
+  started. See the checkpoint above for the exact split.
+- Next recommended step: the extractor. Compose `createExecutionEngine` with
+  `evidenceV2Module`, the contract registry and a gateway; execute one window
+  per engine call keyed by `deriveEvidenceV2WindowRequestKey`; project that
+  window's occurrences into the V2 repository **inside the same step**; stop at
+  the first failed window and report it. Then persistence, routes, surface,
+  the two offline proofs, and only then the live run.
+- Blockers: none. Nothing discovered so far contradicts the charter.
 - Child tasks: none.
-- Resume condition: n/a.
-- Open questions: none. Review and standing are deliberately the next task, not
-  an omission from this one.
+- Resume condition: n/a — work may continue directly against the checklist.
+- Open questions: none.
 
 ## Finalize When Complete
 

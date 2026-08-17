@@ -1,5 +1,46 @@
 # Journal
 
+## 2026-08-16 — ACME-0154 paused: V2 observe contract and module delivered
+
+- Date: 2026-08-16
+- Author: Claude
+- Task: ACME-0154, In Progress. This is a pause at a clean boundary, not a
+  completion.
+- Change: the V2 observe layer's decided half exists.
+  [ADR-0048](adr/0048-evidence-v2-observe-contract.md) is accepted, and
+  `@acme/module-evidence-v2` now carries `evidence-v2-observe/1`, the window
+  planner, the `ObservationOccurrence` record and a domain module that runs on
+  the unchanged `@acme/core` engine.
+- The R-04 fix is structural rather than tuned: the output schema has no
+  coverage field, so the model can never be asked to enumerate the units it
+  skipped — the obligation that killed a 64-unit window after a paid repair.
+  Coverage becomes a product-side derivation over stored rows. An empty answer
+  is valid, because a window may legitimately state nothing.
+- The authority boundary is enforced in code, not in prose: `interpret` builds
+  each occurrence's quote and locator from the cited **unit**, and a test
+  asserts it. The response carries unit ids and classifications only, so no
+  model wording can enter the record.
+- Windows are at most 24 units and target 800 quoted words, cover the supplied
+  units exactly once in order, and carry a content-derived request key so a
+  resumed extraction addresses the same execution and never re-sends a paid
+  window.
+- **First evidence for ADR-0047 §9.** A new application domain — occurrence,
+  state, delta, reducer, invariants, memory policy, task — composed onto the
+  engine with no change inside `packages/core`. That is the proof obligation's
+  claim, and it now has one data point rather than an assertion.
+- Not started, and not to be read as working: the extractor that executes an
+  instance's windows with per-window commit (R-05) and resume, occurrence
+  persistence, the routes and instance surface, the injected mid-job failure
+  and resume proofs, the PostgreSQL gate test, and the recorded live run. No
+  provider call has been made.
+- Verification: typecheck, format, boundaries and docs (278 files) clean; unit
+  858/858, up from 841, with 17 new tests over the contract, planner and
+  module; lint clean over `apps packages tests tooling`.
+- Handoff: `docs/CURRENT_TASK.md` holds a checkpoint section naming exactly
+  what is delivered and what is not, and a next step for the extractor. The
+  charter is unchanged.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0153 V2 authentication and authorization
 
 - Date: 2026-08-16
