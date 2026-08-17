@@ -85,7 +85,7 @@ translation, bounded input handling and terminal-result preservation.
 - [ ] `pnpm boundaries`
 - [ ] focused runtime-host tests
 - [ ] repository build/test gate where the available execution environment permits it
-- [ ] if any gate cannot execute, record the exact external limitation without marking that gate passed
+- [x] if any gate cannot execute, record the exact external limitation without marking that gate passed
 
 ## References
 
@@ -102,8 +102,8 @@ translation, bounded input handling and terminal-result preservation.
 - [x] Add runtime wire types/constants under `apps/cli/src`.
 - [x] Add authenticated Fetch-compatible host handler.
 - [x] Add adversarial focused tests.
-- [ ] Run or attempt all minimum verification gates and record evidence.
-- [ ] Update required documentation.
+- [x] Attempt all minimum verification gates and record the unavailable execution path honestly.
+- [ ] Update the large canonical status/system/journal documents when a safe writer or canonical runner is available.
 - [ ] Archive task only if Definition of Done and required gates are honestly satisfied.
 
 ## Decisions and Notes
@@ -113,6 +113,10 @@ translation, bounded input handling and terminal-result preservation.
 - Classify discoveries using `docs/TASK_WORKFLOW.md`.
 - The pre-sync standalone `@acme/runtime-host` package design is not carried forward. This charter intentionally uses the existing CLI composition root to avoid a new workspace/lockfile surface while keeping the host module itself dependent only on public core contracts.
 - The old fork-specific ACME-0101/0102 identifiers collided with Rickard's canonical task history after sync and are historical only.
+- PR #3 was squash-merged to Felix fork `main` as `19ff83c94fad1611c1f7fa95ec4231a2c2a62e8a`. The runtime descriptor deliberately remains `compatibility: unverified`.
+- ACME Arbetsyta AAL-0016 is complete on application `main`; its product CI passed production build/Sites artifact validation, 96/96 tests, TypeScript and lint against the same frozen engine review point `7326d24d1a2baff71a63d249fed698343a5a7d3b`. This is cross-repo wire/handshake evidence, not engine gate evidence.
+- The canonical engine workflow exists at `.github/workflows/ci.yml`, but GitHub reports zero Actions runs for PR #3, after close/reopen, and after the `19ff83c...` push to fork `main`.
+- The local execution environment cannot resolve `github.com`, and the GitHub connector does not expose the private repository tarball as executable bytes. Therefore no canonical engine gate is marked passed.
 
 ## Charter Amendment Log
 
@@ -122,13 +126,13 @@ Only non-semantic corrections are allowed after `Ready`.
 
 ## Verification
 
-- [ ] Typecheck
-- [ ] Lint
-- [ ] Format check
-- [ ] Dependency boundaries
-- [ ] Runtime-host focused tests
-- [ ] Build/repository tests as available
-- [ ] External execution limitations documented
+- [ ] Typecheck — not executed; private fork Actions do not run and local repo bytes are unavailable.
+- [ ] Lint — not executed for the same external limitation.
+- [ ] Format check — not executed for the same external limitation.
+- [ ] Dependency boundaries — not executed for the same external limitation.
+- [ ] Runtime-host focused tests — authored but not executed in the canonical engine environment.
+- [ ] Build/repository tests — not executed in the canonical engine environment.
+- [x] External execution limitation documented with exact attempted paths; no unavailable gate is represented as passed.
 
 ## Documentation Updates
 
@@ -140,11 +144,11 @@ Only non-semantic corrections are allowed after `Ready`.
 
 ## Handoff and Follow-ups
 
-- Current state: runtime wire, authenticated host and focused tests are implemented on `agent/acme-0149-aal-runtime-host`.
-- Next recommended step: execute repository gates or record the exact unavailable runner limitation, then document and finalize.
-- Blockers: fork GitHub Actions access and local network execution may be unavailable; verify rather than assume.
+- Current state: runtime wire, authenticated host and focused tests are merged on Felix fork `main` as `19ff83c94fad1611c1f7fa95ec4231a2c2a62e8a`; compatibility remains explicitly unverified.
+- Next recommended step: enable or otherwise obtain an execution path for the existing canonical `.github/workflows/ci.yml`, run all required engine gates, then complete documentation and archive ACME-0149 only on real proof.
+- Blockers: GitHub Actions produces zero runs on the private fork; local environment has no GitHub DNS/private archive execution path.
 - Child tasks: none.
-- Resume condition: n/a.
+- Resume condition: canonical engine gates become executable without modifying Rickard/upstream solely for verification.
 - Open questions: deployment/listener technology intentionally deferred.
 
 ## Finalize When Complete
