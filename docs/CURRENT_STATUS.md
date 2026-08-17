@@ -1,5 +1,29 @@
 # Current Status
 
+## Felix fork integration: verified AAL v3 host with runnable Node listener
+
+The Felix fork exposes the existing domain-neutral `ExecutionEngine` through
+an authenticated Fetch-compatible AAL v3 boundary in the CLI composition root.
+The descriptor keeps the frozen reviewed engine pin
+`7326d24d1a2baff71a63d249fed698343a5a7d3b` and reports
+`compatibility: verified`. FELIX-ACME-0001 now adds a thin Node built-in HTTP
+transport around that same Fetch boundary plus an `acme-runtime` service entry
+point. Real loopback HTTP proves `GET /v1/compatibility`, `POST /v1/execute`,
+authorization-before-engine, the existing 1 MiB body bound and client-disconnect
+cancellation. The bridge drains request bytes left unread by an early host
+refusal so a bounded `413` can reach the client without destroying the shared
+HTTP socket.
+
+Service mode is fail-closed: bind host/port, a 32–4096 byte server bearer token,
+PostgreSQL, OpenAI API credentials, model profile and model wire id must all be
+explicit. There is no memory/mock production fallback and no hidden model
+default. Canonical implementation run `32078164500` passed both the full
+`verify` job and PostgreSQL job. `packages/core` remains unchanged.
+
+This state is **runnable but not deployed**. No cloud host, public URL, DNS, TLS
+termination, secret distribution service, scheduler, application runtime URL,
+OAuth provider connection or application-domain mutation is claimed here.
+
 ## Open: real-source acceptance blocked, application model being replaced
 
 The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder
@@ -157,7 +181,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-08-16
+Last updated: 2026-08-18
 
 ## Repository
 

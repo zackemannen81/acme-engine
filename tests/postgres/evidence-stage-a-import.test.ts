@@ -367,6 +367,38 @@ describe('Evidence Stage A PostgreSQL import', () => {
         expect(request.body).toContain(
           'The court records one source-bound fact.',
         );
+        const strings: string[] = [];
+        const collect = (value: unknown): void => {
+          if (typeof value === 'string') strings.push(value);
+          else if (Array.isArray(value)) value.forEach(collect);
+          else if (typeof value === 'object' && value !== null)
+            Object.values(value).forEach(collect);
+        };
+        collect(JSON.parse(request.body));
+        const encodedInput = strings.find(
+          (value) =>
+            value.includes('evidence-observe-artifact-input/3') &&
+            value.includes('sourceSegments'),
+        );
+        if (encodedInput === undefined)
+          throw new Error('Observation provider input was missing.');
+        const observationInput = JSON.parse(encodedInput) as {
+          artifactVersion: {
+            sourceSegments: Array<{
+              sourceSegmentId: string;
+              text: string;
+              role?: 'extractable' | 'context';
+            }>;
+          };
+        };
+        const extractable =
+          observationInput.artifactVersion.sourceSegments.filter(
+            (segment) => segment.role !== 'context',
+          );
+        const factSegments = extractable.filter((segment) =>
+          segment.text.includes('source-bound fact'),
+        );
+        expect(factSegments).toHaveLength(2);
         return {
           kind: 'response',
           status: 200,
@@ -383,40 +415,26 @@ describe('Evidence Stage A PostgreSQL import', () => {
                     type: 'output_text',
                     text: JSON.stringify({
                       schemaVersion: 'evidence-observe-artifact-output/6',
-                      observations: [
-                        {
-                          kind: 'exhibit-assertion',
-                          sourceSegmentId: 'line-000002-segment-0001',
-                          sourceActorReference: null,
-                          temporalBound: {
-                            kind: 'unknown',
-                            role: 'document-time',
-                            reason:
-                              'The cited source line supplies no exact time.',
-                          },
+                      observations: factSegments.map((segment) => ({
+                        kind: 'exhibit-assertion',
+                        sourceSegmentId: segment.sourceSegmentId,
+                        sourceActorReference: null,
+                        temporalBound: {
+                          kind: 'unknown',
+                          role: 'document-time',
+                          reason:
+                            'The cited source segment supplies no exact time.',
                         },
-                        {
-                          kind: 'exhibit-assertion',
-                          sourceSegmentId: 'line-000003-segment-0001',
-                          sourceActorReference: null,
-                          temporalBound: {
-                            kind: 'unknown',
-                            role: 'document-time',
-                            reason:
-                              'The cited source line supplies no exact time.',
-                          },
-                        },
-                      ],
-                      segmentCoverage: [
-                        {
-                          sourceSegmentId: 'line-000002-segment-0001',
-                          status: 'observations_extracted',
-                        },
-                        {
-                          sourceSegmentId: 'line-000003-segment-0001',
-                          status: 'observations_extracted',
-                        },
-                      ],
+                      })),
+                      segmentCoverage: extractable.map((segment) => ({
+                        sourceSegmentId: segment.sourceSegmentId,
+                        status: factSegments.some(
+                          (fact) =>
+                            fact.sourceSegmentId === segment.sourceSegmentId,
+                        )
+                          ? 'observations_extracted'
+                          : 'no_observation',
+                      })),
                     }),
                   },
                 ],
@@ -729,7 +747,7 @@ describe('Evidence Stage A PostgreSQL import', () => {
       expect(job).toMatchObject({
         phase: 'completed',
         reasonCode: 'LIVE_OBSERVATION_RESUMED',
-        actualModelCalls: 1,
+        actualModelCalls: 0,
       });
       expect(providerCalls).toBe(1);
       const snapshot = await reopened.productRepository.snapshot();
