@@ -2,8 +2,8 @@
 
 Task ID: ACME-0154
 Parent Task: None
-Status: Ready
-Owner: unassigned
+Status: In Progress
+Owner: Claude
 Created: 2026-08-16
 Last updated: 2026-08-16
 Charter frozen at: 2026-08-16

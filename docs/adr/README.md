@@ -82,3 +82,4 @@ current architecture.
 - [`0045-real-material-scale-and-recovery.md`](0045-real-material-scale-and-recovery.md)
 - [`0046-source-chronology-and-claim-projection.md`](0046-source-chronology-and-claim-projection.md)
 - [`0047-evidence-application-model-reset.md`](0047-evidence-application-model-reset.md)
+- [`0048-evidence-v2-observe-contract.md`](0048-evidence-v2-observe-contract.md)
