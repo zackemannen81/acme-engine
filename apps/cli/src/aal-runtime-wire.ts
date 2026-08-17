@@ -33,7 +33,7 @@ export const ACME_RUNTIME_DESCRIPTOR = Object.freeze({
   adapterContractVersion: ACME_ADAPTER_V3_CONTRACT_VERSION,
   engineRepository: ACME_ENGINE_V3_REVIEW_POINT.repository,
   engineCommit: ACME_ENGINE_V3_REVIEW_POINT.commit,
-  compatibility: 'unverified' as const,
+  compatibility: 'verified' as const,
   executePath: ACME_RUNTIME_EXECUTE_PATH,
 });
 

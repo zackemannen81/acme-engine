@@ -1,5 +1,34 @@
 # Journal
 
+## 2026-08-18 — ACME-0149 complete: Felix AAL v3 runtime boundary verified
+
+- Date: 2026-08-18
+- Author: ChatGPT
+- Task: ACME-0149, Complete. Archived to
+  `docs/finished/ACME-0149_felix-aal-v3-runtime-host.md`.
+- Change: the existing domain-neutral `ExecutionEngine` is exposed through a
+  small authenticated Fetch-compatible AAL v3 host in the CLI composition root.
+  Exact auth/protocol/adapter/engine pins, body/media/JSON bounds and supported
+  policy semantics fail closed before engine invocation; valid requests map
+  deterministically to the public execution request, forward cancellation and
+  preserve terminal engine results losslessly.
+- Compatibility: the frozen reviewed engine revision remains
+  `7326d24d1a2baff71a63d249fed698343a5a7d3b`. The descriptor moved from `unverified` to `verified` only
+  after the fork's canonical Actions workflow became executable and passed.
+- CI discoveries: the first real fork runs exposed two Prettier drifts, three
+  TypeScript fixture/type drifts and stale PostgreSQL Evidence fixture/accounting
+  assumptions. Repairs were limited to runtime-host formatting/types and
+  adapter-facing Evidence fixtures; `packages/core` remained untouched.
+- Recovery proof: the PostgreSQL restart test "resumes a live observation after
+  provider success without a second call" passed. The resumed process reports
+  zero additional model calls while total provider traffic remains one.
+- Verification: canonical run `32074066197` passed docs, format, lint,
+  typecheck, package boundaries and build; unit 877/877, conformance 78/78,
+  integration 81/81 (runtime host 11/11), scenarios 26/26 and PostgreSQL 43/43.
+- Boundary: no listener/deployment/TLS/service discovery/OAuth/provider or
+  persistence composition, and no application-domain mutation, was added.
+- Signature: ChatGPT
+
 ## 2026-08-17 — ACME-0154 complete: the first V2 evidence, from the real binder
 
 - Date: 2026-08-17

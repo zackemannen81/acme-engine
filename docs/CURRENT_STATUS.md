@@ -1,5 +1,21 @@
 # Current Status
 
+## Felix fork integration: AAL v3 runtime host verified
+
+The Felix fork now exposes the existing domain-neutral `ExecutionEngine` through
+an authenticated Fetch-compatible AAL v3 boundary in the CLI composition root.
+The descriptor keeps the frozen reviewed engine pin
+`7326d24d1a2baff71a63d249fed698343a5a7d3b` and now reports
+`compatibility: verified` after canonical CI run `32074066197` passed the full
+hermetic verify job and PostgreSQL job. The runtime-host integration suite is
+11/11, the repository unit suite 877/877, conformance 78/78, integration 81/81,
+scenarios 26/26 and PostgreSQL 43/43.
+
+This does not add a network listener, deployment, TLS/service discovery,
+provider choice, persistence composition or application-domain mutation.
+`packages/core` remains unchanged. Those are future independently chartered
+steps, not implied by the verified transport boundary.
+
 ## Open: real-source acceptance blocked, application model being replaced
 
 The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder
@@ -157,7 +173,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-08-16
+Last updated: 2026-08-18
 
 ## Repository
 

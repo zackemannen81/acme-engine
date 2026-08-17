@@ -1,5 +1,24 @@
 # System Documentation
 
+## Felix fork AAL v3 runtime boundary
+
+The Felix fork's CLI composition root contains a small authenticated,
+Fetch-compatible AAL v3 runtime host. `GET /v1/compatibility` and
+`POST /v1/execute` expose only the frozen runtime wire shape; auth, protocol,
+adapter and engine-pin mismatches plus invalid media/JSON/body/policy input are
+refused before engine invocation. The execution path maps deterministically to
+the public `ExecutionRequest`, forwards cancellation and preserves every
+terminal engine result without reclassifying it as a transport failure.
+
+The boundary is pinned to reviewed engine revision
+`7326d24d1a2baff71a63d249fed698343a5a7d3b` and advertises
+`compatibility: verified`. Canonical fork CI run `32074066197` passed
+documentation, format, lint, typecheck, package boundaries, unit, conformance,
+integration, deterministic scenarios, build and the PostgreSQL adapter suite.
+No `packages/core` source changed. Listener/server framework, deployment,
+TLS/service discovery, provider/model adapter selection and persistence
+composition remain outside this boundary.
+
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
 count. Source review and the ledger embed the same card object.
@@ -55,7 +74,7 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-08-16
+Last updated: 2026-08-18
 Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are

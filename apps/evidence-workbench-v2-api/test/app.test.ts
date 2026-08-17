@@ -9,7 +9,9 @@ import {
   type EvidenceV2ChainDecision,
   type EvidenceV2ChainMembership,
   type EvidenceV2ChainSummary,
+  type EvidenceV2ExtractionWindowState,
   type EvidenceV2ImportWrite,
+  type EvidenceV2Occurrence,
   type EvidenceV2Page,
   type EvidenceV2PageRequest,
   type EvidenceV2Repository,
@@ -44,7 +46,15 @@ function memoryRepository(): EvidenceV2Repository & {
   const structures = new Map<string, readonly EvidenceV2SourcePart[]>();
   const proposals = new Map<string, EvidenceV2ChainProposal>();
   const decisions = new Map<string, EvidenceV2ChainDecision[]>();
+  const occurrences = new Map<string, Map<string, EvidenceV2Occurrence>>();
+  const extractionWindows = new Map<
+    string,
+    Map<string, EvidenceV2ExtractionWindowState>
+  >();
   const derivationCalls = { count: 0 };
+
+  const instanceKey = (artifactId: string, targetInstanceKey: string): string =>
+    `${artifactId}\u0000${targetInstanceKey}`;
 
   const paged = <T>(
     items: readonly T[],
@@ -138,6 +148,33 @@ function memoryRepository(): EvidenceV2Repository & {
     },
     async readEffectiveMemberships(artifactId) {
       return effective(artifactId);
+    },
+    async putOccurrences(artifactId, targetInstanceKey, values) {
+      const key = instanceKey(artifactId, targetInstanceKey);
+      const stored =
+        occurrences.get(key) ?? new Map<string, EvidenceV2Occurrence>();
+      for (const value of values) stored.set(value.occurrenceId, value);
+      occurrences.set(key, stored);
+    },
+    async listOccurrences(artifactId, targetInstanceKey, request) {
+      const stored = occurrences.get(
+        instanceKey(artifactId, targetInstanceKey),
+      );
+      return paged(stored === undefined ? [] : [...stored.values()], request);
+    },
+    async putExtractionWindow(state) {
+      const key = instanceKey(state.artifactId, state.instanceKey);
+      const stored =
+        extractionWindows.get(key) ??
+        new Map<string, EvidenceV2ExtractionWindowState>();
+      stored.set(state.windowId, state);
+      extractionWindows.set(key, stored);
+    },
+    async readExtractionWindows(artifactId, targetInstanceKey) {
+      const stored = extractionWindows.get(
+        instanceKey(artifactId, targetInstanceKey),
+      );
+      return stored === undefined ? [] : [...stored.values()];
     },
     async appendChainDecision(artifactId, decision) {
       const log = decisions.get(artifactId) ?? [];

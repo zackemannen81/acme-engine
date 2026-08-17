@@ -26,11 +26,7 @@ const MAX_REQUEST_BYTES = 1_048_576;
 const HEADER_PROTOCOL = 'x-acme-runtime-protocol';
 const HEADER_ADAPTER = 'x-acme-adapter-contract';
 const HEADER_ENGINE_COMMIT = 'x-acme-engine-commit';
-const RETENTION_MODES = new Set([
-  'none',
-  'hash-only',
-  'encrypted-payload',
-]);
+const RETENTION_MODES = new Set(['none', 'hash-only', 'encrypted-payload']);
 
 export type AcmeRuntimeAuthorizer = (
   request: Request,
@@ -92,11 +88,7 @@ function requireText(
   label: string,
   maximum = 500,
 ): asserts value is string {
-  if (
-    typeof value !== 'string' ||
-    value.length < 1 ||
-    value.length > maximum
-  ) {
+  if (typeof value !== 'string' || value.length < 1 || value.length > maximum) {
     throw new HostRefusal(
       400,
       'INVALID_V3_REQUEST',
@@ -351,8 +343,7 @@ function validateV3Request(value: unknown): AcmeAdapterV3Request {
     'engineTarget',
   );
   if (
-    value.engineTarget.repository !==
-      ACME_ENGINE_V3_REVIEW_POINT.repository ||
+    value.engineTarget.repository !== ACME_ENGINE_V3_REVIEW_POINT.repository ||
     value.engineTarget.commit !== ACME_ENGINE_V3_REVIEW_POINT.commit
   ) {
     throw new HostRefusal(
@@ -372,11 +363,7 @@ function validateV3Request(value: unknown): AcmeAdapterV3Request {
   const policy = validatePolicy(value.engineTarget.policy);
 
   if (!isRecord(value.task)) {
-    throw new HostRefusal(
-      400,
-      'INVALID_V3_REQUEST',
-      'task must be an object.',
-    );
+    throw new HostRefusal(400, 'INVALID_V3_REQUEST', 'task must be an object.');
   }
   exactKeys(
     value.task,
@@ -567,8 +554,7 @@ function verifyProtocolHeaders(request: Request): void {
     );
   }
   if (
-    request.headers.get(HEADER_ADAPTER) !==
-    ACME_ADAPTER_V3_CONTRACT_VERSION
+    request.headers.get(HEADER_ADAPTER) !== ACME_ADAPTER_V3_CONTRACT_VERSION
   ) {
     throw new HostRefusal(
       409,
@@ -593,7 +579,9 @@ function isJsonContentType(request: Request): boolean {
   if (contentType === null) {
     return false;
   }
-  return contentType.split(';', 1)[0]?.trim().toLowerCase() === 'application/json';
+  return (
+    contentType.split(';', 1)[0]?.trim().toLowerCase() === 'application/json'
+  );
 }
 
 async function readBoundedBody(request: Request): Promise<Uint8Array> {
@@ -761,11 +749,7 @@ export function createAcmeRuntimeHost(
           );
         }
 
-        throw new HostRefusal(
-          404,
-          'NOT_FOUND',
-          'Runtime route was not found.',
-        );
+        throw new HostRefusal(404, 'NOT_FOUND', 'Runtime route was not found.');
       } catch (error) {
         if (error instanceof HostRefusal) {
           return hostError(

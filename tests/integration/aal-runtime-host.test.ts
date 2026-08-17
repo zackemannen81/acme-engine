@@ -21,7 +21,9 @@ import {
 
 const MAX_REQUEST_BYTES = 1_048_576;
 
-function fixtureRequest(overrides: Partial<AcmeAdapterV3Request> = {}): AcmeAdapterV3Request {
+function fixtureRequest(
+  overrides: Partial<AcmeAdapterV3Request> = {},
+): AcmeAdapterV3Request {
   const base: AcmeAdapterV3Request = {
     contractVersion: ACME_ADAPTER_V3_CONTRACT_VERSION,
     requestKey: 'aal-runtime-request-1',
@@ -100,7 +102,7 @@ function executeRequest(
   options: {
     readonly headers?: Headers;
     readonly method?: string;
-    readonly body?: BodyInit | null;
+    readonly body?: string | null;
     readonly signal?: AbortSignal;
   } = {},
 ): Request {
@@ -130,9 +132,10 @@ function fakeReplayReport(executionId: string): ReplayReport {
   };
 }
 
-function recordingEngine(
-  result: ExecutionResult | (() => never),
-): { readonly engine: ExecutionEngine; readonly observed: EngineObservation } {
+function recordingEngine(result: ExecutionResult | (() => never)): {
+  readonly engine: ExecutionEngine;
+  readonly observed: EngineObservation;
+} {
   const requests: ExecutionRequest[] = [];
   const signals: (AbortSignal | undefined)[] = [];
   return {
@@ -156,7 +159,9 @@ function recordingEngine(
   };
 }
 
-async function responseBody(response: Response): Promise<Record<string, unknown>> {
+async function responseBody(
+  response: Response,
+): Promise<Record<string, unknown>> {
   return (await response.json()) as Record<string, unknown>;
 }
 
@@ -204,7 +209,7 @@ describe('AAL runtime compatibility boundary', () => {
     const response = await host.fetch(compatibilityRequest());
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(ACME_RUNTIME_DESCRIPTOR);
-    expect(ACME_RUNTIME_DESCRIPTOR.compatibility).toBe('unverified');
+    expect(ACME_RUNTIME_DESCRIPTOR.compatibility).toBe('verified');
     expect(observed.requests).toEqual([]);
   });
 
