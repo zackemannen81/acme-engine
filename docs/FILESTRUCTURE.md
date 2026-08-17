@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-18
+Last updated: 2026-08-17
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -17,11 +17,6 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
-│   │   │   ├── aal-runtime-host.ts
-│   │   │   ├── aal-runtime-listener.ts
-│   │   │   ├── aal-runtime-service-main.ts
-│   │   │   ├── aal-runtime-service.ts
-│   │   │   ├── aal-runtime-wire.ts
 │   │   │   ├── args.ts
 │   │   │   ├── composition.ts
 │   │   │   ├── index.ts
@@ -507,8 +502,6 @@ acme-engine/
 │   │   ├── postgres-gates.test.ts
 │   │   └── quality-evaluation-postgres.conformance.test.ts
 │   ├── integration/
-│   │   ├── aal-runtime-host.test.ts
-│   │   ├── aal-runtime-listener.test.ts
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts

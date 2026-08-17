@@ -66,7 +66,7 @@ export interface EvidenceV2ExtractOutcome {
 
 /** The engine ledger, plus the snapshot read the projection step needs. */
 export type EvidenceV2Ledger = ExecutionRepository & {
-  snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
+  snapshot(): Promise<RepositoryEvidence>;
 };
 
 export interface EvidenceV2ExtractorOptions {
