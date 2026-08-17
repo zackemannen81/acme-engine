@@ -1,5 +1,36 @@
 # Journal
 
+## 2026-08-18 — FELIX-ACME-0001 checkpoint: runnable AAL v3 Node listener
+
+- Date: 2026-08-18
+- Author: ChatGPT
+- Task: FELIX-ACME-0001, In Progress. The initially selected local ID
+  `ACME-0152` was discovered to collide with Rickard/upstream Evidence V2
+  history before merge; scope and code were carried unchanged into the explicit
+  Felix-local namespace and the colliding PR was closed without merge.
+- Change: Node built-in HTTP now adapts a bound TCP listener to the already
+  verified Fetch-compatible AAL v3 host. A runnable `acme-runtime` entry point
+  composes explicit PostgreSQL + OpenAI dependencies and refuses missing/unsafe
+  service configuration before binding. No memory/mock production fallback or
+  hidden model default exists.
+- HTTP proof: real loopback requests cover compatibility, execute, authorization
+  with zero engine invocation on refusal, the inherited 1 MiB body limit and
+  client-disconnect cancellation. The first oversized-body test exposed a real
+  transport hang: an early Content-Length refusal left the private request stream
+  paused and listener close waited forever. The listener now cancels its private
+  Fetch stream and drains the IncomingMessage without destroying the shared
+  socket, so the host-owned `413` returns normally.
+- Security: bearer comparison is constant-time; service output contains the
+  bound address but never the bearer or OpenAI key. Runtime protocol/policy/body
+  authority remains in the Fetch host.
+- Verification: canonical implementation run `32078164500` passed both
+  `verify` and PostgreSQL after the transport repair. A final
+  documentation-inclusive PR gate and post-merge main gate are still required.
+- Boundary: runnable is not deployed. No public host, TLS/DNS, secret
+  distribution, scheduler, app runtime URL, OAuth integration, ReviewItem or
+  business mutation is added. `packages/core` is unchanged.
+- Signature: ChatGPT
+
 ## 2026-08-18 — ACME-0149 complete: Felix AAL v3 runtime boundary verified
 
 - Date: 2026-08-18

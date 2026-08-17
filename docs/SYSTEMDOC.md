@@ -1,6 +1,6 @@
 # System Documentation
 
-## Felix fork AAL v3 runtime boundary
+## Felix fork AAL v3 runtime boundary and Node transport
 
 The Felix fork's CLI composition root contains a small authenticated,
 Fetch-compatible AAL v3 runtime host. `GET /v1/compatibility` and
@@ -10,14 +10,34 @@ refused before engine invocation. The execution path maps deterministically to
 the public `ExecutionRequest`, forwards cancellation and preserves every
 terminal engine result without reclassifying it as a transport failure.
 
-The boundary is pinned to reviewed engine revision
-`7326d24d1a2baff71a63d249fed698343a5a7d3b` and advertises
-`compatibility: verified`. Canonical fork CI run `32074066197` passed
+FELIX-ACME-0001 adds `apps/cli/src/aal-runtime-listener.ts` as a transport-only
+adapter from Node's built-in `http` server to that existing Fetch host. It owns
+socket lifecycle, header/body translation, loopback/test binding and graceful
+close; it does not own runtime policy. Node request bodies are surfaced as a
+backpressure-aware Web stream whose cancellation drains rather than destroys the
+underlying IncomingMessage. After an early host refusal, any unconsumed private
+body stream is cancelled explicitly before the Fetch response is written. This
+keeps the host's single 1 MiB authority while allowing a real HTTP `413` to be
+delivered without a stuck keep-alive request. Client disconnect drives the Fetch
+AbortSignal and therefore the engine cancellation signal.
+
+`apps/cli/src/aal-runtime-service.ts` is the runnable composition. Production
+service mode requires explicit `ACME_RUNTIME_REPOSITORY=postgres`, PostgreSQL
+configuration, `ACME_RUNTIME_MODEL_PROVIDER=openai`, `OPENAI_API_KEY`, an
+explicit model profile/model id, bind host/port and a bounded server bearer
+token. The CLI package exposes `acme-runtime` via
+`aal-runtime-service-main.ts`; it prints only the bound address and handles
+SIGINT/SIGTERM with graceful close. It does not silently fall back to memory, a
+mock model or a default production model.
+
+The boundary remains pinned to reviewed engine revision
+`7326d24d1a2baff71a63d249fed698343a5a7d3b` with
+`compatibility: verified`. Canonical implementation run `32078164500` passed
 documentation, format, lint, typecheck, package boundaries, unit, conformance,
-integration, deterministic scenarios, build and the PostgreSQL adapter suite.
-No `packages/core` source changed. Listener/server framework, deployment,
-TLS/service discovery, provider/model adapter selection and persistence
-composition remain outside this boundary.
+integration, deterministic scenarios, build and PostgreSQL. No `packages/core`
+source changed. Cloud deployment, DNS, TLS termination, secret distribution,
+scheduler configuration and application runtime wiring remain outside this
+boundary.
 
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation

@@ -1,20 +1,28 @@
 # Current Status
 
-## Felix fork integration: AAL v3 runtime host verified
+## Felix fork integration: verified AAL v3 host with runnable Node listener
 
-The Felix fork now exposes the existing domain-neutral `ExecutionEngine` through
+The Felix fork exposes the existing domain-neutral `ExecutionEngine` through
 an authenticated Fetch-compatible AAL v3 boundary in the CLI composition root.
 The descriptor keeps the frozen reviewed engine pin
-`7326d24d1a2baff71a63d249fed698343a5a7d3b` and now reports
-`compatibility: verified` after canonical CI run `32074066197` passed the full
-hermetic verify job and PostgreSQL job. The runtime-host integration suite is
-11/11, the repository unit suite 877/877, conformance 78/78, integration 81/81,
-scenarios 26/26 and PostgreSQL 43/43.
+`7326d24d1a2baff71a63d249fed698343a5a7d3b` and reports
+`compatibility: verified`. FELIX-ACME-0001 now adds a thin Node built-in HTTP
+transport around that same Fetch boundary plus an `acme-runtime` service entry
+point. Real loopback HTTP proves `GET /v1/compatibility`, `POST /v1/execute`,
+authorization-before-engine, the existing 1 MiB body bound and client-disconnect
+cancellation. The bridge drains request bytes left unread by an early host
+refusal so a bounded `413` can reach the client without destroying the shared
+HTTP socket.
 
-This does not add a network listener, deployment, TLS/service discovery,
-provider choice, persistence composition or application-domain mutation.
-`packages/core` remains unchanged. Those are future independently chartered
-steps, not implied by the verified transport boundary.
+Service mode is fail-closed: bind host/port, a 32–4096 byte server bearer token,
+PostgreSQL, OpenAI API credentials, model profile and model wire id must all be
+explicit. There is no memory/mock production fallback and no hidden model
+default. Canonical implementation run `32078164500` passed both the full
+`verify` job and PostgreSQL job. `packages/core` remains unchanged.
+
+This state is **runnable but not deployed**. No cloud host, public URL, DNS, TLS
+termination, secret distribution service, scheduler, application runtime URL,
+OAuth provider connection or application-domain mutation is claimed here.
 
 ## Open: real-source acceptance blocked, application model being replaced
 
