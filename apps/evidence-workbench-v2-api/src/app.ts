@@ -21,6 +21,7 @@ import {
   renderChains,
   renderCases,
   renderPart,
+  renderInstance,
   renderParts,
   renderSignIn,
 } from '@acme/evidence-workbench-v2-web';
@@ -33,6 +34,7 @@ import {
   EVIDENCE_V2_SESSION_COOKIE,
   type EvidenceV2Auth,
 } from './auth.js';
+import type { EvidenceV2Extractor } from './extract.js';
 import type { EvidenceV2TextStore } from './artifact-store.js';
 
 /** Bound on a request body. A canonical text of tens of megabytes is normal. */
@@ -42,6 +44,8 @@ export interface EvidenceV2AppOptions {
   readonly repository: EvidenceV2Repository;
   readonly textStore: EvidenceV2TextStore;
   readonly auth: EvidenceV2Auth;
+  /** Absent when the deployment has no live model capability configured. */
+  readonly extractor?: EvidenceV2Extractor;
   readonly now: () => string;
 }
 
@@ -627,6 +631,152 @@ export function createEvidenceV2App(
               sourceLine: instance.instanceSourceTime.sourceLine,
               ordered: instance.ordered,
               sourcePartIds: instance.sourcePartIds,
+            })),
+          }),
+        );
+      }
+
+      // Extraction: plan states the bounded call count; run executes the
+      // outstanding windows and reports a partial outcome honestly.
+      const extractMatch =
+        /^\/api\/artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/extraction$/u.exec(
+          path,
+        );
+      if (
+        extractMatch?.[1] !== undefined &&
+        extractMatch[2] !== undefined &&
+        extractMatch[3] !== undefined
+      ) {
+        const artifactId = decodeURIComponent(extractMatch[1]);
+        const chainId = decodeURIComponent(extractMatch[2]);
+        const instanceKey = decodeURIComponent(extractMatch[3]);
+        const action: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'live-model.run';
+        const scope = await authorizeArtifact(artifactId, action);
+        if (scope === undefined) return;
+        if (options.extractor === undefined)
+          return void sendText(
+            response,
+            501,
+            'This deployment has no live model capability.',
+          );
+        const detail = await repository.readChain(artifactId, chainId);
+        const instance = detail?.chain.instances.find(
+          (item) => item.instanceKey === instanceKey,
+        );
+        if (instance === undefined)
+          return void sendText(response, 404, 'Not found.');
+
+        if (method === 'GET') {
+          const plan = await options.extractor.plan({
+            artifactId,
+            chainId,
+            instanceKey,
+            sourcePartIds: instance.sourcePartIds,
+          });
+          const windows = await repository.readExtractionWindows(
+            artifactId,
+            instanceKey,
+          );
+          const occurrences = await repository.listOccurrences(
+            artifactId,
+            instanceKey,
+            page,
+          );
+          return void sendJson(response, 200, {
+            plannedModelCalls: plan.plannedModelCalls,
+            windowCount: plan.windows.length,
+            outstandingWindowIds: plan.outstandingWindowIds,
+            committedWindowIds: plan.committedWindowIds,
+            windows,
+            occurrences,
+          });
+        }
+        if (method === 'POST') {
+          const outcome = await options.extractor.run({
+            caseId: scope.caseId,
+            artifactId,
+            chainId,
+            instanceKey,
+            sourcePartIds: instance.sourcePartIds,
+          });
+          return void sendJson(response, outcome.complete ? 201 : 207, outcome);
+        }
+      }
+
+      const occurrenceMatch =
+        /^\/(?:api\/)?artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)$/u.exec(
+          path,
+        );
+      if (
+        method === 'GET' &&
+        occurrenceMatch?.[1] !== undefined &&
+        occurrenceMatch[2] !== undefined &&
+        occurrenceMatch[3] !== undefined
+      ) {
+        const artifactId = decodeURIComponent(occurrenceMatch[1]);
+        const chainId = decodeURIComponent(occurrenceMatch[2]);
+        const instanceKey = decodeURIComponent(occurrenceMatch[3]);
+        if (
+          (await authorizeArtifact(artifactId, 'workspace.read')) === undefined
+        )
+          return;
+        const detail = await repository.readChain(artifactId, chainId);
+        const instance = detail?.chain.instances.find(
+          (item) => item.instanceKey === instanceKey,
+        );
+        if (detail === undefined || instance === undefined)
+          return void sendText(response, 404, 'Not found.');
+        const occurrences = await repository.listOccurrences(
+          artifactId,
+          instanceKey,
+          page,
+        );
+        const windows = await repository.readExtractionWindows(
+          artifactId,
+          instanceKey,
+        );
+        if (json)
+          return void sendJson(response, 200, {
+            instance,
+            occurrences,
+            windows,
+          });
+        const artifact = await repository.readArtifact(artifactId);
+        const record =
+          artifact === undefined
+            ? undefined
+            : await repository.readCase(artifact.caseId);
+        return void sendHtml(
+          response,
+          200,
+          renderInstance({
+            caseId: artifact?.caseId ?? '',
+            caseTitle: record?.title ?? '',
+            artifactId,
+            chainId,
+            subjectLabel: detail.chain.subjectLabel,
+            instanceOrdinal: instance.instanceOrdinal,
+            sourceTime: instance.instanceSourceTime.from ?? 'unknown',
+            sourcePartIds: instance.sourcePartIds,
+            occurrences: {
+              ...occurrences,
+              items: occurrences.items.map((occurrence) => ({
+                occurrenceId: occurrence.occurrenceId,
+                partId: occurrence.partId,
+                startLine: occurrence.startLine,
+                endLine: occurrence.endLine,
+                kind: occurrence.kind,
+                exactQuote: occurrence.exactQuote,
+                temporal: occurrence.temporalBound?.from ?? null,
+              })),
+            },
+            windows: windows.map((window) => ({
+              windowId: window.windowId,
+              status: window.status,
+              unitCount: window.unitCount,
+              occurrenceCount: window.occurrenceCount,
+              failureCode: window.failureCode,
             })),
           }),
         );

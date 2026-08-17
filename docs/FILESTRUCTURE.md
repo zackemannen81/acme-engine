@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -34,6 +34,15 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/{index.ts,live.ts,live-observation.ts,live-relation.ts,live-assessment.ts,local.ts,local-main.ts,text-import-list.ts}
 │   │   └── test/{auth-blackbox.test.ts,case-management-blackbox.test.ts,execution-scoped-observations.test.ts,live-composition.test.ts,live-coverage-windows.test.ts,live-path-regressions.test.ts,live-repair-budget.test.ts,local-blackbox.test.ts,secret-scan.test.ts,text-import-list.test.ts,artifact-config.test.ts}
+│   ├── evidence-workbench-v2-api/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/{app.ts,artifact-store.ts,auth.ts,extract.ts,index.ts,local.ts}
+│   │   └── test/{app.test.ts,extract.test.ts}
+│   ├── evidence-workbench-v2-web/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/index.ts
 │   ├── evidence-workbench-web/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -212,6 +221,10 @@ acme-engine/
 │   │       ├── index.ts
 │   │       ├── migrations.ts
 │   │       └── repository.ts
+│   ├── adapter-evidence-v2-postgres/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/{index.ts,migrations.ts,repository.ts}
 │   ├── core/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -350,6 +363,10 @@ acme-engine/
 │   │       ├── identity-vectors.test.ts
 │   │       ├── ingestion-redaction.test.ts
 │   │       └── prompt-guard.test.ts
+│   ├── evidence-v2-contracts/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/index.ts
 │   ├── evidence-views/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -387,8 +404,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{chain.ts,index.ts,source-structure.ts}
-│   │   └── test/{chain.test.ts,source-structure.test.ts}
+│   │   ├── src/{chain.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,source-structure.ts}
+│   │   └── test/{chain.test.ts,observe.test.ts,source-structure.test.ts}
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -479,6 +496,7 @@ acme-engine/
 │   │   ├── adapter-postgres.conformance.test.ts
 │   │   ├── evidence-product-postgres.conformance.test.ts
 │   │   ├── evidence-auth-postgres.test.ts
+│   │   ├── evidence-v2-persistence.test.ts
 │   │   ├── harness.ts
 │   │   ├── lazy-repository.ts
 │   │   ├── postgres-gates.test.ts
@@ -726,6 +744,69 @@ acme-engine/
 │   │   ├── ACME-0089_reseal-e-a01-without-late-questions.md
 │   │   ├── ACME-0090_authenticated-principal-authorization-adr.md
 │   │   ├── ACME-0091_authenticated-principal-authorization.md
+│   │   ├── ACME-0092_evidence-case-management-and-isolation-adr.md
+│   │   ├── ACME-0093_evidence-case-management-and-isolation.md
+│   │   ├── ACME-0094_evidence-secure-artifact-foundation-adr.md
+│   │   ├── ACME-0095_evidence-secure-artifact-foundation.md
+│   │   ├── ACME-0096_bounded-text-ingestion-and-redaction-adr.md
+│   │   ├── ACME-0097_bounded-text-ingestion-and-immutable-redaction.md
+│   │   ├── ACME-0098_reviewer-operations-and-case-search.md
+│   │   ├── ACME-0099_case-overview-and-integrity-report.md
+│   │   ├── ACME-0100_assessment-output-and-export-operations.md
+│   │   ├── ACME-0101_browser-shell-parse-failure.md
+│   │   ├── ACME-0102_workbench-live-model-boundary-adr.md
+│   │   ├── ACME-0103_postgres-restart-test-case-first.md
+│   │   ├── ACME-0104_poc-1-live-product-applicability-boundary.md
+│   │   ├── ACME-0105_evidence-live-composition-boundary.md
+│   │   ├── ACME-0106_stage-a-judicial-text-import.md
+│   │   ├── ACME-0107_stage-a-live-observation-job.md
+│   │   ├── ACME-0108_stage-a-live-relation-job.md
+│   │   ├── ACME-0109_superseded-live-assessment-review.md
+│   │   ├── ACME-0110_stage-a-live-assessment-review.md
+│   │   ├── ACME-0111_stage-a-real-provider-acceptance.md
+│   │   ├── ACME-0112_bounded-observation-candidate-contract.md
+│   │   ├── ACME-0113_stage-a-bounded-real-provider-acceptance.md
+│   │   ├── ACME-0114_deterministic-observation-locators.md
+│   │   ├── ACME-0115_stage-a-runtime-locator-provider-acceptance.md
+│   │   ├── ACME-0116_single-line-observation-candidates.md
+│   │   ├── ACME-0117_stage-a-single-line-provider-acceptance.md
+│   │   ├── ACME-0118_runtime-derived-observation-quotes.md
+│   │   ├── ACME-0119_stage-a-segment-provider-acceptance.md
+│   │   ├── ACME-0120_canonical-utc-observation-prompt.md
+│   │   ├── ACME-0121_stage-a-canonical-utc-provider-acceptance.md
+│   │   ├── ACME-0122_live-observation-terminal-code.md
+│   │   ├── ACME-0123_stage-a-live-reviewer-harness.md
+│   │   ├── ACME-0124_stage-a-live-reviewer-acceptance.md
+│   │   ├── ACME-0125_source-view-observation-identity.md
+│   │   ├── ACME-0126_stage-a-typed-reviewer-acceptance.md
+│   │   ├── ACME-0127_sorted-relation-provider-output.md
+│   │   ├── ACME-0128_sorted-assessment-provider-output.md
+│   │   ├── ACME-0129_stage-a-live-reviewer-acceptance.md
+│   │   ├── ACME-0130_case-catalog-request-scoping.md
+│   │   ├── ACME-0131_live-path-projection-and-session.md
+│   │   ├── ACME-0132_measured-cost-and-optional-ceiling.md
+│   │   ├── ACME-0133_poc1-outcome-blind-acceptance.md
+│   │   ├── ACME-0134_real-material-scale.md
+│   │   ├── ACME-0135_bounded-repair-call.md
+│   │   ├── ACME-0136_poc1-outcome-blind-acceptance.md
+│   │   ├── ACME-0137_full-source-observation-coverage.md
+│   │   ├── ACME-0138_atomic-observation-coverage.md
+│   │   ├── ACME-0139_empty-roster-pass-1.md
+│   │   ├── ACME-0140_shared-observation-card.md
+│   │   ├── ACME-0141_source-stream-home.md
+│   │   ├── ACME-0142_source-blocks-neighbour-context.md
+│   │   ├── ACME-0143_claim-surface.md
+│   │   ├── ACME-0144_continuity-information-exposure.md
+│   │   ├── ACME-0145_oversized-source-block-split.md
+│   │   ├── ACME-0146_sentence-level-source-segments.md
+│   │   ├── ACME-0147_three-mode-default-shell.md
+│   │   ├── ACME-0148_document-parts.md
+│   │   ├── ACME-0149_legacy-diagnostic-execution-plan-confirmation.md
+│   │   ├── ACME-0150_v2-source-structure.md
+│   │   ├── ACME-0151_v2-chains-and-instances.md
+│   │   ├── ACME-0152_v2-persistence-and-surfaces.md
+│   │   ├── ACME-0153_v2-authentication-and-authorization.md
+│   │   ├── ACME-0154_v2-observation-occurrence.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
@@ -834,8 +915,14 @@ content remains intentionally omitted here.
   constant-time lookup. Its second layer, `evidence-v2-chain/1`, organizes
   parts into longitudinal chains and instances from body-derived identity and
   time, with append-only membership decisions and a pure fold to the effective
-  state. It depends on nothing, and `pnpm boundaries` forbids it from importing
-  the frozen application.
+  state. Its third layer is observation: the `evidence-v2-observe/1` prompt
+  contract with its named refusals and bounded repair, the window planner (at
+  most 24 units, an 800-word target, a content-derived request key), the
+  `ObservationOccurrence` record with content-derived identity, and the domain
+  module whose `interpret` builds each occurrence's quote and locator from the
+  cited unit rather than from the response. It depends on `@acme/core` for the
+  prompt-contract and module types only, and `pnpm boundaries` forbids it from
+  importing the frozen application.
 - `@acme/evidence-v2-contracts`: the V2 stored records and the single
   repository port over them. Shapes only; derivation stays in the module.
 - `@acme/adapter-evidence-v2-postgres`: that port over PostgreSQL in its own
@@ -845,9 +932,13 @@ content remains intentionally omitted here.
   sign-in and sign-out, cases, import, bounded parts and chains, a part's exact
   source lines and appended membership decisions. Every route is authenticated
   and every case-scoped route authorized through the shared policy; a
-  non-member receives 404.
+  non-member receives 404. `src/extract.ts` composes the unchanged execution
+  engine with the V2 module to plan and run one chain instance's observation
+  windows, committing and projecting each window on its own and resuming without
+  re-sending a paid one.
 - `apps/evidence-workbench-v2-web`: plain server-rendered HTML for sign-in and
-  for Case → Source → Chain → Instance.
+  for Case → Source → Chain → Instance, the instance page showing its extraction
+  plan, per-window state and bounded occurrence list.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

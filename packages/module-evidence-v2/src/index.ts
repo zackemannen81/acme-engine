@@ -16,6 +16,7 @@ export {
   EVIDENCE_V2_OBSERVE_CONTRACT_ID,
   EVIDENCE_V2_OBSERVE_CONTRACT_VERSION,
   EVIDENCE_V2_OBSERVE_INPUT_SCHEMA_VERSION,
+  EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
   EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_VERSION,
   EvidenceV2ObserveInputSchema,
   EvidenceV2ObserveOutputSchema,
@@ -34,6 +35,7 @@ export {
 } from './observe-window.js';
 export {
   EVIDENCE_V2_OCCURRENCE_SCHEMA_VERSION,
+  EVIDENCE_V2_STATED_TIME_PATTERN,
   EvidenceV2OccurrenceKindSchema,
   EvidenceV2OccurrenceSchema,
   EvidenceV2TemporalBoundSchema,

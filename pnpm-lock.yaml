@@ -184,6 +184,9 @@ importers:
       '@acme/adapter-memory':
         specifier: workspace:*
         version: link:../../packages/adapter-memory
+      '@acme/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres

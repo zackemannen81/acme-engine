@@ -1150,8 +1150,39 @@ case and an owning `case-admin` membership in the same operation, and the case
 list is scoped to the principal's memberships. A principal without membership
 receives 404 rather than 403 on every case-scoped route, so a case's existence
 is not disclosed (ADR-0036). Credentials come from a development authenticator;
-a real upstream identity provider is unwired. No occurrence, claim or consensus
-layer exists.
+a real upstream identity provider is unwired.
+
+**V2 observation.** ACME-0154 added the first V2 export,
+`evidence-v2-observe/1` ([ADR-0048](adr/0048-evidence-v2-observe-contract.md)).
+One execution observes one **window** — an ordered set of at most 24 citable
+units, at most 800 quoted words, drawn from one source part of one chain
+instance, with no prior instance, no other actor's statement and no neighbour
+context. For each unit it judges evidential the model returns a unit id, a kind
+and the time span the unit itself states — constrained on the wire to a calendar
+value, because a live run returned the word `då` for one and the product typed it
+into a bound. The product derives the typed temporal bound from that span, and
+the occurrence's **quote and locator come from the cited unit**, never from the
+response, so model prose cannot become the record (ADR-0043's principle restated
+for units already proven uniquely bindable).
+Coverage is derived from stored rows rather than demanded of the model, and an
+empty response is valid.
+
+`createEvidenceV2Extractor` in `apps/evidence-workbench-v2-api` composes
+`@acme/core`'s `createExecutionEngine` unchanged with `evidenceV2Module`. It
+plans the windows, states the exact bounded call count before spending anything,
+executes one engine call per outstanding window keyed by a content-derived
+request key, and persists each window's occurrences **in the same step that
+commits it**. A failed window fails alone: it is recorded with its failure code,
+the run stops there, and everything already committed stays committed and
+visible. Re-running executes only windows with no committed execution, so a paid
+window is never paid for twice. An emergency ceiling guards a runaway only; it is
+not the user-facing bound. Retained request and response payloads are encrypted
+under a key of their own, separate from the session key, and ephemeral when the
+deployment supplies none.
+
+An occurrence is canonical evidence under the authority ladder, not accepted
+evidence: review and standing do not exist yet, and neither do claims, relations
+or consensus projection.
 
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-

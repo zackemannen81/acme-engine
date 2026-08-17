@@ -27,6 +27,7 @@
     "@acme/adapter-evidence-auth-postgres": "workspace:*",
     "@acme/adapter-evidence-v2-postgres": "workspace:*",
     "@acme/adapter-memory": "workspace:*",
+    "@acme/adapter-model-openai": "workspace:*",
     "@acme/adapter-postgres": "workspace:*",
     "@acme/core": "workspace:*",
     "@acme/evidence-artifacts": "workspace:*",

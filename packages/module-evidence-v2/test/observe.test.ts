@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import {
   EVIDENCE_V2_OBSERVE_CONTRACT_VERSION,
+  EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
   EVIDENCE_V2_WINDOW_MAX_UNITS,
   EvidenceV2ObserveOutputSchema,
   deriveEvidenceV2OccurrenceId,
@@ -57,8 +59,16 @@ describe('evidence v2 observe contract', () => {
     expect(prompt).toContain(WINDOW.units[0]?.exactQuote ?? '');
     expect(prompt).toContain(WINDOW.units[0]?.unitId ?? '');
     expect(prompt).toContain('return unit ids only');
-    expect(request.output.schemaName).toBe('evidence-v2-observe-output/1');
-    expect(request.temperature).toBe(0);
+    // A provider constrains the wire schema name to [a-zA-Z0-9_-]+. The first
+    // live call was rejected with HTTP 400 because the schema version, which
+    // carries a slash, was used here.
+    expect(request.output.schemaName).toBe(
+      EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
+    );
+    expect(request.output.schemaName).toMatch(/^[a-zA-Z0-9_-]+$/u);
+    // No provider tuning parameter: a model may reject one, and this one
+    // rejects temperature.
+    expect(request.temperature).toBeUndefined();
   });
 
   it('accepts an empty answer, because a window may state nothing', () => {
@@ -91,7 +101,7 @@ describe('evidence v2 observe contract', () => {
             sourceUnitId: 'part-000009-unit-0001',
             kind: 'statement-occurrence',
             actorReference: null,
-            temporalBound: null,
+            statedTime: null,
           },
         ],
       },
@@ -107,7 +117,7 @@ describe('evidence v2 observe contract', () => {
       sourceUnitId: WINDOW.units[0]?.unitId ?? '',
       kind: 'statement-occurrence' as const,
       actorReference: null,
-      temporalBound: null,
+      statedTime: null,
     };
     const issues = evidenceV2ObserveContract.validateSemantics(
       {
@@ -121,9 +131,9 @@ describe('evidence v2 observe contract', () => {
     ]);
   });
 
-  it('refuses an untyped temporal bound in both directions', () => {
+  it('refuses a stated span that ends before it begins', () => {
     const build = (
-      bound: EvidenceV2ObserveOutput['observations'][number]['temporalBound'],
+      stated: EvidenceV2ObserveOutput['observations'][number]['statedTime'],
     ) =>
       evidenceV2ObserveContract
         .validateSemantics(
@@ -134,7 +144,7 @@ describe('evidence v2 observe contract', () => {
                 sourceUnitId: WINDOW.units[0]?.unitId ?? '',
                 kind: 'statement-occurrence',
                 actorReference: null,
-                temporalBound: bound,
+                statedTime: stated,
               },
             ],
           },
@@ -142,20 +152,66 @@ describe('evidence v2 observe contract', () => {
         )
         .map((issue) => issue.code);
 
-    expect(
-      build({ kind: 'unknown', from: '1979-05-07', to: null, zone: null }),
-    ).toEqual(['EVIDENCE_V2_TEMPORAL_BOUND_UNTYPED']);
-    expect(build({ kind: 'exact', from: null, to: null, zone: null })).toEqual([
-      'EVIDENCE_V2_TEMPORAL_BOUND_UNTYPED',
+    expect(build({ from: '1979-05-11', to: '1979-05-07' })).toEqual([
+      'EVIDENCE_V2_STATED_TIME_REVERSED',
     ]);
-    expect(
-      build({
-        kind: 'range',
-        from: '1979-05-07',
-        to: '1979-05-11',
-        zone: null,
-      }),
-    ).toEqual([]);
+    expect(build({ from: '1979-05-07', to: '1979-05-11' })).toEqual([]);
+    expect(build({ from: '1979-05-07', to: null })).toEqual([]);
+    expect(build(null)).toEqual([]);
+  });
+
+  /**
+   * A live run returned the Swedish word `då` ("then") as a stated time, and
+   * the product typed it into a temporal bound. A word is not a time.
+   */
+  it('rejects a stated time that is not a calendar value', () => {
+    const parse = (from: string) =>
+      EvidenceV2ObserveOutputSchema.safeParse({
+        schemaVersion: 'evidence-v2-observe-output/1',
+        observations: [
+          {
+            sourceUnitId: WINDOW.units[0]?.unitId ?? '',
+            kind: 'statement-occurrence',
+            actorReference: null,
+            statedTime: { from, to: null },
+          },
+        ],
+      }).success;
+
+    for (const vague of ['då', 'senare', 'på kvällen', 'summer 1979', '']) {
+      expect(parse(vague)).toBe(false);
+    }
+    for (const calendar of [
+      '1979',
+      '1979-05',
+      '1979-05-11',
+      '1979-05-11T14:30',
+      '1979-05-11T14:30:00',
+    ]) {
+      expect(parse(calendar)).toBe(true);
+    }
+
+    // The provider is told the same thing on the wire, not only in prose.
+    const schema = z.toJSONSchema(EvidenceV2ObserveOutputSchema);
+    expect(JSON.stringify(schema)).toContain('pattern');
+  });
+
+  it('never asks the model to type the time it reports', () => {
+    // Asking for a typed bound produced a known kind with no value and refused
+    // a real window twice, primary and repair (ADR-0048 §2).
+    const shape = Object.keys(
+      (
+        EvidenceV2ObserveOutputSchema.shape.observations.element as unknown as {
+          shape: Record<string, unknown>;
+        }
+      ).shape,
+    ).sort();
+    expect(shape).toEqual([
+      'actorReference',
+      'kind',
+      'sourceUnitId',
+      'statedTime',
+    ]);
   });
 
   it('restates only the refusals in a repair, never new material', () => {
@@ -265,7 +321,7 @@ describe('evidence v2 module', () => {
             sourceUnitId: WINDOW.units[0]?.unitId ?? '',
             kind: 'statement-occurrence',
             actorReference: null,
-            temporalBound: null,
+            statedTime: null,
           },
         ],
       },

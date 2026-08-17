@@ -47,7 +47,8 @@ For each unit it judges evidential, the response returns:
 
 - `sourceUnitId` — one id from the window;
 - `kind` — `statement-occurrence` or `exhibit-assertion`;
-- `temporalBound` — a typed bound or `null`;
+- `statedTime` — the time span the unit itself states, as `from` and optional
+  `to`, or `null`;
 - `actorReference` — `null` unless a roster was supplied, and no roster is
   supplied by this version.
 
@@ -61,6 +62,36 @@ already proven uniquely bindable by
 No summary, rationale or proposition field is stored. Any prose the model
 produces is confined to the retained request/response payload, which is
 evidence about the execution rather than about the source.
+
+**The model does not type the time.** It reports the span the unit states; the
+product derives the typed kind from it — `exact` when a point with a time of day
+is stated, `range` when a span or a bare date is, and no bound at all when
+nothing is stated. This mirrors how `ChainInstance` already derives its typed
+instance time from document metadata (ACME-0151), and it removes a refusal class
+the same way §3 removes the enumeration obligation: an untyped bound becomes
+unrepresentable rather than refusable.
+
+Clarified 2026-08-16, after the first live run. The response originally carried a
+model-typed `temporalBound`, and the first live extraction was refused twice —
+primary and bounded repair — with `EVIDENCE_V2_TEMPORAL_BOUND_UNTYPED` because
+the model returned a known kind with no value. Refusing more politely would have
+been tuning; removing the obligation is the decision. Nothing else in this ADR
+changes, and no committed evidence existed to migrate.
+
+**A stated time is a calendar value or nothing.** `from` and `to` must match a
+year, a year and month, a date, or a date with a time of day. The constraint is
+in the output schema, so it reaches the provider on the wire, and it is repeated
+in the record's own bound type.
+
+Clarified 2026-08-17, after the run that recorded this task. The model returned
+the Swedish word `då` — "then" — as a stated time for one unit, and the product
+typed it into a temporal bound. A word is not a time: a bound whose `from` is
+`då` would be ordered on a timeline as though it were a date, which is exactly
+the vague-to-precise conversion the product definition forbids. Prose already
+told the model not to do it; prose was not enough. The shape is now
+unrepresentable rather than merely discouraged, on the same reasoning as §3 —
+and a vague reference becomes `null`, which loses nothing, because the unit's
+own words are retained verbatim and remain the evidence.
 
 ### 3. Coverage is derived, never demanded
 
@@ -82,9 +113,11 @@ costs one small call rather than a large one.
 ### 5. Refusals are named and local
 
 A response is refused when it cites a unit outside the window, cites the same
-unit twice, supplies a non-null actor with no roster, or supplies an untyped
-temporal bound. One bounded repair may be attempted; after that the **window**
-fails closed.
+unit twice, supplies a non-null actor with no roster, or states a time span whose
+`to` precedes its `from`. A stated time that is not a calendar value is refused
+by the output schema itself rather than by a named refusal, because a value that
+cannot be represented never reaches semantic validation. One bounded repair may
+be attempted; after that the **window** fails closed.
 
 A failed window fails alone. It does not invalidate other windows, the part, the
 instance, the artifact or the case.

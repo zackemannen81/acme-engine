@@ -22,6 +22,19 @@ export type EvidenceV2OccurrenceKind = z.infer<
 >;
 
 /**
+ * The only shape a stated time may take: a year, a month, a date, or a date
+ * with a time of day. Nothing else is a time.
+ *
+ * This exists because a real live run returned the Swedish word `då` ("then")
+ * as a stated time, and the product typed it into a bound. A word is not a
+ * time, and a bound whose `from` is a word would be ordered on a timeline as if
+ * it were one. Constraining the shape makes that unrepresentable rather than
+ * detectable.
+ */
+export const EVIDENCE_V2_STATED_TIME_PATTERN =
+  /^\d{4}(-\d{2}(-\d{2}(T\d{2}:\d{2}(:\d{2})?)?)?)?$/u;
+
+/**
  * A typed bound, or nothing.
  *
  * Missing precision stays missing: the product definition forbids inventing a
@@ -31,8 +44,8 @@ export type EvidenceV2OccurrenceKind = z.infer<
 export const EvidenceV2TemporalBoundSchema = z
   .object({
     kind: z.enum(['exact', 'range', 'approximate', 'unknown']),
-    from: z.string().min(1).nullable(),
-    to: z.string().min(1).nullable(),
+    from: z.string().regex(EVIDENCE_V2_STATED_TIME_PATTERN).nullable(),
+    to: z.string().regex(EVIDENCE_V2_STATED_TIME_PATTERN).nullable(),
     /** No zone is asserted. The source states none. */
     zone: z.null(),
   })

@@ -67,7 +67,7 @@ function stubGateway(options: {
                 sourceUnitId: 'part-999999-unit-0001',
                 kind: 'statement-occurrence',
                 actorReference: null,
-                temporalBound: null,
+                statedTime: null,
               },
             ],
           }
@@ -78,7 +78,7 @@ function stubGateway(options: {
                 sourceUnitId: unitId,
                 kind: 'statement-occurrence',
                 actorReference: null,
-                temporalBound: null,
+                statedTime: null,
               },
             ],
           };

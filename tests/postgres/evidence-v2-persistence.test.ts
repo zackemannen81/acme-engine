@@ -199,6 +199,97 @@ describe('evidence v2 postgres persistence', () => {
     ).toHaveLength(1);
   });
 
+  it('stores occurrences idempotently and window state per window', async () => {
+    const parts = await repository.listParts(artifact.artifactId, {
+      offset: 0,
+      limit: 1,
+    });
+    const first = parts.items[0];
+    if (first === undefined) throw new Error('expected a part');
+    const stored = await repository.readPart(artifact.artifactId, first.partId);
+    const unit = stored?.units[0];
+    if (unit === undefined) throw new Error('expected a unit');
+
+    const occurrence = {
+      schemaVersion: 'evidence-v2-occurrence/1' as const,
+      occurrenceId: 'occurrence-postgres-1',
+      artifactId: artifact.artifactId,
+      partId: first.partId,
+      unitId: unit.unitId,
+      startLine: unit.startLine,
+      endLine: unit.endLine,
+      exactQuote: unit.exactQuote,
+      kind: 'statement-occurrence' as const,
+      actorReference: null,
+      temporalBound: null,
+      executionId: 'execution-postgres-1',
+      contractVersion: '1.0.0',
+      windowId: `${first.partId}-window-0001`,
+    };
+
+    await repository.putOccurrences(artifact.artifactId, 'instance-1', [
+      occurrence,
+    ]);
+    // Content-identified and immutable: storing it again is the same record.
+    await repository.putOccurrences(artifact.artifactId, 'instance-1', [
+      occurrence,
+    ]);
+
+    const listed = await repository.listOccurrences(
+      artifact.artifactId,
+      'instance-1',
+      { offset: 0, limit: 10 },
+    );
+    expect(listed.total).toBe(1);
+    expect(listed.items[0]?.exactQuote).toBe(unit.exactQuote);
+
+    await repository.putExtractionWindow({
+      artifactId: artifact.artifactId,
+      instanceKey: 'instance-1',
+      windowId: `${first.partId}-window-0001`,
+      partId: first.partId,
+      status: 'committed',
+      unitCount: stored?.units.length ?? 0,
+      occurrenceCount: 1,
+      executionId: 'execution-postgres-1',
+      failureCode: null,
+      decidedAt: '2026-08-16T00:00:00.000Z',
+    });
+    await repository.putExtractionWindow({
+      artifactId: artifact.artifactId,
+      instanceKey: 'instance-1',
+      windowId: `${first.partId}-window-0002`,
+      partId: first.partId,
+      status: 'failed',
+      unitCount: 3,
+      occurrenceCount: 0,
+      executionId: null,
+      failureCode: 'MODEL_INVALID_RESPONSE',
+      decidedAt: '2026-08-16T00:00:00.000Z',
+    });
+
+    const windows = await repository.readExtractionWindows(
+      artifact.artifactId,
+      'instance-1',
+    );
+    expect(windows.map((window) => window.status).sort()).toEqual([
+      'committed',
+      'failed',
+    ]);
+    expect(
+      windows.find((window) => window.status === 'failed')?.failureCode,
+    ).toBe('MODEL_INVALID_RESPONSE');
+    // The committed window's occurrence is untouched by the failed one.
+    expect(
+      (
+        await repository.listOccurrences(artifact.artifactId, 'instance-1', {
+          offset: 0,
+          limit: 10,
+        })
+      ).total,
+    ).toBe(1);
+  });
+
   it('keeps sessions and case membership across a new composition', async () => {
     const identitySchema = `${schema}_identity`;
     await migratePostgresSchema({

@@ -29,7 +29,9 @@ same database    2 failures of 41  (stage-a resume + restart collision)
 ```
 
 and with ACME-0153 applied, on a clean database, 1 failure of 42 — the same
-one. The V2 work changes neither test.
+one. With ACME-0154 applied, on a clean database, 1 failure of 43 — still the
+stage-A resume, while the six new `evidence-v2-persistence` tests pass. The V2
+work changes neither test.
 
 ## Proposed outcome
 

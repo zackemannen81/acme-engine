@@ -21,8 +21,8 @@ import type {
 import { z } from 'zod';
 
 import {
+  EVIDENCE_V2_STATED_TIME_PATTERN,
   EvidenceV2OccurrenceKindSchema,
-  EvidenceV2TemporalBoundSchema,
 } from './occurrence.js';
 
 export const EVIDENCE_V2_OBSERVE_CONTRACT_ID = 'evidence.v2.observe-window';
@@ -31,6 +31,16 @@ export const EVIDENCE_V2_OBSERVE_INPUT_SCHEMA_VERSION =
   'evidence-v2-observe-input/1';
 export const EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_VERSION =
   'evidence-v2-observe-output/1';
+
+/**
+ * The wire name for the structured-output schema.
+ *
+ * A provider constrains this to `[a-zA-Z0-9_-]+`, so the schema *version* — which
+ * carries a slash and belongs in the payload — cannot be reused here. The first
+ * live call was rejected with HTTP 400 for exactly that reason.
+ */
+export const EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME =
+  'evidence_v2_observe_output_1';
 
 export const EvidenceV2ObserveInputSchema = z
   .object({
@@ -67,7 +77,18 @@ export const EvidenceV2ObserveOutputSchema = z
           kind: EvidenceV2OccurrenceKindSchema,
           /** Null unless a roster was supplied, and `/1` supplies none. */
           actorReference: z.null(),
-          temporalBound: EvidenceV2TemporalBoundSchema.nullable(),
+          /**
+           * The span the unit itself states. The product derives the typed
+           * kind from it (ADR-0048 §2): asking the model to type it produced
+           * a known kind with no value and refused the whole window twice.
+           */
+          statedTime: z
+            .object({
+              from: z.string().regex(EVIDENCE_V2_STATED_TIME_PATTERN),
+              to: z.string().regex(EVIDENCE_V2_STATED_TIME_PATTERN).nullable(),
+            })
+            .strict()
+            .nullable(),
         })
         .strict(),
     ),
@@ -87,11 +108,13 @@ const SYSTEM = [
   'that unit. Classify it as statement-occurrence when a person is recounting,',
   'or exhibit-assertion when a document or exhibit records or depicts.',
   '',
-  'Return a temporalBound only when the unit itself states a time. Use kind',
-  '"exact" for a stated point, "range" for a stated span, "approximate" for a',
-  'hedged time, and "unknown" when the unit refers to a time it does not state.',
-  'Never convert vague language into a clock time. Use null when the unit',
-  'states no time at all. Always set zone to null and actorReference to null.',
+  'Return statedTime only when the unit itself states a calendar time, as',
+  'YYYY, YYYY-MM, YYYY-MM-DD or YYYY-MM-DDThh:mm: from for a point or the',
+  'start of a span, to for the end of a span or null. A vague reference such',
+  'as "då", "senare" or "på kvällen" is not a time — use null for it, and',
+  'never convert vague language into a clock time or infer a time from',
+  'elsewhere. Use null when the unit states no time at all. Always set',
+  'actorReference to null.',
   '',
   'Skip a unit that is a heading, a page marker, a form label, an index row or',
   'administrative boilerplate. Returning no observations is a valid answer.',
@@ -144,24 +167,13 @@ function validateSemantics(
     }
     seen.add(observation.sourceUnitId);
 
-    const bound = observation.temporalBound;
-    if (bound === null) return;
-    if (
-      bound.kind === 'unknown' &&
-      (bound.from !== null || bound.to !== null)
-    ) {
+    const stated = observation.statedTime;
+    if (stated === null) return;
+    if (stated.to !== null && stated.to < stated.from) {
       issues.push({
-        code: 'EVIDENCE_V2_TEMPORAL_BOUND_UNTYPED',
-        path: ['observations', index, 'temporalBound'],
-        message: 'An unknown bound carries no from or to value.',
-        severity: 'error',
-      });
-    }
-    if (bound.kind !== 'unknown' && bound.from === null) {
-      issues.push({
-        code: 'EVIDENCE_V2_TEMPORAL_BOUND_UNTYPED',
-        path: ['observations', index, 'temporalBound'],
-        message: 'A known bound states at least a from value.',
+        code: 'EVIDENCE_V2_STATED_TIME_REVERSED',
+        path: ['observations', index, 'statedTime'],
+        message: 'A stated span ends no earlier than it begins.',
         severity: 'error',
       });
     }
@@ -194,10 +206,12 @@ export const evidenceV2ObserveContract: PromptContract<
       ],
       output: {
         mode: 'json',
-        schemaName: EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_VERSION,
+        schemaName: EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
         jsonSchema: z.toJSONSchema(EvidenceV2ObserveOutputSchema) as JsonValue,
       },
-      temperature: 0,
+      // No temperature. A model may reject the parameter outright — this one
+      // does — and a contract has no business assuming a provider tuning knob
+      // exists. Structured output plus the refusals carry determinism instead.
     };
   },
 
@@ -223,16 +237,16 @@ export const evidenceV2ObserveContract: PromptContract<
             listed,
             '',
             'Return the same answer corrected. Cite only unit ids from this',
-            'window, at most once each, and keep every temporal bound typed.',
+            'window, at most once each, and give a stated time only as a',
+            'calendar value, using null for anything vaguer.',
           ].join('\n'),
         ),
       ],
       output: {
         mode: 'json',
-        schemaName: EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_VERSION,
+        schemaName: EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
         jsonSchema: z.toJSONSchema(EvidenceV2ObserveOutputSchema) as JsonValue,
       },
-      temperature: 0,
     };
   },
 

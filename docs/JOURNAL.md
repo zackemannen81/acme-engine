@@ -1,5 +1,70 @@
 # Journal
 
+## 2026-08-17 — ACME-0154 complete: the first V2 evidence, from the real binder
+
+- Date: 2026-08-17
+- Author: Claude
+- Task: ACME-0154, Complete. Archived to
+  `docs/finished/ACME-0154_evidence-v2-observation-occurrence.md`.
+- Change: the second half of the charter. `createEvidenceV2Extractor` composes
+  the **unchanged** execution engine with `evidenceV2Module`, plans an
+  instance's windows, states the exact bounded call count before spending
+  anything, executes one call per outstanding window, and persists each
+  window's occurrences in the same step that commits it. Occurrences and
+  per-window state persist in PostgreSQL; the instance page shows the plan, the
+  windows and a bounded occurrence list.
+- **Recorded live run**, fresh database and bucket, real 74,469-line
+  `source-A`, through the product's own authenticated routes: the smallest
+  Hussein instance planned **2** calls, spent **2**, committed both windows and
+  produced **27 occurrences** in 11.8 s. **0 of 27** quotes fail to appear
+  verbatim in their own source lines and **0 of 27** stored bounds are anything
+  but a calendar value. The ledger holds 2 calls, 2,438 input and 1,255 output
+  tokens, both responses retained AES-256-GCM encrypted under the ledger key and
+  provably not readable with the session key. Provider cost was reported as
+  **unknown, not zero**. Re-running planned **0** calls, spent 0, and left the
+  ledger at 2 — R-05 and ADR-0048 §7 measured rather than asserted.
+- **Four defects were found only by the live run.** Three were in the request
+  the product sends: a structured-output schema name containing `/`, which the
+  provider rejects outright; a `temperature` the model does not accept; and a
+  model-typed `temporalBound` the model could not fill, which refused a real
+  window twice — primary and repair — before it was paid for. The fourth reached
+  the record: the model answered the Swedish word **`då`** — "then" — as a
+  stated time, and the product typed it into a temporal bound. A word is not a
+  time, and a bound whose `from` is a word would be ordered on a timeline as
+  though it were a date. A stated time is now constrained to a calendar value in
+  the output schema, which the provider enforces on the wire, so a vague
+  reference becomes `null` while the unit's own words stay verbatim.
+- Two of those were answered by amending ADR-0048 rather than by tuning a
+  prompt: the product types the time, and a non-calendar time is
+  unrepresentable. Both follow R-04's reasoning — remove the obligation instead
+  of asking more politely.
+- **One defect was found by reading the composition root**, not by a failure:
+  the ledger's payload encryptor was keyed with the **session** key, so one key
+  compromise would have opened both upstream sessions and every retained model
+  payload. The frozen application already separates them. The extraction key is
+  now its own, ephemeral when none is supplied, and the recorded run proves the
+  separation. The live run was re-recorded afterwards rather than reported
+  against code that no longer existed.
+- Offline proofs added for the properties the frozen extractor got wrong: a
+  failure in window 2 leaves window 1 committed and visible and stops at two
+  calls; a re-run executes only outstanding windows; a response citing a unit
+  outside its window fails closed with nothing persisted.
+- Verification: typecheck, lint, format, boundaries and docs (279 files) clean;
+  unit 865/865 (up from 841), conformance 78, integration 70, scenario 26;
+  `evidence-v2-persistence` 6/6 on the PostgreSQL gate. The gate's two
+  pre-existing frozen-app failures are unchanged and attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md).
+- Honest gap: the Definition of Done said "replay to the same digest without a
+  second provider call". Nothing was re-sent and both executions are committed
+  with request and response hashes recorded, but a digest-comparison replay
+  through `loadReplayEvidence` was not run. Recorded in the charter's
+  Verification section rather than smoothed over.
+- Standing: an occurrence is canonical evidence, **not accepted** evidence.
+  Review and standing are the next task and this one invented no shortcut for
+  them. Claims, relations and consensus projection remain unbuilt; extraction
+  is Pass 1 with no neighbour context and no actor roster.
+- Signature: Claude
+
 ## 2026-08-16 — ACME-0154 paused: V2 observe contract and module delivered
 
 - Date: 2026-08-16

@@ -79,6 +79,29 @@ export type EvidenceV2ObserveTaskInput = z.infer<
   typeof EvidenceV2ObserveTaskInputSchema
 >;
 
+/**
+ * Type the span the source stated.
+ *
+ * A point with a time of day is exact; a span or a bare date is a range; a
+ * reversed or absent span yields no bound. The model never types this
+ * (ADR-0048 §2), and missing precision stays missing.
+ */
+function temporalBoundOf(
+  stated: { readonly from: string; readonly to: string | null } | null,
+): EvidenceV2Occurrence['temporalBound'] {
+  if (stated === null) return null;
+  const hasTimeOfDay = /\d{1,2}[:.]\d{2}/u.test(stated.from);
+  if (stated.to === null) {
+    return {
+      kind: hasTimeOfDay ? 'exact' : 'range',
+      from: stated.from,
+      to: hasTimeOfDay ? stated.from : null,
+      zone: null,
+    };
+  }
+  return { kind: 'range', from: stated.from, to: stated.to, zone: null };
+}
+
 function occurrenceOf(
   observation: EvidenceV2ObserveOutput['observations'][number],
   input: EvidenceV2ObserveTaskInput,
@@ -109,7 +132,7 @@ function occurrenceOf(
     exactQuote: unit.exactQuote,
     kind: observation.kind,
     actorReference: null,
-    temporalBound: observation.temporalBound,
+    temporalBound: temporalBoundOf(observation.statedTime),
     executionId,
     contractVersion: EVIDENCE_V2_OBSERVE_CONTRACT_VERSION,
     windowId: input.window.windowId,

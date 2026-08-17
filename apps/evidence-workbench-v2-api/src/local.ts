@@ -22,7 +22,15 @@ import {
 } from '@acme/evidence-artifacts';
 import pg from 'pg';
 
+import { createOpenAiResponsesGateway } from '@acme/adapter-model-openai';
+import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+import { createPostgresExecutionRepository } from '@acme/adapter-postgres';
+
 import { createEvidenceV2App } from './app.js';
+import {
+  EVIDENCE_V2_OBSERVE_PROFILE,
+  createEvidenceV2Extractor,
+} from './extract.js';
 import { createEvidenceV2TextStore } from './artifact-store.js';
 import { createEvidenceV2Auth, type EvidenceV2Account } from './auth.js';
 
@@ -64,6 +72,24 @@ export interface EvidenceV2LocalOptions {
   readonly accounts: readonly (EvidenceV2Account & {
     readonly password: string;
   })[];
+  /**
+   * Live model capability. Absent means the deployment has no extraction: the
+   * route answers 501 rather than pretending (fail closed).
+   */
+  readonly live?: {
+    readonly apiKey: string;
+    readonly model: string;
+    readonly baseUrl?: string;
+    readonly ledgerSchema?: string;
+    readonly emergencyCallCeiling?: number;
+    /**
+     * Key for retained request and response payloads, separate from the session
+     * key. Absent means an ephemeral key: payloads are still encrypted, but a
+     * restart cannot read them, which is the safe default for a local run.
+     */
+    readonly payloadKeyBase64?: string;
+    readonly payloadKeyId?: string;
+  };
 }
 
 export interface EvidenceV2LocalHandle {
@@ -149,10 +175,81 @@ export async function startEvidenceV2Local(
     ],
   });
 
+  const repository = createEvidenceV2PostgresRepository({ pool, schema });
+  const ids = {
+    next: (kind: string) => `${kind}-${randomBytes(16).toString('hex')}`,
+  };
+  let extractor;
+  if (options.live !== undefined) {
+    const ledgerSchema = options.live.ledgerSchema ?? 'acme_v2_ledger';
+    await migratePostgresSchema({
+      pool,
+      schema: ledgerSchema,
+      appliedAt: now(),
+    });
+    const selection = {
+      profile: EVIDENCE_V2_OBSERVE_PROFILE,
+      providerHint: 'openai',
+      modelHint: options.live.model,
+    };
+    const apiKey = options.live.apiKey;
+    extractor = createEvidenceV2Extractor({
+      repository,
+      ledger: createPostgresExecutionRepository({
+        pool,
+        ids,
+        schema: ledgerSchema,
+        // Retained payloads are encrypted at rest, exactly as the frozen
+        // application retains them (ADR-0016), under a key of their own. The
+        // session key protects upstream sessions and must not also unlock
+        // retained model payloads; absent a supplied key this deployment
+        // encrypts under an ephemeral one, so a restart cannot read them back.
+        payloadEncryptor: createAes256GcmPayloadEncryptor({
+          key:
+            options.live.payloadKeyBase64 === undefined
+              ? new Uint8Array(randomBytes(32))
+              : Buffer.from(options.live.payloadKeyBase64, 'base64'),
+          keyId:
+            options.live.payloadKeyBase64 === undefined
+              ? 'ephemeral-local-ledger'
+              : (options.live.payloadKeyId ?? 'evidence-v2-ledger'),
+        }),
+      }),
+      gateway: createOpenAiResponsesGateway({
+        transport: createFetchTransport(),
+        now,
+        ...(options.live.baseUrl === undefined
+          ? {}
+          : { baseUrl: options.live.baseUrl }),
+        headers: () => ({ authorization: `Bearer ${apiKey}` }),
+        profiles: [
+          {
+            selection,
+            model: options.live.model,
+            capabilities: {
+              structuredOutput: true,
+              tools: false,
+              vision: false,
+              maxInputTokens: 32_000,
+              maxOutputTokens: 8_192,
+            },
+          },
+        ],
+      }),
+      clock: { now },
+      ids,
+      selection,
+      ...(options.live.emergencyCallCeiling === undefined
+        ? {}
+        : { emergencyCallCeiling: options.live.emergencyCallCeiling }),
+    });
+  }
+
   const handler = createEvidenceV2App({
-    repository: createEvidenceV2PostgresRepository({ pool, schema }),
+    repository,
     textStore: createEvidenceV2TextStore({ objectStore, keyProvider }),
     auth,
+    ...(extractor === undefined ? {} : { extractor }),
     now,
   });
 

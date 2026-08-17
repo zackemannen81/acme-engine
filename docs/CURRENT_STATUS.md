@@ -1,6 +1,6 @@
 # Current Status
 
-## Open: real-source acceptance blocked, application-model reset proposed
+## Open: real-source acceptance blocked, application model being replaced
 
 The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder
 did not complete any of the three intended product journeys. The failures are
@@ -29,8 +29,8 @@ frozen as a diagnostic reference. The replacement model, V1 boundary, proof
 journeys and binding regression requirements are normative in
 [the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
 
-Nothing of the replacement is implemented yet, and no implementation task is
-active. Nothing below this section is retracted by the decision: the engine,
+The replacement is being built layer by layer below, and no task is active.
+Nothing below this section is retracted by the decision: the engine,
 persistence, artifact security, authorization, case isolation and live model
 boundary carry forward unchanged, and no data authority changes. Stage A remains
 the only authorized non-synthetic class and Stage B stays closed.
@@ -89,10 +89,44 @@ all six case-scoped routes and on the import write**, and sees an empty case
 list; an unauthenticated request gets 401, a write without CSRF 401, a
 cross-origin write 403, and sign-out invalidates the session.
 
-Remaining limitations: credentials come from a development authenticator, so a
-real upstream identity provider is still unwired, and no occurrence, claim or
-consensus layer exists. `pnpm test:postgres` has two pre-existing frozen-app
-failures unrelated to the V2 work, recorded in
+ACME-0154 produced the first V2 evidence. `evidence-v2-observe/1`
+([ADR-0048](adr/0048-evidence-v2-observe-contract.md)) sends one bounded window
+of at most 24 citable units and at most 800 quoted words; the model returns only
+a unit id, a kind and the time span the unit states, and **the occurrence's quote
+and locator are taken from the cited unit**, so no model wording can enter the
+record. The two failures that killed the frozen extractor are designed out rather
+than tuned: there is no coverage field to enumerate (R-04), and each window's
+occurrences are persisted in the same step that commits it (R-05). Window
+identity is content-derived, so a re-run executes only windows with no committed
+execution. `@acme/core` was used unchanged, which is the first live evidence for
+ADR-0047 §9's proof obligation.
+
+Recorded on a fresh database and bucket with the real binder, through the
+product's own authenticated routes: the smallest Hussein instance planned **2**
+bounded calls, spent **2**, committed both windows and produced **27
+occurrences** in 11.8 s; **0 of 27** quotes fail to appear verbatim in their own
+source lines and **0 of 27** stored temporal bounds are anything but a calendar
+value; the ledger holds 2 calls with 2,438 input and 1,255 output tokens, both
+responses retained AES-256-GCM encrypted under a ledger key that is separate from
+the session key; provider cost was reported as unknown, not zero. Re-running the
+same instance planned **0** calls, spent 0, and left the ledger at 2. The
+instance page renders all 27.
+
+Four defects were found only by that run: a structured-output schema name
+containing `/`, an unsupported `temperature`, a model-typed temporal bound the
+model could not fill, and — the one that reached the record — the Swedish word
+`då` ("then") returned as a stated time and typed into a temporal bound. A stated
+time is now constrained to a calendar value in the output schema, so a vague
+reference becomes `null` while the unit's own words stay verbatim. A fifth was
+found by reading the composition root: the ledger's retained payloads were keyed
+with the session key, and now have a key of their own. Each has an offline test.
+
+Remaining limitations: an occurrence is canonical evidence, not accepted
+evidence — review and standing do not exist yet, and neither do claims,
+relations or consensus projection. Extraction is Pass 1 with no neighbour context
+and no actor roster. Credentials still come from a development authenticator, so
+a real upstream identity provider is unwired. `pnpm test:postgres` has two
+pre-existing frozen-app failures unrelated to the V2 work, recorded in
 [the backlog](backlog/postgres-gate-test-hygiene.md).
 
 ## Delivered

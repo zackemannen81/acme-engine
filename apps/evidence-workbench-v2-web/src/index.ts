@@ -400,3 +400,99 @@ export function renderChain(input: {
      <tbody>${rows}</tbody></table>`,
   );
 }
+
+export interface EvidenceV2OccurrenceRow {
+  readonly occurrenceId: string;
+  readonly partId: string;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly kind: string;
+  readonly exactQuote: string;
+  readonly temporal: string | null;
+}
+
+export interface EvidenceV2WindowRow {
+  readonly windowId: string;
+  readonly status: string;
+  readonly unitCount: number;
+  readonly occurrenceCount: number;
+  readonly failureCode: string | null;
+}
+
+/**
+ * One instance: its occurrences against their exact source, and the state of
+ * every extraction window.
+ *
+ * A partially complete extraction is shown as one, with the failed window and
+ * its reason named. The frozen application showed a reviewer nothing at all in
+ * that situation (R-05).
+ */
+export function renderInstance(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly artifactId: string;
+  readonly chainId: string;
+  readonly subjectLabel: string;
+  readonly instanceOrdinal: number;
+  readonly sourceTime: string;
+  readonly sourcePartIds: readonly string[];
+  readonly occurrences: EvidenceV2ListPage<EvidenceV2OccurrenceRow>;
+  readonly windows: readonly EvidenceV2WindowRow[];
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const rows = input.occurrences.items
+    .map(
+      (item) =>
+        `<tr><td><a href="/artifacts/${encodeURIComponent(input.artifactId)}/parts/${encodeURIComponent(item.partId)}">L${String(item.startLine)}–L${String(item.endLine)}</a></td>` +
+        `<td class="muted">${escapeHtml(item.kind)}</td>` +
+        `<td class="muted">${escapeHtml(item.temporal ?? '')}</td>` +
+        `<td>${escapeHtml(item.exactQuote)}</td></tr>`,
+    )
+    .join('');
+  const windowRows = input.windows
+    .map(
+      (window) =>
+        `<tr><td>${escapeHtml(window.windowId)}</td>` +
+        `<td>${escapeHtml(window.status)}</td>` +
+        `<td class="muted">${String(window.unitCount)} units</td>` +
+        `<td>${String(window.occurrenceCount)}</td>` +
+        `<td class="muted">${escapeHtml(window.failureCode ?? '')}</td></tr>`,
+    )
+    .join('');
+  const outstanding = input.windows.length === 0;
+  return layout(
+    `${input.subjectLabel} #${String(input.instanceOrdinal)}`,
+    [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/artifacts/${encodeURIComponent(input.artifactId)}/chains`,
+        label: 'Chains',
+      },
+      {
+        href: `/artifacts/${encodeURIComponent(input.artifactId)}/chains/${encodeURIComponent(input.chainId)}`,
+        label: input.subjectLabel,
+      },
+    ],
+    `<h1>${escapeHtml(input.subjectLabel)} · instance #${String(input.instanceOrdinal)}</h1>
+     <p class="muted">${escapeHtml(input.sourceTime)} · parts ${input.sourcePartIds
+       .map((partId) => escapeHtml(partId))
+       .join(', ')}</p>
+     <h2>Occurrences</h2>
+     <p class="muted">Every quote is the cited source unit, verbatim. The model
+     selected and classified; it wrote none of this text.</p>
+     <table><thead><tr><th>Source</th><th>Kind</th><th>Stated time</th><th>Quote</th></tr></thead>
+     <tbody>${rows || '<tr><td colspan="4" class="muted">No occurrences extracted yet.</td></tr>'}</tbody></table>
+     ${pager(`/artifacts/${input.artifactId}/chains/${input.chainId}/instances/${input.instanceOrdinal}`, input.occurrences)}
+     <h2>Extraction windows</h2>
+     ${
+       outstanding
+         ? '<p class="muted">No window has been executed for this instance.</p>'
+         : `<table><thead><tr><th>Window</th><th>State</th><th>Size</th><th>Occurrences</th><th>Reason</th></tr></thead><tbody>${windowRows}</tbody></table>`
+     }`,
+    input.viewer,
+  );
+}
