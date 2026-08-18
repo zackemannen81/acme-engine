@@ -170,6 +170,40 @@ extraction methods the port added. `pnpm lint` also failed on a file in the
 gitignored `tmp/` scratch directory, so `tmp/`, `.tmp/` and `.local/` are now
 ignored by ESLint and the lint gate no longer depends on operator scratch.
 
+ACME-0157 gave that substrate a frame. Every V2 page now renders inside one
+shell that names the case it belongs to and carries the whole
+[ADR-0049](adr/0049-evidence-v2-surface-set.md) surface bar — Case, Documents,
+Chains, Timeline, Relations, Status — with the current surface marked. Chains
+and documents gained case-scoped entries: a case holding exactly one source
+goes straight to its chains, and a case holding several is asked which one
+rather than having two artifacts' chains merged into a list belonging to
+neither.
+
+The `Status` surface is the §6 case overview. It is a pure projection over
+stored rows — two aggregate statements, nothing stored, no structure
+re-derived (R-10) — reporting sources, lines, parts, citable units, chains,
+instances, occurrences, committed and failed windows, membership decisions, how
+many instances have no committed extraction, and a resume pointer naming a
+concrete next instance. Measured on the ACME-0156 Supabase case: **650 parts,
+29,971 citable units, 351 chains, 467 instances** in **132 ms**, agreeing
+exactly with what the list routes report.
+
+The rule that surface carries is that an unbuilt surface reports its own
+condition and never a number. Timeline, Relations, Claims, Consensus and
+Standing each answer with a named `not-implemented` state and the task that
+delivers them, from one shared list that navigation and the status page both
+read — so the two cannot disagree. Reporting `0 claims` would be a false
+statement about the case where the true statement is about the product, and a
+navigation entry rendering an empty list for an absent surface is R-07 rebuilt
+deliberately. Every list page now also states its own bound rather than
+implying it (R-08).
+
+One finding was recorded rather than fixed: 1 of the 351 chains carries a
+subject label of leftover punctuation and sorts first, so the resume pointer
+names the least useful chain in the case. The pointer is correct and the label
+is the defect; it belongs to the chain layer and is
+[in the backlog](backlog/v2-degenerate-chain-subject.md).
+
 Remaining limitations: an occurrence is canonical evidence, not accepted
 evidence — review and standing do not exist yet, and neither do claims,
 relations or consensus projection. Extraction is Pass 1 with no neighbour context

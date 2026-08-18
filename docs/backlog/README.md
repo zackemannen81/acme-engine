@@ -23,6 +23,7 @@ as `docs/CURRENT_TASK.md`.
 | [`local-workbench-durable-ledger.md`](local-workbench-durable-ledger.md) | Proposed 2026-08-12; the local file composition cannot serve state-projecting views after a restart because its ACME ledger is in memory |
 | [`slice-9-prerequisite-checklist.md`](slice-9-prerequisite-checklist.md) | Working checklist 2026-08-14; ADR-0040 now grants Stage A authority, while this file tracks its remaining executable gates and the prerequisites for later classes |
 | [`v2-interface-deferred-features.md`](v2-interface-deferred-features.md) | Proposed 2026-08-18; the analysis report, person-level relations and relation graph visualisation requested for Evidence Workbench 2.0, all outside the V1 boundary |
+| [`v2-degenerate-chain-subject.md`](v2-degenerate-chain-subject.md) | Observed 2026-08-18 during ACME-0157; 1 of 351 chains carries a subject label of leftover punctuation and sorts first, so the status surface's resume pointer names the least useful chain in the case |
 
 Resolved proposals are removed from this directory once archived under
 `docs/finished/` (ACME-0029 closed strict structured-output schema work;

@@ -15,5 +15,8 @@
   "scripts": {
     "build": "tsc -b --pretty false",
     "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/evidence-v2-contracts": "workspace:*"
   }
 }

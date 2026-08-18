@@ -948,7 +948,10 @@ content remains intentionally omitted here.
   transaction pooler on port 6543, and prints a content-free startup summary.
 - `apps/evidence-workbench-v2-web`: plain server-rendered HTML for sign-in and
   for Case → Source → Chain → Instance, the instance page showing its extraction
-  plan, per-window state and bounded occurrence list.
+  plan, per-window state and bounded occurrence list. Every case-scoped page
+  renders inside one shell carrying the case identity and the ADR-0049 surface
+  bar; `renderCaseStatus` is the status projection and `renderSurfaceGap`
+  answers for a surface that is not built.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

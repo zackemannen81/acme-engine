@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   clampEvidenceV2Page,
   EVIDENCE_V2_MAX_PAGE_SIZE,
+  EVIDENCE_V2_SURFACE_GAPS,
+  type EvidenceV2CaseOverview,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseRecord,
   type EvidenceV2ChainDecision,
@@ -174,6 +176,73 @@ function memoryRepository(): EvidenceV2Repository & {
     },
     async readExtractionWindows(artifactId, instanceKey) {
       return windows.get(`${artifactId}/${instanceKey}`) ?? [];
+    },
+    async readCaseOverview(caseId) {
+      const scoped = [...artifacts.values()].filter(
+        (item) => item.caseId === caseId,
+      );
+      const ids = new Set(scoped.map((item) => item.artifactId));
+      const parts = scoped.flatMap(
+        (item) => structures.get(item.artifactId) ?? [],
+      );
+      const chains = scoped.flatMap(
+        (item) => proposals.get(item.artifactId)?.chains ?? [],
+      );
+      const instances = chains.flatMap((chain) => chain.instances);
+      const scopedWindows = [...windows.entries()]
+        .filter(([key]) => ids.has(key.split('/')[0] ?? ''))
+        .flatMap(([, value]) => value);
+      const scopedOccurrences = [...occurrences.entries()]
+        .filter(([key]) => ids.has(key.split('/')[0] ?? ''))
+        .flatMap(([, value]) => value);
+      const committed = new Set(
+        scopedWindows
+          .filter((item) => item.status === 'committed')
+          .map((item) => item.instanceKey),
+      );
+      const outstanding = instances.filter(
+        (instance) => !committed.has(instance.instanceKey),
+      );
+      const first = outstanding[0];
+      const owner = chains.find((chain) =>
+        chain.instances.some((item) => item.instanceKey === first?.instanceKey),
+      );
+      return {
+        caseId,
+        counts: {
+          artifacts: scoped.length,
+          lines: scoped.reduce((total, item) => total + item.lineCount, 0),
+          parts: parts.length,
+          citableUnits: parts.reduce(
+            (total, part) => total + part.units.length,
+            0,
+          ),
+          chains: chains.length,
+          instances: instances.length,
+          occurrences: scopedOccurrences.length,
+          committedWindows: scopedWindows.filter(
+            (item) => item.status === 'committed',
+          ).length,
+          failedWindows: scopedWindows.filter(
+            (item) => item.status === 'failed',
+          ).length,
+          chainDecisions: [...decisions.entries()]
+            .filter(([artifactId]) => ids.has(artifactId))
+            .reduce((total, [, log]) => total + log.length, 0),
+        },
+        instancesWithoutExtraction: outstanding.length,
+        resumeAt:
+          first === undefined || owner === undefined
+            ? null
+            : {
+                artifactId: scoped[0]?.artifactId ?? '',
+                chainId: owner.chainId,
+                instanceKey: first.instanceKey,
+                subjectLabel: owner.subjectLabel,
+                instanceOrdinal: first.instanceOrdinal,
+              },
+        unavailable: EVIDENCE_V2_SURFACE_GAPS,
+      };
     },
   };
 }
@@ -543,6 +612,114 @@ describe('evidence v2 api', () => {
     expect(chainsPage).toContain('Ammouri, Hussein');
   });
 
+  it('shows the surface bar on every case-scoped page', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const pages = [
+      `/cases/${caseId}`,
+      `/cases/${caseId}/documents`,
+      `/cases/${caseId}/status`,
+      `/cases/${caseId}/timeline`,
+      `/cases/${caseId}/relations`,
+      `/artifacts/${artifactId}/parts`,
+      `/artifacts/${artifactId}/chains`,
+    ];
+    for (const path of pages) {
+      const html = await (await fetch(`${base}${path}`, { headers })).text();
+      // Every surface reachable, and the case named, from every page.
+      expect(html, path).toContain('nav class="surfaces"');
+      expect(html, path).toContain(`/cases/${caseId}/status`);
+      expect(html, path).toContain(`/cases/${caseId}/timeline`);
+      expect(html, path).toContain('Test case');
+      expect(html, path).toContain('aria-current="page"');
+    }
+  });
+
+  it('states the page bound rather than implying it', async () => {
+    const { artifactId, headers } = await seed();
+    // The corpus holds two parts, so a bound of one must both state itself and
+    // offer the page that is being withheld.
+    const html = await (
+      await fetch(`${base}/artifacts/${artifactId}/parts?limit=1`, { headers })
+    ).text();
+    expect(html).toContain('1–1 of 2 · page bound 1 of at most 100');
+    expect(html).toContain('offset=1');
+  });
+
+  it('reports an unbuilt surface as a named condition, never an empty list', async () => {
+    const { caseId, headers } = await seed();
+    for (const surface of ['timeline', 'relations'] as const) {
+      const page = await fetch(`${base}/cases/${caseId}/${surface}`, {
+        headers,
+      });
+      expect(page.status).toBe(200);
+      const html = await page.text();
+      expect(html).toContain('Not built');
+      expect(html).toContain(EVIDENCE_V2_SURFACE_GAPS[surface].deliveredBy);
+      // The defect this exists to prevent: an absent surface answering with an
+      // empty result as though the case had none (R-07).
+      expect(html).not.toContain('<tbody></tbody>');
+
+      const json = (await (
+        await fetch(`${base}/api/cases/${caseId}/${surface}`, { headers })
+      ).json()) as { state: string; deliveredBy: string };
+      expect(json.state).toBe('not-implemented');
+      expect(json.deliveredBy).toBe(
+        EVIDENCE_V2_SURFACE_GAPS[surface].deliveredBy,
+      );
+    }
+  });
+
+  it('reports status counts that agree with the list routes', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    const parts = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/parts`, { headers })
+    ).json()) as EvidenceV2Page<EvidenceV2SourcePart>;
+    const chains = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
+    ).json()) as EvidenceV2Page<unknown>;
+
+    expect(overview.counts.artifacts).toBe(1);
+    expect(overview.counts.parts).toBe(parts.total);
+    expect(overview.counts.chains).toBe(chains.total);
+    expect(overview.counts.occurrences).toBe(0);
+    expect(overview.counts.committedWindows).toBe(0);
+
+    // Nothing extracted, so every instance is outstanding and the resume
+    // pointer names one of them rather than reporting a number alone.
+    expect(overview.instancesWithoutExtraction).toBe(overview.counts.instances);
+    expect(overview.resumeAt).not.toBeNull();
+    expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
+
+    // Unbuilt surfaces report a condition, never zero.
+    expect(Object.keys(overview.unavailable)).toContain('claims');
+    expect(overview.unavailable['claims']?.state).toBe('not-implemented');
+    expect(overview.counts).not.toHaveProperty('claims');
+
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/status`, { headers })
+    ).text();
+    expect(html).toContain('<h1>Status</h1>');
+    expect(html).toContain(String(parts.total));
+    // No chart, gauge or score on a surface that only counts.
+    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('<progress');
+  });
+
+  it('sends a single-source case straight to its chains', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const response = await fetch(`${base}/cases/${caseId}/chains`, {
+      headers,
+      redirect: 'manual',
+    });
+    expect(response.status).toBe(303);
+    expect(response.headers.get('location')).toBe(
+      `/artifacts/${artifactId}/chains`,
+    );
+  });
+
   it('refuses every route without a session', async () => {
     const { caseId, artifactId } = await seed();
     const paths = [
@@ -555,6 +732,10 @@ describe('evidence v2 api', () => {
       `/api/artifacts/${artifactId}/parts`,
       `/api/artifacts/${artifactId}/chains`,
       `/api/artifacts/${artifactId}/chain-decisions`,
+      `/cases/${caseId}/status`,
+      `/cases/${caseId}/documents`,
+      `/cases/${caseId}/timeline`,
+      `/api/cases/${caseId}/status`,
     ];
     for (const path of paths) {
       const response = await fetch(`${base}${path}`);

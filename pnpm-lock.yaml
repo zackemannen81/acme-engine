@@ -212,7 +212,11 @@ importers:
         specifier: 8.16.3
         version: 8.16.3
 
-  apps/evidence-workbench-v2-web: {}
+  apps/evidence-workbench-v2-web:
+    dependencies:
+      '@acme/evidence-v2-contracts':
+        specifier: workspace:*
+        version: link:../../packages/evidence-v2-contracts
 
   apps/evidence-workbench-web: {}
 

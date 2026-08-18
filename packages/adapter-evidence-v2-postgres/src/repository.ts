@@ -4,15 +4,17 @@ import {
   withPostgresDriverErrors,
   withWriteTransaction,
 } from '@acme/adapter-postgres';
-import type {
-  EvidenceV2ArtifactRecord,
-  EvidenceV2ExtractionWindowState,
-  EvidenceV2CaseRecord,
-  EvidenceV2ChainDetail,
-  EvidenceV2ImportWrite,
-  EvidenceV2Page,
-  EvidenceV2PageRequest,
-  EvidenceV2Repository,
+import {
+  EVIDENCE_V2_SURFACE_GAPS,
+  type EvidenceV2ArtifactRecord,
+  type EvidenceV2CaseOverview,
+  type EvidenceV2ExtractionWindowState,
+  type EvidenceV2CaseRecord,
+  type EvidenceV2ChainDetail,
+  type EvidenceV2ImportWrite,
+  type EvidenceV2Page,
+  type EvidenceV2PageRequest,
+  type EvidenceV2Repository,
 } from '@acme/evidence-v2-contracts';
 import {
   deriveEvidenceV2ChainState,
@@ -683,6 +685,104 @@ export function createEvidenceV2PostgresRepository(
         (row) =>
           JSON.parse(String(row['decision_json'])) as EvidenceV2ChainDecision,
       );
+    },
+
+    /**
+     * The case overview.
+     *
+     * Two statements: one aggregate pass over the case's stored rows, and one
+     * bounded lookup for the resume pointer. Nothing is re-derived and no
+     * snapshot is cloned (R-10). Every count is a `COUNT` over rows that exist,
+     * not a sum of denormalized totals, so the surface reports what is
+     * persisted rather than what an import once claimed.
+     */
+    async readCaseOverview(caseId) {
+      const artifactIds = `SELECT artifact_id FROM ${schema}.artifacts WHERE case_id = $1`;
+      const [totals] = await rowsOf(
+        pool,
+        `WITH scoped AS (${artifactIds})
+         SELECT
+           (SELECT count(*) FROM scoped) AS artifacts,
+           (SELECT coalesce(sum(max_line), 0) FROM (
+              SELECT max(end_line) AS max_line FROM ${schema}.source_parts
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)
+              GROUP BY artifact_id) lines) AS lines,
+           (SELECT count(*) FROM ${schema}.source_parts
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS parts,
+           (SELECT count(*) FROM ${schema}.citable_units
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS citable_units,
+           (SELECT count(*) FROM ${schema}.chains
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS chains,
+           (SELECT count(*) FROM ${schema}.chain_instances
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS instances,
+           (SELECT count(*) FROM ${schema}.occurrences
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS occurrences,
+           (SELECT count(*) FROM ${schema}.extraction_windows
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)
+                AND status = 'committed') AS committed_windows,
+           (SELECT count(*) FROM ${schema}.extraction_windows
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)
+                AND status = 'failed') AS failed_windows,
+           (SELECT count(*) FROM ${schema}.chain_decisions
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS chain_decisions,
+           (SELECT count(*) FROM ${schema}.chain_instances i
+              WHERE i.artifact_id IN (SELECT artifact_id FROM scoped)
+                AND NOT EXISTS (
+                  SELECT 1 FROM ${schema}.extraction_windows w
+                  WHERE w.artifact_id = i.artifact_id
+                    AND w.instance_key = i.instance_key
+                    AND w.status = 'committed')) AS instances_without_extraction`,
+        [caseId],
+      );
+
+      const [resume] = await rowsOf(
+        pool,
+        `WITH scoped AS (${artifactIds})
+         SELECT i.artifact_id, i.chain_id, i.instance_key, i.instance_ordinal,
+                c.subject_label
+           FROM ${schema}.chain_instances i
+           JOIN ${schema}.chains c
+             ON c.artifact_id = i.artifact_id AND c.chain_id = i.chain_id
+          WHERE i.artifact_id IN (SELECT artifact_id FROM scoped)
+            AND NOT EXISTS (
+              SELECT 1 FROM ${schema}.extraction_windows w
+              WHERE w.artifact_id = i.artifact_id
+                AND w.instance_key = i.instance_key
+                AND w.status = 'committed')
+          ORDER BY c.ordinal, i.instance_ordinal
+          LIMIT 1`,
+        [caseId],
+      );
+
+      const count = (name: string): number => Number(totals?.[name] ?? 0);
+      const overview: EvidenceV2CaseOverview = {
+        caseId,
+        counts: {
+          artifacts: count('artifacts'),
+          lines: count('lines'),
+          parts: count('parts'),
+          citableUnits: count('citable_units'),
+          chains: count('chains'),
+          instances: count('instances'),
+          occurrences: count('occurrences'),
+          committedWindows: count('committed_windows'),
+          failedWindows: count('failed_windows'),
+          chainDecisions: count('chain_decisions'),
+        },
+        instancesWithoutExtraction: count('instances_without_extraction'),
+        resumeAt:
+          resume === undefined
+            ? null
+            : {
+                artifactId: String(resume['artifact_id']),
+                chainId: String(resume['chain_id']),
+                instanceKey: String(resume['instance_key']),
+                subjectLabel: String(resume['subject_label']),
+                instanceOrdinal: Number(resume['instance_ordinal']),
+              },
+        unavailable: EVIDENCE_V2_SURFACE_GAPS,
+      };
+      return overview;
     },
   };
 }

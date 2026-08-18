@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   EVIDENCE_V2_ARTIFACT_RECORD_VERSION,
   EVIDENCE_V2_CASE_RECORD_VERSION,
+  EVIDENCE_V2_SURFACE_GAPS,
   clampEvidenceV2Page,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseRecord,
@@ -22,8 +23,11 @@ import {
   renderCases,
   renderPart,
   renderInstance,
+  renderCaseStatus,
+  renderChainSourceChoice,
   renderParts,
   renderSignIn,
+  renderSurfaceGap,
 } from '@acme/evidence-workbench-v2-web';
 
 import {
@@ -431,7 +435,12 @@ export function createEvidenceV2App(
         return;
       }
 
-      const caseMatch = /^\/(?:api\/)?cases\/([^/]+)$/u.exec(path);
+      // The case landing and the documents surface answer from one renderer:
+      // both are about the case's sources, and ADR-0049 lists them as separate
+      // entries, so they get separate URLs rather than separate pages.
+      const caseMatch = /^\/(?:api\/)?cases\/([^/]+)(?:\/(documents))?$/u.exec(
+        path,
+      );
       if (method === 'GET' && caseMatch?.[1] !== undefined) {
         const caseId = decodeURIComponent(caseMatch[1]);
         if (!(await authorizeCase(caseId, 'workspace.read'))) return;
@@ -447,6 +456,9 @@ export function createEvidenceV2App(
           renderCase({
             caseId,
             caseTitle: record.title,
+            caseReference: record.caseReference,
+            active: caseMatch[2] === 'documents' ? 'documents' : 'case',
+            viewer,
             artifacts: {
               ...artifacts,
               items: artifacts.items.map((item) => ({
@@ -459,6 +471,115 @@ export function createEvidenceV2App(
                 importedAt: item.importedAt,
               })),
             },
+          }),
+        );
+      }
+
+      // Chains belong to an artifact version. A case with exactly one source
+      // goes straight there; anything else has to be asked, not guessed.
+      const caseChainsMatch = /^\/(?:api\/)?cases\/([^/]+)\/chains$/u.exec(
+        path,
+      );
+      if (method === 'GET' && caseChainsMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(caseChainsMatch[1]);
+        if (!(await authorizeCase(caseId, 'workspace.read'))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+        const artifacts = await repository.listArtifacts(caseId, page);
+        const only = artifacts.total === 1 ? artifacts.items[0] : undefined;
+        if (only !== undefined && !json) {
+          response.writeHead(303, {
+            location: `/artifacts/${encodeURIComponent(only.artifactId)}/chains`,
+          });
+          response.end();
+          return;
+        }
+        if (json)
+          return void sendJson(response, 200, {
+            sources: artifacts.items.map((item) => ({
+              artifactId: item.artifactId,
+              title: item.title,
+              chainCount: item.chainCount,
+            })),
+            total: artifacts.total,
+          });
+        return void sendHtml(
+          response,
+          200,
+          renderChainSourceChoice({
+            caseId,
+            caseTitle: record.title,
+            caseReference: record.caseReference,
+            viewer,
+            artifacts: {
+              ...artifacts,
+              items: artifacts.items.map((item) => ({
+                artifactId: item.artifactId,
+                title: item.title,
+                lineCount: item.lineCount,
+                partCount: item.partCount,
+                chainCount: item.chainCount,
+                canonicalSha256: item.canonicalSha256,
+                importedAt: item.importedAt,
+              })),
+            },
+          }),
+        );
+      }
+
+      // Status: one projection over stored rows. It writes nothing, and its
+      // counts come from the same rows the list routes page through, so the
+      // two cannot disagree (R-07).
+      const statusMatch = /^\/(?:api\/)?cases\/([^/]+)\/status$/u.exec(path);
+      if (method === 'GET' && statusMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(statusMatch[1]);
+        if (!(await authorizeCase(caseId, 'workspace.read'))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+        const overview = await repository.readCaseOverview(caseId);
+        if (json) return void sendJson(response, 200, overview);
+        return void sendHtml(
+          response,
+          200,
+          renderCaseStatus({
+            caseId,
+            caseTitle: record.title,
+            caseReference: record.caseReference,
+            overview,
+            viewer,
+          }),
+        );
+      }
+
+      // Surfaces ADR-0049 names that ACME-0160 to ACME-0162 deliver. They are
+      // reachable and they state their own condition. A surface that does not
+      // exist must never answer with an empty list (R-07).
+      const gapMatch =
+        /^\/(?:api\/)?cases\/([^/]+)\/(timeline|relations)$/u.exec(path);
+      if (method === 'GET' && gapMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(gapMatch[1]);
+        if (!(await authorizeCase(caseId, 'workspace.read'))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+        const surface = gapMatch[2] === 'timeline' ? 'timeline' : 'relations';
+        const gap = EVIDENCE_V2_SURFACE_GAPS[surface];
+        if (json) return void sendJson(response, 200, { surface, ...gap });
+        return void sendHtml(
+          response,
+          200,
+          renderSurfaceGap({
+            context: {
+              caseId,
+              caseTitle: record.title,
+              caseReference: record.caseReference,
+              active: surface,
+            },
+            heading: surface === 'timeline' ? 'Timeline' : 'Relations',
+            gap,
+            viewer,
           }),
         );
       }

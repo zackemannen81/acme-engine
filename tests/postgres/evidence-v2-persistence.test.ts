@@ -290,6 +290,56 @@ describe('evidence v2 postgres persistence', () => {
     ).toBe(1);
   });
 
+  it('projects a case overview from stored rows, not from import totals', async () => {
+    const overview = await repository.readCaseOverview('case-v2-test');
+
+    // Counts must agree with what the list routes page through, because a
+    // status surface that disagrees with a list is R-07 rebuilt.
+    const parts = await repository.listParts(artifact.artifactId, {
+      offset: 0,
+      limit: 1,
+    });
+    const chains = await repository.listChains(artifact.artifactId, {
+      offset: 0,
+      limit: 1,
+    });
+    expect(overview.caseId).toBe('case-v2-test');
+    expect(overview.counts.artifacts).toBe(1);
+    expect(overview.counts.parts).toBe(parts.total);
+    expect(overview.counts.chains).toBe(chains.total);
+    expect(overview.counts.parts).toBeGreaterThan(0);
+    expect(overview.counts.citableUnits).toBeGreaterThan(0);
+
+    // The previous test committed one window and failed another against
+    // instance-1, and stored one occurrence.
+    expect(overview.counts.occurrences).toBe(1);
+    expect(overview.counts.committedWindows).toBe(1);
+    expect(overview.counts.failedWindows).toBe(1);
+
+    // The committed window above was stored against the synthetic key
+    // `instance-1`, which is not one of this artifact's chain instances. Every
+    // real instance is therefore still outstanding — outstanding work is
+    // counted against instances that exist, not against whatever key a window
+    // happens to carry.
+    expect(overview.instancesWithoutExtraction).toBe(overview.counts.instances);
+    expect(overview.resumeAt).not.toBeNull();
+    expect(overview.resumeAt?.instanceKey).not.toBe('instance-1');
+    expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
+    expect(overview.resumeAt?.artifactId).toBe(artifact.artifactId);
+
+    // Unbuilt surfaces report a condition. Reporting zero claims would be a
+    // false statement about the case rather than a true one about the product.
+    expect(overview.unavailable['claims']?.state).toBe('not-implemented');
+    expect(overview.unavailable['standing']?.deliveredBy).toBe('ACME-0159');
+    expect(overview.counts).not.toHaveProperty('claims');
+
+    // An unrelated case sees nothing of this one.
+    const empty = await repository.readCaseOverview('case-that-does-not-exist');
+    expect(empty.counts.artifacts).toBe(0);
+    expect(empty.counts.parts).toBe(0);
+    expect(empty.resumeAt).toBeNull();
+  });
+
   it('keeps sessions and case membership across a new composition', async () => {
     const identitySchema = `${schema}_identity`;
     await migratePostgresSchema({

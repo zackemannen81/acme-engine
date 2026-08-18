@@ -133,6 +133,113 @@ export interface EvidenceV2ExtractionWindowState {
 }
 
 /**
+ * The surfaces ADR-0049 fixes, and which of them this build serves.
+ *
+ * One list, read by navigation and by the status surface alike. R-07 is the
+ * regression a second list would reintroduce: a case must not be able to
+ * answer "there is no timeline" on one page and "the timeline is empty" on
+ * another.
+ */
+export const EVIDENCE_V2_SURFACES = [
+  { id: 'case', label: 'Case', state: 'available' },
+  { id: 'documents', label: 'Documents', state: 'available' },
+  { id: 'chains', label: 'Chains', state: 'available' },
+  { id: 'timeline', label: 'Timeline', state: 'not-implemented' },
+  { id: 'relations', label: 'Relations', state: 'not-implemented' },
+  { id: 'status', label: 'Status', state: 'available' },
+] as const;
+
+export type EvidenceV2SurfaceId = (typeof EVIDENCE_V2_SURFACES)[number]['id'];
+
+/**
+ * Why an unbuilt surface is unbuilt, and what delivers it.
+ *
+ * A surface that does not exist reports this. It never reports zero: "0
+ * claims" is a statement about the case, and the true statement is about the
+ * product.
+ */
+export interface EvidenceV2SurfaceGap {
+  readonly state: 'not-implemented';
+  readonly reason: string;
+  readonly deliveredBy: string;
+}
+
+export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
+  Record<
+    'timeline' | 'relations' | 'claims' | 'consensus' | 'standing',
+    EvidenceV2SurfaceGap
+  >
+> = {
+  timeline: {
+    state: 'not-implemented',
+    reason: 'The temporal projection over occurrences and claims is not built.',
+    deliveredBy: 'ACME-0162',
+  },
+  relations: {
+    state: 'not-implemented',
+    reason: 'Typed relations between occurrences and claims are not built.',
+    deliveredBy: 'ACME-0161',
+  },
+  claims: {
+    state: 'not-implemented',
+    reason: 'Claim grouping over occurrences is not built.',
+    deliveredBy: 'ACME-0160',
+  },
+  consensus: {
+    state: 'not-implemented',
+    reason:
+      'The consensus projection has no reviewed material to compute from.',
+    deliveredBy: 'ACME-0162',
+  },
+  standing: {
+    state: 'not-implemented',
+    reason:
+      'Review and standing are not built, so every occurrence is canonical evidence rather than accepted evidence.',
+    deliveredBy: 'ACME-0159',
+  },
+};
+
+/**
+ * What one case contains, and where to resume.
+ *
+ * A projection: it stores nothing, it is recomputed from stored rows on every
+ * read, and it reports counts rather than findings. Counts come from the rows
+ * themselves rather than from the artifact record's denormalized totals, so
+ * the surface reports what is actually persisted.
+ */
+export interface EvidenceV2CaseOverview {
+  readonly caseId: string;
+  readonly counts: {
+    readonly artifacts: number;
+    readonly lines: number;
+    readonly parts: number;
+    readonly citableUnits: number;
+    readonly chains: number;
+    readonly instances: number;
+    readonly occurrences: number;
+    readonly committedWindows: number;
+    readonly failedWindows: number;
+    readonly chainDecisions: number;
+  };
+  /** Instances with no committed extraction window. Work, not evidence. */
+  readonly instancesWithoutExtraction: number;
+  /**
+   * A concrete next instance, or null when there is nothing outstanding.
+   * Named rather than counted, because "where do I resume" is answered by a
+   * link and not by a number.
+   */
+  readonly resumeAt: {
+    readonly artifactId: string;
+    readonly chainId: string;
+    readonly instanceKey: string;
+    readonly subjectLabel: string;
+    readonly instanceOrdinal: number;
+  } | null;
+  /** Surfaces that report a named condition instead of a count. */
+  readonly unavailable: Readonly<Record<string, EvidenceV2SurfaceGap>>;
+}
+
+/**
  * The one port the V2 application stores through.
  *
  * `readEffectiveMemberships` returns the fold of the stored proposal and the
@@ -205,6 +312,12 @@ export interface EvidenceV2Repository {
   listChainDecisions(
     artifactId: string,
   ): Promise<readonly EvidenceV2ChainDecision[]>;
+
+  /**
+   * The case overview projection. One read, aggregate queries, no structure
+   * re-derivation and no snapshot clone (R-10).
+   */
+  readCaseOverview(caseId: string): Promise<EvidenceV2CaseOverview>;
 }
 
 export function clampEvidenceV2Page(

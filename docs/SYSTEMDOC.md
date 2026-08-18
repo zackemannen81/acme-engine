@@ -1139,6 +1139,33 @@ chain's ordered instances and appended membership decisions.
 HTML. A chain view reflects effective membership, so a reviewer's correction is
 visible where it was made. No read path re-derives anything.
 
+**V2 workbench shell and status surface.** ACME-0157 gave the application one
+shell. `EVIDENCE_V2_SURFACES` in `@acme/evidence-v2-contracts` is the single
+list of ADR-0049's surfaces and which of them this build serves; the surface
+bar and the status page both read it, which is what makes it impossible for a
+case to answer "there is no timeline" on one page and "the timeline is empty"
+on another (R-07). `EVIDENCE_V2_SURFACE_GAPS` names, per unbuilt surface, why
+it is unbuilt and which task delivers it. An unbuilt surface is a reachable
+route answering 200 with that condition — never a redirect, never an error, and
+never an empty list, because an empty list for an absent surface is a statement
+about the case where the true statement is about the product.
+
+`readCaseOverview` on the repository port is the status projection: two
+aggregate statements over the case's stored rows, nothing stored, no structure
+re-derived and no snapshot cloned (R-10). Counts come from the rows themselves
+rather than from the artifact record's denormalized `partCount` and
+`chainCount`, so the surface reports what is persisted rather than what an
+import once claimed, and it agrees with the totals the list routes page
+through. It reports counts and a resume pointer only — no chart, gauge, score,
+weight or ranking (ADR-0049 §2), because a count is a fact about the workspace
+and never a finding about the evidence.
+
+Chains belong to an artifact version, so the case-scoped chains entry redirects
+when the case holds exactly one source and asks which source when it holds
+several. Merging two artifacts' chains into one list would produce a list
+belonging to neither. Every list page states its own page bound rather than
+implying it (R-08).
+
 **V2 deployment on self-hosted Supabase.** `startFromEnvironment` in
 `apps/evidence-workbench-v2-api/src/start.ts` is the operator entry point.
 Configuration is environment variables and mounted secret files only: nothing is

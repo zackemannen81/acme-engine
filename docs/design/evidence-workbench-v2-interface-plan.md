@@ -5,7 +5,7 @@ Status: **Approved sequencing.** Both required decisions are taken:
 [ADR-0050](../adr/0050-evidence-v2-pdf-ingestion-boundary.md) opens the PDF
 ingestion boundary. Implementation is not thereby activated: each step still
 needs its own explicitly approved task and frozen charter. ACME-0156 is
-complete; ACME-0157 is the next step.
+complete, as is ACME-0157. ACME-0158 is the next step.
 Created: 2026-08-18
 Last updated: 2026-08-18
 Authority: [ADR-0047](../adr/0047-evidence-application-model-reset.md) and
@@ -224,6 +224,9 @@ and recorded numbers are in [the runbook](../ops/evidence-v2-supabase.md).
 - **No new authority required.**
 
 ### ACME-0157 — Interface 2.0 shell and case status
+
+**Status: complete 2026-08-18.** Archived as
+[`ACME-0157`](../finished/ACME-0157_v2-shell-and-case-status.md).
 
 - **Goal.** A workbench frame a person can actually work a case in, plus the
   case-status surface.

@@ -1,5 +1,77 @@
 # Journal
 
+## 2026-08-18 — ACME-0157: the workbench gets a shell and a status surface
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0157, Complete. Archived to
+  `docs/finished/ACME-0157_v2-shell-and-case-status.md`.
+- Change: every V2 page now renders inside one shell that names its case and
+  carries the whole [ADR-0049](adr/0049-evidence-v2-surface-set.md) surface bar
+  with the current surface marked. `EVIDENCE_V2_SURFACES` and
+  `EVIDENCE_V2_SURFACE_GAPS` in `@acme/evidence-v2-contracts` are the single
+  list navigation and the status page both read, so the two cannot disagree.
+  `readCaseOverview` joins the repository port and is implemented in the
+  PostgreSQL adapter as two aggregate statements.
+- **The rule this task exists to hold.** An unbuilt surface reports its own
+  named condition and the task that delivers it — Timeline (ACME-0162),
+  Relations (ACME-0161), Claims (ACME-0160), Consensus (ACME-0162), Standing
+  (ACME-0159) — at a reachable route answering 200. It never answers with an
+  empty list. Reporting `0 claims` would be a false statement about the case
+  where the true statement is about the product, and a nav entry rendering an
+  empty list for an absent surface is R-07 rebuilt on purpose. A test asserts
+  it in both HTML and JSON.
+- **Recorded run** against the ACME-0156 Supabase case: the status projection
+  answered in **132 ms** with 650 parts, 29,971 citable units, 351 chains and
+  467 instances — **agreeing exactly** with what the parts and chains list
+  routes report — plus 0 occurrences, 0 committed windows and 467 instances
+  without extraction. All seven case-scoped pages carried the surface bar,
+  named the case and marked the correct active surface. The case-scoped chains
+  entry redirected 303 to the single source's chains. A second principal
+  received 404 on the status, documents and timeline routes and on the status
+  API; an unauthenticated request got 401.
+- Counts come from the rows themselves rather than from the artifact record's
+  denormalized `partCount` and `chainCount`, so the surface reports what is
+  persisted rather than what an import once claimed. It reports counts and a
+  resume pointer only: no chart, gauge, score or ranking, because a count is a
+  fact about the workspace and never a finding about the evidence.
+- Chains belong to an artifact version, so the case-scoped chains entry
+  redirects when the case holds one source and asks which one when it holds
+  several. Merging two artifacts' chains would produce a list belonging to
+  neither. Every list page also states its own bound now rather than implying
+  it (R-08).
+- **One finding recorded rather than fixed.** The resume pointer named
+  `, Anonym, ,` — 1 of 351 chains carries a subject label of leftover
+  punctuation and sorts first, so a person is sent to the least useful chain in
+  the case. The pointer is correct; the label is the defect, it belongs to
+  `evidence-v2-chain/1`, and changing it changes every chain identity. Recorded
+  [in the backlog](backlog/v2-degenerate-chain-subject.md) rather than absorbed,
+  because ACME-0157's Out of Scope forbids touching the chain rules.
+- Verification: typecheck, lint, format, boundaries and docs (289 files) clean;
+  unit 871/871 (up from 866), conformance 78, integration 70, scenario 26;
+  build and `git diff --check` clean. Six new tests cover the surface bar, the
+  stated page bound, the named gap in HTML and JSON, count agreement with the
+  list routes, the single-source redirect, and the four new routes under both
+  the unauthenticated and non-member cases.
+- `pnpm test:postgres`: `evidence-v2-persistence` **7/7**, including a new gate
+  asserting the overview agrees with the list routes, reports a named condition
+  for claims and standing rather than a count, and returns an empty projection
+  for an unrelated case. Two failures of 44, both attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md): the stage-A resume test,
+  and — newly visible — the restart collision, because ACME-0156 left this
+  database populated and that entry's second failure is the **reused database**
+  condition it describes. `EvidenceProductCommandCollisionError` on the exact
+  command key it predicts. Neither is touched by this task.
+- Honest note: a gate assertion I wrote was wrong twice and the code was right
+  both times — the fixture has two parts so a bound of two shows no next page,
+  and a window stored against a synthetic instance key correctly leaves every
+  real instance outstanding. Both assertions were corrected to what the system
+  does, not the other way round.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next in the plan is
+  ACME-0158, PDF import under ADR-0050 — or ACME-0159, review and standing, if
+  the evidence spine is preferred before the ingestion boundary.
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0156: the V2 workbench runs on the installed Supabase
 
 - Date: 2026-08-18
