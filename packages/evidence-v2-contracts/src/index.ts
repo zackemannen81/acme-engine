@@ -66,6 +66,63 @@ export interface EvidenceV2ArtifactProvenance {
   readonly extractedAt: string;
 }
 
+export const EVIDENCE_V2_TEXT_SOURCE_CLASS =
+  'stage-a-anonymized-judicial-text/1';
+export const EVIDENCE_V2_PDF_SOURCE_CLASS = 'stage-a-pdf-extracted-text/1';
+export const EVIDENCE_V2_PDF_EXTRACTOR_RULE_VERSION = 'pdfjs-text/1';
+export const EVIDENCE_V2_PDF_EXTRACTOR_METHOD = 'pdfjs-dist/6.2.108';
+
+/** Same operational ceiling the existing text import already uses. */
+export const EVIDENCE_V2_PDF_MAX_BYTES = 64 * 1024 * 1024;
+export const EVIDENCE_V2_CANONICAL_TEXT_MAX_BYTES = 64 * 1024 * 1024;
+
+/**
+ * Image-only PDFs are refused. A judicial page states hundreds of characters;
+ * fewer than this many non-whitespace characters per page is treated as no
+ * text. OCR stays out.
+ */
+export const EVIDENCE_V2_PDF_MIN_CHARS_PER_PAGE = 20;
+
+export type EvidenceV2PdfRefusalCode =
+  | 'EVIDENCE_V2_PDF_NOT_PDF'
+  | 'EVIDENCE_V2_PDF_ENCRYPTED'
+  | 'EVIDENCE_V2_PDF_EMPTY_TEXT'
+  | 'EVIDENCE_V2_PDF_OVERSIZE'
+  | 'EVIDENCE_V2_PDF_TEXT_OVERSIZE'
+  | 'EVIDENCE_V2_PDF_EXTRACT_FAILED';
+
+export interface EvidenceV2PdfExtraction {
+  readonly text: string;
+  readonly pageCount: number;
+  readonly extractionMethod: typeof EVIDENCE_V2_PDF_EXTRACTOR_METHOD;
+  readonly extractionRuleVersion: typeof EVIDENCE_V2_PDF_EXTRACTOR_RULE_VERSION;
+}
+
+export type EvidenceV2PdfExtractResult =
+  | { readonly ok: true; readonly value: EvidenceV2PdfExtraction }
+  | { readonly ok: false; readonly code: EvidenceV2PdfRefusalCode };
+
+/**
+ * The PDF extractor port.
+ *
+ * The adapter implements this. Domain and contract layers see only the
+ * result: canonical text, a page count, and a named refusal. They never see
+ * the library's types.
+ */
+export interface EvidenceV2PdfExtractor {
+  extract(bytes: Uint8Array): Promise<EvidenceV2PdfExtractResult>;
+}
+
+/** Encrypted received bytes of a PDF, stored separately from canonical text. */
+export interface EvidenceV2ReceivedArtifact {
+  readonly sha256: string;
+  readonly byteLength: number;
+  readonly objectKey: string;
+  readonly mediaType: 'application/pdf';
+  readonly representation: EvidenceArtifactRepresentation;
+  readonly envelope: EvidenceArtifactObjectEnvelope;
+}
+
 export interface EvidenceV2ArtifactRecord {
   readonly schemaVersion: typeof EVIDENCE_V2_ARTIFACT_RECORD_VERSION;
   readonly artifactId: string;
@@ -85,6 +142,15 @@ export interface EvidenceV2ArtifactRecord {
   readonly structureRuleVersion: string;
   readonly chainRuleVersion: string;
   readonly provenance: EvidenceV2ArtifactProvenance;
+  /**
+   * Absent on artifacts imported before ACME-0158. Readers treat a missing
+   * class as the text class. Never required, so existing records still parse.
+   */
+  readonly sourceClass?: string;
+  /** Absent on text imports. Changing it is a new artifact version. */
+  readonly extractionRuleVersion?: string;
+  /** Present only when the L0 object is a retained PDF. */
+  readonly received?: EvidenceV2ReceivedArtifact;
 }
 
 export interface EvidenceV2Page<T> {

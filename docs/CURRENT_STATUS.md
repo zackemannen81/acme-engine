@@ -29,8 +29,8 @@ frozen as a diagnostic reference. The replacement model, V1 boundary, proof
 journeys and binding regression requirements are normative in
 [the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
 
-The replacement is being built layer by layer below. ACME-0161 is complete;
-ACME-0158 (PDF import under ADR-0050) is the active task.
+The replacement is being built layer by layer below. ACME-0158 is complete.
+No task is active.
 Nothing below this section is retracted by the decision: the engine,
 persistence, artifact security, authorization, case isolation and live model
 boundary carry forward unchanged, and no data authority changes. Stage A remains
@@ -315,6 +315,21 @@ receives 404; missing CSRF 401.
 A measured finding, not a defect: J4 window count is the product of current
 and prior batches (52 accepted / 12 × 25 accepted / 12 = 15). Silence in a
 window is valid, so 15 windows produced 3 relations.
+
+ACME-0158 added the PDF ingestion path ADR-0050 accepted. A case owner can
+upload a PDF; the product stores the received bytes encrypted as the L0
+object and derives canonical text with `pdfjs-dist/6.2.108` plus assembly
+rule `pdfjs-text/1`. Image-only and encrypted PDFs are refused with a named
+code and nothing persisted. Text import remains.
+
+Recorded through the product's own routes: import 201, class
+`stage-a-pdf-extracted-text/1`, received SHA-256
+`109be03f6b9f637beac250bc884cf13f9c072eb787ee394655c81a554411ea7e`
+(matches the client hash of the PDF bytes), canonical SHA-256
+`1cf3dc7f2bacd8099c083559dfcbbcc52876b5c883af513db5abfa4c14c7a780`
+(distinct). One part, one line. Second principal 404, missing CSRF 401,
+non-PDF refused 400 `EVIDENCE_V2_PDF_NOT_PDF`. Two-process extractor
+determinism is pinned by test.
 
 Remaining limitations: consensus projection and the timeline surface still
 report their own condition. Extraction is Pass 1 with no neighbour context

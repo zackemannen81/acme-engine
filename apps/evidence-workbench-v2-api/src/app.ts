@@ -6,8 +6,13 @@ import {
   EVIDENCE_V2_CASE_RECORD_VERSION,
   EVIDENCE_V2_SURFACE_GAPS,
   clampEvidenceV2Page,
+  EVIDENCE_V2_PDF_EXTRACTOR_METHOD,
+  EVIDENCE_V2_PDF_EXTRACTOR_RULE_VERSION,
+  EVIDENCE_V2_PDF_SOURCE_CLASS,
+  EVIDENCE_V2_TEXT_SOURCE_CLASS,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseRecord,
+  type EvidenceV2PdfExtractor,
   type EvidenceV2Repository,
 } from '@acme/evidence-v2-contracts';
 import {
@@ -88,7 +93,15 @@ export interface EvidenceV2AppOptions {
   /** Absent when the deployment has no live model capability configured. */
   readonly extractor?: EvidenceV2Extractor;
   readonly comparer?: EvidenceV2Comparer;
+  readonly pdfExtractor?: EvidenceV2PdfExtractor;
   readonly now: () => string;
+}
+
+export class EvidenceV2ImportRefusal extends Error {
+  constructor(readonly code: string) {
+    super(code);
+    this.name = 'EvidenceV2ImportRefusal';
+  }
 }
 
 function digestId(prefix: string, ...parts: readonly string[]): string {
@@ -96,9 +109,10 @@ function digestId(prefix: string, ...parts: readonly string[]): string {
   return `${prefix}-${hash.slice(0, 32)}`;
 }
 
-async function readBody(
-  request: IncomingMessage,
-): Promise<{ readonly text: string }> {
+async function readBody(request: IncomingMessage): Promise<{
+  readonly text: string;
+  readonly bytes: Buffer;
+}> {
   const chunks: Buffer[] = [];
   let total = 0;
   for await (const chunk of request) {
@@ -107,7 +121,56 @@ async function readBody(
     if (total > MAX_BODY_BYTES) throw new RangeError('REQUEST_BODY_TOO_LARGE');
     chunks.push(value);
   }
-  return { text: Buffer.concat(chunks).toString('utf8') };
+  const bytes = Buffer.concat(chunks);
+  return { text: bytes.toString('utf8'), bytes };
+}
+
+function multipartBoundary(contentType: string): string | undefined {
+  const match = /boundary=(?:"([^"]+)"|([^;]+))/iu.exec(contentType);
+  const value = match?.[1] ?? match?.[2];
+  return value === undefined ? undefined : value.trim();
+}
+
+function parseMultipart(
+  bytes: Buffer,
+  contentType: string,
+): {
+  readonly fields: Record<string, string>;
+  readonly files: Record<string, Buffer>;
+} {
+  const boundary = multipartBoundary(contentType);
+  if (boundary === undefined)
+    throw new EvidenceV2ImportRefusal('EVIDENCE_V2_PDF_NOT_PDF');
+  const token = Buffer.from(`--${boundary}`);
+  const fields: Record<string, string> = {};
+  const files: Record<string, Buffer> = {};
+  let cursor = 0;
+  while (cursor < bytes.byteLength) {
+    const start = bytes.indexOf(token, cursor);
+    if (start === -1) break;
+    let partStart = start + token.byteLength;
+    if (bytes[partStart] === 13 && bytes[partStart + 1] === 10) partStart += 2;
+    if (bytes[partStart] === 45 && bytes[partStart + 1] === 45) break;
+    const next = bytes.indexOf(token, partStart);
+    if (next === -1) break;
+    let part = bytes.subarray(partStart, next);
+    if (part.byteLength >= 2 && part[part.byteLength - 2] === 13)
+      part = part.subarray(0, part.byteLength - 2);
+    const headerEnd = part.indexOf(Buffer.from('\r\n\r\n'));
+    if (headerEnd === -1) {
+      cursor = next;
+      continue;
+    }
+    const header = part.subarray(0, headerEnd).toString('utf8');
+    const body = part.subarray(headerEnd + 4);
+    const name = /name="([^"]+)"/u.exec(header)?.[1];
+    if (name !== undefined) {
+      if (/filename=/u.test(header)) files[name] = Buffer.from(body);
+      else fields[name] = body.toString('utf8');
+    }
+    cursor = next;
+  }
+  return { fields, files };
 }
 
 function sendJson(
@@ -169,7 +232,56 @@ export function createEvidenceV2App(
     return authorizationStatus(error);
   };
 
-  async function importArtifact(
+  async function persistStructuredSource(input: {
+    readonly caseId: string;
+    readonly title: string;
+    readonly text: string;
+    readonly now: string;
+    readonly artifactId: string;
+    readonly provenance: EvidenceV2ArtifactRecord['provenance'];
+    readonly sourceClass?: string;
+    readonly extractionRuleVersion?: string;
+    readonly received?: EvidenceV2ArtifactRecord['received'];
+  }): Promise<EvidenceV2ArtifactRecord> {
+    const stored = await textStore.put({
+      caseId: input.caseId,
+      artifactId: input.artifactId,
+      text: input.text,
+      commandKey: digestId('import', input.caseId, input.artifactId),
+      now: input.now,
+    });
+    const structure = deriveEvidenceV2SourceStructure(input.text);
+    const proposal = proposeEvidenceV2Chains(structure, input.text);
+    const artifact: EvidenceV2ArtifactRecord = {
+      schemaVersion: EVIDENCE_V2_ARTIFACT_RECORD_VERSION,
+      artifactId: input.artifactId,
+      caseId: input.caseId,
+      title: input.title,
+      canonicalSha256: stored.canonicalSha256,
+      canonicalByteLength: stored.canonicalByteLength,
+      lineCount: structure.lineCount,
+      partCount: structure.parts.length,
+      chainCount: proposal.chains.length,
+      objectKey: stored.objectKey,
+      representation: stored.representation,
+      envelope: stored.envelope,
+      importedAt: input.now,
+      structureRuleVersion: structure.ruleVersion,
+      chainRuleVersion: proposal.ruleVersion,
+      provenance: input.provenance,
+      ...(input.sourceClass === undefined
+        ? {}
+        : { sourceClass: input.sourceClass }),
+      ...(input.extractionRuleVersion === undefined
+        ? {}
+        : { extractionRuleVersion: input.extractionRuleVersion }),
+      ...(input.received === undefined ? {} : { received: input.received }),
+    };
+    await repository.writeImport({ artifact, structure, proposal });
+    return artifact;
+  }
+
+  async function importTextArtifact(
     caseId: string,
     payload: Record<string, unknown>,
   ): Promise<EvidenceV2ArtifactRecord> {
@@ -182,35 +294,13 @@ export function createEvidenceV2App(
     >;
     const now = options.now();
     const artifactId = digestId('artifact', caseId, text);
-
-    const stored = await textStore.put({
-      caseId,
-      artifactId,
-      text,
-      commandKey: digestId('import', caseId, artifactId),
-      now,
-    });
-
-    // Derived once, here, and never again on a read path.
-    const structure = deriveEvidenceV2SourceStructure(text);
-    const proposal = proposeEvidenceV2Chains(structure, text);
-
-    const artifact: EvidenceV2ArtifactRecord = {
-      schemaVersion: EVIDENCE_V2_ARTIFACT_RECORD_VERSION,
-      artifactId,
+    return persistStructuredSource({
       caseId,
       title,
-      canonicalSha256: stored.canonicalSha256,
-      canonicalByteLength: stored.canonicalByteLength,
-      lineCount: structure.lineCount,
-      partCount: structure.parts.length,
-      chainCount: proposal.chains.length,
-      objectKey: stored.objectKey,
-      representation: stored.representation,
-      envelope: stored.envelope,
-      importedAt: now,
-      structureRuleVersion: structure.ruleVersion,
-      chainRuleVersion: proposal.ruleVersion,
+      text,
+      now,
+      artifactId,
+      sourceClass: EVIDENCE_V2_TEXT_SOURCE_CLASS,
       provenance: {
         parentKind: String(provenanceInput['parentKind'] ?? 'unknown'),
         parentSha256: String(provenanceInput['parentSha256'] ?? ''),
@@ -224,10 +314,64 @@ export function createEvidenceV2App(
         ),
         extractedAt: String(provenanceInput['extractedAt'] ?? now),
       },
-    };
+    });
+  }
 
-    await repository.writeImport({ artifact, structure, proposal });
-    return artifact;
+  async function importPdfArtifact(
+    caseId: string,
+    input: {
+      readonly title: string;
+      readonly bytes: Uint8Array;
+      readonly principalRef: string;
+    },
+  ): Promise<EvidenceV2ArtifactRecord> {
+    if (options.pdfExtractor === undefined)
+      throw new EvidenceV2ImportRefusal('EVIDENCE_V2_PDF_EXTRACT_FAILED');
+    const extracted = await options.pdfExtractor.extract(input.bytes);
+    if (!extracted.ok) throw new EvidenceV2ImportRefusal(extracted.code);
+
+    const now = options.now();
+    const receivedSha256 = createHash('sha256')
+      .update(input.bytes)
+      .digest('hex');
+    const artifactId = digestId('artifact', caseId, receivedSha256);
+    const commandKey = digestId('import', caseId, artifactId);
+    const received = await textStore.putBytes({
+      caseId,
+      artifactId,
+      bytes: input.bytes,
+      kind: 'original',
+      mediaType: 'application/pdf',
+      commandKey,
+      now,
+      principalRef: input.principalRef,
+    });
+
+    return persistStructuredSource({
+      caseId,
+      title: input.title,
+      text: extracted.value.text,
+      now,
+      artifactId,
+      sourceClass: EVIDENCE_V2_PDF_SOURCE_CLASS,
+      extractionRuleVersion: EVIDENCE_V2_PDF_EXTRACTOR_RULE_VERSION,
+      received: {
+        sha256: received.sha256,
+        byteLength: received.byteLength,
+        objectKey: received.objectKey,
+        mediaType: 'application/pdf',
+        representation: received.representation,
+        envelope: received.envelope,
+      },
+      provenance: {
+        parentKind: 'pdf',
+        parentSha256: received.sha256,
+        parentByteLength: received.byteLength,
+        pageCount: extracted.value.pageCount,
+        extractionMethod: EVIDENCE_V2_PDF_EXTRACTOR_METHOD,
+        extractedAt: now,
+      },
+    });
   }
 
   /**
@@ -876,24 +1020,55 @@ export function createEvidenceV2App(
         );
       }
 
-      const importMatch = /^\/api\/cases\/([^/]+)\/artifacts$/u.exec(path);
+      const importMatch = /^\/(?:api\/)?cases\/([^/]+)\/artifacts$/u.exec(path);
       if (method === 'POST' && importMatch?.[1] !== undefined) {
         const caseId = decodeURIComponent(importMatch[1]);
         if (!(await authorizeCase(caseId, 'source.import'))) return;
         if ((await repository.readCase(caseId)) === undefined)
           return void sendText(response, 404, 'No such case.');
         const body = await readBody(request);
-        const artifact = await importArtifact(
-          caseId,
-          JSON.parse(body.text) as Record<string, unknown>,
-        );
-        return void sendJson(response, 201, {
-          artifactId: artifact.artifactId,
-          canonicalSha256: artifact.canonicalSha256,
-          lineCount: artifact.lineCount,
-          partCount: artifact.partCount,
-          chainCount: artifact.chainCount,
+        const contentType = String(request.headers['content-type'] ?? '');
+        let artifact: EvidenceV2ArtifactRecord;
+        if (contentType.includes('multipart/form-data')) {
+          const parsed = parseMultipart(body.bytes, contentType);
+          const file = parsed.files['file'];
+          if (file === undefined)
+            throw new EvidenceV2ImportRefusal('EVIDENCE_V2_PDF_NOT_PDF');
+          artifact = await importPdfArtifact(caseId, {
+            title: parsed.fields['title']?.trim() || 'Untitled source',
+            bytes: file,
+            principalRef: principal.principalRef,
+          });
+        } else {
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const pdfBase64 = String(payload['pdfBase64'] ?? '').trim();
+          if (pdfBase64.length > 0) {
+            artifact = await importPdfArtifact(caseId, {
+              title: String(payload['title'] ?? 'Untitled source'),
+              bytes: Buffer.from(pdfBase64, 'base64'),
+              principalRef: principal.principalRef,
+            });
+          } else {
+            artifact = await importTextArtifact(caseId, payload);
+          }
+        }
+        if (json)
+          return void sendJson(response, 201, {
+            artifactId: artifact.artifactId,
+            canonicalSha256: artifact.canonicalSha256,
+            lineCount: artifact.lineCount,
+            partCount: artifact.partCount,
+            chainCount: artifact.chainCount,
+            sourceClass: artifact.sourceClass,
+            receivedSha256: artifact.received?.sha256,
+          });
+        response.writeHead(303, {
+          location: `/cases/${encodeURIComponent(caseId)}`,
         });
+        response.end();
+        return;
       }
 
       const partsMatch = /^\/(?:api\/)?artifacts\/([^/]+)\/parts$/u.exec(path);
@@ -2061,6 +2236,14 @@ export function createEvidenceV2App(
 
       return void sendText(response, 404, 'Not found.');
     } catch (error) {
+      if (error instanceof EvidenceV2ImportRefusal)
+        return void sendText(response, 400, error.code);
+      if (
+        error instanceof RangeError &&
+        (error.message === 'EMPTY_TEXT' ||
+          error.message === 'REQUEST_BODY_TOO_LARGE')
+      )
+        return void sendText(response, 400, error.message);
       const message =
         error instanceof Error ? error.message : 'Unexpected error.';
       return void sendText(response, 500, message);

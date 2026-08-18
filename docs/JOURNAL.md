@@ -1,5 +1,35 @@
 # Journal
 
+## 2026-08-19 — ACME-0158: the process model now starts inside the product
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0158, Complete. Archived to
+  `docs/finished/ACME-0158_v2-pdf-import.md`.
+- Change: `stage-a-pdf-extracted-text/1` is a real import class. The received
+  PDF bytes are the L0 artifact, encrypted under the ADR-0037 envelope as an
+  `original` representation. Canonical text is a named derivative from
+  `@acme/adapter-evidence-v2-pdf`. Structure and chain proposal still run
+  exactly once in the import transaction. Text import is unchanged.
+- **Library.** `pdfjs-dist` 6.2.108, exact, adapter-scoped. Encryption is a
+  named refusal. Text assembly is ours (`pdfjs-text/1`): items ordered by
+  position, pages joined with LF, NFC. Changing the library or the rule is a
+  new artifact version. Canonical and PDF size bounds are 64 MiB, the
+  operational ceiling V2 already uses.
+- **Fail closed.** Not a PDF, encrypted, empty/image-only, oversize file or
+  oversize text: typed code, nothing persisted, content-free. OCR stays out.
+- **Recorded run** on the live API: import 201; received SHA-256
+  `109be03f…411ea7e` equals the client hash of the PDF; canonical SHA-256
+  `1cf3dc7f…14c7a780` is different; 1 part. Second principal 404, missing
+  CSRF 401, non-PDF 400 `EVIDENCE_V2_PDF_NOT_PDF`. Two-process extractor
+  determinism is pinned offline.
+- Verification: typecheck, lint, format, boundaries, docs (293 files), build
+  and `git diff --check` clean; unit 955/955 (up from 945); conformance 78,
+  integration 70, scenario 26. `evidence-v2-persistence` **10/10**; postgres
+  45 of 47, the same two frozen-app failures as before.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template.
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0161: the four verbs, and J4 without contaminating extraction
 
 - Date: 2026-08-18

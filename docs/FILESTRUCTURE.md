@@ -213,6 +213,11 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/index.ts
 │   │   └── test/index.test.ts
+│   ├── adapter-evidence-v2-pdf/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/{extract.test.ts,hash-canonical.mjs}
 │   ├── adapter-evidence-product-postgres/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -947,7 +952,8 @@ content remains intentionally omitted here.
   engine with the V2 module to plan and run one chain instance's observation
   windows, committing and projecting each window on its own and resuming without
   re-sending a paid one. `src/compare.ts` does the same for J4 in the compare
-  namespace.
+  namespace. PDF import stores received bytes as an `original` representation
+  and derives canonical text once in the same transaction.
   `src/start.ts` is the operator entry point: it reads configuration from
   environment variables and mounted secret files, refuses the Supavisor
   transaction pooler on port 6543, and prints a content-free startup summary.
@@ -964,6 +970,9 @@ content remains intentionally omitted here.
   `@acme/adapter-evidence-artifact-s3`: exclusive-create, bounded-read
   ciphertext object stores for local and hosted composition under one shared
   conformance contract.
+- `@acme/adapter-evidence-v2-pdf`: the ADR-0050 extractor. `pdfjs-dist`
+  6.2.108 is pinned here and nowhere else. It returns canonical text, a page
+  count, or a named refusal; the library's types never leave the adapter.
 - `@acme/evidence-product-contracts`: explicit case lifecycle, participant,
   immutable case-object scope, secure artifact and bounded ingestion/redaction
   services, local workspace, source-import, job and

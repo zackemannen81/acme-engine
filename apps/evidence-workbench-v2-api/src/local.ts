@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { createDeterministicEvidenceAuthenticator } from '@acme/adapter-evidence-auth-memory';
 import { createFileEvidenceArtifactObjectStore } from '@acme/adapter-evidence-artifact-file';
 import { createS3EvidenceArtifactObjectStore } from '@acme/adapter-evidence-artifact-s3';
+import { createEvidenceV2PdfExtractor } from '@acme/adapter-evidence-v2-pdf';
 import {
   buildEvidenceV2Migrations,
   createEvidenceV2PostgresRepository,
@@ -276,6 +277,7 @@ export async function startEvidenceV2Local(
     auth,
     ...(extractor === undefined ? {} : { extractor }),
     ...(comparer === undefined ? {} : { comparer }),
+    pdfExtractor: createEvidenceV2PdfExtractor(),
     now,
   });
 

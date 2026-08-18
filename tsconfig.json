@@ -98,6 +98,9 @@
       "path": "./packages/adapter-evidence-v2-postgres"
     },
     {
+      "path": "./packages/adapter-evidence-v2-pdf"
+    },
+    {
       "path": "./apps/evidence-workbench-v2-web"
     },
     {

@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0158
+Task ID:
 Parent Task: None
-Status: Ready
-Owner: Claude
-Created: 2026-08-18
-Last updated: 2026-08-18
-Charter frozen at: 2026-08-18
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,25 +18,13 @@ Charter frozen at: 2026-08-18
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/adr/0050-evidence-v2-pdf-ingestion-boundary.md`
-- `docs/adr/0037-evidence-secure-artifact-foundation.md`
-- `docs/adr/0038-bounded-text-ingestion-and-immutable-redaction.md`
-- `docs/adr/0040-poc-1-live-product-applicability.md`
-- `docs/design/evidence-workbench-v2-interface-plan.md` (ACME-0158)
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
 A task is never considered done until:
 JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-The requested process model begins with "Importera PDF". Until now the product
-has imported operator-prepared text and recorded outside-PDF provenance. ADR-0050
-accepts one new class, `stage-a-pdf-extracted-text/1`: the received PDF bytes
-are the L0 artifact, canonical text is a named pinned derivative, and image-only
-or encrypted PDFs fail closed.
-
-ACME-0161 closed the evidence backbone through relations. This task opens the
-ingestion path the process model actually starts with. It changes no structure,
-chain, observe, review, claim or relation rule.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
@@ -45,140 +33,42 @@ The charter is editable while status is `Draft` and immutable once status is
 
 ### Goal
 
-A case owner uploads a PDF in the browser and reaches a structured, chained
-source without leaving the product.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-The class decided in ADR-0050: exact received bytes stored as the L0 artifact
-under the ADR-0037 envelope, canonical text derived by a named pinned
-extractor, provenance recorded, structure and chain proposal derived once
-inside the import transaction, and a fail-closed refusal for image-only PDFs
-and over-bound files.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- The source class `stage-a-pdf-extracted-text/1`.
-- A PDF extractor port and one adapter. The library is pinned to an exact
-  version, lives in an adapter package, and never appears in a module or
-  `packages/core`. The implementing notes record why it was chosen against
-  ADR-0050 §4 (determinism) and §5 (refusals).
-- Storing the exact received PDF bytes as the immutable artifact version,
-  encrypted, with their own content hash, retained rather than discarded.
-- Deriving canonical text once inside the import transaction, recorded as a
-  representation with `extractionMethod` in the form `<method>/<version>`.
-- An extraction-rule version field alongside structure and chain rule
-  versions. Changing the extractor is a new artifact version, never an
-  in-place re-cut.
-- Browser upload on the documents surface, plus the existing text-import
-  path left intact (`stage-a-anonymized-judicial-text/1` is not withdrawn).
-- Fail-closed refusals with a typed reason and nothing persisted: not a PDF,
-  encrypted/password-protected, no or below-threshold text (image-only; OCR
-  stays out), over the size bound, over the ADR-0038 canonical-text bound,
-  throw/timeout/non-UTF-8 after NFC.
-- Offline tests: determinism (same bytes, two processes, identical
-  canonical SHA-256), each named refusal, authorization and CSRF, and that
-  a refused import writes no artifact, no structure and no chain proposal.
-- A recorded import of a bounded Stage A PDF through the product's own
-  routes, with the measured digest written down.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- OCR. DOCX. Media. Bulk ingestion. Stage B material.
-- Any change to `evidence-v2-source-structure/1`, `evidence-v2-chain/1`,
-  `evidence-v2-observe/1`, `evidence-v2-review/1`, `evidence-v2-claim/1` or
-  `evidence-v2-relation/1`, or their rule versions.
-- Re-deriving structure or chains on read (R-10).
-- Timeline, consensus, graph visualisation, actor rosters.
-- Anonymization inside the product. That remains the operator's obligation.
-- Wiring Supabase Auth.
-- The degenerate chain subject label in
-  `docs/backlog/v2-degenerate-chain-subject.md`.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- A PDF that satisfies ADR-0050 §1 imports behind an authorized case-scoped
-  route and becomes a structured, chained source identical in kind to a
-  text import: parts, units, chains, exact source lines.
-- The stored L0 object is the received PDF bytes, encrypted. Its SHA-256 is
-  the PDF's, not the text's. Canonical text is a separate representation.
-- Extracting the same PDF twice in separate processes yields the same
-  canonical SHA-256. The measured digest is recorded.
-- Each named refusal in ADR-0050 §5 answers with a typed reason, persists
-  nothing, and is content-free in logs.
-- Existing text import is unchanged. No migration of existing artifacts.
-- A non-member receives 404 on the import write; a write without CSRF is
-  refused; the recorded principal is server-derived.
-- `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, `docs/FILESTRUCTURE.md` and
-  `docs/JOURNAL.md` reflect the delivered state.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] `pnpm typecheck`
-- [ ] `pnpm lint`
-- [ ] `pnpm format:check`
-- [ ] `pnpm boundaries`
-- [ ] `pnpm test` (unit, conformance, integration, scenario)
-- [ ] `pnpm test:postgres` — `evidence-v2-persistence` still passes; the two
-      failures attributed in
-      `docs/backlog/postgres-gate-test-hygiene.md` remain the only failures
-- [ ] `pnpm docs:check`
-- [ ] `pnpm build`
-- [ ] `git diff --check`
-- [ ] Determinism proof: same PDF, two separate processes, identical
-      canonical SHA-256, digest recorded
-- [ ] Each ADR-0050 §5 refusal has an offline test that asserts nothing was
-      persisted
-- [ ] Recorded import of a bounded Stage A PDF through the product's own
-      authenticated routes. Authorization: second principal 404, missing
-      CSRF 401
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
 
 ## References
 
-- [ADR-0050](adr/0050-evidence-v2-pdf-ingestion-boundary.md)
-- [ADR-0037](adr/0037-evidence-secure-artifact-foundation.md)
-- [ADR-0038](adr/0038-bounded-text-ingestion-and-immutable-redaction.md)
-- [ADR-0040](adr/0040-poc-1-live-product-applicability.md)
-- [Interface plan](design/evidence-workbench-v2-interface-plan.md) ACME-0158
-- [ACME-0152](finished/ACME-0152_v2-persistence-and-surfaces.md) — the
-  text-import transaction this path must match
-- [ACME-0161](finished/ACME-0161_v2-relations.md) — just closed; do not
-  reopen relations
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [ ] Choose the extractor library against ADR-0050 §4 and §5; pin it; put
-      it behind a port in an adapter package.
-- [ ] Add the extraction-rule version and the PDF representation to the
-      artifact record without breaking existing text artifacts.
-- [ ] Implement fail-closed classification and the named refusals.
-- [ ] Derive canonical text once inside the existing import transaction,
-      then structure and chain proposal exactly as today.
-- [ ] Store received PDF bytes under the ADR-0037 envelope.
-- [ ] Browser upload on the documents surface; keep the text-import form.
-- [ ] Offline tests: determinism, refusals, authorization, no persist on
-      refuse.
-- [ ] Run every verification gate; record results and any skips with reasons.
-- [ ] Recorded import of a bounded Stage A PDF.
-- [ ] Update `CURRENT_STATUS.md`, `SYSTEMDOC.md`, `FILESTRUCTURE.md` and
-      `JOURNAL.md`.
-- [ ] Archive this task and restore the template.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
 - A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
 - Record decisions and assumptions within the frozen charter.
 - Classify discoveries using `docs/TASK_WORKFLOW.md`.
-
-Recorded at freeze:
-
-- **The operator ordered this task after ACME-0161.** Sequencing is in
-  [the interface plan](design/evidence-workbench-v2-interface-plan.md).
-- **Library choice is an implementation note, not a second ADR.** ADR-0050 §6
-  leaves the specific library to this task, provided it is pinned, adapter-
-  scoped, and passes the determinism gate.
-- **Text import stays.** ADR-0050 §7 does not withdraw
-  `stage-a-anonymized-judicial-text/1`.
-- **No live model spend.** This task is ingestion. J3 and J4 are unchanged.
 
 ## Charter Amendment Log
 
@@ -198,19 +88,16 @@ Only non-semantic corrections are allowed after `Ready`.
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
 - [ ] `docs/FILESTRUCTURE.md` when structure changes
-- [ ] ADRs when long-lived decisions change — none anticipated; ADR-0050 is
-      the authority
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: Charter frozen. ACME-0161 is archived. Implementation has
-  not started.
-- Next recommended step: choose the extractor library against the
-  determinism and refusal gates, then add the port.
-- Blockers: none.
-- Child tasks: none.
-- Resume condition: not applicable.
-- Open questions: none.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 

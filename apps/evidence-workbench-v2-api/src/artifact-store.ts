@@ -25,6 +25,14 @@ export interface EvidenceV2StoredText {
   readonly canonicalByteLength: number;
 }
 
+export interface EvidenceV2StoredBytes {
+  readonly representation: EvidenceArtifactRepresentation;
+  readonly envelope: EvidenceArtifactObjectEnvelope;
+  readonly objectKey: string;
+  readonly sha256: string;
+  readonly byteLength: number;
+}
+
 export interface EvidenceV2TextStore {
   put(input: {
     readonly caseId: string;
@@ -33,6 +41,16 @@ export interface EvidenceV2TextStore {
     readonly commandKey: string;
     readonly now: string;
   }): Promise<EvidenceV2StoredText>;
+  putBytes(input: {
+    readonly caseId: string;
+    readonly artifactId: string;
+    readonly bytes: Uint8Array;
+    readonly kind: 'original';
+    readonly mediaType: 'application/pdf';
+    readonly commandKey: string;
+    readonly now: string;
+    readonly principalRef: string;
+  }): Promise<EvidenceV2StoredBytes>;
   get(stored: EvidenceV2StoredText): Promise<string>;
 }
 
@@ -83,6 +101,44 @@ export function createEvidenceV2TextStore(options: {
         objectKey,
         canonicalSha256: representation.plaintextSha256,
         canonicalByteLength: representation.plaintextByteLength,
+      };
+    },
+
+    async putBytes(input) {
+      const plaintext = Buffer.from(input.bytes);
+      const objectKey = `v2/${input.caseId}/${input.artifactId}/received`;
+      const representation: EvidenceArtifactRepresentation = {
+        schemaVersion: 'evidence-artifact-representation/1',
+        representationId: `${input.artifactId}-received`,
+        caseId: input.caseId,
+        workspaceId: input.caseId,
+        artifactVersionId: input.artifactId,
+        kind: input.kind,
+        mediaType: input.mediaType,
+        plaintextSha256: artifactSha256(plaintext),
+        plaintextByteLength: plaintext.byteLength,
+        predecessorRepresentationId: null,
+        transformationContract: 'evidence-v2-received-pdf',
+        transformationVersion: '1',
+        producingCommandKey: input.commandKey,
+        producingPrincipalRef: input.principalRef,
+        createdAt: input.now,
+      };
+      const sealed = await encryptArtifactRepresentation({
+        plaintext,
+        representation,
+        objectKey,
+        keyProvider: options.keyProvider,
+        activatedAt: input.now,
+        random: nodeArtifactRandom,
+      });
+      await options.objectStore.create(objectKey, sealed.ciphertext);
+      return {
+        representation,
+        envelope: sealed.envelope,
+        objectKey,
+        sha256: representation.plaintextSha256,
+        byteLength: representation.plaintextByteLength,
       };
     },
 

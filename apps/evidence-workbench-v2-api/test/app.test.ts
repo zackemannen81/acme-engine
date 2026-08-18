@@ -35,6 +35,8 @@ import { createDeterministicEvidenceAuthenticator } from '@acme/adapter-evidence
 import { createInMemoryEvidenceIdentityRepository } from '@acme/adapter-evidence-auth-memory';
 import { createAes256GcmPayloadEncryptor } from '@acme/core';
 
+import { createEvidenceV2PdfExtractor } from '@acme/adapter-evidence-v2-pdf';
+
 import { createEvidenceV2App } from '../src/app.js';
 import { createEvidenceV2Auth } from '../src/auth.js';
 import type {
@@ -422,6 +424,18 @@ function memoryTextStore(): EvidenceV2TextStore {
     async get(stored) {
       return texts.get(stored.objectKey) ?? '';
     },
+    async putBytes(input) {
+      const objectKey = `v2/${input.caseId}/${input.artifactId}/received`;
+      return {
+        objectKey,
+        sha256: 'b'.repeat(64),
+        byteLength: input.bytes.byteLength,
+        representation: {
+          objectKey,
+        } as unknown as EvidenceV2StoredText['representation'],
+        envelope: { objectKey } as unknown as EvidenceV2StoredText['envelope'],
+      };
+    },
   };
 }
 
@@ -509,6 +523,7 @@ describe('evidence v2 api', () => {
       repository,
       textStore: memoryTextStore(),
       auth,
+      pdfExtractor: createEvidenceV2PdfExtractor(),
       now: () => '2026-08-16T00:00:00.000Z',
     });
     server = createServer((request, response) => {
@@ -1800,5 +1815,200 @@ describe('evidence v2 api', () => {
       (await fetch(`${base}/api/artifacts/nope/chains/chain-1`, { headers }))
         .status,
     ).toBe(404);
+  });
+
+  function helloPdf(text = 'Hello from the source document'): Buffer {
+    const stream = `BT /F1 24 Tf 72 720 Td (${text}) Tj ET\n`;
+    const objects = [
+      '1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n',
+      '2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n',
+      '3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>endobj\n',
+      `4 0 obj<< /Length ${String(stream.length)} >>stream\n${stream}endstream\nendobj\n`,
+      '5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n',
+    ];
+    let body = '%PDF-1.1\n';
+    const offsets = [0];
+    for (const object of objects) {
+      offsets.push(Buffer.byteLength(body, 'latin1'));
+      body += object;
+    }
+    const xrefStart = Buffer.byteLength(body, 'latin1');
+    let xref = `xref\n0 6\n0000000000 65535 f \n`;
+    for (let index = 1; index <= 5; index += 1) {
+      xref += `${String(offsets[index] ?? 0).padStart(10, '0')} 00000 n \n`;
+    }
+    body += xref;
+    body += `trailer<< /Size 6 /Root 1 0 R >>\nstartxref\n${String(xrefStart)}\n%%EOF\n`;
+    return Buffer.from(body, 'latin1');
+  }
+
+  it('imports a PDF and keeps received bytes distinct from canonical text', async () => {
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'PDF case', caseReference: 'PDF-1' }),
+    });
+    const record = (await created.json()) as EvidenceV2CaseRecord;
+    const pdf = helloPdf();
+    const imported = await fetch(
+      `${base}/api/cases/${record.caseId}/artifacts`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: 'A hearing',
+          pdfBase64: pdf.toString('base64'),
+        }),
+      },
+    );
+    expect(imported.status).toBe(201);
+    const body = (await imported.json()) as {
+      artifactId: string;
+      canonicalSha256: string;
+      receivedSha256: string;
+      sourceClass: string;
+      lineCount: number;
+      partCount: number;
+    };
+    expect(body.sourceClass).toBe('stage-a-pdf-extracted-text/1');
+    expect(body.receivedSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(body.canonicalSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(body.receivedSha256).not.toBe(body.canonicalSha256);
+    expect(body.partCount).toBeGreaterThan(0);
+    expect(body.lineCount).toBeGreaterThan(0);
+
+    const page = await (
+      await fetch(`${base}/cases/${record.caseId}`, { headers })
+    ).text();
+    expect(page).toContain('Import a PDF');
+    expect(page).toContain('accept="application/pdf"');
+  });
+
+  it('refuses encrypted and empty PDFs and persists nothing', async () => {
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Refuse more', caseReference: 'PDF-R' }),
+    });
+    const record = (await created.json()) as EvidenceV2CaseRecord;
+    const encrypted = helloPdf()
+      .toString('latin1')
+      .replace(
+        'trailer<< /Size 6 /Root 1 0 R >>',
+        'trailer<< /Size 6 /Root 1 0 R /Encrypt 6 0 R >>',
+      );
+    const emptyStream = 'BT ET\n';
+    const emptyObjects = [
+      '1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n',
+      '2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n',
+      '3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << >> >>endobj\n',
+      `4 0 obj<< /Length ${String(emptyStream.length)} >>stream\n${emptyStream}endstream\nendobj\n`,
+    ];
+    let emptyBody = '%PDF-1.1\n';
+    const emptyOffsets = [0];
+    for (const object of emptyObjects) {
+      emptyOffsets.push(Buffer.byteLength(emptyBody, 'latin1'));
+      emptyBody += object;
+    }
+    const emptyXrefAt = Buffer.byteLength(emptyBody, 'latin1');
+    let emptyXref = 'xref\n0 5\n0000000000 65535 f \n';
+    for (let index = 1; index <= 4; index += 1) {
+      emptyXref += `${String(emptyOffsets[index] ?? 0).padStart(10, '0')} 00000 n \n`;
+    }
+    emptyBody += `${emptyXref}trailer<< /Size 5 /Root 1 0 R >>\nstartxref\n${String(emptyXrefAt)}\n%%EOF\n`;
+
+    for (const [label, bytes, code] of [
+      [
+        'encrypted',
+        Buffer.from(encrypted, 'latin1'),
+        'EVIDENCE_V2_PDF_ENCRYPTED',
+      ],
+      ['empty', Buffer.from(emptyBody, 'latin1'), 'EVIDENCE_V2_PDF_EMPTY_TEXT'],
+    ] as const) {
+      const refused = await fetch(
+        `${base}/api/cases/${record.caseId}/artifacts`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            title: label,
+            pdfBase64: bytes.toString('base64'),
+          }),
+        },
+      );
+      expect(refused.status, label).toBe(400);
+      expect(await refused.text(), label).toBe(code);
+    }
+    const listed = (await (
+      await fetch(`${base}/api/cases/${record.caseId}`, { headers })
+    ).json()) as { artifacts: { total: number } };
+    expect(listed.artifacts.total).toBe(0);
+  });
+
+  it('refuses a bad PDF and persists nothing', async () => {
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Refuse case', caseReference: 'PDF-0' }),
+    });
+    const record = (await created.json()) as EvidenceV2CaseRecord;
+    const refused = await fetch(
+      `${base}/api/cases/${record.caseId}/artifacts`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: 'Nope',
+          pdfBase64: Buffer.from('not a pdf').toString('base64'),
+        }),
+      },
+    );
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toBe('EVIDENCE_V2_PDF_NOT_PDF');
+    const listed = (await (
+      await fetch(`${base}/api/cases/${record.caseId}`, { headers })
+    ).json()) as { artifacts: { total: number } };
+    expect(listed.artifacts.total).toBe(0);
+  });
+
+  it('hides PDF import from a non-member and refuses a write without CSRF', async () => {
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Auth case', caseReference: 'PDF-A' }),
+    });
+    const record = (await created.json()) as EvidenceV2CaseRecord;
+    const other = await signIn('second@acme.local', 'second-secret');
+    expect(
+      (
+        await fetch(`${base}/api/cases/${record.caseId}/artifacts`, {
+          method: 'POST',
+          headers: other,
+          body: JSON.stringify({
+            title: 'x',
+            pdfBase64: helloPdf().toString('base64'),
+          }),
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await fetch(`${base}/api/cases/${record.caseId}/artifacts`, {
+          method: 'POST',
+          headers: {
+            cookie: headers['cookie'] ?? '',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: 'x',
+            pdfBase64: helloPdf().toString('base64'),
+          }),
+        })
+      ).status,
+    ).toBe(401);
   });
 });

@@ -1,0 +1,11 @@
+{
+  "extends": "../../tooling/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"],
+  "references": [{ "path": "../evidence-v2-contracts" }]
+}

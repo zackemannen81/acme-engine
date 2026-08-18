@@ -20,6 +20,9 @@
       "path": "../../packages/adapter-evidence-auth-postgres"
     },
     {
+      "path": "../../packages/adapter-evidence-v2-pdf"
+    },
+    {
       "path": "../../packages/adapter-evidence-v2-postgres"
     },
     {

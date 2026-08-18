@@ -94,7 +94,8 @@ const STYLES = `
   ol.lines { padding-left: 4.5rem; }
   ol.lines li { white-space: pre-wrap; }
   form { margin: 0.75rem 0; }
-  input, button { font: inherit; padding: 0.25rem 0.4rem; }
+  input, button, textarea { font: inherit; padding: 0.25rem 0.4rem; }
+  textarea { width: 100%; max-width: 48rem; }
 `;
 
 /** The case a page belongs to, and which surface it is. */
@@ -356,8 +357,21 @@ export function renderCase(input: {
     },
     ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
     body: `<h1>${escapeHtml(input.caseTitle)}</h1>
-     <p class="muted">Import canonical text with
-     <code>POST /api/cases/${escapeHtml(input.caseId)}/artifacts</code>.</p>
+     <p class="muted">A source is either operator-prepared text or a PDF the
+     product itself converts. The received PDF bytes are kept; the text is a
+     named derivative. Image-only and encrypted PDFs are refused.</p>
+     <h2>Import a PDF</h2>
+     <form method="post" action="/cases/${encodeURIComponent(input.caseId)}/artifacts" enctype="multipart/form-data">
+       <input name="title" placeholder="Title" required>
+       <input name="file" type="file" accept="application/pdf" required>
+       <button type="submit">Import PDF</button>
+     </form>
+     <h2>Import prepared text</h2>
+     <form method="post" action="/cases/${encodeURIComponent(input.caseId)}/artifacts">
+       <input name="title" placeholder="Title" required>
+       <textarea name="text" rows="6" cols="72" placeholder="Canonical UTF-8 text" required></textarea>
+       <button type="submit">Import text</button>
+     </form>
      <h2>Sources</h2>
      <table><thead><tr><th>Title</th><th>Size</th><th>Parts</th><th>Chains</th><th>Canonical</th></tr></thead>
      <tbody>${rows || '<tr><td colspan="5" class="muted">No sources imported.</td></tr>'}</tbody></table>

@@ -1139,6 +1139,19 @@ chain's ordered instances and appended membership decisions.
 HTML. A chain view reflects effective membership, so a reviewer's correction is
 visible where it was made. No read path re-derives anything.
 
+**V2 PDF import.** ADR-0050's class `stage-a-pdf-extracted-text/1` is
+implemented. The received PDF bytes are the L0 artifact: stored encrypted
+under the ADR-0037 envelope as an `original` representation with their own
+SHA-256. Canonical text is a named derivative produced by
+`@acme/adapter-evidence-v2-pdf` (`pdfjs-dist/6.2.108` plus assembly rule
+`pdfjs-text/1`), NFC, LF page separators, then structured and chained exactly
+once in the same import transaction. Existing text import
+(`stage-a-anonymized-judicial-text/1`) is unchanged. Import refuses, with a
+typed code and nothing persisted, when the bytes are not a PDF, the PDF is
+encrypted, the text is empty or below the per-page floor (image-only; OCR
+stays out), or either the file or the text exceeds the 64 MiB operational
+bound. A non-member receives 404; a write without CSRF is refused.
+
 **V2 claims.** `evidence-v2-claim/1` is a case-scoped named grouping target and
 `evidence-v2-claim-grouping/1` is the append-only decision that puts an
 occurrence in one or takes it out. `deriveEvidenceV2ClaimMemberships` folds the
