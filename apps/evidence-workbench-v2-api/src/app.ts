@@ -209,6 +209,31 @@ export function createEvidenceV2App(
    * Nothing here is stored. A stored completion flag would be a second source
    * of truth the decision log could contradict, and the log is the authority.
    */
+  /**
+   * Every occurrence of one instance, not just the page being rendered.
+   *
+   * Completion is a property of the instance; the page bound is a property of
+   * the display. Folding standing over one page reported an instance
+   * `reviewed` while the chain and the case still reported it pending — R-07
+   * in miniature, found by the ACME-0159 close-out run on a 27-occurrence
+   * instance with a page of 25.
+   */
+  async function allOccurrenceIds(
+    artifactId: string,
+    instanceKey: string,
+  ): Promise<readonly string[]> {
+    const ids: string[] = [];
+    for (let offset = 0; ; offset += 100) {
+      const page = await repository.listOccurrences(artifactId, instanceKey, {
+        offset,
+        limit: 100,
+      });
+      ids.push(...page.items.map((item) => item.occurrenceId));
+      if (ids.length >= page.total || page.items.length === 0) break;
+    }
+    return ids;
+  }
+
   async function instanceReview(
     artifactId: string,
     instanceKey: string,
@@ -227,6 +252,11 @@ export function createEvidenceV2App(
       instanceKey,
     );
     const standings = deriveEvidenceV2Standings(occurrenceIds, decisions);
+    // The rendered rows follow the page; completion follows the instance.
+    const complete = deriveEvidenceV2Standings(
+      await allOccurrenceIds(artifactId, instanceKey),
+      decisions,
+    );
     return {
       standings: new Map(standings.map((item) => [item.occurrenceId, item])),
       completion: deriveEvidenceV2InstanceCompletion({
@@ -234,7 +264,7 @@ export function createEvidenceV2App(
         hasCommittedWindow: windows.some(
           (window) => window.status === 'committed',
         ),
-        standings,
+        standings: complete,
       }),
       decisions,
     };
@@ -253,11 +283,6 @@ export function createEvidenceV2App(
     );
     const perInstance: EvidenceV2InstanceCompletion[] = [];
     for (const instanceKey of instanceKeys) {
-      const occurrences = await repository.listOccurrences(
-        artifactId,
-        instanceKey,
-        { offset: 0, limit: 100 },
-      );
       const decisions = await repository.listReviewDecisions(
         artifactId,
         instanceKey,
@@ -267,7 +292,7 @@ export function createEvidenceV2App(
           instanceKey,
           hasCommittedWindow: extracted.has(instanceKey),
           standings: deriveEvidenceV2Standings(
-            occurrences.items.map((item) => item.occurrenceId),
+            await allOccurrenceIds(artifactId, instanceKey),
             decisions,
           ),
         }),

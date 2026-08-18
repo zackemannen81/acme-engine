@@ -1166,6 +1166,13 @@ pending forever. `authoredBy` distinguishes the two provenances and is optional
 with a `model` default, so every occurrence written before reviewer authoring
 existed still parses and still means what it meant.
 
+Completion folds over every occurrence of an instance, never over the page
+being rendered. Folding over a page reported an instance `reviewed` while the
+chain and the case still reported it pending — 27 occurrences behind a page of
+25 — which is R-07 at small scale. Completion is a property of the instance and
+the page bound is a property of the display, and the two are computed
+separately for that reason.
+
 `deriveEvidenceV2InstanceCompletion` and `deriveEvidenceV2ChainCompletion`
 answer "markera beviskedjan som klar" by derivation. `not-extracted`,
 `pending-review` and `reviewed` stay distinct — an instance whose window

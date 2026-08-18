@@ -1,5 +1,61 @@
 # Journal
 
+## 2026-08-18 — ACME-0159 complete: review, standing, and one R-07 caught in the act
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0159, Complete. Archived to
+  `docs/finished/ACME-0159_v2-review-and-standing.md`.
+- Change: this closes the pause recorded earlier today. The operator authorized
+  the two planned model calls, which resolved the charter's own contradiction —
+  a gate demanding an extraction and an Out of Scope forbidding spend — in
+  favour of the gate. The contradiction was mine and stays in the record.
+- **The bounded run.** `instance-part-000381`: **2** planned, **2** spent, 70.2 s,
+  both windows committed with 19 and 7 occurrences. **0 of 27** quotes are
+  absent from their own source lines and **0** stated times are anything but a
+  calendar value. The ledger holds 2 calls, 2,438 input and 4,802 output tokens
+  under `gpt-5-2025-08-07`; both responses are retained AES-256-GCM under key id
+  `evidence-v2-ledger`, separate from the session key; provider cost is reported
+  **unknown, not zero**. Re-planning afterwards states **0** calls.
+- **The review journey over model-produced evidence.** 25 accepted, 1 rejected,
+  1 needing revision, 0 undecided. The instance moved `not-extracted` →
+  `pending-review` → `reviewed`. The chain reports 1 of 13 instances reviewed,
+  0 pending review, 12 not extracted, and is therefore **not** complete — which
+  is correct, and is why completion is derived rather than flagged.
+- **One defect, found by the run, in this task's own code.** The instance
+  surface reported `reviewed` while the chain and the case reported the same
+  instance pending. Instance completion was folded over the **rendered page**
+  rather than the instance: 27 occurrences, a page of 25, and the two beyond it
+  invisible to the fold. That is R-07 — reintroduced by the task whose Task
+  Summary names R-07 as the regression it is most able to reintroduce, and
+  caught only because the recorded run compared three surfaces instead of
+  trusting one.
+- The fix separates the two ideas that had been conflated: completion folds over
+  every occurrence of the instance, the rendered list stays bounded, and the
+  chain fold's identical latent bound (`limit: 100` as a cap, not a count) went
+  with it. A regression test builds an instance with more units than one page
+  and asserts a page of one and the whole instance report identical completion.
+  After the fix all three surfaces agree: instance 0 pending, chain 0 pending
+  review, case `instancesPendingReview` 0.
+- Worth stating plainly: the offline suite passed before the fix. 26 route tests
+  green, and the product still lied on one surface. The recorded run is what
+  found it, which is what proof rule 7 — "acceptance is about the product
+  journey, not green unit tests" — is for.
+- Verification: typecheck, lint, format, boundaries and docs (290 files) clean;
+  unit 893/893, up from 871, with 22 new tests — 13 over the fold and 9 over the
+  routes; conformance 78, integration 70, scenario 26; build and
+  `git diff --check` clean. `evidence-v2-persistence` 8/8; 43 of 45 on the
+  PostgreSQL gate, the two failures being the ones attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md), unchanged.
+- Standing: an occurrence is now accepted evidence or not, and the consensus
+  layer has the accepted set §2.4 requires it to compute from. Claims,
+  relations and consensus remain unbuilt; the degenerate chain subject label
+  stays [in the backlog](backlog/v2-degenerate-chain-subject.md), untouched as
+  this charter required.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next is ACME-0160
+  (claims) or ACME-0158 (PDF import).
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0159 paused: review and standing delivered, one gate unmet
 
 - Date: 2026-08-18

@@ -233,10 +233,27 @@ folds standing counts, and `standing` is gone from its unbuilt list — the firs
 entry ACME-0157's named-gap machinery has retired, and the compiler found every
 place that had to change.
 
-ACME-0159 is **paused, not complete**. Its frozen gate requires extracting one
-instance and its frozen Out of Scope forbids live model spend; both cannot
-hold. The planner states the cost without paying it — 2 bounded calls on
-`instance-part-000381` — and the decision to spend is the operator's.
+The operator authorized the bounded extraction that closed it. On
+`instance-part-000381`: **2** planned calls, **2** spent, 70.2 s, both windows
+committed with 19 and 7 occurrences, and **0 of 27** quotes absent from their
+own source lines, **0** non-calendar stated times. The ledger holds 2 calls,
+2,438 input and 4,802 output tokens under `gpt-5-2025-08-07`, both responses
+retained AES-256-GCM under a ledger key separate from the session key, provider
+cost reported as unknown rather than zero. Re-running the plan afterwards
+states **0** calls. Reviewing what it produced took the instance
+`not-extracted` → `pending-review` → `reviewed` at 25 accepted, 1 rejected, 1
+needing revision; the chain reports 1 of 13 reviewed and is therefore correctly
+**not** complete.
+
+That run found one defect, in this task's own code. The instance surface
+reported `reviewed` while the chain and the case reported the same instance
+pending, because instance completion was folded over the **rendered page** — 27
+occurrences, a page of 25 — rather than over the instance. R-07, reintroduced
+by the task whose charter names R-07 as the regression it is most able to
+reintroduce. Completion now folds over every occurrence while the rendered list
+stays bounded, the chain fold's identical latent bound went with it, and a
+regression test asserts that a page of one and the whole instance report the
+same completion. All three surfaces then agree.
 
 Remaining limitations: claims, relations and consensus projection do not exist. Extraction is Pass 1 with no neighbour context
 and no actor roster. Credentials still come from a development authenticator, so

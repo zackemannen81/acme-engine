@@ -5,8 +5,9 @@ Status: **Approved sequencing.** Both required decisions are taken:
 [ADR-0050](../adr/0050-evidence-v2-pdf-ingestion-boundary.md) opens the PDF
 ingestion boundary. Implementation is not thereby activated: each step still
 needs its own explicitly approved task and frozen charter. ACME-0156 is
-complete, as is ACME-0157. ACME-0159 is active: the operator reordered it
-ahead of ACME-0158 on 2026-08-18, recorded in §6.
+complete, as are ACME-0157 and ACME-0159 — the last reordered ahead of
+ACME-0158 by the operator on 2026-08-18, recorded in §6. ACME-0158 or
+ACME-0160 is next.
 Created: 2026-08-18
 Last updated: 2026-08-18
 Authority: [ADR-0047](../adr/0047-evidence-application-model-reset.md) and
@@ -261,7 +262,8 @@ nobody can act on. Nothing about ADR-0050 changes; only its position.
 
 ### ACME-0159 — Review, standing and human-authored occurrences
 
-**Status: active, charter frozen 2026-08-18.** Moved ahead of ACME-0158.
+**Status: complete 2026-08-18.** Moved ahead of ACME-0158. Archived as
+[`ACME-0159`](../finished/ACME-0159_v2-review-and-standing.md).
 
 - **Goal.** An occurrence stops being a bare candidate.
 - **Deliverable.** Append-only accept, reject, revise and move decisions with a

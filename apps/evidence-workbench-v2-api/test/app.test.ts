@@ -1051,6 +1051,91 @@ describe('evidence v2 api', () => {
     void caseId;
   });
 
+  it('computes completion over the instance, not over the rendered page', async () => {
+    // R-07, found by the ACME-0159 close-out run: a 27-occurrence instance
+    // with a page of 25 reported `reviewed` on its own page while the chain
+    // and the case still reported it pending. Completion is a property of the
+    // instance; the page bound is a property of the display.
+    const headers = await signIn('first@acme.local', 'first-secret');
+    const created = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Paging case', caseReference: 'T-PAGE' }),
+    });
+    const record = (await created.json()) as EvidenceV2CaseRecord;
+    // One hearing whose body holds several narrative sentences, so the
+    // instance has more citable units than one page will show.
+    const text = [
+      header('Ammouri, Hussein; 2004-10-19 15:40'),
+      block('Ammouri, Hussein', '2004-10-19', '15:40'),
+      'Hussein berättar om resan.',
+      'Han beskriver bilen som blå.',
+      'Han säger att de åkte på kvällen.',
+    ].join('\n');
+    const imported = await fetch(
+      `${base}/api/cases/${record.caseId}/artifacts`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ title: 'paging-source', text }),
+      },
+    );
+    const artifactId = ((await imported.json()) as { artifactId: string })
+      .artifactId;
+
+    const chains = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
+    ).json()) as { items: { chainId: string }[] };
+    const chainId = chains.items[0]?.chainId ?? '';
+    const detail = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains/${chainId}`, {
+        headers,
+      })
+    ).json()) as {
+      chain: { instances: { instanceKey: string; sourcePartIds: string[] }[] };
+    };
+    const instance = detail.chain.instances[0];
+    if (instance === undefined) throw new Error('expected an instance');
+    const path = `${base}/api/artifacts/${artifactId}/chains/${chainId}/instances/${instance.instanceKey}`;
+
+    const units: string[] = [];
+    for (const partId of instance.sourcePartIds) {
+      const part = (await (
+        await fetch(`${base}/api/artifacts/${artifactId}/parts/${partId}`, {
+          headers,
+        })
+      ).json()) as { part: { units: { unitId: string }[] } };
+      units.push(...part.part.units.map((item) => item.unitId));
+    }
+    expect(units.length).toBeGreaterThan(1);
+
+    for (const unitId of units.slice(0, 2))
+      await fetch(`${path}/occurrences`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ unitId, rationale: 'For the paging proof.' }),
+      });
+
+    // One occurrence per page. Whatever the page shows, completion must speak
+    // for the whole instance.
+    const firstPage = (await (
+      await fetch(`${path}/reviews?limit=1`, { headers })
+    ).json()) as {
+      standings: unknown[];
+      completion: { occurrenceCount: number };
+    };
+    expect(firstPage.standings).toHaveLength(1);
+    expect(firstPage.completion.occurrenceCount).toBe(2);
+
+    const whole = (await (
+      await fetch(`${path}/reviews`, { headers })
+    ).json()) as {
+      completion: { occurrenceCount: number };
+    };
+    expect(whole.completion.occurrenceCount).toBe(2);
+    expect(firstPage.completion).toEqual(whole.completion);
+  });
+
   it('no longer reports standing as an unbuilt surface', async () => {
     const { caseId, headers } = await seed();
     const overview = (await (
