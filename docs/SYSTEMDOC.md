@@ -1184,6 +1184,13 @@ An occurrence is canonical evidence under the authority ladder, not accepted
 evidence: review and standing do not exist yet, and neither do claims, relations
 or consensus projection.
 
+The recorded live run that first measured those engine properties — planned 2,
+spent 2, re-run 0, 27 occurrences, payloads encrypted under a ledger key
+separate from the session key — is packaged as
+[the POC #1 reusable-execution proof](acceptance/poc-1-reusable-execution-proof.md).
+That document is a scoped execution-reuse claim, not V1 acceptance and not the
+close of ADR-0047 §9.
+
 The POC is a corpus-bound, non-adjudicative review product. It canonically
 records source-bound observations and explicit domain decisions, not real-
 world or legal truth. Its authority ladder separates immutable source artifact

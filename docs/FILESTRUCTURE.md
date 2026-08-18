@@ -807,10 +807,13 @@ acme-engine/
 │   │   ├── ACME-0152_v2-persistence-and-surfaces.md
 │   │   ├── ACME-0153_v2-authentication-and-authorization.md
 │   │   ├── ACME-0154_v2-observation-occurrence.md
+│   │   ├── ACME-0155_poc-1-reusable-execution-proof.md
 │   │   └── README.md
 │   ├── hrd/
 │   │   ├── README.md
-│   │   └── (Swedish PDF and PNG explanatory artifacts)
+│   │   ├── openAI_log.md
+│   │   ├── openAI_runtime-jobs.png
+│   │   └── desktop.ini
 │   ├── paused/
 │   │   └── README.md
 │   ├── presentations/
@@ -819,7 +822,8 @@ acme-engine/
 │   ├── acceptance/
 │   │   ├── ACME-0133-frozen-acceptance-report.md
 │   │   ├── ACME-0136-frozen-acceptance-report.md
-│   │   └── ACME-0136-post-freeze-comparison.md
+│   │   ├── ACME-0136-post-freeze-comparison.md
+│   │   └── poc-1-reusable-execution-proof.md
 │   ├── CONTRIBUTING.md
 │   ├── CURRENT_STATUS.md
 │   ├── CURRENT_TASK.md

@@ -112,6 +112,14 @@ the session key; provider cost was reported as unknown, not zero. Re-running the
 same instance planned **0** calls, spent 0, and left the ledger at 2. The
 instance page renders all 27.
 
+That run is the first measured proof that an application can compose ACME
+and receive bounded execution, persist, resume, retention and cost control
+without inventing them. The scoped claim, the tests, and the account of
+where `packages/core` was and was not adapted are in
+[the POC #1 reusable-execution proof](acceptance/poc-1-reusable-execution-proof.md).
+It is not V1 acceptance of the V2 application and not the close of
+ADR-0047 §9.
+
 Four defects were found only by that run: a structured-output schema name
 containing `/`, an unsupported `temperature`, a model-typed temporal bound the
 model could not fill, and — the one that reached the record — the Swedish word

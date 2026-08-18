@@ -1,5 +1,37 @@
 # Journal
 
+## 2026-08-17 — ACME-0155: POC #1 reusable-execution proof packaged
+
+- Date: 2026-08-17
+- Author: Grok
+- Task: ACME-0155, Complete. Archived to
+  `docs/finished/ACME-0155_poc-1-reusable-execution-proof.md`.
+- Change: packaged the ACME-0154 recorded live run as a scoped open-source
+  proof in
+  [docs/acceptance/poc-1-reusable-execution-proof.md](acceptance/poc-1-reusable-execution-proof.md).
+  The claim is that Evidence Workbench POC #1 is the first concrete proof ACME
+  delivers reusable execution value — bounded execution, persisted state,
+  idempotent resume, encrypted payload retention, provider-cost control — to
+  an application built on top of it. The document lists the measured numbers,
+  links ADR-0048 and the tests that pin each property, and records what is
+  still unproven.
+- **Core adaptation, verified against the tree.** After ADR-0047 acceptance,
+  `packages/core` has an empty change set through HEAD. The last core commit
+  is `f40264a` (bounded repair, ADR-0045 §5), before the V2 application work,
+  and it is domain-neutral: the contract authors the repair, core only
+  budgets it. Domain-specific fixes from the live run — schema name, no
+  `temperature`, product-typed time, calendar-only `statedTime`, ledger key
+  separate from the session key — all live outside core.
+- **HRD files are old V1 artifacts.** `docs/hrd/openAI_log.md` and
+  `openAI_runtime-jobs.png` are leftover frozen-workbench provider output,
+  not the V2 two-call run. Confirmed after packaging; the proof does not
+  cite them. The catalog is in `docs/hrd/README.md`.
+- Verification: documentation-only. `pnpm docs:check`, format check and
+  `git diff --check` run with this change. No application code.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next work is
+  still review and standing over occurrences, unchanged from ACME-0154.
+- Signature: Grok
+
 ## 2026-08-17 — ACME-0154 complete: the first V2 evidence, from the real binder
 
 - Date: 2026-08-17
