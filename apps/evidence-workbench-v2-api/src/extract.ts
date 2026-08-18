@@ -64,9 +64,16 @@ export interface EvidenceV2ExtractOutcome {
   readonly complete: boolean;
 }
 
-/** The engine ledger, plus the snapshot read the projection step needs. */
+/**
+ * The engine ledger, plus the snapshot read the projection step needs.
+ *
+ * The snapshot may be synchronous or asynchronous: the PostgreSQL repository
+ * returns a promise and the in-memory one returns a value, both call sites
+ * await it, and requiring a promise here only forced one adapter to describe
+ * itself inaccurately.
+ */
 export type EvidenceV2Ledger = ExecutionRepository & {
-  snapshot(): Promise<RepositoryEvidence>;
+  snapshot(): RepositoryEvidence | Promise<RepositoryEvidence>;
 };
 
 export interface EvidenceV2ExtractorOptions {

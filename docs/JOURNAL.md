@@ -1,5 +1,91 @@
 # Journal
 
+## 2026-08-18 — ACME-0156: the V2 workbench runs on the installed Supabase
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0156, Complete. Archived to
+  `docs/finished/ACME-0156_v2-supabase-substrate.md`.
+- Change: the V2 application has a substrate. `startFromEnvironment` in
+  `apps/evidence-workbench-v2-api/src/start.ts` reads configuration from
+  environment variables and mounted secret files, migrates `evidence_v2`,
+  `evidence_v2_identity` and `acme_v2_ledger` against the installed self-hosted
+  Supabase instance through the Supavisor **session** pooler, and stores
+  encrypted canonical text in a private Supabase Storage bucket through the
+  unchanged ADR-0037 S3 port. `tooling/supabase/provision-v2-bucket.mjs`
+  provisions the bucket as an operator step. The run procedure and every
+  recorded number are in [the runbook](ops/evidence-v2-supabase.md).
+- **Two decisions were taken first**, both approved by the operator:
+  [ADR-0049](adr/0049-evidence-v2-surface-set.md) adds `Global: Timeline` to the
+  §6 surface set, confirms the case-status surface is the case overview,
+  constrains the relations surface to a bounded list rather than a graph, and
+  represents persons by chain subject with the null-actor rule untouched;
+  [ADR-0050](adr/0050-evidence-v2-pdf-ingestion-boundary.md) opens
+  `stage-a-pdf-extracted-text/1`, making the received PDF bytes the L0 artifact
+  and canonical text a pinned, versioned, determinism-gated derivative, with
+  image-only and encrypted PDFs refused fail-closed and OCR still out. Neither
+  is implemented; they unblock ACME-0157/0161/0162 and ACME-0158 respectively.
+  The sequencing is in
+  [the interface plan](design/evidence-workbench-v2-interface-plan.md).
+- **Recorded run**, real `source-A` (1,915 pages), text prepared outside the
+  product with `pypdf 6.10.0; default; LF-page-separator/1` — which reproduced
+  the 74,469-line canonical text exactly, SHA-256 `d9113164…b53f2d`. Import took
+  **1,603 ms** and persisted **650 parts and 351 chains**, the same figures
+  ACME-0150 and ACME-0151 measured offline. The stored object is 3,521,477 bytes
+  of ciphertext in which the source's own first-line marker appears **0** times.
+  After a full process restart every read came from PostgreSQL with canonical
+  SHA-256 and all three counts identical, in **261 ms** across five surfaces,
+  and the Hussein chain still showed **13** instances in body-date order with
+  two of them spanning several parts. A second principal received **404 on all
+  three case-scoped routes** and an empty case list; an unauthenticated request
+  got 401.
+- **Browser isolation was measured, not assumed.** PostgREST exposes
+  `public,storage,graphql_public`; both the anonymous **and** the service-role
+  key receive `PGRST205` on the V2 tables, so the schema is not exposed at all
+  rather than merely policy-protected. The anon key cannot fetch the artifact
+  object. The gate's own `anonymous role is denied against acme and evidence
+  schemas` passes.
+- **The transaction pooler is refused before the first migration**, with the
+  reason named: ACME commits at an expected revision with compare-and-swap and
+  holds one connection across a transaction, which port 6543 cannot provide.
+  Verified by pointing a configuration at it and reading the refusal.
+- **One substrate finding worth an hour to anyone who meets it.** An S3 request
+  signed against `127.0.0.1:8000` fails `SignatureDoesNotMatch` while the
+  identical request signed against `localhost:8000` succeeds, because Supabase
+  Storage rebuilds the canonical `Host` header from `STORAGE_PUBLIC_URL` instead
+  of from the header it received. Found by reading
+  `storage/protocols/s3/signature-v4.js` in the running container after five
+  signing variants all failed identically. It is a configuration rule;
+  `@acme/adapter-evidence-artifact-s3` was used unchanged.
+- **Three pre-existing gate failures were found by this task's gate run and
+  fixed**, none in product behaviour: the V2 ledger type required `snapshot()`
+  to return a promise, which the in-memory repository does not and both call
+  sites already `await`, so the type now describes both adapters; the app test's
+  stand-in repository never gained the four extraction methods ACME-0154 added
+  to the port; and `pnpm lint` failed on a file in the gitignored `tmp/`
+  scratch directory, so `tmp/`, `.tmp/` and `.local/` are now ESLint-ignored and
+  the lint gate no longer depends on operator scratch.
+- Verification: typecheck, lint, format, boundaries and docs (287 files) clean;
+  unit 866/866, conformance 78, integration 70, scenario 26; build and
+  `git diff --check` clean. `pnpm test:postgres` against the Supabase database:
+  42 of 43 pass, `evidence-v2-persistence` 6/6, and the single failure is the
+  stage-A resume test attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md), whose second recorded
+  failure did not occur because this `acme` schema was empty — exactly the
+  "reused database" condition that entry describes.
+- Honest notes: the deployment holds **2** cases, one of which is the empty case
+  from the failed first import attempt before the endpoint host was corrected.
+  It was left in place rather than repaired. Credentials still come from a
+  development authenticator reading a mounted accounts file; wiring the running
+  Supabase Auth is ACME-0163. The server binds to loopback and nothing is
+  exposed remotely. The live capability is configured, which migrates the ledger
+  schema and makes the extraction route available, but **no provider call was
+  made and nothing was spent** — extraction was out of this charter's scope.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. The next step in the
+  plan is ACME-0157, the interface 2.0 shell and case-status surface, which
+  ADR-0049 now authorizes.
+- Signature: Claude
+
 ## 2026-08-17 — ACME-0155: POC #1 reusable-execution proof packaged
 
 - Date: 2026-08-17

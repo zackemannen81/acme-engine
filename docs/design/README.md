@@ -60,6 +60,15 @@ Application surfaces:
   decided by ADR-0046 and inherits the product definition's authority ladder and
   immutable boundaries unchanged. Implementation is not activated by it.
 
+- [`evidence-workbench-v2-interface-plan.md`](evidence-workbench-v2-interface-plan.md)
+  — proposed sequencing for the Evidence Workbench 2.0 interface request:
+  substrate activation on the running self-hosted Supabase (ACME-0156), the
+  workbench shell and case status (ACME-0157), PDF import (ACME-0158), review
+  and standing (ACME-0159), claims (ACME-0160), relations and instance
+  comparison (ACME-0161) and the global timeline plus consensus (ACME-0162).
+  Not activated. Two steps require decisions that do not exist yet: the V2
+  surface set and the PDF ingestion boundary.
+
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and
   continued through ACME-0053: the gate freezes are accepted in

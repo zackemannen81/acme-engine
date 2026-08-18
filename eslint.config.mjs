@@ -9,6 +9,11 @@ export default defineConfig(
       '**/dist/**',
       '**/node_modules/**',
       'coverage/**',
+      // Operator scratch space. It is gitignored, so the lint gate must not
+      // depend on whatever happens to be sitting in it.
+      'tmp/**',
+      '.tmp/**',
+      '.local/**',
       'tooling/boundaries/fixtures/**',
     ],
   },

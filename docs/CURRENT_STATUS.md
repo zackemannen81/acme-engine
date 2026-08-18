@@ -129,6 +129,47 @@ reference becomes `null` while the unit's own words stay verbatim. A fifth was
 found by reading the composition root: the ledger's retained payloads were keyed
 with the session key, and now have a key of their own. Each has an offline test.
 
+ACME-0156 put that application on a persistent substrate for the first time.
+Every earlier V2 run used a throwaway database and bucket, because acceptance
+proof rule 1 requires a clean substrate per proof run. The workbench now starts
+from environment and mounted secret files against the installed self-hosted
+Supabase instance: `startFromEnvironment` migrates `evidence_v2`,
+`evidence_v2_identity` and `acme_v2_ledger` through the Supavisor **session**
+pooler, refusing the transaction pooler on port 6543 before the first migration
+because compare-and-swap needs a session-scoped connection, and stores encrypted
+canonical text in a private Supabase Storage bucket through the existing
+ADR-0037 S3 port.
+
+Recorded on that instance with the real binder: import in 1,603 ms; 74,469
+lines, 650 parts and 351 chains persisted; the stored object is 3,521,477 bytes
+of ciphertext in which the source's own first-line marker appears zero times.
+After a full process restart every read comes from PostgreSQL — canonical
+SHA-256, line, part and chain counts identical — in 261 ms across five surfaces,
+and the Hussein chain still shows its 13 instances in body-date order with two
+of them spanning several parts. A second principal receives 404 on all three
+case-scoped routes and an empty case list; an unauthenticated request gets 401.
+Browser isolation is measured rather than assumed: PostgREST exposes
+`public,storage,graphql_public` only, and both the anonymous and the
+service-role key receive `PGRST205` on the V2 tables, so the schema is not
+exposed at all rather than merely protected by a policy.
+
+One finding is worth carrying forward because it costs an hour to rediscover:
+Supabase Storage rebuilds the canonical `Host` header from `STORAGE_PUBLIC_URL`
+rather than from the header it received, so an S3 request signed against
+`127.0.0.1:8000` fails `SignatureDoesNotMatch` while the identical request
+signed against `localhost:8000` succeeds. It is a configuration rule, not an
+adapter defect; `@acme/adapter-evidence-artifact-s3` was used unchanged. The
+run procedure, the required variables and every recorded number are in
+[the V2 Supabase runbook](ops/evidence-v2-supabase.md).
+
+Two pre-existing gate failures were found by that run and fixed, both in
+ACME-0154's own test surface and neither in product behaviour: the V2 ledger
+type required `snapshot()` to return a promise, which the in-memory repository
+does not, and the app test's stand-in repository never gained the four
+extraction methods the port added. `pnpm lint` also failed on a file in the
+gitignored `tmp/` scratch directory, so `tmp/`, `.tmp/` and `.local/` are now
+ignored by ESLint and the lint gate no longer depends on operator scratch.
+
 Remaining limitations: an occurrence is canonical evidence, not accepted
 evidence — review and standing do not exist yet, and neither do claims,
 relations or consensus projection. Extraction is Pass 1 with no neighbour context

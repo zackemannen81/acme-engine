@@ -1139,6 +1139,33 @@ chain's ordered instances and appended membership decisions.
 HTML. A chain view reflects effective membership, so a reviewer's correction is
 visible where it was made. No read path re-derives anything.
 
+**V2 deployment on self-hosted Supabase.** `startFromEnvironment` in
+`apps/evidence-workbench-v2-api/src/start.ts` is the operator entry point.
+Configuration is environment variables and mounted secret files only: nothing is
+read from the repository, and no default generates a key, because a generated
+key would silently make existing encrypted objects unreadable. It refuses a
+connection string pointing at Supavisor's transaction pooler on port 6543 before
+the first migration runs — ACME commits at an expected revision with
+compare-and-swap and holds one connection across a transaction's statements,
+which transaction pooling cannot provide — and it names the reason rather than
+failing later under contention. The live model capability is opt-in and
+conjunctive: no model and no key means no extractor, and the extraction route
+answers 501 rather than degrading. Configuring the capability also migrates the
+ledger schema; it spends nothing by itself. The startup summary is content-free
+by construction, naming schemas, port, bucket and model and never a credential,
+a case or a source line.
+
+Two substrate rules are properties of the platform rather than of this code, and
+both are recorded in [the runbook](ops/evidence-v2-supabase.md). The object-store
+endpoint host must be spelled exactly as `STORAGE_PUBLIC_URL` spells it, because
+Supabase Storage rebuilds the canonical `Host` header from that setting instead
+of from the header it received; the shared S3 adapter needed no change. And
+bucket provisioning is an operator script
+(`tooling/supabase/provision-v2-bucket.mjs`), not a startup side effect: the
+object-store port creates objects, never containers, so a running product cannot
+invent storage it was not given. The script is idempotent and refuses a public
+bucket.
+
 **V2 authentication and authorization.** ACME-0153 wired the shared identity
 machinery in without adding a model. `@acme/adapter-evidence-auth-postgres`
 persists principals, organization and case memberships and sessions in their own

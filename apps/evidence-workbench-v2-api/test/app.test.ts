@@ -9,7 +9,9 @@ import {
   type EvidenceV2ChainDecision,
   type EvidenceV2ChainMembership,
   type EvidenceV2ChainSummary,
+  type EvidenceV2ExtractionWindowState,
   type EvidenceV2ImportWrite,
+  type EvidenceV2Occurrence,
   type EvidenceV2Page,
   type EvidenceV2PageRequest,
   type EvidenceV2Repository,
@@ -44,6 +46,8 @@ function memoryRepository(): EvidenceV2Repository & {
   const structures = new Map<string, readonly EvidenceV2SourcePart[]>();
   const proposals = new Map<string, EvidenceV2ChainProposal>();
   const decisions = new Map<string, EvidenceV2ChainDecision[]>();
+  const occurrences = new Map<string, EvidenceV2Occurrence[]>();
+  const windows = new Map<string, EvidenceV2ExtractionWindowState[]>();
   const derivationCalls = { count: 0 };
 
   const paged = <T>(
@@ -146,6 +150,30 @@ function memoryRepository(): EvidenceV2Repository & {
     },
     async listChainDecisions(artifactId) {
       return decisions.get(artifactId) ?? [];
+    },
+    // Extraction storage. These route tests run without a live capability, so
+    // the app answers 501 before reaching them; they are held here so the
+    // stand-in implements the whole port rather than the half it happens to
+    // use.
+    async putOccurrences(artifactId, instanceKey, written) {
+      const key = `${artifactId}/${instanceKey}`;
+      occurrences.set(key, [...(occurrences.get(key) ?? []), ...written]);
+    },
+    async listOccurrences(artifactId, instanceKey, request) {
+      return paged(
+        occurrences.get(`${artifactId}/${instanceKey}`) ?? [],
+        request,
+      );
+    },
+    async putExtractionWindow(state) {
+      const key = `${state.artifactId}/${state.instanceKey}`;
+      const held = (windows.get(key) ?? []).filter(
+        (item) => item.windowId !== state.windowId,
+      );
+      windows.set(key, [...held, state]);
+    },
+    async readExtractionWindows(artifactId, instanceKey) {
+      return windows.get(`${artifactId}/${instanceKey}`) ?? [];
     },
   };
 }

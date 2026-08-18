@@ -33,6 +33,12 @@ one. With ACME-0154 applied, on a clean database, 1 failure of 43 — still the
 stage-A resume, while the six new `evidence-v2-persistence` tests pass. The V2
 work changes neither test.
 
+ACME-0156 ran the gate against the self-hosted Supabase database, whose `acme`
+schema was empty: 1 failure of 43, the stage-A resume again. The restart
+collision did not occur, which is the second failure's "reused database"
+condition behaving exactly as described here. `evidence-v2-persistence` passed
+6/6 and `anonymous role is denied against acme and evidence schemas` passed.
+
 ## Proposed outcome
 
 - The restart test provisions its own schema, or derives its command keys per

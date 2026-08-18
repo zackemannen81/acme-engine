@@ -83,3 +83,5 @@ current architecture.
 - [`0046-source-chronology-and-claim-projection.md`](0046-source-chronology-and-claim-projection.md)
 - [`0047-evidence-application-model-reset.md`](0047-evidence-application-model-reset.md)
 - [`0048-evidence-v2-observe-contract.md`](0048-evidence-v2-observe-contract.md)
+- [`0049-evidence-v2-surface-set.md`](0049-evidence-v2-surface-set.md)
+- [`0050-evidence-v2-pdf-ingestion-boundary.md`](0050-evidence-v2-pdf-ingestion-boundary.md)

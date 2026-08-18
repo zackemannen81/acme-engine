@@ -37,7 +37,7 @@ acme-engine/
 │   ├── evidence-workbench-v2-api/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{app.ts,artifact-store.ts,auth.ts,extract.ts,index.ts,local.ts}
+│   │   ├── src/{app.ts,artifact-store.ts,auth.ts,extract.ts,index.ts,local.ts,start.ts}
 │   │   └── test/{app.test.ts,extract.test.ts}
 │   ├── evidence-workbench-v2-web/
 │   │   ├── package.json
@@ -546,11 +546,14 @@ acme-engine/
 │   │   └── check-docs.mjs
 │   ├── postgres/
 │   │   └── run-postgres-tests.mjs
+│   ├── supabase/
+│   │   └── provision-v2-bucket.mjs
 │   └── typescript/
 │       └── tsconfig.base.json
 ├── docs/
 │   ├── ops/
 │   │   ├── evidence-artifact-operations.md
+│   │   ├── evidence-v2-supabase.md
 │   │   ├── hosted-shell.md
 │   │   └── postgresql-operations.md
 │   ├── adr/
@@ -940,6 +943,9 @@ content remains intentionally omitted here.
   engine with the V2 module to plan and run one chain instance's observation
   windows, committing and projecting each window on its own and resuming without
   re-sending a paid one.
+  `src/start.ts` is the operator entry point: it reads configuration from
+  environment variables and mounted secret files, refuses the Supavisor
+  transaction pooler on port 6543, and prints a content-free startup summary.
 - `apps/evidence-workbench-v2-web`: plain server-rendered HTML for sign-in and
   for Case → Source → Chain → Instance, the instance page showing its extraction
   plan, per-window state and bounded occurrence list.
@@ -1075,6 +1081,9 @@ content remains intentionally omitted here.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
 - `tooling/docs/`: internal Markdown link and fence verification.
+- `tooling/supabase/`: idempotent provisioning of the private V2 artifact
+  bucket on a self-hosted Supabase Storage instance. An operator step, not a
+  product one: the object-store port creates objects, never containers.
 - `.github/workflows/ci.yml`: secret-free mirror of local verification gates.
 
 ## Planned Structure
