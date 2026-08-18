@@ -1,5 +1,60 @@
 # Journal
 
+## 2026-08-18 — ACME-0160: claims, and the first object that reaches across sources
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0160, Complete. Archived to
+  `docs/finished/ACME-0160_v2-claims.md`.
+- Change: `evidence-v2-claim/1` is a named grouping target and
+  `evidence-v2-claim-grouping/1` the append-only decision behind it.
+  Membership folds on read and `projectEvidenceV2Claim` is J5 — deterministic,
+  recomputed per read, no model and no spend. Migration 4 applied to the live
+  database.
+- **The invariant is the feature.** A claim never merges, never absorbs and
+  never owns. There is no foreign key from an occurrence to a claim, only
+  decisions pointing the other way. Two occurrences quoting identical words
+  stay two contributors with their own locators, which a test pins directly.
+  Excluding one removes it from that claim and from nowhere else: the
+  occurrence, its standing, its source and the superseded inclusion are all
+  untouched. An emptied claim says it is empty rather than reading as an
+  assertion with nothing behind it.
+- The projection reports each contributor's **own** standing rather than a
+  claim-level state, and a rejected contributor stays visible — hiding it would
+  make the group look cleaner than the evidence is. It carries no score,
+  weight, confidence, rank or verdict; a test asserts those keys are absent,
+  because what grouped evidence adds up to is the consensus projection's
+  question and a claim that scored itself would pre-empt it.
+- **Recorded run**, spending nothing: a claim grouping 3 model-produced
+  occurrences and 1 reviewer-authored one from a second instance reported **4
+  contributors across 2 instances**, `crossInstance: true`, with 2 accepted, 1
+  rejected and 1 needing revision. Excluding one left 3 contributors, all 5
+  grouping decisions in the log with the exclusion naming what it superseded,
+  and the occurrence still in its instance of 27. Cross-case grouping is
+  refused 404 — disclosure control, not validation. Second principal 404,
+  unauthenticated 401, missing CSRF 401. The ledger held **2 calls before and 2
+  after**.
+- `claims` is gone from the status surface's unbuilt list, leaving timeline,
+  relations and consensus. Second gap retired by the ACME-0157 machinery, and
+  it again failed two older tests that asserted the gap was there — which is
+  the mechanism working, not breaking.
+- Three assertions were corrected and none of them was the code. Two were the
+  stale gap assertions above. The third was mine: I asserted an exclusion
+  records `supersedes: null`, when an exclusion should name the inclusion it
+  replaces. That is now the assertion.
+- Verification: typecheck, lint, format, boundaries and docs (291 files) clean;
+  unit 911/911, up from 893, with 18 new tests — 12 over the fold and the
+  projection, 6 over the routes; conformance 78, integration 70, scenario 26;
+  build and `git diff --check` clean. `evidence-v2-persistence` **9/9**; 44 of
+  46 on the PostgreSQL gate, the two failures being the ones attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md), unchanged.
+- Standing: consensus now has one of the two inputs §2.4 names. Relations are
+  the other, and are unbuilt. The degenerate chain subject label stays
+  [in the backlog](backlog/v2-degenerate-chain-subject.md), untouched.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Next is ACME-0161
+  (relations and instance comparison) or ACME-0158 (PDF import).
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0159 complete: review, standing, and one R-07 caught in the act
 
 - Date: 2026-08-18

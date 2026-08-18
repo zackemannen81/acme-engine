@@ -12,6 +12,8 @@ import type {
   EvidenceArtifactRepresentation,
 } from '@acme/evidence-artifacts';
 import type {
+  EvidenceV2Claim,
+  EvidenceV2ClaimGroupingDecision,
   EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
   EvidenceV2ReviewDecision,
@@ -24,6 +26,8 @@ import type {
 } from '@acme/module-evidence-v2';
 
 export type {
+  EvidenceV2Claim,
+  EvidenceV2ClaimGroupingDecision,
   EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
   EvidenceV2ReviewDecision,
@@ -148,6 +152,7 @@ export const EVIDENCE_V2_SURFACES = [
   { id: 'case', label: 'Case', state: 'available' },
   { id: 'documents', label: 'Documents', state: 'available' },
   { id: 'chains', label: 'Chains', state: 'available' },
+  { id: 'claims', label: 'Claims', state: 'available' },
   { id: 'timeline', label: 'Timeline', state: 'not-implemented' },
   { id: 'relations', label: 'Relations', state: 'not-implemented' },
   { id: 'status', label: 'Status', state: 'available' },
@@ -169,10 +174,7 @@ export interface EvidenceV2SurfaceGap {
 }
 
 export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
-  Record<
-    'timeline' | 'relations' | 'claims' | 'consensus',
-    EvidenceV2SurfaceGap
-  >
+  Record<'timeline' | 'relations' | 'consensus', EvidenceV2SurfaceGap>
 > = {
   timeline: {
     state: 'not-implemented',
@@ -183,11 +185,6 @@ export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
     state: 'not-implemented',
     reason: 'Typed relations between occurrences and claims are not built.',
     deliveredBy: 'ACME-0161',
-  },
-  claims: {
-    state: 'not-implemented',
-    reason: 'Claim grouping over occurrences is not built.',
-    deliveredBy: 'ACME-0160',
   },
   consensus: {
     state: 'not-implemented',
@@ -225,6 +222,11 @@ export interface EvidenceV2CaseOverview {
     readonly rejected: number;
     readonly needsRevision: number;
     readonly reviewerAuthored: number;
+    /** Claims, and how much evidence they currently group. */
+    readonly claims: number;
+    readonly claimGroupingDecisions: number;
+    readonly groupedOccurrences: number;
+    readonly crossInstanceClaims: number;
   };
   /** Instances with no committed extraction window. Work, not evidence. */
   readonly instancesWithoutExtraction: number;
@@ -336,6 +338,26 @@ export interface EvidenceV2Repository {
   ): Promise<readonly EvidenceV2ReviewDecision[]>;
   /** Which instances of one artifact hold a committed window. */
   readExtractedInstanceKeys(artifactId: string): Promise<readonly string[]>;
+
+  createClaim(claim: EvidenceV2Claim): Promise<void>;
+  listClaims(
+    caseId: string,
+    page: EvidenceV2PageRequest,
+  ): Promise<EvidenceV2Page<EvidenceV2Claim>>;
+  readClaim(claimId: string): Promise<EvidenceV2Claim | undefined>;
+  /** Append-only, exactly as review decisions are. */
+  appendClaimGrouping(decision: EvidenceV2ClaimGroupingDecision): Promise<void>;
+  listClaimGroupings(
+    claimId: string,
+  ): Promise<readonly EvidenceV2ClaimGroupingDecision[]>;
+  /** Which claims one occurrence currently belongs to. */
+  readOccurrenceClaimIds(
+    occurrenceId: string,
+  ): Promise<readonly EvidenceV2ClaimGroupingDecision[]>;
+  /** The occurrences named by a set of ids, for the claim projection. */
+  readOccurrencesById(
+    ids: readonly string[],
+  ): Promise<readonly EvidenceV2Occurrence[]>;
 
   /**
    * The case overview projection. One read, aggregate queries, no structure

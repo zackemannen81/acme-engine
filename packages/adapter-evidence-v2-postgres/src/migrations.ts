@@ -172,5 +172,41 @@ export function buildEvidenceV2Migrations(
            ADD COLUMN authored_by text NOT NULL DEFAULT 'model'`,
       ]),
     }),
+    Object.freeze({
+      version: 4,
+      name: 'evidence-v2-claims',
+      statements: Object.freeze([
+        `CREATE TABLE ${s}.claims (
+          claim_id text PRIMARY KEY,
+          case_id text NOT NULL REFERENCES ${s}.cases(case_id),
+          label text NOT NULL,
+          created_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX claims_by_case ON ${s}.claims (case_id, created_at)`,
+        // Append-only, like every other decision log in this schema. A claim
+        // never owns an occurrence, so there is no foreign key from an
+        // occurrence to a claim — only decisions pointing the other way.
+        `CREATE TABLE ${s}.claim_groupings (
+          claim_id text NOT NULL REFERENCES ${s}.claims(claim_id),
+          decision_id text NOT NULL,
+          appended_seq bigserial NOT NULL,
+          case_id text NOT NULL,
+          artifact_id text NOT NULL,
+          instance_key text NOT NULL,
+          occurrence_id text NOT NULL,
+          action text NOT NULL,
+          supersedes text,
+          principal text NOT NULL,
+          decided_at text NOT NULL,
+          decision_json text NOT NULL,
+          PRIMARY KEY (claim_id, decision_id)
+        )`,
+        `CREATE INDEX claim_groupings_by_claim
+           ON ${s}.claim_groupings (claim_id, appended_seq)`,
+        `CREATE INDEX claim_groupings_by_occurrence
+           ON ${s}.claim_groupings (occurrence_id, appended_seq)`,
+      ]),
+    }),
   ]);
 }

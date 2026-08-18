@@ -255,7 +255,37 @@ stays bounded, the chain fold's identical latent bound went with it, and a
 regression test asserts that a page of one and the whole instance report the
 same completion. All three surfaces then agree.
 
-Remaining limitations: claims, relations and consensus projection do not exist. Extraction is Pass 1 with no neighbour context
+ACME-0160 added the first object that reaches across instances.
+`evidence-v2-claim/1` is a named grouping target and
+`evidence-v2-claim-grouping/1` is the append-only decision behind it; effective
+membership is folded on read, and the J5 projection over it is deterministic,
+recomputed per read and spends nothing.
+
+The invariant that makes a claim safe is the one that makes it useful: it
+**never merges, never absorbs and never owns**. Two occurrences quoting the
+same words stay two contributors with their own locators — a test pins exactly
+that — and excluding one removes it from the claim and from nowhere else. The
+occurrence, its standing and its source are untouched, and the superseded
+inclusion stays in the log. An emptied claim states that it is empty rather
+than reading as an assertion with nothing behind it. A claim carries no score,
+weight, confidence or verdict; what grouped evidence adds up to is the
+consensus projection's question.
+
+Recorded on the live case, spending nothing: a claim grouping 3 model-produced
+occurrences and 1 reviewer-authored one from a second instance reports **4
+contributors across 2 instances**, `crossInstance: true`, with 2 accepted, 1
+rejected and 1 needing revision — each standing reported rather than flattened,
+and the rejected contributor left visible. Excluding one left 3 contributors,
+all 5 grouping decisions in the log, and the occurrence still in its instance
+of 27. The ledger held **2 calls before and 2 after**. Cross-case grouping is
+refused with 404, which is disclosure control rather than validation.
+
+`claims` is gone from the status surface's unbuilt list, leaving timeline,
+relations and consensus. That is the second gap the ACME-0157 machinery has
+retired.
+
+Remaining limitations: relations and consensus projection do not exist, and the
+timeline surface still reports its own condition. Extraction is Pass 1 with no neighbour context
 and no actor roster. Credentials still come from a development authenticator, so
 a real upstream identity provider is unwired. `pnpm test:postgres` has two
 pre-existing frozen-app failures unrelated to the V2 work, recorded in

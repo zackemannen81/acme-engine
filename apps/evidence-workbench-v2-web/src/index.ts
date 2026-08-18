@@ -854,6 +854,190 @@ export function renderChainSourceChoice(input: {
   });
 }
 
+export interface EvidenceV2ClaimRow {
+  readonly claimId: string;
+  readonly label: string;
+  readonly statement: string;
+  readonly contributorCount: number;
+  readonly distinctInstances: number;
+  readonly crossInstance: boolean;
+  readonly accepted: number;
+  readonly pending: number;
+  readonly empty: boolean;
+}
+
+/**
+ * The claims of one case.
+ *
+ * Counts of what each claim currently groups, and how widely. No score, no
+ * ranking and no ordering by "strength": how much evidence a claim gathers is
+ * not a statement about whether it holds.
+ */
+export function renderClaims(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly claims: EvidenceV2ListPage<EvidenceV2ClaimRow>;
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const rows = input.claims.items
+    .map(
+      (item) =>
+        `<tr><td><a href="/cases/${encodeURIComponent(input.caseId)}/claims/${encodeURIComponent(item.claimId)}">${escapeHtml(item.label)}</a></td>` +
+        `<td class="muted">${escapeHtml(item.statement)}</td>` +
+        `<td>${item.empty ? '<span class="muted">empty</span>' : String(item.contributorCount)}</td>` +
+        `<td class="muted">${String(item.distinctInstances)}${item.crossInstance ? ' · cross-source' : ''}</td>` +
+        `<td class="muted">${String(item.accepted)} accepted, ${String(item.pending)} undecided</td></tr>`,
+    )
+    .join('');
+  return layout({
+    title: `Claims · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/claims`,
+        label: 'Claims',
+      },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'claims',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>Claims</h1>
+     <p class="muted">A claim groups occurrences that concern one proposition.
+     It never merges them, never absorbs them and never owns them: each stays
+     an immutable occurrence with its own source and its own standing.</p>
+     <form method="post" action="/cases/${encodeURIComponent(input.caseId)}/claims">
+       <input name="label" placeholder="Label" required>
+       <input name="statement" placeholder="What this groups" required>
+       <button type="submit">Create claim</button>
+     </form>
+     <table><thead><tr><th>Claim</th><th>Groups</th><th>Occurrences</th><th>Instances</th><th>Standing</th></tr></thead>
+     <tbody>${rows || '<tr><td colspan="5" class="muted">No claims yet.</td></tr>'}</tbody></table>
+     ${pager(`/cases/${input.caseId}/claims`, input.claims)}`,
+  });
+}
+
+export interface EvidenceV2ClaimContributorRow {
+  readonly occurrenceId: string;
+  readonly artifactId: string;
+  readonly instanceKey: string;
+  readonly partId: string;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly exactQuote: string;
+  readonly standing: 'pending' | 'accepted' | 'rejected' | 'needs-revision';
+  readonly rationale: string;
+}
+
+/**
+ * One claim and what it currently groups.
+ *
+ * Every contributor opens its exact source and carries its own standing. A
+ * rejected contributor stays visible: hiding it would make the group look
+ * cleaner than the evidence is.
+ */
+export function renderClaim(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly claim: {
+    readonly claimId: string;
+    readonly label: string;
+    readonly statement: string;
+    readonly createdAt: string;
+  };
+  readonly projection: {
+    readonly contributorCount: number;
+    readonly distinctInstances: number;
+    readonly distinctArtifacts: number;
+    readonly crossInstance: boolean;
+    readonly empty: boolean;
+    readonly standingCounts: Readonly<Record<string, number>>;
+    readonly contributors: readonly EvidenceV2ClaimContributorRow[];
+  };
+  readonly groupingCount: number;
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const groupPath = `/cases/${encodeURIComponent(input.caseId)}/claims/${encodeURIComponent(input.claim.claimId)}`;
+  const rows = input.projection.contributors
+    .map(
+      (item) =>
+        `<tr><td><a href="/artifacts/${encodeURIComponent(item.artifactId)}/parts/${encodeURIComponent(item.partId)}">L${String(item.startLine)}–L${String(item.endLine)}</a></td>` +
+        `<td class="muted">${escapeHtml(item.instanceKey)}</td>` +
+        `<td>${escapeHtml(item.exactQuote)}</td>` +
+        `<td class="standing standing-${escapeHtml(item.standing)}">${escapeHtml(item.standing)}</td>` +
+        `<td class="muted">${escapeHtml(item.rationale)}</td>` +
+        `<td class="actions"><form method="post" action="${escapeHtml(groupPath)}">` +
+        `<input type="hidden" name="occurrenceId" value="${escapeHtml(item.occurrenceId)}">` +
+        `<input type="hidden" name="action" value="exclude">` +
+        `<input name="rationale" placeholder="Why?" required>` +
+        `<button type="submit">Exclude</button></form></td></tr>`,
+    )
+    .join('');
+  const counts = input.projection.standingCounts;
+  const body = input.projection.empty
+    ? `<div class="gap"><h2>Empty</h2>
+       <p>This claim groups nothing. That is a statement about the claim, not
+       about the case: an empty claim asserts nothing and supports nothing.</p>
+       <p class="delivered">${String(input.groupingCount)} grouping decision${input.groupingCount === 1 ? '' : 's'} in its history.</p></div>`
+    : `<p>${String(input.projection.contributorCount)} occurrences from
+       ${String(input.projection.distinctInstances)} instance${input.projection.distinctInstances === 1 ? '' : 's'}
+       ${input.projection.crossInstance ? '<strong>· cross-source</strong>' : ''}
+       <span class="muted">· ${String(counts['accepted'] ?? 0)} accepted,
+       ${String(counts['rejected'] ?? 0)} rejected,
+       ${String(counts['needs-revision'] ?? 0)} need revision,
+       ${String(counts['pending'] ?? 0)} undecided
+       · ${String(input.groupingCount)} grouping decisions in history</span></p>
+       <table><thead><tr><th>Source</th><th>Instance</th><th>Quote</th><th>Standing</th><th>Grouped because</th><th></th></tr></thead>
+       <tbody>${rows}</tbody></table>`;
+  return layout({
+    title: `${input.claim.label} · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/claims`,
+        label: 'Claims',
+      },
+      { href: groupPath, label: input.claim.label },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'claims',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>${escapeHtml(input.claim.label)}</h1>
+     <p class="muted">${escapeHtml(input.claim.statement)}</p>
+     ${body}
+     <h2>Group an occurrence</h2>
+     <p class="muted">Grouping is a recorded decision. Excluding an occurrence
+     later removes it from this claim and from nothing else.</p>
+     <form method="post" action="${escapeHtml(groupPath)}">
+       <input type="hidden" name="action" value="include">
+       <input name="occurrenceId" placeholder="Occurrence id" required>
+       <input name="rationale" placeholder="Why it belongs here" required>
+       <button type="submit">Include</button>
+     </form>`,
+  });
+}
+
 /**
  * The status surface: what this case contains, and where to resume.
  *
@@ -945,6 +1129,13 @@ export function renderCaseStatus(input: {
      </dl>
      <h2>Resume</h2>
      ${resumeBlock}
+     <h2>Claims</h2>
+     <dl class="counts">
+       ${row('Claims', c.claims)}
+       ${row('Grouping decisions', c.claimGroupingDecisions)}
+       ${row('Grouped occurrences', c.groupedOccurrences)}
+       ${row('Claims spanning several instances', c.crossInstanceClaims)}
+     </dl>
      <h2>Not built yet</h2>
      <p class="muted">These report their own condition rather than a number.
      Reporting zero would be a statement about this case; the true statement is

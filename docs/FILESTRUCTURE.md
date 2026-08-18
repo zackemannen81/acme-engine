@@ -404,7 +404,7 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{chain.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,review.ts,source-structure.ts}
+│   │   ├── src/{chain.ts,claim.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,review.ts,source-structure.ts}
 │   │   └── test/{chain.test.ts,observe.test.ts,source-structure.test.ts}
 │   ├── module-narrative/
 │   │   ├── package.json

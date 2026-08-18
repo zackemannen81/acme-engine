@@ -96,3 +96,20 @@ export {
   type EvidenceV2ReviewDecision,
   type EvidenceV2Standing,
 } from './review.js';
+export {
+  EVIDENCE_V2_CLAIM_SCHEMA_VERSION,
+  EvidenceV2ClaimGroupingActionSchema,
+  EvidenceV2ClaimGroupingDecisionSchema,
+  EvidenceV2ClaimSchema,
+  deriveEvidenceV2ClaimGroupingDecisionId,
+  deriveEvidenceV2ClaimId,
+  deriveEvidenceV2ClaimMemberships,
+  projectEvidenceV2Claim,
+  type EvidenceV2Claim,
+  type EvidenceV2ClaimContributor,
+  type EvidenceV2ClaimGroupingAction,
+  type EvidenceV2ClaimGroupingDecision,
+  type EvidenceV2ClaimMembership,
+  type EvidenceV2ClaimOccurrenceInput,
+  type EvidenceV2ClaimProjection,
+} from './claim.js';

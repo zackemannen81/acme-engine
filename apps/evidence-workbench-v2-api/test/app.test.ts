@@ -13,6 +13,8 @@ import {
   type EvidenceV2ChainSummary,
   type EvidenceV2ExtractionWindowState,
   type EvidenceV2ImportWrite,
+  type EvidenceV2Claim,
+  type EvidenceV2ClaimGroupingDecision,
   type EvidenceV2Occurrence,
   type EvidenceV2ReviewDecision,
   type EvidenceV2Page,
@@ -51,6 +53,8 @@ function memoryRepository(): EvidenceV2Repository & {
   const decisions = new Map<string, EvidenceV2ChainDecision[]>();
   const occurrences = new Map<string, EvidenceV2Occurrence[]>();
   const reviews: EvidenceV2ReviewDecision[] = [];
+  const claims = new Map<string, EvidenceV2Claim>();
+  const groupings: EvidenceV2ClaimGroupingDecision[] = [];
   const windows = new Map<string, EvidenceV2ExtractionWindowState[]>();
   const derivationCalls = { count: 0 };
 
@@ -208,6 +212,35 @@ function memoryRepository(): EvidenceV2Repository & {
         ),
       ];
     },
+    async createClaim(claim) {
+      if (!claims.has(claim.claimId)) claims.set(claim.claimId, claim);
+    },
+    async listClaims(caseId, request) {
+      return paged(
+        [...claims.values()].filter((item) => item.caseId === caseId),
+        request,
+      );
+    },
+    async readClaim(claimId) {
+      return claims.get(claimId);
+    },
+    async appendClaimGrouping(decision) {
+      if (groupings.some((item) => item.decisionId === decision.decisionId))
+        return;
+      groupings.push(decision);
+    },
+    async listClaimGroupings(claimId) {
+      return groupings.filter((item) => item.claimId === claimId);
+    },
+    async readOccurrenceClaimIds(occurrenceId) {
+      return groupings.filter((item) => item.occurrenceId === occurrenceId);
+    },
+    async readOccurrencesById(ids) {
+      const wanted = new Set(ids);
+      return [...occurrences.values()]
+        .flat()
+        .filter((item) => wanted.has(item.occurrenceId));
+    },
     async readCaseOverview(caseId) {
       const scoped = [...artifacts.values()].filter(
         (item) => item.caseId === caseId,
@@ -272,6 +305,13 @@ function memoryRepository(): EvidenceV2Repository & {
           reviewerAuthored: scopedOccurrences.filter(
             (item) => item.authoredBy === 'reviewer',
           ).length,
+          claims: [...claims.values()].filter((item) => item.caseId === caseId)
+            .length,
+          claimGroupingDecisions: groupings.filter(
+            (item) => item.caseId === caseId,
+          ).length,
+          groupedOccurrences: 0,
+          crossInstanceClaims: 0,
         },
         instancesWithoutExtraction: outstanding.length,
         instancesPendingReview: 0,
@@ -737,10 +777,11 @@ describe('evidence v2 api', () => {
     expect(overview.resumeAt).not.toBeNull();
     expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
 
-    // Unbuilt surfaces report a condition, never zero.
-    expect(Object.keys(overview.unavailable)).toContain('claims');
-    expect(overview.unavailable['claims']?.state).toBe('not-implemented');
-    expect(overview.counts).not.toHaveProperty('claims');
+    // Unbuilt surfaces report a condition, never zero. ACME-0160 retired
+    // `claims`, so `timeline` is the standing example now.
+    expect(Object.keys(overview.unavailable)).toContain('timeline');
+    expect(overview.unavailable['timeline']?.state).toBe('not-implemented');
+    expect(overview.counts).not.toHaveProperty('timeline');
 
     const html = await (
       await fetch(`${base}/cases/${caseId}/status`, { headers })
@@ -1136,13 +1177,224 @@ describe('evidence v2 api', () => {
     expect(firstPage.completion).toEqual(whole.completion);
   });
 
+  async function seedClaim(
+    caseId: string,
+    headers: Record<string, string>,
+  ): Promise<string> {
+    const created = await fetch(`${base}/api/cases/${caseId}/claims`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        label: 'The blue car',
+        statement: 'Statements about the colour of the car.',
+      }),
+    });
+    return ((await created.json()) as { claimId: string }).claimId;
+  }
+
+  it('groups occurrences without merging, absorbing or owning them', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const claimId = await seedClaim(caseId, headers);
+    const claimPath = `${base}/api/cases/${caseId}/claims/${claimId}`;
+
+    const before = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`,
+        { headers },
+      )
+    ).json()) as { occurrences: { items: EvidenceV2Occurrence[] } };
+    const original = before.occurrences.items[0];
+
+    const grouped = await fetch(claimPath, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        occurrenceId: seeded.occurrenceId,
+        action: 'include',
+        instanceKey: seeded.instanceKey,
+        rationale: 'Concerns the same proposition.',
+      }),
+    });
+    expect(grouped.status).toBe(201);
+
+    const projection = (await (await fetch(claimPath, { headers })).json()) as {
+      contributorCount: number;
+      empty: boolean;
+      contributors: { occurrenceId: string; exactQuote: string }[];
+    };
+    expect(projection.contributorCount).toBe(1);
+    expect(projection.empty).toBe(false);
+    expect(projection.contributors[0]?.exactQuote).toBe(original?.exactQuote);
+
+    // The occurrence is unchanged by having been grouped: the claim owns
+    // nothing.
+    const after = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`,
+        { headers },
+      )
+    ).json()) as { occurrences: { items: EvidenceV2Occurrence[] } };
+    expect(after.occurrences.items[0]).toEqual(original);
+  });
+
+  it('excludes an occurrence without touching it or the superseded decision', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const claimId = await seedClaim(caseId, headers);
+    const claimPath = `${base}/api/cases/${caseId}/claims/${claimId}`;
+
+    for (const action of ['include', 'exclude'] as const)
+      await fetch(claimPath, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          occurrenceId: seeded.occurrenceId,
+          action,
+          instanceKey: seeded.instanceKey,
+          rationale: `${action} for the exclusion proof.`,
+        }),
+      });
+
+    const projection = (await (await fetch(claimPath, { headers })).json()) as {
+      contributorCount: number;
+      empty: boolean;
+      groupings: {
+        action: string;
+        decisionId: string;
+        supersedes: string | null;
+      }[];
+    };
+    expect(projection.contributorCount).toBe(0);
+    expect(projection.empty).toBe(true);
+    // Both decisions survive, and the exclusion names what it replaced.
+    expect(projection.groupings.map((item) => item.action)).toEqual([
+      'include',
+      'exclude',
+    ]);
+    // The exclusion names what it replaced, rather than leaving it implied.
+    expect(projection.groupings[1]?.supersedes).toBe(
+      projection.groupings[0]?.decisionId,
+    );
+
+    // The occurrence itself is still there, still reviewable.
+    const occurrences = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`,
+        { headers },
+      )
+    ).json()) as { occurrences: { total: number } };
+    expect(occurrences.occurrences.total).toBe(1);
+  });
+
+  it('refuses grouping an occurrence of another case, and an unknown one', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const claimId = await seedClaim(caseId, headers);
+
+    const other = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Other case', caseReference: 'T-OTHER' }),
+    });
+    const otherCase = (await other.json()) as EvidenceV2CaseRecord;
+    const otherClaimId = await seedClaim(otherCase.caseId, headers);
+
+    // Grouping this case's occurrence into the other case's claim is a
+    // disclosure, not a projection (ADR-0036).
+    const crossCase = await fetch(
+      `${base}/api/cases/${otherCase.caseId}/claims/${otherClaimId}`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          occurrenceId: seeded.occurrenceId,
+          action: 'include',
+          rationale: 'Should be refused.',
+        }),
+      },
+    );
+    expect(crossCase.status).toBe(404);
+
+    const unknown = await fetch(
+      `${base}/api/cases/${caseId}/claims/${claimId}`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          occurrenceId: 'occurrence-nope',
+          action: 'include',
+          rationale: 'Should be refused.',
+        }),
+      },
+    );
+    expect(unknown.status).toBe(404);
+  });
+
+  it('refuses a claim without a label, and a grouping without an action', async () => {
+    const { caseId, headers } = await seed();
+    const claimId = await seedClaim(caseId, headers);
+    expect(
+      (
+        await fetch(`${base}/api/cases/${caseId}/claims`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ label: '', statement: 'x' }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await fetch(`${base}/api/cases/${caseId}/claims/${claimId}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            occurrenceId: 'x',
+            action: 'merge',
+            rationale: 'x',
+          }),
+        })
+      ).status,
+    ).toBe(400);
+  });
+
+  it('hides another case\u2019s claim behind 404, and refuses non-members', async () => {
+    const { caseId, headers } = await seed();
+    const claimId = await seedClaim(caseId, headers);
+    const other = await signIn('second@acme.local', 'second-secret');
+    for (const path of [
+      `/api/cases/${caseId}/claims`,
+      `/api/cases/${caseId}/claims/${claimId}`,
+    ]) {
+      expect((await fetch(`${base}${path}`, { headers: other })).status).toBe(
+        404,
+      );
+      expect((await fetch(`${base}${path}`)).status).toBe(401);
+    }
+  });
+
+  it('shows Claims in the surface bar and no longer as an unbuilt surface', async () => {
+    const { caseId, headers } = await seed();
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/claims`, { headers })
+    ).text();
+    expect(html).toContain('<h1>Claims</h1>');
+    expect(html).toContain('aria-current="page"');
+
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    expect(Object.keys(overview.unavailable)).not.toContain('claims');
+    expect(overview.counts).toHaveProperty('claims');
+  });
+
   it('no longer reports standing as an unbuilt surface', async () => {
     const { caseId, headers } = await seed();
     const overview = (await (
       await fetch(`${base}/api/cases/${caseId}/status`, { headers })
     ).json()) as EvidenceV2CaseOverview;
     expect(Object.keys(overview.unavailable)).not.toContain('standing');
-    expect(Object.keys(overview.unavailable)).toContain('claims');
+    expect(Object.keys(overview.unavailable)).toContain('timeline');
     expect(overview.counts).toHaveProperty('accepted');
   });
 

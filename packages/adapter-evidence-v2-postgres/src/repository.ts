@@ -6,6 +6,8 @@ import {
 } from '@acme/adapter-postgres';
 import {
   EVIDENCE_V2_SURFACE_GAPS,
+  type EvidenceV2Claim,
+  type EvidenceV2ClaimGroupingDecision,
   type EvidenceV2ReviewDecision,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseOverview,
@@ -760,6 +762,129 @@ export function createEvidenceV2PostgresRepository(
       return rows.map((row) => String(row['instance_key']));
     },
 
+    async createClaim(claim) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.claims
+             (claim_id, case_id, label, created_at, record_json)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (claim_id) DO NOTHING`,
+          [
+            claim.claimId,
+            claim.caseId,
+            claim.label,
+            claim.createdAt,
+            JSON.stringify(claim),
+          ],
+        );
+      });
+    },
+
+    async listClaims(caseId, page) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT record_json, count(*) OVER () AS total
+           FROM ${schema}.claims
+          WHERE case_id = $1
+          ORDER BY created_at, claim_id
+          OFFSET $2 LIMIT $3`,
+        [caseId, page.offset, page.limit],
+      );
+      return {
+        items: rows.map(
+          (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Claim,
+        ),
+        total: Number(rows[0]?.['total'] ?? 0),
+        offset: page.offset,
+        limit: page.limit,
+      };
+    },
+
+    async readClaim(claimId) {
+      const [row] = await rowsOf(
+        pool,
+        `SELECT record_json FROM ${schema}.claims WHERE claim_id = $1`,
+        [claimId],
+      );
+      return row === undefined
+        ? undefined
+        : (JSON.parse(String(row['record_json'])) as EvidenceV2Claim);
+    },
+
+    /**
+     * Append a grouping decision. INSERT only, like every decision log here:
+     * an exclusion is a further row, never an update or a delete.
+     */
+    async appendClaimGrouping(decision) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.claim_groupings
+             (claim_id, decision_id, case_id, artifact_id, instance_key,
+              occurrence_id, action, supersedes, principal, decided_at,
+              decision_json)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           ON CONFLICT (claim_id, decision_id) DO NOTHING`,
+          [
+            decision.claimId,
+            decision.decisionId,
+            decision.caseId,
+            decision.artifactId,
+            decision.instanceKey,
+            decision.occurrenceId,
+            decision.action,
+            decision.supersedes,
+            decision.principal,
+            decision.decidedAt,
+            JSON.stringify(decision),
+          ],
+        );
+      });
+    },
+
+    async listClaimGroupings(claimId) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT decision_json FROM ${schema}.claim_groupings
+          WHERE claim_id = $1 ORDER BY appended_seq`,
+        [claimId],
+      );
+      return rows.map(
+        (row) =>
+          JSON.parse(
+            String(row['decision_json']),
+          ) as EvidenceV2ClaimGroupingDecision,
+      );
+    },
+
+    async readOccurrenceClaimIds(occurrenceId) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT decision_json FROM ${schema}.claim_groupings
+          WHERE occurrence_id = $1 ORDER BY appended_seq`,
+        [occurrenceId],
+      );
+      return rows.map(
+        (row) =>
+          JSON.parse(
+            String(row['decision_json']),
+          ) as EvidenceV2ClaimGroupingDecision,
+      );
+    },
+
+    async readOccurrencesById(ids) {
+      if (ids.length === 0) return [];
+      const rows = await rowsOf(
+        pool,
+        `SELECT record_json FROM ${schema}.occurrences
+          WHERE occurrence_id = ANY($1::text[])
+          ORDER BY occurrence_id`,
+        [[...ids]],
+      );
+      return rows.map(
+        (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Occurrence,
+      );
+    },
+
     /**
      * The case overview.
      *
@@ -779,6 +904,13 @@ export function createEvidenceV2PostgresRepository(
                   FROM ${schema}.review_decisions
                  WHERE artifact_id IN (SELECT artifact_id FROM scoped)
                  ORDER BY artifact_id, occurrence_id, appended_seq DESC
+              ),
+              current_grouping AS (
+                SELECT DISTINCT ON (claim_id, occurrence_id)
+                       claim_id, occurrence_id, instance_key, action
+                  FROM ${schema}.claim_groupings
+                 WHERE case_id = $1
+                 ORDER BY claim_id, occurrence_id, appended_seq DESC
               )
          SELECT
            (SELECT count(*) FROM scoped) AS artifacts,
@@ -806,6 +938,19 @@ export function createEvidenceV2PostgresRepository(
               WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS chain_decisions,
            (SELECT count(*) FROM ${schema}.review_decisions
               WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS review_decisions,
+           (SELECT count(*) FROM ${schema}.claims WHERE case_id = $1) AS claims,
+           (SELECT count(*) FROM ${schema}.claim_groupings
+              WHERE case_id = $1) AS claim_grouping_decisions,
+           -- Grouped means currently included: the latest decision per
+           -- (claim, occurrence) wins, exactly as the module folds it.
+           (SELECT count(*) FROM current_grouping WHERE action = 'include')
+             AS grouped_occurrences,
+           (SELECT count(*) FROM (
+              SELECT claim_id FROM current_grouping
+               WHERE action = 'include'
+               GROUP BY claim_id
+              HAVING count(DISTINCT instance_key) > 1) spread)
+             AS cross_instance_claims,
            (SELECT count(*) FROM ${schema}.occurrences
               WHERE artifact_id IN (SELECT artifact_id FROM scoped)
                 AND authored_by = 'reviewer') AS reviewer_authored,
@@ -884,6 +1029,10 @@ export function createEvidenceV2PostgresRepository(
           rejected: count('rejected'),
           needsRevision: count('needs_revision'),
           reviewerAuthored: count('reviewer_authored'),
+          claims: count('claims'),
+          claimGroupingDecisions: count('claim_grouping_decisions'),
+          groupedOccurrences: count('grouped_occurrences'),
+          crossInstanceClaims: count('cross_instance_claims'),
         },
         instancesWithoutExtraction: count('instances_without_extraction'),
         instancesPendingReview: count('instances_pending_review'),

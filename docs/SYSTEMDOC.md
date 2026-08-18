@@ -1139,6 +1139,33 @@ chain's ordered instances and appended membership decisions.
 HTML. A chain view reflects effective membership, so a reviewer's correction is
 visible where it was made. No read path re-derives anything.
 
+**V2 claims.** `evidence-v2-claim/1` is a case-scoped named grouping target and
+`evidence-v2-claim-grouping/1` is the append-only decision that puts an
+occurrence in one or takes it out. `deriveEvidenceV2ClaimMemberships` folds the
+log — latest decision per (claim, occurrence) wins — and
+`projectEvidenceV2Claim` is J5: deterministic, recomputed on read, no model and
+no spend, ordered so the projection is byte-stable across reads.
+
+A claim never merges, never absorbs and never owns. There is no foreign key
+from an occurrence to a claim, only decisions pointing the other way; two
+occurrences quoting identical words stay two contributors with their own
+locators; and an exclusion removes an occurrence from that claim and from
+nowhere else, leaving the occurrence, its standing, its source and the
+superseded inclusion untouched. A membership whose occurrence the store does
+not hold is skipped rather than reconstructed, because a claim cannot rebuild
+what it does not own. An emptied claim reports `empty` rather than reading as
+an assertion with nothing behind it.
+
+The projection reports each contributor's own standing rather than a single
+claim-level state, and reports how the grouped material is spread across
+instances and artifacts — which is what makes the P2 cross-source property
+visible on the surface. It carries no score, weight, confidence, rank or
+verdict: what grouped evidence adds up to belongs to the consensus projection,
+and a claim that scored itself would pre-empt it. Grouping an occurrence into
+a claim gives it no standing; the two are separate acts over the same
+immutable record. Cross-case grouping is refused, which is ADR-0036 disclosure
+control rather than validation.
+
 **V2 review and standing.** `evidence-v2-review/1` in
 `@acme/module-evidence-v2` is an append-only decision and
 `deriveEvidenceV2Standings` folds the log to effective standing. Nothing stores

@@ -6,8 +6,8 @@ Status: **Approved sequencing.** Both required decisions are taken:
 ingestion boundary. Implementation is not thereby activated: each step still
 needs its own explicitly approved task and frozen charter. ACME-0156 is
 complete, as are ACME-0157 and ACME-0159 — the last reordered ahead of
-ACME-0158 by the operator on 2026-08-18, recorded in §6. ACME-0158 or
-ACME-0160 is next.
+ACME-0158 by the operator on 2026-08-18, recorded in §6. ACME-0160 followed;
+ACME-0161 or ACME-0158 is next.
 Created: 2026-08-18
 Last updated: 2026-08-18
 Authority: [ADR-0047](../adr/0047-evidence-application-model-reset.md) and
@@ -276,6 +276,9 @@ nobody can act on. Nothing about ADR-0050 changes; only its position.
   workflow (§7). Claims. Relations.
 
 ### ACME-0160 — Claims
+
+**Status: complete 2026-08-18.** Archived as
+[`ACME-0160`](../finished/ACME-0160_v2-claims.md).
 
 - **Goal.** Occurrences that concern one proposition can be worked as a group
   without ever being merged.

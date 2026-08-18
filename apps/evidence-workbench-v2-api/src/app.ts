@@ -11,8 +11,14 @@ import {
   type EvidenceV2Repository,
 } from '@acme/evidence-v2-contracts';
 import {
+  EVIDENCE_V2_CLAIM_SCHEMA_VERSION,
   EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
+  EvidenceV2ClaimGroupingActionSchema,
   EvidenceV2ReviewActionSchema,
+  deriveEvidenceV2ClaimGroupingDecisionId,
+  deriveEvidenceV2ClaimId,
+  deriveEvidenceV2ClaimMemberships,
+  projectEvidenceV2Claim,
   deriveEvidenceV2ChainCompletion,
   deriveEvidenceV2InstanceCompletion,
   deriveEvidenceV2OccurrenceId,
@@ -21,6 +27,8 @@ import {
   deriveEvidenceV2Standings,
   proposeEvidenceV2Chains,
   type EvidenceV2ChainDecision,
+  type EvidenceV2Claim,
+  type EvidenceV2ClaimGroupingDecision,
   type EvidenceV2EffectiveStanding,
   type EvidenceV2InstanceCompletion,
   type EvidenceV2Occurrence,
@@ -36,6 +44,8 @@ import {
   renderInstance,
   renderCaseStatus,
   renderChainSourceChoice,
+  renderClaim,
+  renderClaims,
   renderParts,
   renderSignIn,
   renderSurfaceGap,
@@ -301,6 +311,63 @@ export function createEvidenceV2App(
     return {
       perInstance,
       chain: deriveEvidenceV2ChainCompletion(perInstance),
+    };
+  }
+
+  /**
+   * J5, assembled from stored rows.
+   *
+   * Deterministic and free: it reads the grouping log, folds it, fetches the
+   * named occurrences and their standings, and projects. It speaks for the
+   * claim rather than for any page (the ACME-0159 lesson), and it never
+   * reconstructs an occurrence a claim points at but the store does not hold —
+   * a claim does not own its contributors.
+   */
+  async function claimProjection(claim: EvidenceV2Claim) {
+    const groupings = await repository.listClaimGroupings(claim.claimId);
+    const memberships = deriveEvidenceV2ClaimMemberships(
+      claim.claimId,
+      groupings,
+    );
+    const occurrences = await repository.readOccurrencesById(
+      memberships.map((item) => item.occurrenceId),
+    );
+    const byInstance = new Map<string, string[]>();
+    for (const membership of memberships) {
+      const key = `${membership.artifactId}\u0000${membership.instanceKey}`;
+      byInstance.set(key, [
+        ...(byInstance.get(key) ?? []),
+        membership.occurrenceId,
+      ]);
+    }
+    const standings: EvidenceV2EffectiveStanding[] = [];
+    for (const [key, ids] of byInstance) {
+      const [artifactId, instanceKey] = key.split('\u0000');
+      const decisions = await repository.listReviewDecisions(
+        artifactId ?? '',
+        instanceKey ?? '',
+      );
+      standings.push(...deriveEvidenceV2Standings(ids, decisions));
+    }
+    return {
+      projection: projectEvidenceV2Claim({
+        claim,
+        memberships,
+        occurrences: occurrences.map((item) => ({
+          occurrenceId: item.occurrenceId,
+          artifactId: item.artifactId,
+          instanceKey:
+            memberships.find(
+              (member) => member.occurrenceId === item.occurrenceId,
+            )?.instanceKey ?? '',
+          partId: item.partId,
+          startLine: item.startLine,
+          endLine: item.endLine,
+          exactQuote: item.exactQuote,
+        })),
+        standings,
+      }),
+      groupings,
     };
   }
 
@@ -1046,6 +1113,208 @@ export function createEvidenceV2App(
             })),
           }),
         );
+      }
+
+      // Claims: create and list, case-scoped.
+      const claimsMatch = /^\/(?:api\/)?cases\/([^/]+)\/claims$/u.exec(path);
+      if (claimsMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(claimsMatch[1]);
+        const claimAction: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'review.decide';
+        if (!(await authorizeCase(caseId, claimAction))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+
+        if (method === 'GET') {
+          const claims = await repository.listClaims(caseId, page);
+          const rows = [];
+          for (const claim of claims.items) {
+            const { projection } = await claimProjection(claim);
+            rows.push({
+              claimId: claim.claimId,
+              label: claim.label,
+              statement: claim.statement,
+              contributorCount: projection.contributorCount,
+              distinctInstances: projection.distinctInstances,
+              crossInstance: projection.crossInstance,
+              accepted: projection.standingCounts.accepted,
+              pending: projection.standingCounts.pending,
+              empty: projection.empty,
+            });
+          }
+          if (json)
+            return void sendJson(response, 200, { ...claims, items: rows });
+          return void sendHtml(
+            response,
+            200,
+            renderClaims({
+              caseId,
+              caseTitle: record.title,
+              caseReference: record.caseReference,
+              viewer,
+              claims: { ...claims, items: rows },
+            }),
+          );
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(request);
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const label = String(payload['label'] ?? '').trim();
+          const statement = String(payload['statement'] ?? '').trim();
+          if (label.length === 0 || statement.length === 0)
+            return void sendText(
+              response,
+              400,
+              'A label and a statement are required.',
+            );
+          const createdAt = options.now();
+          const claim: EvidenceV2Claim = {
+            schemaVersion: EVIDENCE_V2_CLAIM_SCHEMA_VERSION,
+            claimId: deriveEvidenceV2ClaimId({ caseId, label, createdAt }),
+            caseId,
+            label,
+            statement,
+            createdBy: principal.principalRef,
+            createdAt,
+          };
+          await repository.createClaim(claim);
+          if (json) return void sendJson(response, 201, claim);
+          response.writeHead(303, {
+            location: `/cases/${encodeURIComponent(caseId)}/claims/${encodeURIComponent(claim.claimId)}`,
+          });
+          response.end();
+          return;
+        }
+      }
+
+      // One claim: its projection, and appending a grouping decision.
+      const claimMatch = /^\/(?:api\/)?cases\/([^/]+)\/claims\/([^/]+)$/u.exec(
+        path,
+      );
+      if (claimMatch?.[1] !== undefined && claimMatch[2] !== undefined) {
+        const caseId = decodeURIComponent(claimMatch[1]);
+        const claimId = decodeURIComponent(claimMatch[2]);
+        const claimAction: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'review.decide';
+        if (!(await authorizeCase(caseId, claimAction))) return;
+        const claim = await repository.readClaim(claimId);
+        // A claim of another case is as invisible as one that does not exist.
+        if (claim === undefined || claim.caseId !== caseId)
+          return void sendText(response, 404, 'No such claim.');
+
+        if (method === 'GET') {
+          const { projection, groupings } = await claimProjection(claim);
+          if (json)
+            return void sendJson(response, 200, { ...projection, groupings });
+          const record = await repository.readCase(caseId);
+          return void sendHtml(
+            response,
+            200,
+            renderClaim({
+              caseId,
+              caseTitle: record?.title ?? caseId,
+              caseReference: record?.caseReference ?? '',
+              viewer,
+              claim,
+              projection: {
+                contributorCount: projection.contributorCount,
+                distinctInstances: projection.distinctInstances,
+                distinctArtifacts: projection.distinctArtifacts,
+                crossInstance: projection.crossInstance,
+                empty: projection.empty,
+                standingCounts: projection.standingCounts,
+                contributors: projection.contributors.map((item) => ({
+                  occurrenceId: item.occurrenceId,
+                  artifactId: item.artifactId,
+                  instanceKey: item.instanceKey,
+                  partId: item.partId,
+                  startLine: item.startLine,
+                  endLine: item.endLine,
+                  exactQuote: item.exactQuote,
+                  standing: item.standing,
+                  rationale: item.rationale,
+                })),
+              },
+              groupingCount: groupings.length,
+            }),
+          );
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(request);
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const parsed = EvidenceV2ClaimGroupingActionSchema.safeParse(
+            payload['action'],
+          );
+          const occurrenceId = String(payload['occurrenceId'] ?? '').trim();
+          const rationale = String(payload['rationale'] ?? '').trim();
+          if (!parsed.success)
+            return void sendText(
+              response,
+              400,
+              'Action must be include or exclude.',
+            );
+          if (occurrenceId.length === 0 || rationale.length === 0)
+            return void sendText(
+              response,
+              400,
+              'An occurrence and a rationale are required.',
+            );
+
+          const [occurrence] = await repository.readOccurrencesById([
+            occurrenceId,
+          ]);
+          if (occurrence === undefined)
+            return void sendText(response, 404, 'No such occurrence.');
+          // The occurrence must belong to this case. Grouping across cases
+          // would be a disclosure, not a projection (ADR-0036).
+          const owner = await repository.readArtifact(occurrence.artifactId);
+          if (owner === undefined || owner.caseId !== caseId)
+            return void sendText(response, 404, 'No such occurrence.');
+
+          const history = await repository.readOccurrenceClaimIds(occurrenceId);
+          const previous = history
+            .filter((item) => item.claimId === claimId)
+            .at(-1);
+          const decidedAt = options.now();
+          const instanceKey =
+            String(payload['instanceKey'] ?? '').trim() ||
+            previous?.instanceKey ||
+            occurrence.windowId.replace(/-window-\d+$/u, '');
+          const decision: EvidenceV2ClaimGroupingDecision = {
+            schemaVersion: 'evidence-v2-claim-grouping/1',
+            decisionId: deriveEvidenceV2ClaimGroupingDecisionId({
+              claimId,
+              occurrenceId,
+              action: parsed.data,
+              principal: principal.principalRef,
+              decidedAt,
+            }),
+            caseId,
+            claimId,
+            artifactId: occurrence.artifactId,
+            instanceKey,
+            occurrenceId,
+            action: parsed.data,
+            supersedes: previous?.decisionId ?? null,
+            principal: principal.principalRef,
+            decidedAt,
+            rationale,
+          };
+          await repository.appendClaimGrouping(decision);
+          if (json) return void sendJson(response, 201, decision);
+          response.writeHead(303, {
+            location: `/cases/${encodeURIComponent(caseId)}/claims/${encodeURIComponent(claimId)}`,
+          });
+          response.end();
+          return;
+        }
       }
 
       // Review: append a decision, or read the log and the folded standings.

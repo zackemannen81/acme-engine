@@ -22,6 +22,7 @@ import {
   type EvidenceV2Repository,
 } from '../../packages/evidence-v2-contracts/src/index.js';
 import {
+  deriveEvidenceV2ClaimMemberships,
   deriveEvidenceV2SourceStructure,
   deriveEvidenceV2Standings,
   proposeEvidenceV2Chains,
@@ -357,6 +358,111 @@ describe('evidence v2 postgres persistence', () => {
     expect(extracted).toContain('instance-1');
   });
 
+  it('groups occurrences into a claim append-only, across instances', async () => {
+    const listed = await repository.listOccurrences(
+      artifact.artifactId,
+      'instance-1',
+      { offset: 0, limit: 10 },
+    );
+    const first = listed.items[0];
+    if (first === undefined) throw new Error('expected an occurrence');
+
+    // A second occurrence in a different instance, so the claim can span both.
+    const second = {
+      ...first,
+      occurrenceId: 'occurrence-postgres-2',
+      exactQuote: first.exactQuote,
+    };
+    await repository.putOccurrences(artifact.artifactId, 'instance-2', [
+      second,
+    ]);
+
+    const claim = {
+      schemaVersion: 'evidence-v2-claim/1' as const,
+      claimId: 'claim-postgres-1',
+      caseId: 'case-v2-test',
+      label: 'The blue car',
+      statement: 'Statements about the colour of the car.',
+      createdBy: 'principal-postgres',
+      createdAt: '2026-08-18T12:00:00.000Z',
+    };
+    await repository.createClaim(claim);
+    await repository.createClaim(claim);
+    expect(
+      (
+        await repository.listClaims('case-v2-test', {
+          offset: 0,
+          limit: 10,
+        })
+      ).total,
+    ).toBe(1);
+
+    const include = (
+      occurrenceId: string,
+      instanceKey: string,
+      id: string,
+    ) => ({
+      schemaVersion: 'evidence-v2-claim-grouping/1' as const,
+      decisionId: id,
+      caseId: 'case-v2-test',
+      claimId: claim.claimId,
+      artifactId: artifact.artifactId,
+      instanceKey,
+      occurrenceId,
+      action: 'include' as const,
+      supersedes: null,
+      principal: 'principal-postgres',
+      decidedAt: '2026-08-18T12:00:00.000Z',
+      rationale: 'Concerns the same proposition.',
+    });
+    await repository.appendClaimGrouping(
+      include(first.occurrenceId, 'instance-1', 'grouping-1'),
+    );
+    await repository.appendClaimGrouping(
+      include('occurrence-postgres-2', 'instance-2', 'grouping-2'),
+    );
+
+    const memberships = deriveEvidenceV2ClaimMemberships(
+      claim.claimId,
+      await repository.listClaimGroupings(claim.claimId),
+    );
+    expect(memberships).toHaveLength(2);
+    // Identical quotes from two instances stay two contributors.
+    const occurrences = await repository.readOccurrencesById(
+      memberships.map((item) => item.occurrenceId),
+    );
+    expect(occurrences).toHaveLength(2);
+    expect(occurrences[0]?.exactQuote).toBe(occurrences[1]?.exactQuote);
+
+    // Excluding one is a further row; the first is still stored unchanged.
+    await repository.appendClaimGrouping({
+      ...include('occurrence-postgres-2', 'instance-2', 'grouping-3'),
+      action: 'exclude',
+      supersedes: 'grouping-2',
+      decidedAt: '2026-08-18T13:00:00.000Z',
+      rationale: 'On reflection it is a different proposition.',
+    });
+    const log = await repository.listClaimGroupings(claim.claimId);
+    expect(log.map((item) => item.action)).toEqual([
+      'include',
+      'include',
+      'exclude',
+    ]);
+    expect(log[1]).toEqual(
+      include('occurrence-postgres-2', 'instance-2', 'grouping-2'),
+    );
+    expect(
+      deriveEvidenceV2ClaimMemberships(claim.claimId, log).map(
+        (item) => item.occurrenceId,
+      ),
+    ).toEqual([first.occurrenceId]);
+
+    // The excluded occurrence is untouched.
+    expect(
+      (await repository.readOccurrencesById(['occurrence-postgres-2'])).length,
+    ).toBe(1);
+  });
+
   it('projects a case overview from stored rows, not from import totals', async () => {
     const overview = await repository.readCaseOverview('case-v2-test');
 
@@ -379,7 +485,7 @@ describe('evidence v2 postgres persistence', () => {
 
     // The previous test committed one window and failed another against
     // instance-1, and stored one occurrence.
-    expect(overview.counts.occurrences).toBe(1);
+    expect(overview.counts.occurrences).toBe(2);
     expect(overview.counts.committedWindows).toBe(1);
     expect(overview.counts.failedWindows).toBe(1);
 
@@ -394,19 +500,30 @@ describe('evidence v2 postgres persistence', () => {
     expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
     expect(overview.resumeAt?.artifactId).toBe(artifact.artifactId);
 
+    // Claims are counted from the same aggregate read.
+    expect(overview.counts.claims).toBe(1);
+    expect(overview.counts.claimGroupingDecisions).toBe(3);
+    expect(overview.counts.groupedOccurrences).toBe(1);
+    expect(overview.counts.crossInstanceClaims).toBe(0);
+
     // Standing is folded from the log by the same aggregate read.
     expect(overview.counts.reviewDecisions).toBe(2);
     expect(overview.counts.rejected).toBe(1);
     expect(overview.counts.accepted).toBe(0);
-    expect(overview.counts.pending).toBe(0);
+    // The claim test's second occurrence has no decision, so it is pending.
+    // Grouping an occurrence into a claim gives it no standing: the two are
+    // separate acts over the same immutable record.
+    expect(overview.counts.pending).toBe(1);
     expect(overview.counts.reviewerAuthored).toBe(0);
 
     // Unbuilt surfaces report a condition. Reporting zero claims would be a
     // false statement about the case rather than a true one about the product.
-    expect(overview.unavailable['claims']?.state).toBe('not-implemented');
-    // ACME-0159 retired this one, so it must be gone rather than stale.
+    expect(overview.unavailable['timeline']?.state).toBe('not-implemented');
+    // ACME-0159 and ACME-0160 retired these, so they must be gone rather
+    // than stale.
     expect(overview.unavailable).not.toHaveProperty('standing');
-    expect(overview.counts).not.toHaveProperty('claims');
+    expect(overview.unavailable).not.toHaveProperty('claims');
+    expect(overview.counts).not.toHaveProperty('timeline');
 
     // An unrelated case sees nothing of this one.
     const empty = await repository.readCaseOverview('case-that-does-not-exist');
