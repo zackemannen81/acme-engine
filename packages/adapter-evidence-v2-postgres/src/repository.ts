@@ -6,6 +6,7 @@ import {
 } from '@acme/adapter-postgres';
 import {
   EVIDENCE_V2_SURFACE_GAPS,
+  type EvidenceV2ReviewDecision,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseOverview,
   type EvidenceV2ExtractionWindowState,
@@ -547,6 +548,7 @@ export function createEvidenceV2PostgresRepository(
               'end_line',
               'window_id',
               'execution_id',
+              'authored_by',
               'record_json',
             ],
             occurrences.map((occurrence) => [
@@ -559,6 +561,7 @@ export function createEvidenceV2PostgresRepository(
               occurrence.endLine,
               occurrence.windowId,
               occurrence.executionId,
+              occurrence.authoredBy ?? 'model',
               JSON.stringify(occurrence),
             ]),
             'ON CONFLICT (artifact_id, occurrence_id) DO NOTHING',
@@ -688,6 +691,76 @@ export function createEvidenceV2PostgresRepository(
     },
 
     /**
+     * Append a review decision.
+     *
+     * INSERT only. The table takes no UPDATE and no DELETE anywhere in this
+     * adapter, which is what makes "append-only" a property of the code rather
+     * than a convention. An identical retry collides on the content-derived
+     * decision id and is ignored, so a repeated submit does not double the log.
+     */
+    async appendReviewDecision(decision) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.review_decisions
+             (artifact_id, decision_id, instance_key, occurrence_id, action,
+              supersedes, principal, decided_at, decision_json)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (artifact_id, decision_id) DO NOTHING`,
+          [
+            decision.artifactId,
+            decision.decisionId,
+            decision.instanceKey,
+            decision.occurrenceId,
+            decision.action,
+            decision.supersedes,
+            decision.principal,
+            decision.decidedAt,
+            JSON.stringify(decision),
+          ],
+        );
+      });
+    },
+
+    async listReviewDecisions(artifactId, instanceKey) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT decision_json FROM ${schema}.review_decisions
+          WHERE artifact_id = $1 AND instance_key = $2
+          ORDER BY appended_seq`,
+        [artifactId, instanceKey],
+      );
+      return rows.map(
+        (row) =>
+          JSON.parse(String(row['decision_json'])) as EvidenceV2ReviewDecision,
+      );
+    },
+
+    async readOccurrenceReviewHistory(artifactId, occurrenceId) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT decision_json FROM ${schema}.review_decisions
+          WHERE artifact_id = $1 AND occurrence_id = $2
+          ORDER BY appended_seq`,
+        [artifactId, occurrenceId],
+      );
+      return rows.map(
+        (row) =>
+          JSON.parse(String(row['decision_json'])) as EvidenceV2ReviewDecision,
+      );
+    },
+
+    async readExtractedInstanceKeys(artifactId) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT DISTINCT instance_key FROM ${schema}.extraction_windows
+          WHERE artifact_id = $1 AND status = 'committed'
+          ORDER BY instance_key`,
+        [artifactId],
+      );
+      return rows.map((row) => String(row['instance_key']));
+    },
+
+    /**
      * The case overview.
      *
      * Two statements: one aggregate pass over the case's stored rows, and one
@@ -700,7 +773,13 @@ export function createEvidenceV2PostgresRepository(
       const artifactIds = `SELECT artifact_id FROM ${schema}.artifacts WHERE case_id = $1`;
       const [totals] = await rowsOf(
         pool,
-        `WITH scoped AS (${artifactIds})
+        `WITH scoped AS (${artifactIds}),
+              latest AS (
+                SELECT DISTINCT ON (artifact_id, occurrence_id) action
+                  FROM ${schema}.review_decisions
+                 WHERE artifact_id IN (SELECT artifact_id FROM scoped)
+                 ORDER BY artifact_id, occurrence_id, appended_seq DESC
+              )
          SELECT
            (SELECT count(*) FROM scoped) AS artifacts,
            (SELECT coalesce(sum(max_line), 0) FROM (
@@ -725,6 +804,37 @@ export function createEvidenceV2PostgresRepository(
                 AND status = 'failed') AS failed_windows,
            (SELECT count(*) FROM ${schema}.chain_decisions
               WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS chain_decisions,
+           (SELECT count(*) FROM ${schema}.review_decisions
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)) AS review_decisions,
+           (SELECT count(*) FROM ${schema}.occurrences
+              WHERE artifact_id IN (SELECT artifact_id FROM scoped)
+                AND authored_by = 'reviewer') AS reviewer_authored,
+           -- Standing is folded from the log: the latest decision per
+           -- occurrence wins, and an occurrence with none is pending.
+           (SELECT count(*) FROM ${schema}.occurrences o
+              WHERE o.artifact_id IN (SELECT artifact_id FROM scoped)
+                AND NOT EXISTS (
+                  SELECT 1 FROM ${schema}.review_decisions r
+                  WHERE r.artifact_id = o.artifact_id
+                    AND r.occurrence_id = o.occurrence_id)) AS pending,
+           (SELECT count(*) FROM latest WHERE action = 'accept') AS accepted,
+           (SELECT count(*) FROM latest WHERE action = 'reject') AS rejected,
+           (SELECT count(*) FROM latest WHERE action = 'revise') AS needs_revision,
+           (SELECT count(*) FROM ${schema}.chain_instances i
+              WHERE i.artifact_id IN (SELECT artifact_id FROM scoped)
+                AND EXISTS (
+                  SELECT 1 FROM ${schema}.extraction_windows w
+                  WHERE w.artifact_id = i.artifact_id
+                    AND w.instance_key = i.instance_key
+                    AND w.status = 'committed')
+                AND EXISTS (
+                  SELECT 1 FROM ${schema}.occurrences o
+                  WHERE o.artifact_id = i.artifact_id
+                    AND o.instance_key = i.instance_key
+                    AND NOT EXISTS (
+                      SELECT 1 FROM ${schema}.review_decisions r
+                      WHERE r.artifact_id = o.artifact_id
+                        AND r.occurrence_id = o.occurrence_id))) AS instances_pending_review,
            (SELECT count(*) FROM ${schema}.chain_instances i
               WHERE i.artifact_id IN (SELECT artifact_id FROM scoped)
                 AND NOT EXISTS (
@@ -768,8 +878,15 @@ export function createEvidenceV2PostgresRepository(
           committedWindows: count('committed_windows'),
           failedWindows: count('failed_windows'),
           chainDecisions: count('chain_decisions'),
+          reviewDecisions: count('review_decisions'),
+          pending: count('pending'),
+          accepted: count('accepted'),
+          rejected: count('rejected'),
+          needsRevision: count('needs_revision'),
+          reviewerAuthored: count('reviewer_authored'),
         },
         instancesWithoutExtraction: count('instances_without_extraction'),
+        instancesPendingReview: count('instances_pending_review'),
         resumeAt:
           resume === undefined
             ? null

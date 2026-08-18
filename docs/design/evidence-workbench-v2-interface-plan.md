@@ -5,7 +5,8 @@ Status: **Approved sequencing.** Both required decisions are taken:
 [ADR-0050](../adr/0050-evidence-v2-pdf-ingestion-boundary.md) opens the PDF
 ingestion boundary. Implementation is not thereby activated: each step still
 needs its own explicitly approved task and frozen charter. ACME-0156 is
-complete, as is ACME-0157. ACME-0158 is the next step.
+complete, as is ACME-0157. ACME-0159 is active: the operator reordered it
+ahead of ACME-0158 on 2026-08-18, recorded in §6.
 Created: 2026-08-18
 Last updated: 2026-08-18
 Authority: [ADR-0047](../adr/0047-evidence-application-model-reset.md) and
@@ -241,6 +242,13 @@ and recorded numbers are in [the runbook](../ops/evidence-v2-supabase.md).
 
 ### ACME-0158 — PDF import
 
+**Reordered 2026-08-18: ACME-0159 runs first.** The operator's call, and the
+defensible one. The status surface reports instances waiting on extraction in a
+flow where nothing can yet be accepted, and every layer above — claims,
+relations, consensus — is defined over occurrences with an *accepted* standing
+(§2.4). Widening ingestion before the review loop closes would add material
+nobody can act on. Nothing about ADR-0050 changes; only its position.
+
 - **Goal.** A case owner uploads a PDF in the browser and reaches a structured,
   chained source without leaving the product.
 - **Deliverable.** The class decided in D2: exact received bytes stored as the
@@ -252,6 +260,8 @@ and recorded numbers are in [the runbook](../ops/evidence-v2-supabase.md).
 - **Requires D2** — satisfied by [ADR-0050](../adr/0050-evidence-v2-pdf-ingestion-boundary.md).
 
 ### ACME-0159 — Review, standing and human-authored occurrences
+
+**Status: active, charter frozen 2026-08-18.** Moved ahead of ACME-0158.
 
 - **Goal.** An occurrence stops being a bare candidate.
 - **Deliverable.** Append-only accept, reject, revise and move decisions with a

@@ -12,7 +12,9 @@ import type {
   EvidenceArtifactRepresentation,
 } from '@acme/evidence-artifacts';
 import type {
+  EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
+  EvidenceV2ReviewDecision,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
   EvidenceV2ChainMembership,
@@ -22,7 +24,9 @@ import type {
 } from '@acme/module-evidence-v2';
 
 export type {
+  EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
+  EvidenceV2ReviewDecision,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
   EvidenceV2ChainMembership,
@@ -166,7 +170,7 @@ export interface EvidenceV2SurfaceGap {
 
 export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
   Record<
-    'timeline' | 'relations' | 'claims' | 'consensus' | 'standing',
+    'timeline' | 'relations' | 'claims' | 'consensus',
     EvidenceV2SurfaceGap
   >
 > = {
@@ -191,12 +195,6 @@ export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
       'The consensus projection has no reviewed material to compute from.',
     deliveredBy: 'ACME-0162',
   },
-  standing: {
-    state: 'not-implemented',
-    reason:
-      'Review and standing are not built, so every occurrence is canonical evidence rather than accepted evidence.',
-    deliveredBy: 'ACME-0159',
-  },
 };
 
 /**
@@ -220,9 +218,18 @@ export interface EvidenceV2CaseOverview {
     readonly committedWindows: number;
     readonly failedWindows: number;
     readonly chainDecisions: number;
+    /** Review, folded from the decision log. Never a stored field. */
+    readonly reviewDecisions: number;
+    readonly pending: number;
+    readonly accepted: number;
+    readonly rejected: number;
+    readonly needsRevision: number;
+    readonly reviewerAuthored: number;
   };
   /** Instances with no committed extraction window. Work, not evidence. */
   readonly instancesWithoutExtraction: number;
+  /** Instances extracted but holding at least one undecided occurrence. */
+  readonly instancesPendingReview: number;
   /**
    * A concrete next instance, or null when there is nothing outstanding.
    * Named rather than counted, because "where do I resume" is answered by a
@@ -312,6 +319,23 @@ export interface EvidenceV2Repository {
   listChainDecisions(
     artifactId: string,
   ): Promise<readonly EvidenceV2ChainDecision[]>;
+
+  /**
+   * Append-only. A decision is never updated and never deleted; a reversal is
+   * a further decision that supersedes its predecessor.
+   */
+  appendReviewDecision(decision: EvidenceV2ReviewDecision): Promise<void>;
+  listReviewDecisions(
+    artifactId: string,
+    instanceKey: string,
+  ): Promise<readonly EvidenceV2ReviewDecision[]>;
+  /** The whole log for one occurrence, oldest first. */
+  readOccurrenceReviewHistory(
+    artifactId: string,
+    occurrenceId: string,
+  ): Promise<readonly EvidenceV2ReviewDecision[]>;
+  /** Which instances of one artifact hold a committed window. */
+  readExtractedInstanceKeys(artifactId: string): Promise<readonly string[]>;
 
   /**
    * The case overview projection. One read, aggregate queries, no structure

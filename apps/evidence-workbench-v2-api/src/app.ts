@@ -11,9 +11,20 @@ import {
   type EvidenceV2Repository,
 } from '@acme/evidence-v2-contracts';
 import {
+  EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
+  EvidenceV2ReviewActionSchema,
+  deriveEvidenceV2ChainCompletion,
+  deriveEvidenceV2InstanceCompletion,
+  deriveEvidenceV2OccurrenceId,
+  deriveEvidenceV2ReviewDecisionId,
   deriveEvidenceV2SourceStructure,
+  deriveEvidenceV2Standings,
   proposeEvidenceV2Chains,
   type EvidenceV2ChainDecision,
+  type EvidenceV2EffectiveStanding,
+  type EvidenceV2InstanceCompletion,
+  type EvidenceV2Occurrence,
+  type EvidenceV2ReviewDecision,
 } from '@acme/module-evidence-v2';
 import type { EvidenceProductAction } from '@acme/evidence-auth';
 import {
@@ -190,6 +201,82 @@ export function createEvidenceV2App(
 
     await repository.writeImport({ artifact, structure, proposal });
     return artifact;
+  }
+
+  /**
+   * Standing and completion for one instance, folded on read.
+   *
+   * Nothing here is stored. A stored completion flag would be a second source
+   * of truth the decision log could contradict, and the log is the authority.
+   */
+  async function instanceReview(
+    artifactId: string,
+    instanceKey: string,
+    occurrenceIds: readonly string[],
+  ): Promise<{
+    readonly standings: ReadonlyMap<string, EvidenceV2EffectiveStanding>;
+    readonly completion: EvidenceV2InstanceCompletion;
+    readonly decisions: readonly EvidenceV2ReviewDecision[];
+  }> {
+    const decisions = await repository.listReviewDecisions(
+      artifactId,
+      instanceKey,
+    );
+    const windows = await repository.readExtractionWindows(
+      artifactId,
+      instanceKey,
+    );
+    const standings = deriveEvidenceV2Standings(occurrenceIds, decisions);
+    return {
+      standings: new Map(standings.map((item) => [item.occurrenceId, item])),
+      completion: deriveEvidenceV2InstanceCompletion({
+        instanceKey,
+        hasCommittedWindow: windows.some(
+          (window) => window.status === 'committed',
+        ),
+        standings,
+      }),
+      decisions,
+    };
+  }
+
+  /** Every instance's completion in one chain, so the chain can report its own. */
+  async function chainCompletion(
+    artifactId: string,
+    instanceKeys: readonly string[],
+  ): Promise<{
+    readonly perInstance: readonly EvidenceV2InstanceCompletion[];
+    readonly chain: ReturnType<typeof deriveEvidenceV2ChainCompletion>;
+  }> {
+    const extracted = new Set(
+      await repository.readExtractedInstanceKeys(artifactId),
+    );
+    const perInstance: EvidenceV2InstanceCompletion[] = [];
+    for (const instanceKey of instanceKeys) {
+      const occurrences = await repository.listOccurrences(
+        artifactId,
+        instanceKey,
+        { offset: 0, limit: 100 },
+      );
+      const decisions = await repository.listReviewDecisions(
+        artifactId,
+        instanceKey,
+      );
+      perInstance.push(
+        deriveEvidenceV2InstanceCompletion({
+          instanceKey,
+          hasCommittedWindow: extracted.has(instanceKey),
+          standings: deriveEvidenceV2Standings(
+            occurrences.items.map((item) => item.occurrenceId),
+            decisions,
+          ),
+        }),
+      );
+    }
+    return {
+      perInstance,
+      chain: deriveEvidenceV2ChainCompletion(perInstance),
+    };
   }
 
   async function partView(artifactId: string, partId: string) {
@@ -729,7 +816,19 @@ export function createEvidenceV2App(
         );
         if (detail === undefined)
           return void sendText(response, 404, 'No such chain.');
-        if (json) return void sendJson(response, 200, detail);
+        const completion = await chainCompletion(
+          artifactId,
+          detail.chain.instances.map((instance) => instance.instanceKey),
+        );
+        const stateOf = new Map(
+          completion.perInstance.map((item) => [item.instanceKey, item.state]),
+        );
+        if (json)
+          return void sendJson(response, 200, {
+            ...detail,
+            completion: completion.chain,
+            instanceReviewStates: completion.perInstance,
+          });
         const artifact = await repository.readArtifact(artifactId);
         const record =
           artifact === undefined
@@ -745,8 +844,11 @@ export function createEvidenceV2App(
             chainId: detail.chain.chainId,
             subjectLabel: detail.chain.subjectLabel,
             caseFileRef: detail.chain.caseFileRef,
+            completion: completion.chain,
             instances: detail.chain.instances.map((instance) => ({
               instanceOrdinal: instance.instanceOrdinal,
+              instanceKey: instance.instanceKey,
+              reviewState: stateOf.get(instance.instanceKey) ?? 'not-extracted',
               sourceTime: instance.instanceSourceTime.from ?? 'unknown',
               kind: instance.instanceSourceTime.kind,
               sourceLine: instance.instanceSourceTime.sourceLine,
@@ -857,11 +959,18 @@ export function createEvidenceV2App(
           artifactId,
           instanceKey,
         );
+        const review = await instanceReview(
+          artifactId,
+          instanceKey,
+          occurrences.items.map((item) => item.occurrenceId),
+        );
         if (json)
           return void sendJson(response, 200, {
             instance,
             occurrences,
             windows,
+            completion: review.completion,
+            standings: [...review.standings.values()],
           });
         const artifact = await repository.readArtifact(artifactId);
         const record =
@@ -876,10 +985,21 @@ export function createEvidenceV2App(
             caseTitle: record?.title ?? '',
             artifactId,
             chainId,
+            instanceKey,
             subjectLabel: detail.chain.subjectLabel,
             instanceOrdinal: instance.instanceOrdinal,
             sourceTime: instance.instanceSourceTime.from ?? 'unknown',
             sourcePartIds: instance.sourcePartIds,
+            completion: review.completion,
+            standings: [...review.standings.values()].map((standing) => ({
+              occurrenceId: standing.occurrenceId,
+              standing: standing.standing,
+              principal: standing.principal,
+              decidedAt: standing.decidedAt,
+              rationale: standing.rationale,
+              decisionCount: standing.decisionCount,
+            })),
+            viewer,
             occurrences: {
               ...occurrences,
               items: occurrences.items.map((occurrence) => ({
@@ -901,6 +1021,249 @@ export function createEvidenceV2App(
             })),
           }),
         );
+      }
+
+      // Review: append a decision, or read the log and the folded standings.
+      const reviewMatch =
+        /^\/(?:api\/)?artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/reviews$/u.exec(
+          path,
+        );
+      if (
+        reviewMatch?.[1] !== undefined &&
+        reviewMatch[2] !== undefined &&
+        reviewMatch[3] !== undefined
+      ) {
+        const artifactId = decodeURIComponent(reviewMatch[1]);
+        const chainId = decodeURIComponent(reviewMatch[2]);
+        const instanceKey = decodeURIComponent(reviewMatch[3]);
+        const action: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'review.decide';
+        if ((await authorizeArtifact(artifactId, action)) === undefined) return;
+
+        if (method === 'GET') {
+          const occurrences = await repository.listOccurrences(
+            artifactId,
+            instanceKey,
+            page,
+          );
+          const review = await instanceReview(
+            artifactId,
+            instanceKey,
+            occurrences.items.map((item) => item.occurrenceId),
+          );
+          return void sendJson(response, 200, {
+            completion: review.completion,
+            standings: [...review.standings.values()],
+            decisions: review.decisions,
+          });
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(request);
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const parsedAction = EvidenceV2ReviewActionSchema.safeParse(
+            payload['action'],
+          );
+          const occurrenceId = String(payload['occurrenceId'] ?? '').trim();
+          const rationale = String(payload['rationale'] ?? '').trim();
+          if (!parsedAction.success)
+            return void sendText(
+              response,
+              400,
+              'Action must be accept, reject or revise.',
+            );
+          if (occurrenceId.length === 0 || rationale.length === 0)
+            return void sendText(
+              response,
+              400,
+              'An occurrence and a rationale are required.',
+            );
+
+          // The decision must land on an occurrence of this instance. A
+          // decision on something the reviewer is not looking at is a
+          // cross-instance write, not a review.
+          const occurrences = await repository.listOccurrences(
+            artifactId,
+            instanceKey,
+            { offset: 0, limit: 100 },
+          );
+          if (
+            !occurrences.items.some(
+              (item) => item.occurrenceId === occurrenceId,
+            )
+          )
+            return void sendText(
+              response,
+              404,
+              'No such occurrence in this instance.',
+            );
+
+          // Supersession is read from the stored log rather than accepted from
+          // the caller, so a client cannot claim to replace a decision that
+          // does not exist or that belongs to someone else.
+          const history = await repository.readOccurrenceReviewHistory(
+            artifactId,
+            occurrenceId,
+          );
+          const previous = history[history.length - 1];
+          const decidedAt = options.now();
+          // Server-derived. A principal named in the body is not a principal.
+          const decidingPrincipal = principal.principalRef;
+          const decision: EvidenceV2ReviewDecision = {
+            schemaVersion: EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
+            decisionId: deriveEvidenceV2ReviewDecisionId({
+              occurrenceId,
+              action: parsedAction.data,
+              principal: decidingPrincipal,
+              decidedAt,
+              rationale,
+            }),
+            artifactId,
+            instanceKey,
+            occurrenceId,
+            action: parsedAction.data,
+            supersedes: previous?.decisionId ?? null,
+            principal: decidingPrincipal,
+            decidedAt,
+            rationale,
+          };
+          await repository.appendReviewDecision(decision);
+          if (json) return void sendJson(response, 201, decision);
+          response.writeHead(303, {
+            location: `/artifacts/${encodeURIComponent(artifactId)}/chains/${encodeURIComponent(chainId)}/instances/${encodeURIComponent(instanceKey)}`,
+          });
+          response.end();
+          return;
+        }
+      }
+
+      // A reviewer-authored occurrence. It cites a citable unit, exactly as the
+      // model does, so the product assembles the quote and locator from the
+      // source (ADR-0048 section 2). A reviewer may not supply quote text.
+      const authorMatch =
+        /^\/(?:api\/)?artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/occurrences$/u.exec(
+          path,
+        );
+      if (
+        method === 'POST' &&
+        authorMatch?.[1] !== undefined &&
+        authorMatch[2] !== undefined &&
+        authorMatch[3] !== undefined
+      ) {
+        const artifactId = decodeURIComponent(authorMatch[1]);
+        const chainId = decodeURIComponent(authorMatch[2]);
+        const instanceKey = decodeURIComponent(authorMatch[3]);
+        if (
+          (await authorizeArtifact(artifactId, 'review.decide')) === undefined
+        )
+          return;
+        const detail = await repository.readChain(artifactId, chainId);
+        const instance = detail?.chain.instances.find(
+          (item) => item.instanceKey === instanceKey,
+        );
+        if (instance === undefined)
+          return void sendText(response, 404, 'Not found.');
+
+        const body = await readBody(request);
+        const payload = body.text.trimStart().startsWith('{')
+          ? (JSON.parse(body.text) as Record<string, unknown>)
+          : Object.fromEntries(new URLSearchParams(body.text));
+        const unitId = String(payload['unitId'] ?? '').trim();
+        const rationale = String(payload['rationale'] ?? '').trim();
+        const kind =
+          payload['kind'] === 'exhibit-assertion'
+            ? ('exhibit-assertion' as const)
+            : ('statement-occurrence' as const);
+        if (unitId.length === 0 || rationale.length === 0)
+          return void sendText(
+            response,
+            400,
+            'A citable unit and a rationale are required.',
+          );
+
+        // The unit must exist and lie inside this instance's own parts.
+        let found:
+          | {
+              readonly partId: string;
+              readonly unit: {
+                readonly unitId: string;
+                readonly startLine: number;
+                readonly endLine: number;
+                readonly exactQuote: string;
+              };
+            }
+          | undefined;
+        for (const partId of instance.sourcePartIds) {
+          const part = await repository.readPart(artifactId, partId);
+          const unit = part?.units.find((item) => item.unitId === unitId);
+          if (unit !== undefined) {
+            found = { partId, unit };
+            break;
+          }
+        }
+        if (found === undefined)
+          return void sendText(
+            response,
+            404,
+            'No such citable unit in this instance.',
+          );
+
+        const authoringContract = 'evidence-v2-review-authored/1';
+        const decidedAt = options.now();
+        const authoringDecisionId = deriveEvidenceV2ReviewDecisionId({
+          occurrenceId: found.unit.unitId,
+          action: 'accept',
+          principal: principal.principalRef,
+          decidedAt,
+          rationale,
+        });
+        const occurrence: EvidenceV2Occurrence = {
+          schemaVersion: 'evidence-v2-occurrence/1',
+          occurrenceId: deriveEvidenceV2OccurrenceId({
+            artifactId,
+            unitId: found.unit.unitId,
+            contractVersion: authoringContract,
+          }),
+          artifactId,
+          partId: found.partId,
+          unitId: found.unit.unitId,
+          startLine: found.unit.startLine,
+          endLine: found.unit.endLine,
+          // From the unit, never from the request body.
+          exactQuote: found.unit.exactQuote,
+          kind,
+          actorReference: null,
+          temporalBound: null,
+          executionId: authoringDecisionId,
+          contractVersion: authoringContract,
+          windowId: 'reviewer-authored',
+          authoredBy: 'reviewer',
+        };
+        await repository.putOccurrences(artifactId, instanceKey, [occurrence]);
+
+        // A reviewer who writes an occurrence has thereby accepted it: the
+        // record and the standing come from the same act, and leaving it
+        // pending would ask them to review their own entry.
+        await repository.appendReviewDecision({
+          schemaVersion: EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
+          decisionId: authoringDecisionId,
+          artifactId,
+          instanceKey,
+          occurrenceId: occurrence.occurrenceId,
+          action: 'accept',
+          supersedes: null,
+          principal: principal.principalRef,
+          decidedAt,
+          rationale,
+        });
+        if (json) return void sendJson(response, 201, occurrence);
+        response.writeHead(303, {
+          location: `/artifacts/${encodeURIComponent(artifactId)}/chains/${encodeURIComponent(chainId)}/instances/${encodeURIComponent(instanceKey)}`,
+        });
+        response.end();
+        return;
       }
 
       const decisionMatch =

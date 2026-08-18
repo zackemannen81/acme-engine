@@ -142,5 +142,35 @@ export function buildEvidenceV2Migrations(
         )`,
       ]),
     }),
+    Object.freeze({
+      version: 3,
+      name: 'evidence-v2-review-standing',
+      statements: Object.freeze([
+        // Append-only. No UPDATE and no DELETE is ever issued against this
+        // table: a reversal is a further row that supersedes its predecessor,
+        // and effective standing is folded from the log on read.
+        `CREATE TABLE ${s}.review_decisions (
+          artifact_id text NOT NULL REFERENCES ${s}.artifacts(artifact_id),
+          decision_id text NOT NULL,
+          appended_seq bigserial NOT NULL,
+          instance_key text NOT NULL,
+          occurrence_id text NOT NULL,
+          action text NOT NULL,
+          supersedes text,
+          principal text NOT NULL,
+          decided_at text NOT NULL,
+          decision_json text NOT NULL,
+          PRIMARY KEY (artifact_id, decision_id)
+        )`,
+        `CREATE INDEX review_decisions_by_instance
+           ON ${s}.review_decisions (artifact_id, instance_key, appended_seq)`,
+        `CREATE INDEX review_decisions_by_occurrence
+           ON ${s}.review_decisions (artifact_id, occurrence_id, appended_seq)`,
+        // Authorship provenance for occurrences written before it existed:
+        // they were all model-produced, which is what the default states.
+        `ALTER TABLE ${s}.occurrences
+           ADD COLUMN authored_by text NOT NULL DEFAULT 'model'`,
+      ]),
+    }),
   ]);
 }

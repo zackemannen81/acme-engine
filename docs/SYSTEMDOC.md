@@ -1139,6 +1139,42 @@ chain's ordered instances and appended membership decisions.
 HTML. A chain view reflects effective membership, so a reviewer's correction is
 visible where it was made. No read path re-derives anything.
 
+**V2 review and standing.** `evidence-v2-review/1` in
+`@acme/module-evidence-v2` is an append-only decision and
+`deriveEvidenceV2Standings` folds the log to effective standing. Nothing stores
+a standing: the fold runs on every read, so "who decided this, when and on what
+grounds" is answerable for every occurrence rather than only for the most recent
+decision, and a reversal is a further decision that supersedes its predecessor
+by id rather than an edit. `pending` is a state and not an absence, because an
+occurrence nobody has looked at is materially different from one a reviewer
+accepted.
+
+The vocabulary is `accept`, `reject`, `revise` — three actions, not the
+specification's four. §2.3 fixes that an occurrence belongs to a chain instance
+by reference only and that re-chaining never touches it, so `move` is already
+exercised, correctly, by the chain membership decisions; a second way to
+re-chain could disagree with the first. `revise` records that a reviewer wants
+an occurrence looked at again and edits nothing, because an occurrence is
+immutable.
+
+A reviewer-authored occurrence cites a citable unit id and nothing else. The
+product builds the quote and the locator from that unit, which is the same
+authority boundary ADR-0048 §2 imposes on the model: text the source does not
+contain is unrepresentable rather than merely rejected. Authoring is itself an
+acceptance, since asking a reviewer to review their own entry would leave it
+pending forever. `authoredBy` distinguishes the two provenances and is optional
+with a `model` default, so every occurrence written before reviewer authoring
+existed still parses and still means what it meant.
+
+`deriveEvidenceV2InstanceCompletion` and `deriveEvidenceV2ChainCompletion`
+answer "markera beviskedjan som klar" by derivation. `not-extracted`,
+`pending-review` and `reviewed` stay distinct — an instance whose window
+legitimately stated nothing is reviewed, not un-extracted — and a chain is
+complete only when every instance is reviewed, which is why an empty chain is
+not vacuously finished. In PostgreSQL the log is `review_decisions`, which takes
+INSERT only: no UPDATE and no DELETE is issued against it anywhere in the
+adapter, so append-only is a property of the code rather than a convention.
+
 **V2 workbench shell and status surface.** ACME-0157 gave the application one
 shell. `EVIDENCE_V2_SURFACES` in `@acme/evidence-v2-contracts` is the single
 list of ADR-0049's surfaces and which of them this build serves; the surface

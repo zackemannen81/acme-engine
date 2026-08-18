@@ -12,7 +12,6 @@
 
 import {
   EVIDENCE_V2_MAX_PAGE_SIZE,
-  EVIDENCE_V2_SURFACE_GAPS,
   EVIDENCE_V2_SURFACES,
   type EvidenceV2CaseOverview,
   type EvidenceV2SurfaceGap,
@@ -74,6 +73,16 @@ const STYLES = `
            border-bottom: 1px solid var(--line); vertical-align: top; }
   .muted { opacity: 0.65; }
   .pager { margin-top: 0.75rem; font-size: 0.8rem; opacity: 0.8; }
+  td.standing { white-space: nowrap; font-weight: 600; }
+  .standing-pending { opacity: 0.6; font-weight: 400; }
+  .standing-accepted { color: #1a7f37; }
+  .standing-rejected { color: #b3261e; }
+  .standing-needs-revision { color: #8a6d00; }
+  .standing-not-extracted { opacity: 0.55; font-weight: 400; }
+  .standing-pending-review { color: #8a6d00; }
+  .standing-reviewed { color: #1a7f37; }
+  td.actions form { display: inline-flex; gap: 0.2rem; margin: 0 0.2rem 0.2rem 0; }
+  td.actions input { width: 7rem; }
   .gap { border: 1px solid var(--line); border-left-width: 3px;
          padding: 0.8rem 1rem; margin: 1rem 0; max-width: 44rem; }
   .gap h2 { margin-top: 0; }
@@ -522,12 +531,22 @@ export function renderChains(input: {
 }
 
 export interface EvidenceV2InstanceRow {
+  readonly reviewState?: 'not-extracted' | 'pending-review' | 'reviewed';
+  readonly instanceKey?: string;
   readonly instanceOrdinal: number;
   readonly sourceTime: string;
   readonly kind: string;
   readonly sourceLine: number | null;
   readonly ordered: boolean;
   readonly sourcePartIds: readonly string[];
+}
+
+export interface EvidenceV2ChainCompletionRow {
+  readonly complete: boolean;
+  readonly instanceCount: number;
+  readonly reviewedCount: number;
+  readonly pendingReviewCount: number;
+  readonly notExtractedCount: number;
 }
 
 export function renderChain(input: {
@@ -538,6 +557,7 @@ export function renderChain(input: {
   readonly subjectLabel: string;
   readonly caseFileRef: string | null;
   readonly instances: readonly EvidenceV2InstanceRow[];
+  readonly completion?: EvidenceV2ChainCompletionRow;
 }): string {
   const rows = input.instances
     .map((instance) => {
@@ -554,7 +574,10 @@ export function renderChain(input: {
           instance.ordered ? '' : ' · unordered'
         }</td>` +
         `<td class="muted">${instance.sourceLine === null ? '' : `line ${String(instance.sourceLine)}`}</td>` +
-        `<td>${parts}</td></tr>`
+        `<td>${parts}</td>` +
+        `<td class="standing standing-${escapeHtml(instance.reviewState ?? 'not-extracted')}">` +
+        `<a href="/artifacts/${encodeURIComponent(input.artifactId)}/chains/${encodeURIComponent(input.chainId)}/instances/${encodeURIComponent(instance.instanceKey ?? '')}">` +
+        `${escapeHtml(COMPLETION_LABEL[instance.reviewState ?? 'not-extracted'])}</a></td></tr>`
       );
     })
     .join('');
@@ -582,7 +605,16 @@ export function renderChain(input: {
     },
     body: `<h1>${escapeHtml(input.subjectLabel)}</h1>
      <p class="muted">${escapeHtml(input.caseFileRef ?? '')} · ${String(input.instances.length)} instances in source-time order</p>
-     <table><thead><tr><th>#</th><th>Source time</th><th>Precision</th><th>From</th><th>Parts</th></tr></thead>
+     <p>Chain state:
+       <strong>${input.completion === undefined ? 'unknown' : input.completion.complete ? 'complete' : 'in progress'}</strong>
+       ${
+         input.completion === undefined
+           ? ''
+           : `<span class="muted">· ${String(input.completion.reviewedCount)} of ${String(input.completion.instanceCount)} instances reviewed, ` +
+             `${String(input.completion.pendingReviewCount)} pending review, ` +
+             `${String(input.completion.notExtractedCount)} not extracted</span>`
+       }</p>
+     <table><thead><tr><th>#</th><th>Source time</th><th>Precision</th><th>From</th><th>Parts</th><th>Review</th></tr></thead>
      <tbody>${rows}</tbody></table>`,
   });
 }
@@ -613,27 +645,86 @@ export interface EvidenceV2WindowRow {
  * its reason named. The frozen application showed a reviewer nothing at all in
  * that situation (R-05).
  */
+/** What a reviewer decided about one occurrence, folded from the log. */
+export interface EvidenceV2StandingRow {
+  readonly occurrenceId: string;
+  readonly standing: 'pending' | 'accepted' | 'rejected' | 'needs-revision';
+  readonly principal: string | null;
+  readonly decidedAt: string | null;
+  readonly rationale: string | null;
+  readonly decisionCount: number;
+}
+
+export interface EvidenceV2CompletionRow {
+  readonly state: 'not-extracted' | 'pending-review' | 'reviewed';
+  readonly occurrenceCount: number;
+  readonly pendingCount: number;
+  readonly acceptedCount: number;
+  readonly rejectedCount: number;
+  readonly needsRevisionCount: number;
+}
+
+const COMPLETION_LABEL: Readonly<
+  Record<EvidenceV2CompletionRow['state'], string>
+> = {
+  'not-extracted': 'not extracted',
+  'pending-review': 'pending review',
+  reviewed: 'reviewed',
+};
+
 export function renderInstance(input: {
   readonly caseId: string;
   readonly caseTitle: string;
   readonly artifactId: string;
   readonly chainId: string;
+  readonly instanceKey: string;
   readonly subjectLabel: string;
   readonly instanceOrdinal: number;
   readonly sourceTime: string;
   readonly sourcePartIds: readonly string[];
   readonly occurrences: EvidenceV2ListPage<EvidenceV2OccurrenceRow>;
   readonly windows: readonly EvidenceV2WindowRow[];
+  readonly standings: readonly EvidenceV2StandingRow[];
+  readonly completion: EvidenceV2CompletionRow;
+  readonly csrfToken?: string;
   readonly viewer?: EvidenceV2Viewer;
 }): string {
+  const standingOf = new Map(
+    input.standings.map((item) => [item.occurrenceId, item]),
+  );
+  const reviewPath = `/artifacts/${encodeURIComponent(input.artifactId)}/chains/${encodeURIComponent(input.chainId)}/instances/${encodeURIComponent(input.instanceKey)}/reviews`;
+  const action = (
+    occurrenceId: string,
+    verb: 'accept' | 'reject' | 'revise',
+    label: string,
+  ): string =>
+    `<form method="post" action="${escapeHtml(reviewPath)}">` +
+    `<input type="hidden" name="occurrenceId" value="${escapeHtml(occurrenceId)}">` +
+    `<input type="hidden" name="action" value="${verb}">` +
+    `<input name="rationale" placeholder="Why?" required>` +
+    `<button type="submit">${label}</button></form>`;
   const rows = input.occurrences.items
-    .map(
-      (item) =>
+    .map((item) => {
+      const standing = standingOf.get(item.occurrenceId);
+      const state = standing?.standing ?? 'pending';
+      const history =
+        standing === undefined || standing.decisionCount === 0
+          ? '<span class="muted">no decision</span>'
+          : `${escapeHtml(standing.rationale ?? '')} <span class="muted">` +
+            `(${escapeHtml(standing.decidedAt ?? '')}, ${String(standing.decisionCount)} decision` +
+            `${standing.decisionCount === 1 ? '' : 's'})</span>`;
+      return (
         `<tr><td><a href="/artifacts/${encodeURIComponent(input.artifactId)}/parts/${encodeURIComponent(item.partId)}">L${String(item.startLine)}–L${String(item.endLine)}</a></td>` +
         `<td class="muted">${escapeHtml(item.kind)}</td>` +
         `<td class="muted">${escapeHtml(item.temporal ?? '')}</td>` +
-        `<td>${escapeHtml(item.exactQuote)}</td></tr>`,
-    )
+        `<td>${escapeHtml(item.exactQuote)}</td>` +
+        `<td class="standing standing-${escapeHtml(state)}">${escapeHtml(state)}</td>` +
+        `<td class="muted">${history}</td>` +
+        `<td class="actions">${action(item.occurrenceId, 'accept', 'Accept')}` +
+        `${action(item.occurrenceId, 'reject', 'Reject')}` +
+        `${action(item.occurrenceId, 'revise', 'Revise')}</td></tr>`
+      );
+    })
     .join('');
   const windowRows = input.windows
     .map(
@@ -672,23 +763,35 @@ export function renderInstance(input: {
      <p class="muted">${escapeHtml(input.sourceTime)} · parts ${input.sourcePartIds
        .map((partId) => escapeHtml(partId))
        .join(', ')}</p>
+     <p>Review state:
+       <strong>${escapeHtml(COMPLETION_LABEL[input.completion.state])}</strong>
+       <span class="muted">· ${String(input.completion.acceptedCount)} accepted,
+       ${String(input.completion.rejectedCount)} rejected,
+       ${String(input.completion.needsRevisionCount)} need revision,
+       ${String(input.completion.pendingCount)} undecided</span></p>
      <h2>Occurrences</h2>
      <p class="muted">Every quote is the cited source unit, verbatim. The model
-     selected and classified; it wrote none of this text.</p>
-     <table><thead><tr><th>Source</th><th>Kind</th><th>Stated time</th><th>Quote</th></tr></thead>
-     <tbody>${rows || '<tr><td colspan="4" class="muted">No occurrences extracted yet.</td></tr>'}</tbody></table>
-     ${pager(`/artifacts/${input.artifactId}/chains/${input.chainId}/instances/${input.instanceOrdinal}`, input.occurrences)}
+     selected and classified; it wrote none of this text. A decision is
+     appended, never applied over an earlier one — rejecting an occurrence
+     removes nothing.</p>
+     <table><thead><tr><th>Source</th><th>Kind</th><th>Stated time</th><th>Quote</th><th>Standing</th><th>Last decision</th><th>Review</th></tr></thead>
+     <tbody>${rows || '<tr><td colspan="7" class="muted">No occurrences extracted yet.</td></tr>'}</tbody></table>
+     ${pager(`/artifacts/${input.artifactId}/chains/${input.chainId}/instances/${input.instanceKey}`, input.occurrences)}
+     <h2>Add an occurrence</h2>
+     <p class="muted">Cite a citable unit of this instance. The quote and the
+     locator come from that unit, exactly as they do for the model — a
+     reviewer cannot enter words the source does not contain.</p>
+     <form method="post" action="/artifacts/${encodeURIComponent(input.artifactId)}/chains/${encodeURIComponent(input.chainId)}/instances/${encodeURIComponent(input.instanceKey)}/occurrences">
+       <input name="unitId" placeholder="Citable unit id" required>
+       <input name="rationale" placeholder="Why this is an occurrence" required>
+       <button type="submit">Add</button>
+     </form>
      <h2>Extraction windows</h2>
      ${
        outstanding
          ? '<p class="muted">No window has been executed for this instance.</p>'
          : `<table><thead><tr><th>Window</th><th>State</th><th>Size</th><th>Occurrences</th><th>Reason</th></tr></thead><tbody>${windowRows}</tbody></table>`
-     }
-     <h2>Standing</h2>
-     <div class="gap">
-       <p>${escapeHtml(EVIDENCE_V2_SURFACE_GAPS.standing.reason)}</p>
-       <p class="delivered">Delivered by ${escapeHtml(EVIDENCE_V2_SURFACE_GAPS.standing.deliveredBy)}.</p>
-     </div>`,
+     }`,
   });
 }
 
@@ -826,6 +929,19 @@ export function renderCaseStatus(input: {
        ${row('Committed windows', c.committedWindows)}
        ${row('Failed windows', c.failedWindows)}
        ${row('Instances without extraction', input.overview.instancesWithoutExtraction)}
+     </dl>
+     <h2>Review</h2>
+     <p class="muted">Standing is folded from the append-only decision log on
+     every read. Nothing here is a stored field, and rejecting an occurrence
+     removes nothing.</p>
+     <dl class="counts">
+       ${row('Decisions appended', c.reviewDecisions)}
+       ${row('Accepted', c.accepted)}
+       ${row('Rejected', c.rejected)}
+       ${row('Needing revision', c.needsRevision)}
+       ${row('Undecided', c.pending)}
+       ${row('Reviewer-authored occurrences', c.reviewerAuthored)}
+       ${row('Instances pending review', input.overview.instancesPendingReview)}
      </dl>
      <h2>Resume</h2>
      ${resumeBlock}

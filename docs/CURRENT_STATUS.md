@@ -204,9 +204,41 @@ names the least useful chain in the case. The pointer is correct and the label
 is the defect; it belongs to the chain layer and is
 [in the backlog](backlog/v2-degenerate-chain-subject.md).
 
-Remaining limitations: an occurrence is canonical evidence, not accepted
-evidence — review and standing do not exist yet, and neither do claims,
-relations or consensus projection. Extraction is Pass 1 with no neighbour context
+ACME-0159 made an occurrence reviewable. `evidence-v2-review/1` is an
+append-only decision — action, occurrence, superseded predecessor,
+server-derived principal, time and rationale — and effective standing is a pure
+fold over that log, never a stored field. Three actions, not four: §2.3 says an
+occurrence belongs to a chain instance by reference only and that re-chaining
+never touches it, so moving is already exercised by the chain membership
+decisions and a second way to re-chain could disagree with the first. `revise`
+edits nothing either.
+
+A reviewer can add an occurrence the model missed, and does it by citing a
+citable unit id — the product assembles the quote and locator from that unit,
+exactly as ADR-0048 §2 makes it do for the model. A reviewer cannot type words
+the source does not contain, structurally rather than by validation. Instance
+and chain completion are derived on read: `not-extracted`, `pending-review` and
+`reviewed` are three distinct states, and a chain is complete only when every
+instance is reviewed. Nothing stores a completion flag, because a flag would be
+a second source of truth the log could contradict.
+
+Recorded on the live Supabase case through the product's own routes: a
+reviewer-authored occurrence took its quote from unit L48071 and ignored an
+`exactQuote` planted in the request body; accept → reject → accept left the
+effective standing `accepted` with **all three decisions still in the log**;
+the recorded principal was server-derived and a `principal` named in the body
+was ignored; refusals answered 400/400/404/404; a second principal got 404, an
+unauthenticated write 401 and a write without CSRF 401. The status surface now
+folds standing counts, and `standing` is gone from its unbuilt list — the first
+entry ACME-0157's named-gap machinery has retired, and the compiler found every
+place that had to change.
+
+ACME-0159 is **paused, not complete**. Its frozen gate requires extracting one
+instance and its frozen Out of Scope forbids live model spend; both cannot
+hold. The planner states the cost without paying it — 2 bounded calls on
+`instance-part-000381` — and the decision to spend is the operator's.
+
+Remaining limitations: claims, relations and consensus projection do not exist. Extraction is Pass 1 with no neighbour context
 and no actor roster. Credentials still come from a development authenticator, so
 a real upstream identity provider is unwired. `pnpm test:postgres` has two
 pre-existing frozen-app failures unrelated to the V2 work, recorded in

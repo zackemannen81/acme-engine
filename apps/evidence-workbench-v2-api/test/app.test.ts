@@ -14,6 +14,7 @@ import {
   type EvidenceV2ExtractionWindowState,
   type EvidenceV2ImportWrite,
   type EvidenceV2Occurrence,
+  type EvidenceV2ReviewDecision,
   type EvidenceV2Page,
   type EvidenceV2PageRequest,
   type EvidenceV2Repository,
@@ -49,6 +50,7 @@ function memoryRepository(): EvidenceV2Repository & {
   const proposals = new Map<string, EvidenceV2ChainProposal>();
   const decisions = new Map<string, EvidenceV2ChainDecision[]>();
   const occurrences = new Map<string, EvidenceV2Occurrence[]>();
+  const reviews: EvidenceV2ReviewDecision[] = [];
   const windows = new Map<string, EvidenceV2ExtractionWindowState[]>();
   const derivationCalls = { count: 0 };
 
@@ -177,6 +179,35 @@ function memoryRepository(): EvidenceV2Repository & {
     async readExtractionWindows(artifactId, instanceKey) {
       return windows.get(`${artifactId}/${instanceKey}`) ?? [];
     },
+    async appendReviewDecision(decision) {
+      // Append-only, and idempotent on the content-derived id.
+      if (reviews.some((item) => item.decisionId === decision.decisionId))
+        return;
+      reviews.push(decision);
+    },
+    async listReviewDecisions(artifactId, instanceKey) {
+      return reviews.filter(
+        (item) =>
+          item.artifactId === artifactId && item.instanceKey === instanceKey,
+      );
+    },
+    async readOccurrenceReviewHistory(artifactId, occurrenceId) {
+      return reviews.filter(
+        (item) =>
+          item.artifactId === artifactId && item.occurrenceId === occurrenceId,
+      );
+    },
+    async readExtractedInstanceKeys(artifactId) {
+      return [
+        ...new Set(
+          [...windows.entries()]
+            .filter(([key]) => key.startsWith(`${artifactId}/`))
+            .flatMap(([, value]) => value)
+            .filter((item) => item.status === 'committed')
+            .map((item) => item.instanceKey),
+        ),
+      ];
+    },
     async readCaseOverview(caseId) {
       const scoped = [...artifacts.values()].filter(
         (item) => item.caseId === caseId,
@@ -229,8 +260,21 @@ function memoryRepository(): EvidenceV2Repository & {
           chainDecisions: [...decisions.entries()]
             .filter(([artifactId]) => ids.has(artifactId))
             .reduce((total, [, log]) => total + log.length, 0),
+          reviewDecisions: reviews.filter((item) => ids.has(item.artifactId))
+            .length,
+          pending: scopedOccurrences.filter(
+            (item) =>
+              !reviews.some((r) => r.occurrenceId === item.occurrenceId),
+          ).length,
+          accepted: 0,
+          rejected: 0,
+          needsRevision: 0,
+          reviewerAuthored: scopedOccurrences.filter(
+            (item) => item.authoredBy === 'reviewer',
+          ).length,
         },
         instancesWithoutExtraction: outstanding.length,
+        instancesPendingReview: 0,
         resumeAt:
           first === undefined || owner === undefined
             ? null
@@ -718,6 +762,303 @@ describe('evidence v2 api', () => {
     expect(response.headers.get('location')).toBe(
       `/artifacts/${artifactId}/chains`,
     );
+  });
+
+  async function seedOccurrence(
+    caseId: string,
+    artifactId: string,
+    headers: Record<string, string>,
+  ): Promise<{ instanceKey: string; chainId: string; occurrenceId: string }> {
+    void caseId;
+    const chains = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
+    ).json()) as { items: { chainId: string }[] };
+    const chainId = chains.items[0]?.chainId ?? '';
+    const detail = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains/${chainId}`, {
+        headers,
+      })
+    ).json()) as {
+      chain: {
+        instances: { instanceKey: string; sourcePartIds: string[] }[];
+      };
+    };
+    const instance = detail.chain.instances[0];
+    if (instance === undefined) throw new Error('expected an instance');
+    // A reviewer-authored occurrence is the offline way to get real evidence
+    // into an instance: extraction needs a provider and this suite has none.
+    const part = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/parts/${instance.sourcePartIds[0] ?? ''}`,
+        { headers },
+      )
+    ).json()) as { part: { units: { unitId: string }[] } };
+    const unitId = part.part.units[0]?.unitId ?? '';
+    const created = await fetch(
+      `${base}/api/artifacts/${artifactId}/chains/${chainId}/instances/${instance.instanceKey}/occurrences`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ unitId, rationale: 'The model missed this.' }),
+      },
+    );
+    const occurrence = (await created.json()) as { occurrenceId: string };
+    return {
+      instanceKey: instance.instanceKey,
+      chainId,
+      occurrenceId: occurrence.occurrenceId,
+    };
+  }
+
+  it('builds a reviewer-authored occurrence from the cited unit, not from the request', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const chains = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains`, { headers })
+    ).json()) as { items: { chainId: string }[] };
+    const chainId = chains.items[0]?.chainId ?? '';
+    const detail = (await (
+      await fetch(`${base}/api/artifacts/${artifactId}/chains/${chainId}`, {
+        headers,
+      })
+    ).json()) as {
+      chain: { instances: { instanceKey: string; sourcePartIds: string[] }[] };
+    };
+    const instance = detail.chain.instances[0];
+    if (instance === undefined) throw new Error('expected an instance');
+    const part = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/parts/${instance.sourcePartIds[0] ?? ''}`,
+        { headers },
+      )
+    ).json()) as {
+      part: { units: { unitId: string; exactQuote: string }[] };
+    };
+    const unit = part.part.units[0];
+    if (unit === undefined) throw new Error('expected a unit');
+
+    const created = await fetch(
+      `${base}/api/artifacts/${artifactId}/chains/${chainId}/instances/${instance.instanceKey}/occurrences`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          unitId: unit.unitId,
+          rationale: 'The model missed this sentence.',
+          // Ignored by construction: the record is assembled from the unit.
+          exactQuote: 'Something the source never says.',
+          startLine: 9999,
+        }),
+      },
+    );
+    expect(created.status).toBe(201);
+    const occurrence = (await created.json()) as EvidenceV2Occurrence;
+    expect(occurrence.exactQuote).toBe(unit.exactQuote);
+    expect(occurrence.exactQuote).not.toContain('never says');
+    expect(occurrence.startLine).not.toBe(9999);
+    expect(occurrence.authoredBy).toBe('reviewer');
+    expect(occurrence.windowId).toBe('reviewer-authored');
+
+    // Authoring is itself an acceptance, so it does not sit pending awaiting
+    // its own author.
+    const review = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${chainId}/instances/${instance.instanceKey}/reviews`,
+        { headers },
+      )
+    ).json()) as { standings: { standing: string }[] };
+    expect(review.standings[0]?.standing).toBe('accepted');
+    void caseId;
+  });
+
+  it('refuses a reviewer-authored occurrence citing a unit outside the instance', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const response = await fetch(
+      `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/occurrences`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          unitId: 'unit-that-does-not-exist',
+          rationale: 'Should be refused.',
+        }),
+      },
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it('appends a review decision and folds standing without storing it', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const reviewPath = `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/reviews`;
+
+    const rejected = await fetch(reviewPath, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        occurrenceId: seeded.occurrenceId,
+        action: 'reject',
+        rationale: 'The quote is an index line, not testimony.',
+      }),
+    });
+    expect(rejected.status).toBe(201);
+    const decision = (await rejected.json()) as {
+      principal: string;
+      supersedes: string | null;
+      action: string;
+    };
+    expect(decision.action).toBe('reject');
+    // The authoring acceptance is superseded, explicitly.
+    expect(decision.supersedes).not.toBeNull();
+
+    const after = (await (await fetch(reviewPath, { headers })).json()) as {
+      standings: { standing: string; decisionCount: number }[];
+      decisions: { action: string }[];
+      completion: { state: string; rejectedCount: number };
+    };
+    expect(after.standings[0]?.standing).toBe('rejected');
+    // Rejection removes nothing: both decisions are still in the log.
+    expect(after.decisions.map((item) => item.action)).toEqual([
+      'accept',
+      'reject',
+    ]);
+    expect(after.standings[0]?.decisionCount).toBe(2);
+    expect(after.completion.rejectedCount).toBe(1);
+
+    // The occurrence itself is untouched by the decision.
+    const occurrences = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`,
+        { headers },
+      )
+    ).json()) as { occurrences: { total: number } };
+    expect(occurrences.occurrences.total).toBe(1);
+  });
+
+  it('records the server-derived principal and ignores one in the body', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const response = await fetch(
+      `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/reviews`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          occurrenceId: seeded.occurrenceId,
+          action: 'accept',
+          rationale: 'Verified against the source lines.',
+          principal: 'somebody-else',
+        }),
+      },
+    );
+    const decision = (await response.json()) as { principal: string };
+    expect(decision.principal).not.toBe('somebody-else');
+    expect(decision.principal).toContain('evidence_principal');
+  });
+
+  it('refuses a decision without a rationale, an action or a known occurrence', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const reviewPath = `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/reviews`;
+    const cases: [Record<string, unknown>, number][] = [
+      [{ occurrenceId: seeded.occurrenceId, action: 'accept' }, 400],
+      [
+        { occurrenceId: seeded.occurrenceId, action: 'move', rationale: 'x' },
+        400,
+      ],
+      [
+        { occurrenceId: seeded.occurrenceId, action: 'delete', rationale: 'x' },
+        400,
+      ],
+      [
+        { occurrenceId: 'occurrence-nope', action: 'accept', rationale: 'x' },
+        404,
+      ],
+    ];
+    for (const [body, status] of cases) {
+      const response = await fetch(reviewPath, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+      expect(response.status, JSON.stringify(body)).toBe(status);
+    }
+  });
+
+  it('reports instance and chain completion without storing a flag', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+
+    // The authored occurrence is accepted, but its instance has no committed
+    // extraction window, so the instance is not reviewed and the chain is not
+    // complete. Work that was never started is not finished work.
+    const chain = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}`,
+        { headers },
+      )
+    ).json()) as {
+      completion: { complete: boolean; notExtractedCount: number };
+      instanceReviewStates: { instanceKey: string; state: string }[];
+    };
+    expect(chain.completion.complete).toBe(false);
+    expect(chain.completion.notExtractedCount).toBeGreaterThan(0);
+    expect(
+      chain.instanceReviewStates.find(
+        (item) => item.instanceKey === seeded.instanceKey,
+      )?.state,
+    ).toBe('not-extracted');
+  });
+
+  it('requires review.decide, CSRF and membership for every review write', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const paths = [
+      `/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/reviews`,
+      `/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/occurrences`,
+    ];
+    const body = JSON.stringify({
+      occurrenceId: seeded.occurrenceId,
+      action: 'accept',
+      rationale: 'x',
+      unitId: 'x',
+    });
+
+    for (const path of paths) {
+      // Unauthenticated.
+      expect(
+        (await fetch(`${base}${path}`, { method: 'POST', body })).status,
+      ).toBe(401);
+      // Authenticated without the CSRF header.
+      const noCsrf = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: {
+          cookie: headers['cookie'] ?? '',
+          'content-type': 'application/json',
+        },
+        body,
+      });
+      expect(noCsrf.status).toBe(401);
+      // A different principal is not a member: indistinguishable from missing.
+      const other = await signIn('second@acme.local', 'second-secret');
+      const nonMember = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: other,
+        body,
+      });
+      expect(nonMember.status).toBe(404);
+    }
+    void caseId;
+  });
+
+  it('no longer reports standing as an unbuilt surface', async () => {
+    const { caseId, headers } = await seed();
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    expect(Object.keys(overview.unavailable)).not.toContain('standing');
+    expect(Object.keys(overview.unavailable)).toContain('claims');
+    expect(overview.counts).toHaveProperty('accepted');
   });
 
   it('refuses every route without a session', async () => {

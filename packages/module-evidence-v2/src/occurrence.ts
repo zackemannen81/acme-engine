@@ -70,10 +70,24 @@ export const EvidenceV2OccurrenceSchema = z
     /** Null until a roster exists. `evidence-v2-observe/1` supplies none. */
     actorReference: z.null(),
     temporalBound: EvidenceV2TemporalBoundSchema.nullable(),
-    /** Provenance of the execution that produced it, so it replays. */
+    /**
+     * The identity of the act that produced this record, so it replays.
+     *
+     * For a model-produced occurrence that is the engine execution. For a
+     * reviewer-authored one it is the authoring review decision, which carries
+     * the principal, the time and the rationale and is equally auditable.
+     * `authoredBy` says which namespace the value lives in; the field is never
+     * two meanings at once without it.
+     */
     executionId: z.string().min(1),
     contractVersion: z.string().min(1),
     windowId: z.string().min(1),
+    /**
+     * Who produced the record. Optional and defaulting to `model`, so every
+     * `evidence-v2-occurrence/1` record written before reviewer authoring
+     * existed still parses and still means what it meant.
+     */
+    authoredBy: z.enum(['model', 'reviewer']).optional(),
   })
   .strict();
 

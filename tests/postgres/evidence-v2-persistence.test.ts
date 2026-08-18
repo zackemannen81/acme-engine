@@ -23,6 +23,7 @@ import {
 } from '../../packages/evidence-v2-contracts/src/index.js';
 import {
   deriveEvidenceV2SourceStructure,
+  deriveEvidenceV2Standings,
   proposeEvidenceV2Chains,
 } from '../../packages/module-evidence-v2/src/index.js';
 
@@ -290,6 +291,72 @@ describe('evidence v2 postgres persistence', () => {
     ).toBe(1);
   });
 
+  it('appends review decisions and never updates one', async () => {
+    const listed = await repository.listOccurrences(
+      artifact.artifactId,
+      'instance-1',
+      { offset: 0, limit: 10 },
+    );
+    const occurrenceId = listed.items[0]?.occurrenceId;
+    if (occurrenceId === undefined) throw new Error('expected an occurrence');
+
+    const accept = {
+      schemaVersion: 'evidence-v2-review/1' as const,
+      decisionId: 'review-postgres-accept',
+      artifactId: artifact.artifactId,
+      instanceKey: 'instance-1',
+      occurrenceId,
+      action: 'accept' as const,
+      supersedes: null,
+      principal: 'principal-postgres',
+      decidedAt: '2026-08-18T10:00:00.000Z',
+      rationale: 'Verified against the source lines.',
+    };
+    await repository.appendReviewDecision(accept);
+    // Content-derived identity: an identical retry is the same decision.
+    await repository.appendReviewDecision(accept);
+    expect(
+      (
+        await repository.readOccurrenceReviewHistory(
+          artifact.artifactId,
+          occurrenceId,
+        )
+      ).length,
+    ).toBe(1);
+
+    await repository.appendReviewDecision({
+      ...accept,
+      decisionId: 'review-postgres-reject',
+      action: 'reject',
+      supersedes: accept.decisionId,
+      decidedAt: '2026-08-18T11:00:00.000Z',
+      rationale: 'On a second read this quotes the index.',
+    });
+
+    const history = await repository.readOccurrenceReviewHistory(
+      artifact.artifactId,
+      occurrenceId,
+    );
+    expect(history.map((item) => item.action)).toEqual(['accept', 'reject']);
+    // The superseded decision is stored exactly as it was written.
+    expect(history[0]).toEqual(accept);
+
+    const standings = deriveEvidenceV2Standings([occurrenceId], history);
+    expect(standings[0]?.standing).toBe('rejected');
+    expect(standings[0]?.decisionCount).toBe(2);
+
+    // Scoped: another instance's log does not see these.
+    expect(
+      (await repository.listReviewDecisions(artifact.artifactId, 'instance-2'))
+        .length,
+    ).toBe(0);
+
+    const extracted = await repository.readExtractedInstanceKeys(
+      artifact.artifactId,
+    );
+    expect(extracted).toContain('instance-1');
+  });
+
   it('projects a case overview from stored rows, not from import totals', async () => {
     const overview = await repository.readCaseOverview('case-v2-test');
 
@@ -327,10 +394,18 @@ describe('evidence v2 postgres persistence', () => {
     expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
     expect(overview.resumeAt?.artifactId).toBe(artifact.artifactId);
 
+    // Standing is folded from the log by the same aggregate read.
+    expect(overview.counts.reviewDecisions).toBe(2);
+    expect(overview.counts.rejected).toBe(1);
+    expect(overview.counts.accepted).toBe(0);
+    expect(overview.counts.pending).toBe(0);
+    expect(overview.counts.reviewerAuthored).toBe(0);
+
     // Unbuilt surfaces report a condition. Reporting zero claims would be a
     // false statement about the case rather than a true one about the product.
     expect(overview.unavailable['claims']?.state).toBe('not-implemented');
-    expect(overview.unavailable['standing']?.deliveredBy).toBe('ACME-0159');
+    // ACME-0159 retired this one, so it must be gone rather than stale.
+    expect(overview.unavailable).not.toHaveProperty('standing');
     expect(overview.counts).not.toHaveProperty('claims');
 
     // An unrelated case sees nothing of this one.

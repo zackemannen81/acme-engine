@@ -80,3 +80,19 @@ export {
   type EvidenceV2SourceStructure,
   type EvidenceV2SourceStructureDiagnostic,
 } from './source-structure.js';
+export {
+  EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
+  EvidenceV2ReviewActionSchema,
+  EvidenceV2ReviewDecisionSchema,
+  EvidenceV2StandingSchema,
+  deriveEvidenceV2ChainCompletion,
+  deriveEvidenceV2InstanceCompletion,
+  deriveEvidenceV2ReviewDecisionId,
+  deriveEvidenceV2Standings,
+  type EvidenceV2EffectiveStanding,
+  type EvidenceV2InstanceCompletion,
+  type EvidenceV2InstanceReviewState,
+  type EvidenceV2ReviewAction,
+  type EvidenceV2ReviewDecision,
+  type EvidenceV2Standing,
+} from './review.js';

@@ -1,5 +1,70 @@
 # Journal
 
+## 2026-08-18 — ACME-0159 paused: review and standing delivered, one gate unmet
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0159, In Progress. This is a pause at a clean boundary, not a
+  completion.
+- Change: an occurrence is reviewable. `evidence-v2-review/1` is an append-only
+  decision and `deriveEvidenceV2Standings` folds the log to effective standing
+  on every read; nothing stores a standing. `review_decisions` in PostgreSQL
+  takes INSERT only — no UPDATE and no DELETE is issued against it anywhere in
+  the adapter, so append-only is a property of the code rather than a
+  convention. Migration 3 applied to the live database.
+- **Three actions, not four.** The specification says "accept, reject, revise or
+  move", but §2.3 fixes that an occurrence belongs to a chain instance by
+  reference only and that re-chaining never touches it. Moving is already
+  exercised by the chain membership decisions; a second way to re-chain could
+  disagree with the first. `revise` edits nothing either — an occurrence is
+  immutable, and `revise` records that someone wants it looked at again.
+- **A reviewer cites a unit, not a quote.** The authority boundary ADR-0048 §2
+  imposes on the model now applies to people: a reviewer-authored occurrence
+  names a citable unit id and the product assembles the quote and locator from
+  that unit. Text the source does not contain is unrepresentable rather than
+  merely rejected. Authoring is itself an acceptance, because asking a reviewer
+  to review their own entry would leave it pending forever.
+- **Completion is derived.** `not-extracted`, `pending-review` and `reviewed`
+  stay three distinct states — an instance whose window legitimately stated
+  nothing is reviewed, not un-extracted — and a chain is complete only when
+  every instance is reviewed, so an empty chain is not vacuously finished. A
+  stored flag would be a second source of truth the log could contradict.
+- **Recorded run** on the live Supabase case through the product's own routes:
+  a reviewer-authored occurrence took its quote from unit L48071 and **ignored
+  an `exactQuote` planted in the request body**; accept → reject → accept left
+  the effective standing `accepted` with **all three decisions still in the
+  log**; the principal was server-derived and a `principal: an-impostor` in the
+  body was ignored; refusals answered 400 (no rationale), 400 (`move`), 404
+  (unknown occurrence), 404 (unit outside the instance); a second principal got
+  404, an unauthenticated write 401, a write without CSRF 401. Re-running the
+  whole journey produced the **same** occurrence rather than a duplicate — it is
+  content-identified — with three further decisions appended.
+- `standing` is gone from the status surface's unbuilt list, leaving timeline,
+  relations, claims and consensus. That is the first entry ACME-0157's
+  named-gap machinery has retired, and the compiler found every place that had
+  to change — which is what the single shared list was for.
+- **One frozen gate is unmet, and the contradiction is mine.** The charter's
+  verification gate says "extract one instance"; its Out of Scope says "Live
+  model spend". Both cannot hold. The plan route states the cost without paying
+  it — **2** bounded calls on `instance-part-000381`, 2 windows, 0 committed —
+  and what the extraction would add is the model-produced half of a loop
+  already proven end to end on reviewer-authored evidence over the real binder.
+  Spending is the operator's decision, so the task pauses rather than skipping
+  a frozen gate or spending unasked.
+- One numbering error, caught by the gate rather than by review: the new
+  migration was written as version 2, which the occurrences migration already
+  holds. Renumbered to 3 before it reached the live database.
+- Verification: typecheck, lint, format, boundaries and docs (290 files) clean;
+  unit 892/892, up from 871, with 21 new tests — 13 over the fold and 8 over the
+  routes; conformance 78, integration 70, scenario 26; build and
+  `git diff --check` clean. `evidence-v2-persistence` 8/8 on the PostgreSQL
+  gate; 43 of 45 pass overall and the two failures are the ones attributed in
+  [the backlog](backlog/postgres-gate-test-hygiene.md), unchanged.
+- Handoff: `docs/CURRENT_TASK.md` holds a checkpoint naming exactly what is
+  delivered and the one gate that is not. Resume condition: an operator
+  decision on the 2-call extraction.
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0157: the workbench gets a shell and a status surface
 
 - Date: 2026-08-18
