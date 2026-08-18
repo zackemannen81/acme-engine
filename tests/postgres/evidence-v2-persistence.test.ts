@@ -463,6 +463,87 @@ describe('evidence v2 postgres persistence', () => {
     ).toBe(1);
   });
 
+  it('stores a relation append-only and never deletes its endpoints', async () => {
+    const [first] = await repository.readOccurrencesById(
+      (
+        await repository.listOccurrences(artifact.artifactId, 'instance-1', {
+          offset: 0,
+          limit: 1,
+        })
+      ).items.map((item) => item.occurrenceId),
+    );
+    if (first === undefined) throw new Error('expected an occurrence');
+
+    const relation = {
+      schemaVersion: 'evidence-v2-relation/1' as const,
+      relationId: 'relation-postgres-1',
+      caseId: 'case-v2-test',
+      artifactId: artifact.artifactId,
+      chainId: 'chain-1',
+      from: { kind: 'occurrence' as const, id: first.occurrenceId },
+      to: { kind: 'occurrence' as const, id: 'occurrence-postgres-2' },
+      type: 'contradicts' as const,
+      comparableScope: {
+        actor: 'comparable' as const,
+        time: 'comparable' as const,
+        location: 'unknown' as const,
+        entity: 'comparable' as const,
+      },
+      rationale: 'Blue versus the later colour.',
+      provenance: 'reviewer-authored' as const,
+      createdBy: 'principal-postgres',
+      createdAt: '2026-08-18T14:00:00.000Z',
+      executionId: null,
+      contractVersion: null,
+      windowId: null,
+    };
+    await repository.createRelation(relation);
+    await repository.createRelation(relation);
+    expect(
+      (
+        await repository.listRelations('case-v2-test', {
+          offset: 0,
+          limit: 10,
+        })
+      ).total,
+    ).toBe(1);
+
+    await repository.appendRelationReview({
+      schemaVersion: 'evidence-v2-relation-review/1',
+      decisionId: 'relation-review-1',
+      caseId: 'case-v2-test',
+      relationId: relation.relationId,
+      action: 'accept',
+      supersedes: null,
+      principal: 'principal-postgres',
+      decidedAt: '2026-08-18T14:00:00.000Z',
+      rationale: 'Authorship is acceptance.',
+    });
+    await repository.appendRelationReview({
+      schemaVersion: 'evidence-v2-relation-review/1',
+      decisionId: 'relation-review-2',
+      caseId: 'case-v2-test',
+      relationId: relation.relationId,
+      action: 'reject',
+      supersedes: 'relation-review-1',
+      principal: 'principal-postgres',
+      decidedAt: '2026-08-18T15:00:00.000Z',
+      rationale: 'On reflection the scopes are not the same evening.',
+    });
+    const log = await repository.listRelationReviews(relation.relationId);
+    expect(log.map((item) => item.action)).toEqual(['accept', 'reject']);
+    expect(log[0]?.decisionId).toBe('relation-review-1');
+
+    const bindings = await repository.readOccurrenceBindings([
+      first.occurrenceId,
+      'occurrence-postgres-2',
+    ]);
+    expect(bindings).toHaveLength(2);
+    expect(
+      (await repository.readOccurrencesById([first.occurrenceId])).length,
+    ).toBe(1);
+  });
+
   it('projects a case overview from stored rows, not from import totals', async () => {
     const overview = await repository.readCaseOverview('case-v2-test');
 
@@ -505,6 +586,10 @@ describe('evidence v2 postgres persistence', () => {
     expect(overview.counts.claimGroupingDecisions).toBe(3);
     expect(overview.counts.groupedOccurrences).toBe(1);
     expect(overview.counts.crossInstanceClaims).toBe(0);
+    expect(overview.counts.relations).toBe(1);
+    expect(overview.counts.relationReviewDecisions).toBe(2);
+    expect(overview.counts.rejectedRelations).toBe(1);
+    expect(overview.counts.reviewerAuthoredRelations).toBe(1);
 
     // Standing is folded from the log by the same aggregate read.
     expect(overview.counts.reviewDecisions).toBe(2);

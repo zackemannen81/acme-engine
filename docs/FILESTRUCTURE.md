@@ -37,7 +37,7 @@ acme-engine/
 │   ├── evidence-workbench-v2-api/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{app.ts,artifact-store.ts,auth.ts,extract.ts,index.ts,local.ts,start.ts}
+│   │   ├── src/{app.ts,artifact-store.ts,auth.ts,compare.ts,extract.ts,index.ts,local.ts,start.ts}
 │   │   └── test/{app.test.ts,extract.test.ts}
 │   ├── evidence-workbench-v2-web/
 │   │   ├── package.json
@@ -404,8 +404,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{chain.ts,claim.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,review.ts,source-structure.ts}
-│   │   └── test/{chain.test.ts,observe.test.ts,source-structure.test.ts}
+│   │   ├── src/{chain.ts,claim.ts,compare-contract.ts,compare-module.ts,compare-window.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,relation.ts,review.ts,source-structure.ts}
+│   │   └── test/{chain.test.ts,claim.test.ts,compare.test.ts,observe.test.ts,relation.test.ts,review.test.ts,source-structure.test.ts}
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -927,7 +927,11 @@ content remains intentionally omitted here.
   most 24 units, an 800-word target, a content-derived request key), the
   `ObservationOccurrence` record with content-derived identity, and the domain
   module whose `interpret` builds each occurrence's quote and locator from the
-  cited unit rather than from the response. It depends on `@acme/core` for the
+  cited unit rather than from the response. Its fourth layer is `Relation` and
+  J4: `evidence-v2-relation/1` with typed endpoints and comparable scope,
+  append-only relation review, the `evidence-v2-compare/1` contract in a
+  separate engine namespace so observe state is untouched, and a planner over
+  frozen accepted occurrences of earlier instances. It depends on `@acme/core` for the
   prompt-contract and module types only, and `pnpm boundaries` forbids it from
   importing the frozen application.
 - `@acme/evidence-v2-contracts`: the V2 stored records and the single
@@ -942,7 +946,8 @@ content remains intentionally omitted here.
   non-member receives 404. `src/extract.ts` composes the unchanged execution
   engine with the V2 module to plan and run one chain instance's observation
   windows, committing and projecting each window on its own and resuming without
-  re-sending a paid one.
+  re-sending a paid one. `src/compare.ts` does the same for J4 in the compare
+  namespace.
   `src/start.ts` is the operator entry point: it reads configuration from
   environment variables and mounted secret files, refuses the Supavisor
   transaction pooler on port 6543, and prints a content-free startup summary.

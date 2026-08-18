@@ -12,8 +12,14 @@ import {
 } from '@acme/evidence-v2-contracts';
 import {
   EVIDENCE_V2_CLAIM_SCHEMA_VERSION,
+  EVIDENCE_V2_RELATION_SCHEMA_VERSION,
+  EVIDENCE_V2_RELATION_REVIEW_SCHEMA_VERSION,
   EVIDENCE_V2_REVIEW_SCHEMA_VERSION,
   EvidenceV2ClaimGroupingActionSchema,
+  EvidenceV2ComparableScopeSchema,
+  EvidenceV2RelationEndpointKindSchema,
+  EvidenceV2RelationReviewActionSchema,
+  EvidenceV2RelationTypeSchema,
   EvidenceV2ReviewActionSchema,
   deriveEvidenceV2ClaimGroupingDecisionId,
   deriveEvidenceV2ClaimId,
@@ -22,9 +28,14 @@ import {
   deriveEvidenceV2ChainCompletion,
   deriveEvidenceV2InstanceCompletion,
   deriveEvidenceV2OccurrenceId,
+  deriveEvidenceV2RelationId,
+  deriveEvidenceV2RelationReviewDecisionId,
+  deriveEvidenceV2RelationStandings,
   deriveEvidenceV2ReviewDecisionId,
   deriveEvidenceV2SourceStructure,
   deriveEvidenceV2Standings,
+  evidenceV2ContradictionScopeIssues,
+  projectEvidenceV2Relation,
   proposeEvidenceV2Chains,
   type EvidenceV2ChainDecision,
   type EvidenceV2Claim,
@@ -32,6 +43,8 @@ import {
   type EvidenceV2EffectiveStanding,
   type EvidenceV2InstanceCompletion,
   type EvidenceV2Occurrence,
+  type EvidenceV2Relation,
+  type EvidenceV2RelationEndpointInput,
   type EvidenceV2ReviewDecision,
 } from '@acme/module-evidence-v2';
 import type { EvidenceProductAction } from '@acme/evidence-auth';
@@ -47,6 +60,8 @@ import {
   renderClaim,
   renderClaims,
   renderParts,
+  renderRelation,
+  renderRelations,
   renderSignIn,
   renderSurfaceGap,
 } from '@acme/evidence-workbench-v2-web';
@@ -59,6 +74,7 @@ import {
   EVIDENCE_V2_SESSION_COOKIE,
   type EvidenceV2Auth,
 } from './auth.js';
+import type { EvidenceV2Comparer } from './compare.js';
 import type { EvidenceV2Extractor } from './extract.js';
 import type { EvidenceV2TextStore } from './artifact-store.js';
 
@@ -71,6 +87,7 @@ export interface EvidenceV2AppOptions {
   readonly auth: EvidenceV2Auth;
   /** Absent when the deployment has no live model capability configured. */
   readonly extractor?: EvidenceV2Extractor;
+  readonly comparer?: EvidenceV2Comparer;
   readonly now: () => string;
 }
 
@@ -368,6 +385,103 @@ export function createEvidenceV2App(
         standings,
       }),
       groupings,
+    };
+  }
+
+  async function resolveRelationEndpoint(
+    caseId: string,
+    kind: 'occurrence' | 'claim',
+    id: string,
+  ): Promise<EvidenceV2RelationEndpointInput | undefined> {
+    if (kind === 'occurrence') {
+      const [binding] = await repository.readOccurrenceBindings([id]);
+      if (binding === undefined) return undefined;
+      const owner = await repository.readArtifact(
+        binding.occurrence.artifactId,
+      );
+      if (owner === undefined || owner.caseId !== caseId) return undefined;
+      const reviews = await repository.listReviewDecisions(
+        binding.occurrence.artifactId,
+        binding.instanceKey,
+      );
+      const [standing] = deriveEvidenceV2Standings(
+        [binding.occurrence.occurrenceId],
+        reviews,
+      );
+      return {
+        kind: 'occurrence',
+        id: binding.occurrence.occurrenceId,
+        artifactId: binding.occurrence.artifactId,
+        instanceKey: binding.instanceKey,
+        partId: binding.occurrence.partId,
+        startLine: binding.occurrence.startLine,
+        endLine: binding.occurrence.endLine,
+        exactQuote: binding.occurrence.exactQuote,
+        standing: standing?.standing ?? 'pending',
+      };
+    }
+    const claim = await repository.readClaim(id);
+    if (claim === undefined || claim.caseId !== caseId) return undefined;
+    const { projection } = await claimProjection(claim);
+    return {
+      kind: 'claim',
+      id: claim.claimId,
+      claimLabel: claim.label,
+      standing: projection.empty ? 'pending' : 'accepted',
+    };
+  }
+
+  function endpointLabel(endpoint: EvidenceV2RelationEndpointInput): string {
+    if (endpoint.kind === 'claim') return endpoint.claimLabel ?? endpoint.id;
+    if (endpoint.exactQuote !== undefined && endpoint.startLine !== undefined)
+      return `L${String(endpoint.startLine)} · ${endpoint.exactQuote}`;
+    return endpoint.id;
+  }
+
+  function endpointLink(
+    caseId: string,
+    endpoint: EvidenceV2RelationEndpointInput,
+  ): string | null {
+    if (
+      endpoint.kind === 'occurrence' &&
+      endpoint.artifactId !== undefined &&
+      endpoint.partId !== undefined
+    )
+      return `/artifacts/${encodeURIComponent(endpoint.artifactId)}/parts/${encodeURIComponent(endpoint.partId)}`;
+    if (endpoint.kind === 'claim')
+      return `/cases/${encodeURIComponent(caseId)}/claims/${encodeURIComponent(endpoint.id)}`;
+    return null;
+  }
+
+  async function relationProjection(relation: EvidenceV2Relation) {
+    const reviews = await repository.listRelationReviews(relation.relationId);
+    const [standing] = deriveEvidenceV2RelationStandings([relation], reviews);
+    const from = await resolveRelationEndpoint(
+      relation.caseId,
+      relation.from.kind,
+      relation.from.id,
+    );
+    const to = await resolveRelationEndpoint(
+      relation.caseId,
+      relation.to.kind,
+      relation.to.id,
+    );
+    const endpoints = [from, to].filter(
+      (item): item is EvidenceV2RelationEndpointInput => item !== undefined,
+    );
+    return {
+      projection:
+        standing === undefined
+          ? undefined
+          : projectEvidenceV2Relation({
+              relation,
+              standing,
+              endpoints,
+            }),
+      standing,
+      reviews,
+      from,
+      to,
     };
   }
 
@@ -732,20 +846,19 @@ export function createEvidenceV2App(
         );
       }
 
-      // Surfaces ADR-0049 names that ACME-0160 to ACME-0162 deliver. They are
+      // Surfaces ADR-0049 names that ACME-0162 still delivers. They are
       // reachable and they state their own condition. A surface that does not
       // exist must never answer with an empty list (R-07).
-      const gapMatch =
-        /^\/(?:api\/)?cases\/([^/]+)\/(timeline|relations)$/u.exec(path);
+      const gapMatch = /^\/(?:api\/)?cases\/([^/]+)\/timeline$/u.exec(path);
       if (method === 'GET' && gapMatch?.[1] !== undefined) {
         const caseId = decodeURIComponent(gapMatch[1]);
         if (!(await authorizeCase(caseId, 'workspace.read'))) return;
         const record = await repository.readCase(caseId);
         if (record === undefined)
           return void sendText(response, 404, 'No such case.');
-        const surface = gapMatch[2] === 'timeline' ? 'timeline' : 'relations';
-        const gap = EVIDENCE_V2_SURFACE_GAPS[surface];
-        if (json) return void sendJson(response, 200, { surface, ...gap });
+        const gap = EVIDENCE_V2_SURFACE_GAPS.timeline;
+        if (json)
+          return void sendJson(response, 200, { surface: 'timeline', ...gap });
         return void sendHtml(
           response,
           200,
@@ -754,9 +867,9 @@ export function createEvidenceV2App(
               caseId,
               caseTitle: record.title,
               caseReference: record.caseReference,
-              active: surface,
+              active: 'timeline',
             },
-            heading: surface === 'timeline' ? 'Timeline' : 'Relations',
+            heading: 'Timeline',
             gap,
             viewer,
           }),
@@ -1069,6 +1182,14 @@ export function createEvidenceV2App(
           artifact === undefined
             ? undefined
             : await repository.readCase(artifact.caseId);
+        const compare =
+          options.comparer === undefined
+            ? undefined
+            : await options.comparer.plan({
+                artifactId,
+                chainId,
+                instanceKey,
+              });
         return void sendHtml(
           response,
           200,
@@ -1111,8 +1232,85 @@ export function createEvidenceV2App(
               occurrenceCount: window.occurrenceCount,
               failureCode: window.failureCode,
             })),
+            ...(compare === undefined
+              ? {}
+              : {
+                  compare: {
+                    reason: compare.reason,
+                    plannedModelCalls: compare.plannedModelCalls,
+                    windowCount: compare.windows.length,
+                    outstandingCount: compare.outstandingWindowIds.length,
+                    committedCount: compare.committedWindowIds.length,
+                  },
+                }),
           }),
         );
+      }
+
+      // J4: plan states the bounded call count; run executes outstanding
+      // windows. HTML posts redirect back to the instance.
+      const compareMatch =
+        /^\/(?:api\/)?artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/comparison$/u.exec(
+          path,
+        );
+      if (
+        compareMatch?.[1] !== undefined &&
+        compareMatch[2] !== undefined &&
+        compareMatch[3] !== undefined
+      ) {
+        const artifactId = decodeURIComponent(compareMatch[1]);
+        const chainId = decodeURIComponent(compareMatch[2]);
+        const instanceKey = decodeURIComponent(compareMatch[3]);
+        const action: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'live-model.run';
+        const scope = await authorizeArtifact(artifactId, action);
+        if (scope === undefined) return;
+        if (options.comparer === undefined)
+          return void sendText(
+            response,
+            501,
+            'This deployment has no live model capability.',
+          );
+        const detail = await repository.readChain(artifactId, chainId);
+        const instance = detail?.chain.instances.find(
+          (item) => item.instanceKey === instanceKey,
+        );
+        if (instance === undefined)
+          return void sendText(response, 404, 'Not found.');
+
+        if (method === 'GET') {
+          const plan = await options.comparer.plan({
+            artifactId,
+            chainId,
+            instanceKey,
+          });
+          return void sendJson(response, 200, {
+            plannedModelCalls: plan.plannedModelCalls,
+            windowCount: plan.windows.length,
+            outstandingWindowIds: plan.outstandingWindowIds,
+            committedWindowIds: plan.committedWindowIds,
+            reason: plan.reason,
+          });
+        }
+        if (method === 'POST') {
+          const outcome = await options.comparer.run({
+            caseId: scope.caseId,
+            artifactId,
+            chainId,
+            instanceKey,
+          });
+          if (json)
+            return void sendJson(
+              response,
+              outcome.complete ? 201 : 207,
+              outcome,
+            );
+          response.writeHead(303, {
+            location: `/cases/${encodeURIComponent(scope.caseId)}/relations`,
+          });
+          response.end();
+          return;
+        }
       }
 
       // Claims: create and list, case-scoped.
@@ -1311,6 +1509,277 @@ export function createEvidenceV2App(
           if (json) return void sendJson(response, 201, decision);
           response.writeHead(303, {
             location: `/cases/${encodeURIComponent(caseId)}/claims/${encodeURIComponent(claimId)}`,
+          });
+          response.end();
+          return;
+        }
+      }
+
+      // Relations: create and list, case-scoped. A graph is not this surface.
+      const relationsMatch = /^\/(?:api\/)?cases\/([^/]+)\/relations$/u.exec(
+        path,
+      );
+      if (relationsMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(relationsMatch[1]);
+        const relationAction: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'review.decide';
+        if (!(await authorizeCase(caseId, relationAction))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+
+        if (method === 'GET') {
+          const listed = await repository.listRelations(caseId, page);
+          const rows = [];
+          for (const item of listed.items) {
+            const viewed = await relationProjection(item);
+            rows.push({
+              relationId: item.relationId,
+              type: item.type,
+              provenance: item.provenance,
+              standing: viewed.standing?.standing ?? 'pending',
+              rationale: item.rationale,
+              fromLabel:
+                viewed.from === undefined
+                  ? item.from.id
+                  : endpointLabel(viewed.from),
+              fromHref:
+                viewed.from === undefined
+                  ? null
+                  : endpointLink(caseId, viewed.from),
+              toLabel:
+                viewed.to === undefined ? item.to.id : endpointLabel(viewed.to),
+              toHref:
+                viewed.to === undefined
+                  ? null
+                  : endpointLink(caseId, viewed.to),
+            });
+          }
+          if (json)
+            return void sendJson(response, 200, { ...listed, items: rows });
+          return void sendHtml(
+            response,
+            200,
+            renderRelations({
+              caseId,
+              caseTitle: record.title,
+              caseReference: record.caseReference,
+              viewer,
+              relations: { ...listed, items: rows },
+            }),
+          );
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(request);
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const fromKind = EvidenceV2RelationEndpointKindSchema.safeParse(
+            payload['fromKind'],
+          );
+          const toKind = EvidenceV2RelationEndpointKindSchema.safeParse(
+            payload['toKind'],
+          );
+          const type = EvidenceV2RelationTypeSchema.safeParse(payload['type']);
+          const scope = EvidenceV2ComparableScopeSchema.safeParse({
+            actor: payload['actor'] ?? 'unknown',
+            time: payload['time'] ?? 'unknown',
+            location: payload['location'] ?? 'unknown',
+            entity: payload['entity'] ?? 'unknown',
+          });
+          const fromId = String(payload['fromId'] ?? '').trim();
+          const toId = String(payload['toId'] ?? '').trim();
+          const rationale = String(payload['rationale'] ?? '').trim();
+          const artifactId = String(payload['artifactId'] ?? '').trim();
+          const chainId = String(payload['chainId'] ?? '').trim();
+          if (
+            !fromKind.success ||
+            !toKind.success ||
+            !type.success ||
+            !scope.success
+          )
+            return void sendText(
+              response,
+              400,
+              'Type, endpoint kinds and comparable scope are required.',
+            );
+          if (
+            fromId.length === 0 ||
+            toId.length === 0 ||
+            rationale.length === 0 ||
+            artifactId.length === 0 ||
+            chainId.length === 0
+          )
+            return void sendText(
+              response,
+              400,
+              'Both endpoints, a rationale, an artifact and a chain are required.',
+            );
+          if (type.data === 'contradicts') {
+            const issues = evidenceV2ContradictionScopeIssues(scope.data);
+            if (issues.length > 0)
+              return void sendText(response, 400, issues.join(' '));
+          }
+          const from = await resolveRelationEndpoint(
+            caseId,
+            fromKind.data,
+            fromId,
+          );
+          const to = await resolveRelationEndpoint(caseId, toKind.data, toId);
+          if (from === undefined || to === undefined)
+            return void sendText(response, 404, 'No such endpoint.');
+          const owner = await repository.readArtifact(artifactId);
+          if (owner === undefined || owner.caseId !== caseId)
+            return void sendText(response, 404, 'No such artifact.');
+          const createdAt = options.now();
+          const relation: EvidenceV2Relation = {
+            schemaVersion: EVIDENCE_V2_RELATION_SCHEMA_VERSION,
+            relationId: deriveEvidenceV2RelationId({
+              caseId,
+              fromKind: fromKind.data,
+              fromId,
+              toKind: toKind.data,
+              toId,
+              type: type.data,
+              createdAt,
+            }),
+            caseId,
+            artifactId,
+            chainId,
+            from: { kind: fromKind.data, id: fromId },
+            to: { kind: toKind.data, id: toId },
+            type: type.data,
+            comparableScope: scope.data,
+            rationale,
+            provenance: 'reviewer-authored',
+            createdBy: principal.principalRef,
+            createdAt,
+            executionId: null,
+            contractVersion: null,
+            windowId: null,
+          };
+          await repository.createRelation(relation);
+          const decidedAt = createdAt;
+          await repository.appendRelationReview({
+            schemaVersion: EVIDENCE_V2_RELATION_REVIEW_SCHEMA_VERSION,
+            decisionId: deriveEvidenceV2RelationReviewDecisionId({
+              relationId: relation.relationId,
+              action: 'accept',
+              principal: principal.principalRef,
+              decidedAt,
+            }),
+            caseId,
+            relationId: relation.relationId,
+            action: 'accept',
+            supersedes: null,
+            principal: principal.principalRef,
+            decidedAt,
+            rationale: 'Reviewer-authored; authorship is acceptance.',
+          });
+          if (json) return void sendJson(response, 201, relation);
+          response.writeHead(303, {
+            location: `/cases/${encodeURIComponent(caseId)}/relations/${encodeURIComponent(relation.relationId)}`,
+          });
+          response.end();
+          return;
+        }
+      }
+
+      const relationMatch =
+        /^\/(?:api\/)?cases\/([^/]+)\/relations\/([^/]+)$/u.exec(path);
+      if (relationMatch?.[1] !== undefined && relationMatch[2] !== undefined) {
+        const caseId = decodeURIComponent(relationMatch[1]);
+        const relationId = decodeURIComponent(relationMatch[2]);
+        const relationAction: EvidenceProductAction =
+          method === 'GET' ? 'workspace.read' : 'review.decide';
+        if (!(await authorizeCase(caseId, relationAction))) return;
+        const relation = await repository.readRelation(relationId);
+        if (relation === undefined || relation.caseId !== caseId)
+          return void sendText(response, 404, 'No such relation.');
+
+        if (method === 'GET') {
+          const viewed = await relationProjection(relation);
+          if (json)
+            return void sendJson(response, 200, {
+              ...viewed.projection,
+              reviews: viewed.reviews,
+            });
+          const record = await repository.readCase(caseId);
+          return void sendHtml(
+            response,
+            200,
+            renderRelation({
+              caseId,
+              caseTitle: record?.title ?? caseId,
+              caseReference: record?.caseReference ?? '',
+              viewer,
+              relation,
+              standing: viewed.standing?.standing ?? 'pending',
+              decisionCount: viewed.reviews.length,
+              from: {
+                label:
+                  viewed.from === undefined
+                    ? relation.from.id
+                    : endpointLabel(viewed.from),
+                href:
+                  viewed.from === undefined
+                    ? null
+                    : endpointLink(caseId, viewed.from),
+              },
+              to: {
+                label:
+                  viewed.to === undefined
+                    ? relation.to.id
+                    : endpointLabel(viewed.to),
+                href:
+                  viewed.to === undefined
+                    ? null
+                    : endpointLink(caseId, viewed.to),
+              },
+            }),
+          );
+        }
+
+        if (method === 'POST') {
+          const body = await readBody(request);
+          const payload = body.text.trimStart().startsWith('{')
+            ? (JSON.parse(body.text) as Record<string, unknown>)
+            : Object.fromEntries(new URLSearchParams(body.text));
+          const parsed = EvidenceV2RelationReviewActionSchema.safeParse(
+            payload['action'],
+          );
+          const rationale = String(payload['rationale'] ?? '').trim();
+          if (!parsed.success)
+            return void sendText(
+              response,
+              400,
+              'Action must be accept, reject or revise.',
+            );
+          if (rationale.length === 0)
+            return void sendText(response, 400, 'A rationale is required.');
+          const history = await repository.listRelationReviews(relationId);
+          const decidedAt = options.now();
+          const decision = {
+            schemaVersion: 'evidence-v2-relation-review/1' as const,
+            decisionId: deriveEvidenceV2RelationReviewDecisionId({
+              relationId,
+              action: parsed.data,
+              principal: principal.principalRef,
+              decidedAt,
+            }),
+            caseId,
+            relationId,
+            action: parsed.data,
+            supersedes: history.at(-1)?.decisionId ?? null,
+            principal: principal.principalRef,
+            decidedAt,
+            rationale,
+          };
+          await repository.appendRelationReview(decision);
+          if (json) return void sendJson(response, 201, decision);
+          response.writeHead(303, {
+            location: `/cases/${encodeURIComponent(caseId)}/relations/${encodeURIComponent(relationId)}`,
           });
           response.end();
           return;

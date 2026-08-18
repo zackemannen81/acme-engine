@@ -7,7 +7,7 @@ ingestion boundary. Implementation is not thereby activated: each step still
 needs its own explicitly approved task and frozen charter. ACME-0156 is
 complete, as are ACME-0157 and ACME-0159 — the last reordered ahead of
 ACME-0158 by the operator on 2026-08-18, recorded in §6. ACME-0160 followed;
-ACME-0161 or ACME-0158 is next.
+ACME-0161 is complete; ACME-0158 is next.
 Created: 2026-08-18
 Last updated: 2026-08-18
 Authority: [ADR-0047](../adr/0047-evidence-application-model-reset.md) and
@@ -243,6 +243,9 @@ and recorded numbers are in [the runbook](../ops/evidence-v2-supabase.md).
 
 ### ACME-0158 — PDF import
 
+**Status: Ready 2026-08-18.** Active as `docs/CURRENT_TASK.md`. Reordered
+behind ACME-0159 through ACME-0161 by the operator; those are complete.
+
 **Reordered 2026-08-18: ACME-0159 runs first.** The operator's call, and the
 defensible one. The status surface reports instances waiting on extraction in a
 flow where nothing can yet be accepted, and every layer above — claims,
@@ -290,6 +293,9 @@ nobody can act on. Nothing about ADR-0050 changes; only its position.
   occurrences.
 
 ### ACME-0161 — Relations and instance comparison
+
+**Status: complete 2026-08-18.** Archived as
+[`ACME-0161`](../finished/ACME-0161_v2-relations.md).
 
 - **Goal.** The four verbs in the requested model become reviewable evidence.
 - **Deliverable.** `Relation` with typed endpoints, comparable scope, rationale

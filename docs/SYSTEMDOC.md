@@ -1166,6 +1166,25 @@ a claim gives it no standing; the two are separate acts over the same
 immutable record. Cross-case grouping is refused, which is ADR-0036 disclosure
 control rather than validation.
 
+**V2 relations and J4.** `evidence-v2-relation/1` is a typed statement about
+two endpoints — an occurrence or a claim — with one of four verbs
+(`contradicts`, `adds`, `supports`, `qualifies`), comparable scope on actor,
+time, location and entity, rationale and provenance. A relation never deletes
+an endpoint. `evidence-v2-relation-review/1` is the append-only standing log;
+human authorship is itself an acceptance. A `contradicts` relation whose actor
+or time is not `comparable` is refused with a named code.
+
+J4 is `evidence-v2-compare/1`, a separate engine namespace so observe state is
+untouched and extraction stays blind. The planner derives windows over frozen
+accepted occurrences of a reviewed current instance and earlier instances in
+the same chain; the model cites occurrence ids only; the product assembles the
+relation. An empty response is valid. A re-run executes only windows with no
+committed execution.
+
+The Relations surface is a bounded case-scoped list (ADR-0049 §3), not a
+graph. Every row shows type, rationale, provenance, standing and both
+endpoints resolved to their exact sources.
+
 **V2 review and standing.** `evidence-v2-review/1` in
 `@acme/module-evidence-v2` is an append-only decision and
 `deriveEvidenceV2Standings` folds the log to effective standing. Nothing stores

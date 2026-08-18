@@ -208,5 +208,58 @@ export function buildEvidenceV2Migrations(
            ON ${s}.claim_groupings (occurrence_id, appended_seq)`,
       ]),
     }),
+    Object.freeze({
+      version: 5,
+      name: 'evidence-v2-relations',
+      statements: Object.freeze([
+        `CREATE TABLE ${s}.relations (
+          relation_id text PRIMARY KEY,
+          case_id text NOT NULL REFERENCES ${s}.cases(case_id),
+          artifact_id text NOT NULL,
+          chain_id text NOT NULL,
+          from_kind text NOT NULL,
+          from_id text NOT NULL,
+          to_kind text NOT NULL,
+          to_id text NOT NULL,
+          type text NOT NULL,
+          provenance text NOT NULL,
+          created_at text NOT NULL,
+          record_json text NOT NULL
+        )`,
+        `CREATE INDEX relations_by_case ON ${s}.relations (case_id, created_at)`,
+        `CREATE INDEX relations_by_chain ON ${s}.relations (artifact_id, chain_id, created_at)`,
+        // Append-only. A reversal is a further row, never an update.
+        `CREATE TABLE ${s}.relation_reviews (
+          relation_id text NOT NULL REFERENCES ${s}.relations(relation_id),
+          decision_id text NOT NULL,
+          appended_seq bigserial NOT NULL,
+          case_id text NOT NULL,
+          action text NOT NULL,
+          supersedes text,
+          principal text NOT NULL,
+          decided_at text NOT NULL,
+          decision_json text NOT NULL,
+          PRIMARY KEY (relation_id, decision_id)
+        )`,
+        `CREATE INDEX relation_reviews_by_relation
+           ON ${s}.relation_reviews (relation_id, appended_seq)`,
+        `CREATE TABLE ${s}.comparison_windows (
+          artifact_id text NOT NULL REFERENCES ${s}.artifacts(artifact_id),
+          instance_key text NOT NULL,
+          window_id text NOT NULL,
+          prior_instance_key text NOT NULL,
+          status text NOT NULL,
+          current_count integer NOT NULL,
+          prior_count integer NOT NULL,
+          relation_count integer NOT NULL,
+          execution_id text,
+          failure_code text,
+          decided_at text NOT NULL,
+          PRIMARY KEY (artifact_id, instance_key, window_id)
+        )`,
+        `CREATE INDEX comparison_windows_by_instance
+           ON ${s}.comparison_windows (artifact_id, instance_key, decided_at)`,
+      ]),
+    }),
   ]);
 }

@@ -1,5 +1,53 @@
 # Journal
 
+## 2026-08-18 — ACME-0161: the four verbs, and J4 without contaminating extraction
+
+- Date: 2026-08-18
+- Author: Claude
+- Task: ACME-0161, Complete. Archived to
+  `docs/finished/ACME-0161_v2-relations.md`.
+- Change: `evidence-v2-relation/1` is a typed statement about two endpoints
+  with one of four verbs — `contradicts`, `adds`, `supports`, `qualifies` —
+  plus comparable scope, rationale and provenance. It never deletes an
+  endpoint. `evidence-v2-relation-review/1` is the append-only standing log;
+  human authorship is itself an acceptance. J4 is `evidence-v2-compare/1` in
+  a **separate engine namespace**, so observe state is untouched and
+  extraction stays blind. Migration 5 applied to the live database.
+- **The invariant is the feature.** Creating, accepting or rejecting a
+  relation leaves both endpoints and their standings untouched. A
+  `contradicts` relation whose actor or time is not comparable is refused
+  with a named code rather than tuned in the prompt. The model cites
+  occurrence ids only; the product assembles the relation. An empty compare
+  response is valid: silence is not a contradiction.
+- **Recorded run.** A reviewer-authored `adds` from an accepted occurrence
+  to an existing claim resolved both sources. Rejecting it left the
+  occurrence in its instance of 27, with accept then reject in the log and
+  the rejection naming what it superseded. Second principal 404,
+  unauthenticated 401, missing CSRF 401.
+- **J4 on Hussein ordinal 2.** `instance-part-000400` planned **3** extract
+  calls, spent 3, produced **52** occurrences, then reviewed. J4 planned
+  **15** windows over ordinal 1's frozen accepted set. All 15 committed.
+  Re-planning states **0**. Three model-proposed relations (`adds`,
+  `supports`, `adds`) are pending; every endpoint opens its exact source.
+  The ledger moved **2 → 21**. Provider cost remains unknown, not zero.
+- The first J4 POST hit the client's header timeout after nine windows; the
+  server finished the rest. That is resume working, and a timeout the
+  default fetch client does not survive at 15 windows.
+- Window count is the product of current and prior batches (52/12 × 25/12 =
+  15). Fifteen windows produced three relations because empty is valid.
+  Measured, not a charter defect.
+- `relations` is gone from the status surface's unbuilt list, leaving
+  timeline and consensus. Third gap retired by the ACME-0157 machinery.
+- Verification: typecheck, lint, format, boundaries and docs (292 files)
+  clean; unit 945/945, up from 911; conformance 78, integration 70,
+  scenario 26; build and `git diff --check` clean. `evidence-v2-persistence`
+  **10/10**; 45 of 47 on the PostgreSQL gate, the two failures being the
+  ones attributed in [the backlog](backlog/postgres-gate-test-hygiene.md),
+  unchanged.
+- Handoff: `docs/CURRENT_TASK.md` becomes ACME-0158 (PDF import). The
+  operator ordered 0161 then 0158.
+- Signature: Claude
+
 ## 2026-08-18 — ACME-0160: claims, and the first object that reaches across sources
 
 - Date: 2026-08-18

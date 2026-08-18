@@ -28,6 +28,10 @@ import { createPostgresExecutionRepository } from '@acme/adapter-postgres';
 
 import { createEvidenceV2App } from './app.js';
 import {
+  EVIDENCE_V2_COMPARE_PROFILE,
+  createEvidenceV2Comparer,
+} from './compare.js';
+import {
   EVIDENCE_V2_OBSERVE_PROFILE,
   createEvidenceV2Extractor,
 } from './extract.js';
@@ -180,6 +184,7 @@ export async function startEvidenceV2Local(
     next: (kind: string) => `${kind}-${randomBytes(16).toString('hex')}`,
   };
   let extractor;
+  let comparer;
   if (options.live !== undefined) {
     const ledgerSchema = options.live.ledgerSchema ?? 'acme_v2_ledger';
     await migratePostgresSchema({
@@ -187,61 +192,81 @@ export async function startEvidenceV2Local(
       schema: ledgerSchema,
       appliedAt: now(),
     });
-    const selection = {
+    const observeSelection = {
       profile: EVIDENCE_V2_OBSERVE_PROFILE,
       providerHint: 'openai',
       modelHint: options.live.model,
     };
+    const compareSelection = {
+      profile: EVIDENCE_V2_COMPARE_PROFILE,
+      providerHint: 'openai',
+      modelHint: options.live.model,
+    };
     const apiKey = options.live.apiKey;
-    extractor = createEvidenceV2Extractor({
+    const ledger = createPostgresExecutionRepository({
+      pool,
+      ids,
+      schema: ledgerSchema,
+      // Retained payloads are encrypted at rest, exactly as the frozen
+      // application retains them (ADR-0016), under a key of their own. The
+      // session key protects upstream sessions and must not also unlock
+      // retained model payloads; absent a supplied key this deployment
+      // encrypts under an ephemeral one, so a restart cannot read them back.
+      payloadEncryptor: createAes256GcmPayloadEncryptor({
+        key:
+          options.live.payloadKeyBase64 === undefined
+            ? new Uint8Array(randomBytes(32))
+            : Buffer.from(options.live.payloadKeyBase64, 'base64'),
+        keyId:
+          options.live.payloadKeyBase64 === undefined
+            ? 'ephemeral-local-ledger'
+            : (options.live.payloadKeyId ?? 'evidence-v2-ledger'),
+      }),
+    });
+    const capabilities = {
+      structuredOutput: true,
+      tools: false,
+      vision: false,
+      maxInputTokens: 32_000,
+      maxOutputTokens: 8_192,
+    };
+    const gateway = createOpenAiResponsesGateway({
+      transport: createFetchTransport(),
+      now,
+      ...(options.live.baseUrl === undefined
+        ? {}
+        : { baseUrl: options.live.baseUrl }),
+      headers: () => ({ authorization: `Bearer ${apiKey}` }),
+      profiles: [
+        {
+          selection: observeSelection,
+          model: options.live.model,
+          capabilities,
+        },
+        {
+          selection: compareSelection,
+          model: options.live.model,
+          capabilities,
+        },
+      ],
+    });
+    const liveShared = {
       repository,
-      ledger: createPostgresExecutionRepository({
-        pool,
-        ids,
-        schema: ledgerSchema,
-        // Retained payloads are encrypted at rest, exactly as the frozen
-        // application retains them (ADR-0016), under a key of their own. The
-        // session key protects upstream sessions and must not also unlock
-        // retained model payloads; absent a supplied key this deployment
-        // encrypts under an ephemeral one, so a restart cannot read them back.
-        payloadEncryptor: createAes256GcmPayloadEncryptor({
-          key:
-            options.live.payloadKeyBase64 === undefined
-              ? new Uint8Array(randomBytes(32))
-              : Buffer.from(options.live.payloadKeyBase64, 'base64'),
-          keyId:
-            options.live.payloadKeyBase64 === undefined
-              ? 'ephemeral-local-ledger'
-              : (options.live.payloadKeyId ?? 'evidence-v2-ledger'),
-        }),
-      }),
-      gateway: createOpenAiResponsesGateway({
-        transport: createFetchTransport(),
-        now,
-        ...(options.live.baseUrl === undefined
-          ? {}
-          : { baseUrl: options.live.baseUrl }),
-        headers: () => ({ authorization: `Bearer ${apiKey}` }),
-        profiles: [
-          {
-            selection,
-            model: options.live.model,
-            capabilities: {
-              structuredOutput: true,
-              tools: false,
-              vision: false,
-              maxInputTokens: 32_000,
-              maxOutputTokens: 8_192,
-            },
-          },
-        ],
-      }),
+      ledger,
+      gateway,
       clock: { now },
       ids,
-      selection,
       ...(options.live.emergencyCallCeiling === undefined
         ? {}
         : { emergencyCallCeiling: options.live.emergencyCallCeiling }),
+    };
+    extractor = createEvidenceV2Extractor({
+      ...liveShared,
+      selection: observeSelection,
+    });
+    comparer = createEvidenceV2Comparer({
+      ...liveShared,
+      selection: compareSelection,
     });
   }
 
@@ -250,6 +275,7 @@ export async function startEvidenceV2Local(
     textStore: createEvidenceV2TextStore({ objectStore, keyProvider }),
     auth,
     ...(extractor === undefined ? {} : { extractor }),
+    ...(comparer === undefined ? {} : { comparer }),
     now,
   });
 

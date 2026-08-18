@@ -16,6 +16,8 @@ import type {
   EvidenceV2ClaimGroupingDecision,
   EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
+  EvidenceV2Relation,
+  EvidenceV2RelationReviewDecision,
   EvidenceV2ReviewDecision,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
@@ -30,6 +32,8 @@ export type {
   EvidenceV2ClaimGroupingDecision,
   EvidenceV2EffectiveStanding,
   EvidenceV2Occurrence,
+  EvidenceV2Relation,
+  EvidenceV2RelationReviewDecision,
   EvidenceV2ReviewDecision,
   EvidenceV2Chain,
   EvidenceV2ChainDecision,
@@ -140,6 +144,32 @@ export interface EvidenceV2ExtractionWindowState {
   readonly decidedAt: string;
 }
 
+/** An occurrence together with the instance it was stored under. */
+export interface EvidenceV2OccurrenceBinding {
+  readonly occurrence: EvidenceV2Occurrence;
+  readonly instanceKey: string;
+}
+
+/**
+ * One J4 window's comparison outcome.
+ *
+ * Stored per window so a partial compare is visible — committed, outstanding
+ * or failed — and a re-run executes only windows with no committed execution.
+ */
+export interface EvidenceV2ComparisonWindowState {
+  readonly artifactId: string;
+  readonly instanceKey: string;
+  readonly windowId: string;
+  readonly priorInstanceKey: string;
+  readonly status: 'committed' | 'failed';
+  readonly currentCount: number;
+  readonly priorCount: number;
+  readonly relationCount: number;
+  readonly executionId: string | null;
+  readonly failureCode: string | null;
+  readonly decidedAt: string;
+}
+
 /**
  * The surfaces ADR-0049 fixes, and which of them this build serves.
  *
@@ -154,7 +184,7 @@ export const EVIDENCE_V2_SURFACES = [
   { id: 'chains', label: 'Chains', state: 'available' },
   { id: 'claims', label: 'Claims', state: 'available' },
   { id: 'timeline', label: 'Timeline', state: 'not-implemented' },
-  { id: 'relations', label: 'Relations', state: 'not-implemented' },
+  { id: 'relations', label: 'Relations', state: 'available' },
   { id: 'status', label: 'Status', state: 'available' },
 ] as const;
 
@@ -174,17 +204,12 @@ export interface EvidenceV2SurfaceGap {
 }
 
 export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
-  Record<'timeline' | 'relations' | 'consensus', EvidenceV2SurfaceGap>
+  Record<'timeline' | 'consensus', EvidenceV2SurfaceGap>
 > = {
   timeline: {
     state: 'not-implemented',
     reason: 'The temporal projection over occurrences and claims is not built.',
     deliveredBy: 'ACME-0162',
-  },
-  relations: {
-    state: 'not-implemented',
-    reason: 'Typed relations between occurrences and claims are not built.',
-    deliveredBy: 'ACME-0161',
   },
   consensus: {
     state: 'not-implemented',
@@ -227,6 +252,14 @@ export interface EvidenceV2CaseOverview {
     readonly claimGroupingDecisions: number;
     readonly groupedOccurrences: number;
     readonly crossInstanceClaims: number;
+    /** Relations, folded from the review log. Never a stored field. */
+    readonly relations: number;
+    readonly relationReviewDecisions: number;
+    readonly acceptedRelations: number;
+    readonly pendingRelations: number;
+    readonly rejectedRelations: number;
+    readonly modelProposedRelations: number;
+    readonly reviewerAuthoredRelations: number;
   };
   /** Instances with no committed extraction window. Work, not evidence. */
   readonly instancesWithoutExtraction: number;
@@ -358,6 +391,32 @@ export interface EvidenceV2Repository {
   readOccurrencesById(
     ids: readonly string[],
   ): Promise<readonly EvidenceV2Occurrence[]>;
+
+  createRelation(relation: EvidenceV2Relation): Promise<void>;
+  listRelations(
+    caseId: string,
+    page: EvidenceV2PageRequest,
+  ): Promise<EvidenceV2Page<EvidenceV2Relation>>;
+  readRelation(relationId: string): Promise<EvidenceV2Relation | undefined>;
+  /** Append-only, exactly as occurrence review and claim grouping are. */
+  appendRelationReview(
+    decision: EvidenceV2RelationReviewDecision,
+  ): Promise<void>;
+  listRelationReviews(
+    relationId: string,
+  ): Promise<readonly EvidenceV2RelationReviewDecision[]>;
+  /**
+   * Occurrence plus the instance it was stored under. The occurrence record
+   * itself has no instance key; the table does.
+   */
+  readOccurrenceBindings(
+    ids: readonly string[],
+  ): Promise<readonly EvidenceV2OccurrenceBinding[]>;
+  putComparisonWindow(state: EvidenceV2ComparisonWindowState): Promise<void>;
+  readComparisonWindows(
+    artifactId: string,
+    instanceKey: string,
+  ): Promise<readonly EvidenceV2ComparisonWindowState[]>;
 
   /**
    * The case overview projection. One read, aggregate queries, no structure

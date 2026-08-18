@@ -22,7 +22,7 @@ product imports text, never a container.
 | Component | Value used in the recorded run |
 | --- | --- |
 | PostgreSQL | Supavisor **session** pooler, `127.0.0.1:5432`, user `postgres.<POOLER_TENANT_ID>`, database `postgres` |
-| Schemas | `evidence_v2` (13 tables), `evidence_v2_identity` (8), `acme_v2_ledger` (15) |
+| Schemas | `evidence_v2` (18 tables), `evidence_v2_identity` (8), `acme_v2_ledger` (15) |
 | Object store | Supabase Storage S3 protocol endpoint, `http://localhost:8000/storage/v1/s3` |
 | Bucket | `evidence-v2-artifacts`, private |
 | API | `http://127.0.0.1:8795` |

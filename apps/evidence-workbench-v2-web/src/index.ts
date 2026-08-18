@@ -686,6 +686,7 @@ export function renderInstance(input: {
   readonly windows: readonly EvidenceV2WindowRow[];
   readonly standings: readonly EvidenceV2StandingRow[];
   readonly completion: EvidenceV2CompletionRow;
+  readonly compare?: EvidenceV2ComparePlanRow;
   readonly csrfToken?: string;
   readonly viewer?: EvidenceV2Viewer;
 }): string {
@@ -791,8 +792,47 @@ export function renderInstance(input: {
        outstanding
          ? '<p class="muted">No window has been executed for this instance.</p>'
          : `<table><thead><tr><th>Window</th><th>State</th><th>Size</th><th>Occurrences</th><th>Reason</th></tr></thead><tbody>${windowRows}</tbody></table>`
-     }`,
+     }
+     ${renderCompareBlock(input)}`,
   });
+}
+
+export interface EvidenceV2ComparePlanRow {
+  readonly reason: 'ready' | 'instance-not-reviewed' | 'no-prior-accepted';
+  readonly plannedModelCalls: number;
+  readonly windowCount: number;
+  readonly outstandingCount: number;
+  readonly committedCount: number;
+}
+
+function renderCompareBlock(input: {
+  readonly artifactId: string;
+  readonly chainId: string;
+  readonly instanceKey: string;
+  readonly compare?: EvidenceV2ComparePlanRow;
+}): string {
+  if (input.compare === undefined) return '';
+  const path = `/artifacts/${encodeURIComponent(input.artifactId)}/chains/${encodeURIComponent(input.chainId)}/instances/${encodeURIComponent(input.instanceKey)}/comparison`;
+  if (input.compare.reason === 'instance-not-reviewed')
+    return `<h2>Compare with earlier instances</h2>
+     <p class="muted">Comparison runs only after this instance is reviewed.
+     Extraction stays blind: earlier interviews are not shown to it.</p>`;
+  if (input.compare.reason === 'no-prior-accepted')
+    return `<h2>Compare with earlier instances</h2>
+     <p class="muted">No earlier instance in this chain has accepted
+     occurrences to compare against.</p>`;
+  if (input.compare.plannedModelCalls === 0)
+    return `<h2>Compare with earlier instances</h2>
+     <p>Comparison is complete. ${String(input.compare.committedCount)} window${input.compare.committedCount === 1 ? '' : 's'} committed, nothing outstanding.</p>`;
+  return `<h2>Compare with earlier instances</h2>
+     <p>J4 will compare this instance's accepted occurrences with frozen
+     accepted occurrences of earlier instances in this chain.
+     <strong>${String(input.compare.plannedModelCalls)} model call${input.compare.plannedModelCalls === 1 ? '' : 's'}</strong>
+     planned across ${String(input.compare.windowCount)} window${input.compare.windowCount === 1 ? '' : 's'}
+     <span class="muted">· ${String(input.compare.committedCount)} already committed</span>.</p>
+     <form method="post" action="${escapeHtml(path)}">
+       <button type="submit">Run comparison</button>
+     </form>`;
 }
 
 /**
@@ -1038,6 +1078,160 @@ export function renderClaim(input: {
   });
 }
 
+export interface EvidenceV2RelationRow {
+  readonly relationId: string;
+  readonly type: string;
+  readonly provenance: string;
+  readonly standing: 'pending' | 'accepted' | 'rejected' | 'needs-revision';
+  readonly rationale: string;
+  readonly fromLabel: string;
+  readonly fromHref: string | null;
+  readonly toLabel: string;
+  readonly toHref: string | null;
+}
+
+export function renderRelations(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly relations: EvidenceV2ListPage<EvidenceV2RelationRow>;
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const rows = input.relations.items
+    .map(
+      (item) =>
+        `<tr><td><a href="/cases/${encodeURIComponent(input.caseId)}/relations/${encodeURIComponent(item.relationId)}">${escapeHtml(item.type)}</a></td>` +
+        `<td>${item.fromHref === null ? escapeHtml(item.fromLabel) : `<a href="${escapeHtml(item.fromHref)}">${escapeHtml(item.fromLabel)}</a>`}</td>` +
+        `<td>${item.toHref === null ? escapeHtml(item.toLabel) : `<a href="${escapeHtml(item.toHref)}">${escapeHtml(item.toLabel)}</a>`}</td>` +
+        `<td class="standing standing-${escapeHtml(item.standing)}">${escapeHtml(item.standing)}</td>` +
+        `<td class="muted">${escapeHtml(item.provenance)}</td>` +
+        `<td class="muted">${escapeHtml(item.rationale)}</td></tr>`,
+    )
+    .join('');
+  return layout({
+    title: `Relations · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/relations`,
+        label: 'Relations',
+      },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'relations',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>Relations</h1>
+     <p class="muted">A typed statement about two endpoints. It never deletes
+     either of them. The four verbs are contradicts, adds, supports and
+     qualifies. A graph is not this surface: a thicker edge would read as
+     importance, and no relation here states importance.</p>
+     <form method="post" action="/cases/${encodeURIComponent(input.caseId)}/relations">
+       <input name="artifactId" placeholder="Artifact id" required>
+       <input name="chainId" placeholder="Chain id" required>
+       <input name="fromKind" placeholder="from kind (occurrence|claim)" required>
+       <input name="fromId" placeholder="from id" required>
+       <input name="toKind" placeholder="to kind (occurrence|claim)" required>
+       <input name="toId" placeholder="to id" required>
+       <input name="type" placeholder="contradicts|adds|supports|qualifies" required>
+       <input name="actor" placeholder="actor scope" value="comparable">
+       <input name="time" placeholder="time scope" value="comparable">
+       <input name="location" placeholder="location scope" value="unknown">
+       <input name="entity" placeholder="entity scope" value="unknown">
+       <input name="rationale" placeholder="Why this relation" required>
+       <button type="submit">Record relation</button>
+     </form>
+     <table><thead><tr><th>Type</th><th>From</th><th>To</th><th>Standing</th><th>Provenance</th><th>Rationale</th></tr></thead>
+     <tbody>${rows || '<tr><td colspan="6" class="muted">No relations yet.</td></tr>'}</tbody></table>
+     ${pager(`/cases/${input.caseId}/relations`, input.relations)}`,
+  });
+}
+
+export function renderRelation(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly relation: {
+    readonly relationId: string;
+    readonly type: string;
+    readonly provenance: string;
+    readonly rationale: string;
+    readonly createdAt: string;
+    readonly comparableScope: {
+      readonly actor: string;
+      readonly time: string;
+      readonly location: string;
+      readonly entity: string;
+    };
+  };
+  readonly standing: string;
+  readonly decisionCount: number;
+  readonly from: { readonly label: string; readonly href: string | null };
+  readonly to: { readonly label: string; readonly href: string | null };
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const path = `/cases/${encodeURIComponent(input.caseId)}/relations/${encodeURIComponent(input.relation.relationId)}`;
+  const end = (
+    item: { readonly label: string; readonly href: string | null },
+    title: string,
+  ): string =>
+    `<h2>${escapeHtml(title)}</h2>
+     <p>${item.href === null ? escapeHtml(item.label) : `<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`}</p>`;
+  const action = (verb: string, label: string): string =>
+    `<form method="post" action="${escapeHtml(path)}">` +
+    `<input type="hidden" name="action" value="${escapeHtml(verb)}">` +
+    `<input name="rationale" placeholder="Why?" required>` +
+    `<button type="submit">${escapeHtml(label)}</button></form>`;
+  return layout({
+    title: `${input.relation.type} · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/relations`,
+        label: 'Relations',
+      },
+      { href: path, label: input.relation.type },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'relations',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>${escapeHtml(input.relation.type)}</h1>
+     <p class="standing standing-${escapeHtml(input.standing)}">${escapeHtml(input.standing)}</p>
+     <p>${escapeHtml(input.relation.rationale)}</p>
+     <p class="muted">${escapeHtml(input.relation.provenance)}
+       · actor ${escapeHtml(input.relation.comparableScope.actor)},
+       time ${escapeHtml(input.relation.comparableScope.time)},
+       location ${escapeHtml(input.relation.comparableScope.location)},
+       entity ${escapeHtml(input.relation.comparableScope.entity)}
+       · ${String(input.decisionCount)} review decision${input.decisionCount === 1 ? '' : 's'}</p>
+     ${end(input.from, 'From')}
+     ${end(input.to, 'To')}
+     <h2>Review</h2>
+     <p class="muted">A decision is appended, never applied over an earlier
+     one. Rejecting a relation deletes neither endpoint.</p>
+     <div class="actions">${action('accept', 'Accept')}${action('reject', 'Reject')}${action('revise', 'Revise')}</div>`,
+  });
+}
+
 /**
  * The status surface: what this case contains, and where to resume.
  *
@@ -1135,6 +1329,18 @@ export function renderCaseStatus(input: {
        ${row('Grouping decisions', c.claimGroupingDecisions)}
        ${row('Grouped occurrences', c.groupedOccurrences)}
        ${row('Claims spanning several instances', c.crossInstanceClaims)}
+     </dl>
+     <h2>Relations</h2>
+     <p class="muted">A relation never deletes an endpoint. Standing is
+     folded from the append-only review log.</p>
+     <dl class="counts">
+       ${row('Relations', c.relations)}
+       ${row('Review decisions', c.relationReviewDecisions)}
+       ${row('Accepted', c.acceptedRelations)}
+       ${row('Rejected', c.rejectedRelations)}
+       ${row('Undecided', c.pendingRelations)}
+       ${row('Model-proposed', c.modelProposedRelations)}
+       ${row('Reviewer-authored', c.reviewerAuthoredRelations)}
      </dl>
      <h2>Not built yet</h2>
      <p class="muted">These report their own condition rather than a number.

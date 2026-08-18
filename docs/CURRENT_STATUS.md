@@ -29,7 +29,8 @@ frozen as a diagnostic reference. The replacement model, V1 boundary, proof
 journeys and binding regression requirements are normative in
 [the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
 
-The replacement is being built layer by layer below, and no task is active.
+The replacement is being built layer by layer below. ACME-0161 is complete;
+ACME-0158 (PDF import under ADR-0050) is the active task.
 Nothing below this section is retracted by the decision: the engine,
 persistence, artifact security, authorization, case isolation and live model
 boundary carry forward unchanged, and no data authority changes. Stage A remains
@@ -284,8 +285,39 @@ refused with 404, which is disclosure control rather than validation.
 relations and consensus. That is the second gap the ACME-0157 machinery has
 retired.
 
-Remaining limitations: relations and consensus projection do not exist, and the
-timeline surface still reports its own condition. Extraction is Pass 1 with no neighbour context
+ACME-0161 added the typed relation and J4. `evidence-v2-relation/1` is a
+statement about two endpoints with one of four verbs — `contradicts`, `adds`,
+`supports`, `qualifies` — plus comparable scope, rationale and provenance.
+A relation never deletes an endpoint. Standing is folded from
+`evidence-v2-relation-review/1`; reviewer authorship is itself an acceptance.
+A `contradicts` relation whose actor or time is not comparable is refused.
+
+J4 is `evidence-v2-compare/1` in a separate engine namespace, so observe state
+is untouched and extraction stays blind. The planner derives the call count
+from frozen accepted occurrences of a reviewed current instance and earlier
+instances in the same chain. The model cites occurrence ids only. An empty
+response is valid. A re-run executes only windows with no committed execution.
+
+The Relations surface is a bounded list, not a graph. `relations` is gone from
+the status surface's unbuilt list, leaving timeline and consensus.
+
+Recorded on the live case: a reviewer-authored `adds` from an accepted
+occurrence to an existing claim resolved both sources; rejecting it left the
+occurrence in its instance of 27 and both decisions in the log. J4 on Hussein
+ordinal 2 (`instance-part-000400`) was planned at **15** windows after that
+instance was extracted (**3** J3 calls, **52** occurrences, then reviewed) and
+compared against ordinal 1's frozen accepted set. All 15 windows committed;
+re-planning states **0**. Three model-proposed relations (`adds`, `supports`,
+`adds`) are pending, each endpoint opening its exact source. The ledger moved
+**2 → 21** (3 extract + 16 compare, including repair). A second principal
+receives 404; missing CSRF 401.
+
+A measured finding, not a defect: J4 window count is the product of current
+and prior batches (52 accepted / 12 × 25 accepted / 12 = 15). Silence in a
+window is valid, so 15 windows produced 3 relations.
+
+Remaining limitations: consensus projection and the timeline surface still
+report their own condition. Extraction is Pass 1 with no neighbour context
 and no actor roster. Credentials still come from a development authenticator, so
 a real upstream identity provider is unwired. `pnpm test:postgres` has two
 pre-existing frozen-app failures unrelated to the V2 work, recorded in

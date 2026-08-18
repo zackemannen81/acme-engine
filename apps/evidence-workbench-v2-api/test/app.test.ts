@@ -15,7 +15,10 @@ import {
   type EvidenceV2ImportWrite,
   type EvidenceV2Claim,
   type EvidenceV2ClaimGroupingDecision,
+  type EvidenceV2ComparisonWindowState,
   type EvidenceV2Occurrence,
+  type EvidenceV2Relation,
+  type EvidenceV2RelationReviewDecision,
   type EvidenceV2ReviewDecision,
   type EvidenceV2Page,
   type EvidenceV2PageRequest,
@@ -55,7 +58,10 @@ function memoryRepository(): EvidenceV2Repository & {
   const reviews: EvidenceV2ReviewDecision[] = [];
   const claims = new Map<string, EvidenceV2Claim>();
   const groupings: EvidenceV2ClaimGroupingDecision[] = [];
+  const relations = new Map<string, EvidenceV2Relation>();
+  const relationReviews: EvidenceV2RelationReviewDecision[] = [];
   const windows = new Map<string, EvidenceV2ExtractionWindowState[]>();
+  const comparisons = new Map<string, EvidenceV2ComparisonWindowState[]>();
   const derivationCalls = { count: 0 };
 
   const paged = <T>(
@@ -241,6 +247,55 @@ function memoryRepository(): EvidenceV2Repository & {
         .flat()
         .filter((item) => wanted.has(item.occurrenceId));
     },
+    async readOccurrenceBindings(ids) {
+      const wanted = new Set(ids);
+      const bindings = [];
+      for (const [key, items] of occurrences) {
+        const instanceKey = key.split('/').slice(1).join('/');
+        for (const occurrence of items) {
+          if (wanted.has(occurrence.occurrenceId))
+            bindings.push({ occurrence, instanceKey });
+        }
+      }
+      return bindings.sort((left, right) =>
+        left.occurrence.occurrenceId.localeCompare(
+          right.occurrence.occurrenceId,
+        ),
+      );
+    },
+    async createRelation(relation) {
+      if (!relations.has(relation.relationId))
+        relations.set(relation.relationId, relation);
+    },
+    async listRelations(caseId, request) {
+      return paged(
+        [...relations.values()].filter((item) => item.caseId === caseId),
+        request,
+      );
+    },
+    async readRelation(relationId) {
+      return relations.get(relationId);
+    },
+    async appendRelationReview(decision) {
+      if (
+        relationReviews.some((item) => item.decisionId === decision.decisionId)
+      )
+        return;
+      relationReviews.push(decision);
+    },
+    async listRelationReviews(relationId) {
+      return relationReviews.filter((item) => item.relationId === relationId);
+    },
+    async putComparisonWindow(state) {
+      const key = `${state.artifactId}/${state.instanceKey}`;
+      const held = (comparisons.get(key) ?? []).filter(
+        (item) => item.windowId !== state.windowId,
+      );
+      comparisons.set(key, [...held, state]);
+    },
+    async readComparisonWindows(artifactId, instanceKey) {
+      return comparisons.get(`${artifactId}/${instanceKey}`) ?? [];
+    },
     async readCaseOverview(caseId) {
       const scoped = [...artifacts.values()].filter(
         (item) => item.caseId === caseId,
@@ -312,6 +367,23 @@ function memoryRepository(): EvidenceV2Repository & {
           ).length,
           groupedOccurrences: 0,
           crossInstanceClaims: 0,
+          relations: [...relations.values()].filter(
+            (item) => item.caseId === caseId,
+          ).length,
+          relationReviewDecisions: relationReviews.filter(
+            (item) => item.caseId === caseId,
+          ).length,
+          acceptedRelations: 0,
+          pendingRelations: 0,
+          rejectedRelations: 0,
+          modelProposedRelations: [...relations.values()].filter(
+            (item) =>
+              item.caseId === caseId && item.provenance === 'model-proposed',
+          ).length,
+          reviewerAuthoredRelations: [...relations.values()].filter(
+            (item) =>
+              item.caseId === caseId && item.provenance === 'reviewer-authored',
+          ).length,
         },
         instancesWithoutExtraction: outstanding.length,
         instancesPendingReview: 0,
@@ -731,26 +803,22 @@ describe('evidence v2 api', () => {
 
   it('reports an unbuilt surface as a named condition, never an empty list', async () => {
     const { caseId, headers } = await seed();
-    for (const surface of ['timeline', 'relations'] as const) {
-      const page = await fetch(`${base}/cases/${caseId}/${surface}`, {
-        headers,
-      });
-      expect(page.status).toBe(200);
-      const html = await page.text();
-      expect(html).toContain('Not built');
-      expect(html).toContain(EVIDENCE_V2_SURFACE_GAPS[surface].deliveredBy);
-      // The defect this exists to prevent: an absent surface answering with an
-      // empty result as though the case had none (R-07).
-      expect(html).not.toContain('<tbody></tbody>');
+    const page = await fetch(`${base}/cases/${caseId}/timeline`, { headers });
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain('Not built');
+    expect(html).toContain(EVIDENCE_V2_SURFACE_GAPS.timeline.deliveredBy);
+    // The defect this exists to prevent: an absent surface answering with an
+    // empty result as though the case had none (R-07).
+    expect(html).not.toContain('<tbody></tbody>');
 
-      const json = (await (
-        await fetch(`${base}/api/cases/${caseId}/${surface}`, { headers })
-      ).json()) as { state: string; deliveredBy: string };
-      expect(json.state).toBe('not-implemented');
-      expect(json.deliveredBy).toBe(
-        EVIDENCE_V2_SURFACE_GAPS[surface].deliveredBy,
-      );
-    }
+    const json = (await (
+      await fetch(`${base}/api/cases/${caseId}/timeline`, { headers })
+    ).json()) as { state: string; deliveredBy: string };
+    expect(json.state).toBe('not-implemented');
+    expect(json.deliveredBy).toBe(
+      EVIDENCE_V2_SURFACE_GAPS.timeline.deliveredBy,
+    );
   });
 
   it('reports status counts that agree with the list routes', async () => {
@@ -1396,6 +1464,220 @@ describe('evidence v2 api', () => {
     expect(Object.keys(overview.unavailable)).not.toContain('standing');
     expect(Object.keys(overview.unavailable)).toContain('timeline');
     expect(overview.counts).toHaveProperty('accepted');
+  });
+
+  it('records a relation without deleting either endpoint', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const claimId = await seedClaim(caseId, headers);
+    const created = await fetch(`${base}/api/cases/${caseId}/relations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        artifactId,
+        chainId: seeded.chainId,
+        fromKind: 'occurrence',
+        fromId: seeded.occurrenceId,
+        toKind: 'claim',
+        toId: claimId,
+        type: 'adds',
+        actor: 'comparable',
+        time: 'comparable',
+        location: 'unknown',
+        entity: 'unknown',
+        rationale: 'The occurrence adds to this grouping.',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const relation = (await created.json()) as {
+      relationId: string;
+      type: string;
+      provenance: string;
+    };
+    expect(relation.type).toBe('adds');
+    expect(relation.provenance).toBe('reviewer-authored');
+
+    const viewed = (await (
+      await fetch(
+        `${base}/api/cases/${caseId}/relations/${relation.relationId}`,
+        { headers },
+      )
+    ).json()) as {
+      standing: string;
+      from: { id: string };
+      to: { id: string };
+      reviews: { action: string }[];
+    };
+    expect(viewed.standing).toBe('accepted');
+    expect(viewed.from.id).toBe(seeded.occurrenceId);
+    expect(viewed.to.id).toBe(claimId);
+    expect(viewed.reviews.map((item) => item.action)).toEqual(['accept']);
+
+    const after = (await (
+      await fetch(
+        `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`,
+        { headers },
+      )
+    ).json()) as { occurrences: { total: number } };
+    expect(after.occurrences.total).toBe(1);
+  });
+
+  it('rejects a relation without deleting the superseded decision or the endpoints', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const created = await fetch(`${base}/api/cases/${caseId}/relations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        artifactId,
+        chainId: seeded.chainId,
+        fromKind: 'occurrence',
+        fromId: seeded.occurrenceId,
+        toKind: 'occurrence',
+        toId: seeded.occurrenceId,
+        type: 'supports',
+        actor: 'comparable',
+        time: 'comparable',
+        location: 'unknown',
+        entity: 'unknown',
+        rationale: 'Same occurrence cited twice as a pair of endpoints.',
+      }),
+    });
+    const relation = (await created.json()) as { relationId: string };
+    const rejected = await fetch(
+      `${base}/api/cases/${caseId}/relations/${relation.relationId}`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          action: 'reject',
+          rationale: 'Self-relation is not useful here.',
+        }),
+      },
+    );
+    expect(rejected.status).toBe(201);
+    const viewed = (await (
+      await fetch(
+        `${base}/api/cases/${caseId}/relations/${relation.relationId}`,
+        { headers },
+      )
+    ).json()) as {
+      standing: string;
+      reviews: { action: string; supersedes: string | null }[];
+    };
+    expect(viewed.standing).toBe('rejected');
+    expect(viewed.reviews.map((item) => item.action)).toEqual([
+      'accept',
+      'reject',
+    ]);
+    expect(viewed.reviews[1]?.supersedes).toBeTruthy();
+  });
+
+  it('refuses a contradiction whose actor is not comparable', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const refused = await fetch(`${base}/api/cases/${caseId}/relations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        artifactId,
+        chainId: seeded.chainId,
+        fromKind: 'occurrence',
+        fromId: seeded.occurrenceId,
+        toKind: 'occurrence',
+        toId: seeded.occurrenceId,
+        type: 'contradicts',
+        actor: 'incomparable',
+        time: 'comparable',
+        location: 'unknown',
+        entity: 'unknown',
+        rationale: 'Different people.',
+      }),
+    });
+    expect(refused.status).toBe(400);
+  });
+
+  it('refuses a relation whose endpoint belongs to another case', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const other = await fetch(`${base}/api/cases`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: 'Other case', caseReference: 'T-REL' }),
+    });
+    const otherCase = (await other.json()) as EvidenceV2CaseRecord;
+    const cross = await fetch(
+      `${base}/api/cases/${otherCase.caseId}/relations`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          artifactId,
+          chainId: seeded.chainId,
+          fromKind: 'occurrence',
+          fromId: seeded.occurrenceId,
+          toKind: 'occurrence',
+          toId: seeded.occurrenceId,
+          type: 'adds',
+          actor: 'unknown',
+          time: 'unknown',
+          location: 'unknown',
+          entity: 'unknown',
+          rationale: 'Should be refused.',
+        }),
+      },
+    );
+    expect(cross.status).toBe(404);
+  });
+
+  it('hides another case’s relation behind 404, and refuses non-members', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const created = await fetch(`${base}/api/cases/${caseId}/relations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        artifactId,
+        chainId: seeded.chainId,
+        fromKind: 'occurrence',
+        fromId: seeded.occurrenceId,
+        toKind: 'occurrence',
+        toId: seeded.occurrenceId,
+        type: 'qualifies',
+        actor: 'unknown',
+        time: 'unknown',
+        location: 'unknown',
+        entity: 'unknown',
+        rationale: 'A condition.',
+      }),
+    });
+    const relation = (await created.json()) as { relationId: string };
+    const other = await signIn('second@acme.local', 'second-secret');
+    for (const path of [
+      `/api/cases/${caseId}/relations`,
+      `/api/cases/${caseId}/relations/${relation.relationId}`,
+    ]) {
+      expect((await fetch(`${base}${path}`, { headers: other })).status).toBe(
+        404,
+      );
+      expect((await fetch(`${base}${path}`)).status).toBe(401);
+    }
+  });
+
+  it('shows Relations in the surface bar and no longer as an unbuilt surface', async () => {
+    const { caseId, headers } = await seed();
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/relations`, { headers })
+    ).text();
+    expect(html).toContain('<h1>Relations</h1>');
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain('Not built');
+
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    expect(Object.keys(overview.unavailable)).not.toContain('relations');
+    expect(overview.counts).toHaveProperty('relations');
   });
 
   it('refuses every route without a session', async () => {

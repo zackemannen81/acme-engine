@@ -8,6 +8,10 @@ import {
   EVIDENCE_V2_SURFACE_GAPS,
   type EvidenceV2Claim,
   type EvidenceV2ClaimGroupingDecision,
+  type EvidenceV2ComparisonWindowState,
+  type EvidenceV2OccurrenceBinding,
+  type EvidenceV2Relation,
+  type EvidenceV2RelationReviewDecision,
   type EvidenceV2ReviewDecision,
   type EvidenceV2ArtifactRecord,
   type EvidenceV2CaseOverview,
@@ -885,6 +889,185 @@ export function createEvidenceV2PostgresRepository(
       );
     },
 
+    async readOccurrenceBindings(ids) {
+      if (ids.length === 0) return [];
+      const rows = await rowsOf(
+        pool,
+        `SELECT instance_key, record_json FROM ${schema}.occurrences
+          WHERE occurrence_id = ANY($1::text[])
+          ORDER BY occurrence_id`,
+        [[...ids]],
+      );
+      return rows.map(
+        (row) =>
+          ({
+            occurrence: JSON.parse(
+              String(row['record_json']),
+            ) as EvidenceV2Occurrence,
+            instanceKey: String(row['instance_key']),
+          }) satisfies EvidenceV2OccurrenceBinding,
+      );
+    },
+
+    async createRelation(relation) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.relations
+             (relation_id, case_id, artifact_id, chain_id, from_kind, from_id,
+              to_kind, to_id, type, provenance, created_at, record_json)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           ON CONFLICT (relation_id) DO NOTHING`,
+          [
+            relation.relationId,
+            relation.caseId,
+            relation.artifactId,
+            relation.chainId,
+            relation.from.kind,
+            relation.from.id,
+            relation.to.kind,
+            relation.to.id,
+            relation.type,
+            relation.provenance,
+            relation.createdAt,
+            JSON.stringify(relation),
+          ],
+        );
+      });
+    },
+
+    async listRelations(caseId, page) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT record_json, count(*) OVER () AS total
+           FROM ${schema}.relations
+          WHERE case_id = $1
+          ORDER BY created_at, relation_id
+          OFFSET $2 LIMIT $3`,
+        [caseId, page.offset, page.limit],
+      );
+      return {
+        items: rows.map(
+          (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Relation,
+        ),
+        total: Number(rows[0]?.['total'] ?? 0),
+        offset: page.offset,
+        limit: page.limit,
+      };
+    },
+
+    async readRelation(relationId) {
+      const [row] = await rowsOf(
+        pool,
+        `SELECT record_json FROM ${schema}.relations WHERE relation_id = $1`,
+        [relationId],
+      );
+      return row === undefined
+        ? undefined
+        : (JSON.parse(String(row['record_json'])) as EvidenceV2Relation);
+    },
+
+    async appendRelationReview(decision) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.relation_reviews
+             (relation_id, decision_id, case_id, action, supersedes,
+              principal, decided_at, decision_json)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (relation_id, decision_id) DO NOTHING`,
+          [
+            decision.relationId,
+            decision.decisionId,
+            decision.caseId,
+            decision.action,
+            decision.supersedes,
+            decision.principal,
+            decision.decidedAt,
+            JSON.stringify(decision),
+          ],
+        );
+      });
+    },
+
+    async listRelationReviews(relationId) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT decision_json FROM ${schema}.relation_reviews
+          WHERE relation_id = $1 ORDER BY appended_seq`,
+        [relationId],
+      );
+      return rows.map(
+        (row) =>
+          JSON.parse(
+            String(row['decision_json']),
+          ) as EvidenceV2RelationReviewDecision,
+      );
+    },
+
+    async putComparisonWindow(state) {
+      await withPostgresDriverErrors(async () => {
+        await pool.query(
+          `INSERT INTO ${schema}.comparison_windows
+             (artifact_id, instance_key, window_id, prior_instance_key, status,
+              current_count, prior_count, relation_count, execution_id,
+              failure_code, decided_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           ON CONFLICT (artifact_id, instance_key, window_id) DO UPDATE SET
+             prior_instance_key = EXCLUDED.prior_instance_key,
+             status = EXCLUDED.status,
+             current_count = EXCLUDED.current_count,
+             prior_count = EXCLUDED.prior_count,
+             relation_count = EXCLUDED.relation_count,
+             execution_id = EXCLUDED.execution_id,
+             failure_code = EXCLUDED.failure_code,
+             decided_at = EXCLUDED.decided_at`,
+          [
+            state.artifactId,
+            state.instanceKey,
+            state.windowId,
+            state.priorInstanceKey,
+            state.status,
+            state.currentCount,
+            state.priorCount,
+            state.relationCount,
+            state.executionId,
+            state.failureCode,
+            state.decidedAt,
+          ],
+        );
+      });
+    },
+
+    async readComparisonWindows(artifactId, instanceKey) {
+      const rows = await rowsOf(
+        pool,
+        `SELECT artifact_id, instance_key, window_id, prior_instance_key,
+                status, current_count, prior_count, relation_count,
+                execution_id, failure_code, decided_at
+           FROM ${schema}.comparison_windows
+          WHERE artifact_id = $1 AND instance_key = $2
+          ORDER BY decided_at, window_id`,
+        [artifactId, instanceKey],
+      );
+      return rows.map(
+        (row) =>
+          ({
+            artifactId: String(row['artifact_id']),
+            instanceKey: String(row['instance_key']),
+            windowId: String(row['window_id']),
+            priorInstanceKey: String(row['prior_instance_key']),
+            status: String(row['status']) as 'committed' | 'failed',
+            currentCount: Number(row['current_count']),
+            priorCount: Number(row['prior_count']),
+            relationCount: Number(row['relation_count']),
+            executionId:
+              row['execution_id'] === null ? null : String(row['execution_id']),
+            failureCode:
+              row['failure_code'] === null ? null : String(row['failure_code']),
+            decidedAt: String(row['decided_at']),
+          }) satisfies EvidenceV2ComparisonWindowState,
+      );
+    },
+
     /**
      * The case overview.
      *
@@ -911,6 +1094,12 @@ export function createEvidenceV2PostgresRepository(
                   FROM ${schema}.claim_groupings
                  WHERE case_id = $1
                  ORDER BY claim_id, occurrence_id, appended_seq DESC
+              ),
+              latest_relation AS (
+                SELECT DISTINCT ON (relation_id) relation_id, action
+                  FROM ${schema}.relation_reviews
+                 WHERE case_id = $1
+                 ORDER BY relation_id, appended_seq DESC
               )
          SELECT
            (SELECT count(*) FROM scoped) AS artifacts,
@@ -951,6 +1140,25 @@ export function createEvidenceV2PostgresRepository(
                GROUP BY claim_id
               HAVING count(DISTINCT instance_key) > 1) spread)
              AS cross_instance_claims,
+           (SELECT count(*) FROM ${schema}.relations WHERE case_id = $1)
+             AS relations,
+           (SELECT count(*) FROM ${schema}.relation_reviews WHERE case_id = $1)
+             AS relation_review_decisions,
+           (SELECT count(*) FROM latest_relation WHERE action = 'accept')
+             AS accepted_relations,
+           (SELECT count(*) FROM ${schema}.relations r
+              WHERE r.case_id = $1
+                AND NOT EXISTS (
+                  SELECT 1 FROM ${schema}.relation_reviews d
+                  WHERE d.relation_id = r.relation_id)) AS pending_relations,
+           (SELECT count(*) FROM latest_relation WHERE action = 'reject')
+             AS rejected_relations,
+           (SELECT count(*) FROM ${schema}.relations
+              WHERE case_id = $1 AND provenance = 'model-proposed')
+             AS model_proposed_relations,
+           (SELECT count(*) FROM ${schema}.relations
+              WHERE case_id = $1 AND provenance = 'reviewer-authored')
+             AS reviewer_authored_relations,
            (SELECT count(*) FROM ${schema}.occurrences
               WHERE artifact_id IN (SELECT artifact_id FROM scoped)
                 AND authored_by = 'reviewer') AS reviewer_authored,
@@ -1033,6 +1241,13 @@ export function createEvidenceV2PostgresRepository(
           claimGroupingDecisions: count('claim_grouping_decisions'),
           groupedOccurrences: count('grouped_occurrences'),
           crossInstanceClaims: count('cross_instance_claims'),
+          relations: count('relations'),
+          relationReviewDecisions: count('relation_review_decisions'),
+          acceptedRelations: count('accepted_relations'),
+          pendingRelations: count('pending_relations'),
+          rejectedRelations: count('rejected_relations'),
+          modelProposedRelations: count('model_proposed_relations'),
+          reviewerAuthoredRelations: count('reviewer_authored_relations'),
         },
         instancesWithoutExtraction: count('instances_without_extraction'),
         instancesPendingReview: count('instances_pending_review'),
