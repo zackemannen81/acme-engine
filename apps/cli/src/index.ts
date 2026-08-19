@@ -21,6 +21,15 @@ export {
   type OutboxFileDeliveryEnvelope,
 } from './outbox-file-dispatcher.js';
 export {
+  createRuntimeBearerAuthorizer,
+  readAcmeRuntimeServiceConfig,
+  startAcmeRuntimeService,
+  validateAcmeRuntimeServiceConfig,
+  type AcmeRuntimeService,
+  type AcmeRuntimeServiceConfig,
+  type AcmeRuntimeServiceOptions,
+} from './acme-runtime-service.js';
+export {
   EXIT_OK,
   EXIT_OUTCOME,
   EXIT_USAGE,
