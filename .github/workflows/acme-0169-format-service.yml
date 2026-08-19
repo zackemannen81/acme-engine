@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
 
+# One-shot helper: canonical-format the service file and remove itself.
 jobs:
   format:
     if: github.actor != 'github-actions[bot]'
