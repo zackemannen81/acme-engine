@@ -1,5 +1,10 @@
 # Design Documents
 
+Discoverability: index. Every member of this directory is listed below,
+and members are never renamed or moved to express a change of state.
+Member state: required. Every member declares a `Status:` line under its
+title.
+
 This directory contains complete system and package design specifications.
 
 POC #1 is frozen. The operator pack is
@@ -13,6 +18,12 @@ Team implementation guides:
 
 - [`narrative-module-build-and-test-plan.md`](narrative-module-build-and-test-plan.md)
 - [`research-module-build-and-test-plan.md`](research-module-build-and-test-plan.md)
+
+Discovery and selection:
+
+- [`first-poc-application-discovery.md`](first-poc-application-discovery.md)
+  — the bounded comparison that selected ACME's first product proof of
+  concept, decided by [`ADR-0028`](../adr/0028-first-poc-evidence-integrity-workbench.md).
 
 Application surfaces:
 

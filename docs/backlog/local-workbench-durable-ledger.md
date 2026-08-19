@@ -1,6 +1,7 @@
 # Local workbench durable execution ledger
 
-Status: Proposed; not activated
+Status: resolved / not applicable; not activated
+POC #1 - accepted as is.
 
 Decision: none yet. Changing the local composition's ledger persistence is an
 architecture choice and needs a frozen charter, and probably an ADR.

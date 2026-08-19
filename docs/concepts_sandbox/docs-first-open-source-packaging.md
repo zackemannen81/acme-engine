@@ -1,7 +1,7 @@
 # Docs-First Continuity Protocol — Open-Source Packaging Concept
 
 - Date: 2026-08-10
-- Updated at: 2026-08-10
+- Updated at: 2026-08-19
 - Owner: Rickard Zakrisson
 - Status: Concept — candidate packaging direction, not approved scope
 
@@ -89,7 +89,8 @@ bounded context loading**.
 ### Core invariants
 
 - There is one known entry point.
-- There is at most one active task.
+- There is at most one active task per working context, and the trunk never
+  states how many are active anywhere.
 - Every document has one semantic ownership role.
 - Current reality, intended direction and historical work are not conflated.
 - A task has an explicit goal, deliverable, scope and verification plan before
@@ -99,6 +100,12 @@ bounded context loading**.
 - Incomplete work leaves explicit blockers, next steps and verification gaps.
 - Completion updates durable truth, archives the task and restores a clean
   active state.
+- Undecided ideas have a named, non-authoritative home, and they gain
+  authority only by explicit restatement in an owning document.
+- Records have stable addresses. Status lives in content and in indexes,
+  never in filenames or locations.
+- Task identities are claimed on the trunk before a charter freezes, and the
+  claim records identity only, never activity.
 - A new actor must be able to resume from repository state alone.
 
 ### Reference document ownership
@@ -117,6 +124,7 @@ bounded context loading**.
 | Completed work | `finished/` | Frozen historical task records |
 | Blocked work | `paused/` | Valid parent tasks waiting on an explicit condition |
 | Future work | `backlog/` | Non-activated discoveries and proposals |
+| Excluded ideas | `concepts_sandbox/` | Undecided concepts, visions, sketches and mocks that no work may cite as authority |
 
 Profiles may rename presentation-facing documents, but they must preserve
 these semantic roles or publish an exact mapping.
@@ -137,6 +145,93 @@ Draft / Ready / In Progress / Paused
 The protocol must define which fields freeze at `Ready`, what evidence permits
 completion and how a task is resumed without rewriting history.
 
+## Stable Addressing and Status
+
+### The rule
+
+A record's path is its identity. Status is expressed in the record's content
+and in its index, never in its filename or its location.
+
+### Why it is structural, not stylistic
+
+The protocol makes several classes of record immutable: journal entries are
+append-only, completed tasks are archived unmodified, accepted decisions are
+superseded rather than edited. Those records cite other records by path.
+
+A path cited by an immutable record is therefore itself immutable. Renaming or
+moving the target leaves exactly two exits, and the protocol forbids one of
+them:
+
+```text
+rename a cited record
+  → repair the citations       → requires rewriting append-only history: forbidden
+  → leave the citations broken → the repository fails its own retrieval promise
+  → restore the original path  → the only permitted exit
+```
+
+A repository that encodes status in filenames will eventually have to choose
+between broken references and rewritten history. The rule exists so that the
+choice never arises.
+
+The constraint binds any record cited by an immutable document, an index or an
+external link. Working files that nothing references may be reorganized
+freely.
+
+### Observed failure
+
+Recorded in the reference implementation on 2026-08-19. Nine backlog proposals
+were renamed with a `resolved-` prefix so that a reader could see resolved
+items in a file listing without opening anything.
+
+Every one of those files already carried a `Status:` line directly under its
+title. The rename therefore added no information, and it broke 39 links in the
+journal, the task archive, accepted decisions and design documents. The repair
+was to restore the paths and to move the reader-facing signal into the index.
+
+The instinct was sound and the mechanism was wrong. That distinction matters,
+because the protocol has to answer the instinct rather than suppress it.
+
+### The index is the status surface
+
+A reader wanting current state without opening anything needs one place that
+holds it. The protocol answers with an index, not with filenames.
+
+An index that carries this responsibility must be:
+
+- complete — every record in the collection appears exactly once, unless the
+  collection is instead covered by a deterministic naming convention that
+  makes each member addressable without a list;
+- current — updated in the same change as the record it describes;
+- resolved — each entry names the state and the task or decision that produced
+  it; and
+- checked — completeness verified mechanically rather than by discipline.
+
+An enforced index is strictly more informative than a filename convention. A
+`resolved-` prefix says only that something ended. An index row says what
+ended it, when, and where the evidence is.
+
+### Tense
+
+Validation of cited paths has to distinguish what a document is for. A document
+describing the present must name paths that exist. The archive names files
+after they are gone, and the active charter names its deliverables before they
+exist. Both legitimately cite paths that do not resolve, in opposite
+directions, and both should report without gating.
+
+A validator that ignores tense either fails on correct history or makes it
+impossible to charter work that creates a new file. The reference
+implementation hit the second case within an hour of shipping the first version
+of the check.
+
+### Conformance checks
+
+- every path cited by an append-only or archived record still resolves;
+- no record encodes its state in its filename or its location;
+- each collection is either fully indexed or fully covered by a declared
+  naming convention; and
+- index entries state the current state and, where one exists, the resolving
+  record.
+
 ## Context-Minimization Model
 
 The model should teach progressive context loading:
@@ -151,6 +246,275 @@ The model should teach progressive context loading:
 This reduces human information overload and agent context-window pressure
 without hiding history. Old context remains addressable but is not part of
 every working set.
+
+## Multiple Actors and Identity Allocation
+
+### The gap this closes
+
+The invariants above were written as if one actor works at a time. Real use
+breaks that assumption immediately: two people, or a person and an agent, work
+on separate branches from the same trunk, and each needs a task identity.
+
+A task identity is an address in the same sense a path is. It appears in the
+active charter, in the archive filename, in journal entries, in branch names,
+in commit messages and in pull request titles. Two records sharing one identity
+is the same defect as two records sharing a path, and it is harder to repair,
+because published commit messages cannot be rewritten without discarding a
+review.
+
+### Observed failure
+
+Recorded in the reference implementation on 2026-08-19. Two tasks were frozen
+under the same identity on the same day, an hour apart. The second actor
+derived the next free identity from the archive directory and a search of the
+local tree. Neither can see an unmerged branch belonging to somebody else.
+
+The repair was asymmetric, and that asymmetry is the useful part. The first
+claim already existed in sixteen commit messages, a branch name, a pull request
+title and continuous integration history; renaming it would have required
+rewriting published history. The second existed in two archived records, two
+journal entries and a handful of cross-references on one branch. The later
+claim was renumbered.
+
+Nothing about that repair prevents the next collision. Two actors starting on
+the same day from the same trunk will always compute the same next number.
+
+### The rule
+
+An identity is claimed on the trunk before the charter that uses it freezes.
+The claim is a single line in a register that lives on the trunk, and the
+identity belongs to nobody until that line is merged.
+
+### The design constraint that actually matters
+
+A register does not prevent the race. Two actors can still claim the same
+identity within the same minute.
+
+What it can do is make the race loud. If the register is a strictly ascending
+list with one identity per line, appended at the end, two simultaneous claims
+edit the same region of the same file and the second one is a merge conflict. A
+sorted insert, a nested structure or a per-owner section would merge cleanly
+and reproduce the silent duplicate the register was meant to prevent.
+
+```text
+prevent the race            → impossible with distributed branches
+detect it after the fact    → too late; the identity is already published
+make it a merge conflict    → the only reliable outcome available
+```
+
+This generalizes beyond identities. Where a protocol needs coordination between
+actors who cannot see each other, the achievable goal is usually not exclusion
+but a guaranteed collision at a known point.
+
+### The register records identity, never activity
+
+A register that records "in progress" turns the trunk into a statement about
+how much work is active across the whole repository, which contradicts the
+active-task invariant directly.
+
+A register that records only that an identity is taken says nothing about
+activity, the way a reserved name says nothing about whether the thing is
+built. Task state keeps its existing owners: the active charter and the
+archive. The register joins them without competing with them.
+
+### Scope of the active-task invariant
+
+The invariant is not repository-wide, and stating it that way makes parallel
+work impossible while describing something no implementation actually enforces.
+
+The active-task document is a file in the working tree, so the version control
+system already provides exactly one per branch. Stating the rule per working
+context does not weaken it. It states it at the level where it is already
+enforced, and the trunk obeys it too.
+
+| Level | Holds | Invariant |
+| --- | --- | --- |
+| Working context, one branch or workspace | Active task | Exactly one active task |
+| Trunk | Identity register | Identity only, never activity |
+
+One actor holding three branches genuinely has divided scope, so per actor is
+the intent. Only per context is checkable, and a protocol should not write a
+rule that pretends to enforce what it cannot observe. Record the intent as
+practice and the observable part as the gate.
+
+### Merging a working context back
+
+A branch merges when its task is complete, so the trunk normally carries no
+active charter. A merged in-progress charter is an explicit exception, not the
+normal state, and two branches that both merge an active charter will conflict
+on that file — correctly, because they are making incompatible claims about the
+same slot.
+
+### Conformance checks
+
+- an identity register exists on the trunk and is append-only and strictly
+  ascending;
+- every identity in the register is unique;
+- the register records no task status;
+- every archived task at or above the register's stated floor has a claim;
+- the active task's identity has a claim; and
+- the active-task invariant is stated with its scope.
+
+## Idea Containment and the Concepts Sandbox
+
+### The problem it solves
+
+A docs-first system works only while its documents are trustworthy. As soon as
+a reader cannot tell approved direction from speculation, or implemented
+reality from intention, every document must be re-verified against the code,
+the chat history or the original author. That is precisely the failure the
+protocol exists to remove.
+
+Long-running work continuously produces material that is valuable but not
+decided: alternative architectures, product visions, domain sketches, visual
+mocks, competitor notes and unfinished "what if" threads. Such material has
+only three possible destinations:
+
+1. an authoritative document, where it silently contaminates the truth
+   surface;
+2. chat, mail or a personal note, where it leaves the repository and is lost;
+   or
+3. a marked, non-authoritative area inside the repository.
+
+Only the third preserves both properties the protocol depends on: nothing
+valuable leaves the repository, and nothing undecided gains authority.
+
+The concepts sandbox is that third destination.
+
+### Function
+
+`concepts_sandbox/` is a write-friendly, authority-free annex of the
+repository. Its boundary is deliberately asymmetric:
+
+```text
+ideas, visions, sketches, mocks, rejected paths
+  → enter freely: no task ID, no charter, no verification
+concepts_sandbox/
+  → leave only by explicit restatement
+activated task → design document or decision record → authority
+```
+
+Material may enter at any time at almost no cost. Material may leave only by
+being restated in an owning document through an activated task or a decision
+record. Nothing becomes true by sitting in the sandbox, and nothing becomes
+true by being linked from an authoritative document.
+
+The sandbox is therefore not "documentation we have not finished yet". It is
+the protocol's containment zone for everything the project is not currently
+committed to.
+
+### How it differs from the other non-active containers
+
+A mature docs-first repository has four places for work that is not happening
+right now. They are not interchangeable, and collapsing them is a common
+adoption error.
+
+| Container | Decided | Inside the project charter | May be cited as authority | Normal exit |
+| --- | --- | --- | --- | --- |
+| `paused/` | Yes, already chartered | Yes | Yes, when resumed | Restored as the active task |
+| `backlog/` | No | Yes, a plausible next task | No | Activation as a task |
+| `concepts_sandbox/` | No | No, outside current scope | Never | Restatement in a design document or decision record, or supersession |
+| `finished/` | Historically decided | Was | As history only | Retained as evidence |
+
+The distinction carrying the most weight is `backlog/` versus
+`concepts_sandbox/`. The backlog answers "what should this project do next?"
+The sandbox answers "what might exist one day, here or somewhere else?"
+Merging them turns the backlog into a wish list, and a wish list is not a
+usable routing target for the scope decision tree.
+
+### Why the protocol needs it
+
+| Function | Why it matters |
+| --- | --- |
+| Authority hygiene | Speculation stays out of the documents describing current reality, approved direction and system behavior |
+| Scope protection | The scope decision tree needs a terminal for "interesting, but not this project now"; without one, a discovery either expands a frozen charter or disappears |
+| Agent guardrail | Autonomous actors treat plausible repository text as instruction, so an explicitly marked non-authority zone is what makes speculative material safe to keep near the working set |
+| Context minimization | The sandbox sits outside the reading order, so an arbitrarily large idea corpus costs no tokens and no reader attention |
+| Creative retention | Writing an idea carries no ceremony, so ideas are externalized instead of hoarded in chat, private notes or model context |
+| Decision memory | Rejected and superseded paths remain readable with their original reasoning, which prevents re-litigating the same alternative |
+| Strictness affordance | A strict core is tolerable only because a zero-friction annex sits beside it; without the annex, contributors route around the strictness itself |
+
+The last point is the least obvious and the most important. Every rule that
+freezes a charter, restricts document ownership or blocks silent scope growth
+creates pressure. Pressure with no outlet is released by breaking the rule.
+The sandbox is the outlet, and it is a large part of why a strict core
+survives contact with real exploratory work.
+
+### Rules that make it work
+
+These are candidate normative requirements, drawn from the reference
+implementation:
+
+- The sandbox is never part of the documented reading order.
+- No task, specification or decision record may cite a sandbox artifact as
+  authority.
+- An authoritative document may reference sandbox material only with an
+  explicit non-authority label stating what the reference is used for.
+- Every sandbox document carries date, updated date, owner and status, plus an
+  authority-boundary statement naming what it does not decide.
+- Sandbox documents describe possibilities; they never assert implementation
+  status.
+- Content becomes authoritative only by restatement in an owning document.
+  Promotion by reference is not permitted.
+- Superseded ideas are marked with a dated status and the deciding record
+  rather than deleted, unless they are actively misleading.
+- An index lists the contents and the status of each item.
+- Repository safety rules still apply. The sandbox is not a place for
+  credentials, personal data or unlicensed third-party material.
+
+### Observed promotion path
+
+The reference implementation shows both permitted exits.
+
+```text
+concepts_sandbox/legal-evidence-on-acme/
+  → non-authoritative input to an activated discovery task
+design/first-poc-application-discovery.md
+  → decided
+ADR-0028 — first product proof of concept
+  → normative
+design/evidence-integrity-workbench-product-definition.md
+```
+
+A visual workbench mock took the shorter path. It informed layout discussion
+only, the normative specification states that the mock is not authority, and
+that specification's own review checklist asks whether the mock was treated as
+non-authority. The idea was used without the sketch ever becoming a
+requirement.
+
+### Profile mapping
+
+Every profile needs a sandbox, because every domain produces undecided
+material.
+
+| Profile | Typical sandbox contents |
+| --- | --- |
+| Software | Alternative architectures, future domain sketches, unbuilt tooling, UI mocks |
+| Creative production | Mood boards, unpitched campaign concepts, tone experiments, parked formats |
+| Operations | Proposed topologies, migration ideas, tooling evaluations |
+| Research | Unexplored hypotheses, discarded methods, out-of-scope questions |
+
+### Conformance checks
+
+- an excluded, non-authoritative idea area exists and is named;
+- it is absent from the documented reading order;
+- every sandbox document states date, owner, status and authority boundary;
+- no authoritative document derives a requirement from sandbox material;
+- references from authority into the sandbox carry a non-authority label;
+- promoted material appears restated in an owning document, with the sandbox
+  original retained or marked superseded; and
+- a cold-start reviewer can state, for any sandbox document, what it does not
+  decide.
+
+### Failure modes when it is missing
+
+| Consequence | Observable symptom |
+| --- | --- |
+| Aspirational architecture | The system model describes components that do not exist |
+| Backlog inflation | Hundreds of proposals no charter will ever activate |
+| Idea loss | Reasoning survives only in chat logs and individual memory |
+| Charter erosion | Speculation is absorbed into the active task because it has nowhere else to go |
+| Agent overreach | An autonomous actor implements a sketch it found and reasonably assumed was intended |
 
 ## Protocol, Template and Tooling Separation
 
@@ -225,14 +589,19 @@ or task states. Human-only operation remains a first-class mode.
 A validator should test workflow scenarios, not only filenames:
 
 - work cannot start without an active task;
-- one and only one task is active;
+- one and only one task is active in the working context under test;
+- task identities are claimed on the trunk, unique and free of task status;
 - frozen charter fields do not change silently;
 - a blocking prerequisite creates a paused parent and bounded child;
 - non-blocking discoveries are routed outside the active charter;
 - a pause records blocker, next step and resume condition;
 - completion records verification, updates durable truth and archives the
   task;
-- internal links and Markdown fences remain valid; and
+- internal links and Markdown fences remain valid;
+- speculative material is contained in the excluded idea area, is outside
+  the reading order and is never cited as authority;
+- records cited by append-only or archived documents keep their paths, and
+  each collection index names every member exactly once; and
 - a newcomer can follow the documented reading path to the active authority.
 
 Conformance should have levels rather than a single badge:
@@ -284,7 +653,7 @@ docs-first-continuity/
 ├── protocol/
 ├── templates/
 │   ├── core/
-│   └── structured/
+│   └── structured/          # includes backlog/, paused/, finished/, concepts_sandbox/
 ├── profiles/
 │   ├── software/
 │   ├── creative/
@@ -406,6 +775,8 @@ come directly from the [Open Source Definition](https://opensource.org/osd).
 - [`CURRENT_TASK.md`](../CURRENT_TASK.md)
 - [`ACME-0001`](../finished/ACME-0001_docs-first-foundation.md)
 - [`ACME-0002`](../finished/ACME-0002_frozen-task-charter-workflow.md)
+- [Concepts sandbox index](README.md)
+- [Docs-first extraction plan](docs-first-extraction-plan.md)
 
 ## External References
 

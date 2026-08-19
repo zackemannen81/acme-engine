@@ -1,6 +1,6 @@
 # PostgreSQL gate: two non-idempotent frozen-app tests
 
-Status: Proposal. Not activated. Observed during ACME-0153.
+Status: Fixed. With ACME-0167.
 
 ## Discovery context
 

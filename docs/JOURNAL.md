@@ -1,5 +1,220 @@
 # Journal
 
+## 2026-08-19 — ACME-0172: task identities are claimed on the trunk
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0172, Complete. Archived to
+  `docs/finished/ACME-0172_task-id-claim-register.md`.
+- Branch: `concept/docs-first_opensource`
+- Cause: two charters were frozen under `ACME-0169` on the same day, an hour
+  apart. Felix's PR #38 at 13:04 and this branch at 14:03. The later actor
+  computed the next free identity from `docs/finished/` and a search of the
+  local tree, neither of which can see somebody else's unmerged branch. The
+  later pair was renumbered to ACME-0170 and ACME-0171, because the earlier
+  claim already existed in sixteen commit messages, a branch name, a PR title
+  and CI history.
+- Change: `docs/TASK_IDS.md` is now the claim register. It states a floor of
+  ACME-0169 and holds four claims: ACME-0169 for PR #38, ACME-0170 and
+  ACME-0171 for the delivered addressing work, and ACME-0172 for this task.
+  `AGENTS.md` and `docs/TASK_WORKFLOW.md` carry the allocation rule: the next
+  free identity is one above the highest of the register and the archive, the
+  claim is merged to `main` before the charter moves to `Ready`, and an
+  unmerged claim is not yours.
+- Design: the register cannot prevent the race. Two actors can still claim the
+  same identity within the same minute. What it buys is that both claims append
+  to the same region of one file on the trunk, so the second is a merge conflict
+  instead of a silent duplicate. That is why rows are appended in strictly
+  ascending order and never sorted or grouped; a sorted insert or a per-owner
+  section would merge cleanly and reproduce the defect.
+- Invariant scope: the single-active-task rule is now stated per branch, held in
+  that branch's `docs/CURRENT_TASK.md`. This does not weaken it. The active-task
+  document is a file in the working tree, so git already provides exactly one
+  per branch, and ACME has run parallel `felix/*` branches for several tasks.
+  The trunk never states how many tasks are active anywhere, which is precisely
+  why the register carries no status column: a claim records that an identity is
+  taken, never that work is in progress. Per actor is the intent and is recorded
+  as practice, since no check can observe it.
+- Correction to ACME-0171, applied before this charter froze: the active charter
+  was in the validated prose-citation surface list, which made it impossible to
+  charter work that creates a new file. This charter cited `docs/TASK_IDS.md`
+  five times before it existed. `docs/CURRENT_TASK.md` now warns instead of
+  failing, for the mirror image of the reason the archive does: a charter names
+  its deliverables before they exist, a journal entry names files after they are
+  gone. The archived ACME-0171 record is not edited; the correction is recorded
+  here.
+- Defect found by its own negative test: the column check first used a substring
+  match, so an appended `Status` column still satisfied it. It now compares the
+  whole header line.
+- Verification: `pnpm docs:check` 313 files with 0 errors, `pnpm format:check`
+  clean, `pnpm lint` clean, `git diff --check` clean, no renames against
+  `origin/main`. Five broken-fixture demonstrations, all reverted: duplicate
+  claim row, appended status column, missing floor line, archived task without a
+  claim, active task without a claim. No checks skipped. No ADR: the rule
+  constrains workflow, not a contract, persistence or a migration path.
+- Concept work, outside any charter: `docs/concepts_sandbox/` gained a
+  "Multiple Actors and Identity Allocation" section, requirement C-18, the scope
+  qualifier on C-04 and a "Tense" refinement. The specification had assumed one
+  actor at a time, which real parallel use falsified today.
+- Handoff: `docs/CURRENT_TASK.md` is restored to the template. Merge order
+  agreed with the owner is PR #38 first, then this branch; the only file both
+  touch is `docs/CURRENT_TASK.md`, and `pnpm docs:check` should be run on `main`
+  after the second merge, since the stricter checks will meet the combined tree
+  for the first time.
+- Signature: Claude
+
+## 2026-08-19 — ACME-0171: cited paths in prose are checked, history only warns
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0171, Complete. Archived to
+  `docs/finished/ACME-0171_prose-path-citations.md`.
+- Branch: `concept/docs-first_opensource`
+- Change: `pnpm docs:check` now validates repository paths written as inline
+  code, not only Markdown link targets. ACME-0170 closed the loud failure
+  where a renamed record broke a link; this closes the quiet one where a
+  normative document keeps naming a path that no longer exists.
+- Surface split: documents that describe the present must name files that
+  exist — `AGENTS.md`, `docs/CURRENT_TASK.md`, `docs/CURRENT_STATUS.md`,
+  `docs/SYSTEMDOC.md`, `docs/FILESTRUCTURE.md`, `docs/design/`, `docs/ops/`,
+  `docs/acceptance/` and collection indexes. `docs/JOURNAL.md`,
+  `docs/finished/` and `docs/adr/` are exempt and only warn: they record what
+  was true when written, and failing there could only be satisfied by editing
+  records that may not be edited. Exemption wins over the collection-index
+  rule, so the archive and ADR indexes inherit it.
+- Recognition: a candidate must start at a real top-level repository entry,
+  contain a separator and end in an extension beginning with a letter. The
+  first run proved each boundary necessary. `pdfjs-dist/6.2.108` is a version,
+  not a file. `acme-test-plan/1` is a contract identity. `src/extract.ts` and
+  `contracts/observe-document.ts` are package-relative fragments that name no
+  single file in the repository. All three classes were false positives and
+  are now excluded rather than papered over.
+- Measured result: no present-tense surface holds a stale citation today, so
+  no repair was needed. The 30 warnings are all in `docs/JOURNAL.md` and
+  `docs/finished/`, and each names a file that was genuinely removed —
+  proposals closed by ACME-0029 and ACME-0030, resumed paused tasks, and the
+  `hrd` artifacts. That is correct history and stays.
+- Verification: `pnpm docs:check` 310 files with 0 errors, `pnpm format:check`
+  clean, `pnpm lint` clean, `git diff --check` clean, no renames. Three
+  demonstrations, all reverted: a probe citation in `docs/ops/README.md`
+  failed with exit 1; the same probe in `docs/adr/README.md` warned and exited
+  0; and moving the Domain Test UI mock out of the tree failed the check from
+  the normative Test UI specification that cites it, which is exactly the
+  silent rot this task existed to close. No checks skipped. No ADR: the split
+  constrains documentation practice, not a contract or migration path.
+- Applied to itself: the archived ACME-0170 record named three probe fixtures
+  by path, which would have warned forever. Those sentences now describe the
+  fixtures instead of citing them, following the rule ACME-0170 added to
+  `docs/CONTRIBUTING.md`.
+- Backlog: `docs/backlog/prose-path-citations-unchecked.md` is resolved in
+  place. It keeps its path, its `Status:` line carries the resolution and its
+  index row moved from open to resolved, per the ACME-0170 invariant that this
+  task descends from.
+- Handoff: `docs/CURRENT_TASK.md` is restored to the template. Backlog
+  proposals and `docs/concepts_sandbox/` remain outside both surface lists, so
+  their prose citations are unchecked; that followed the frozen charter and can
+  be revisited if it ever matters.
+- Signature: Claude
+
+## 2026-08-19 — ACME-0170: addressing and discoverability become enforceable
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0170, Complete. Archived to
+  `docs/finished/ACME-0170_addressing-and-discoverability.md`.
+- Branch: `concept/docs-first_opensource`
+- Change: The rule produced by the backlog rename repair is now authoritative
+  and mechanically enforced. `AGENTS.md` gains an Addressing and
+  Discoverability section: a record's path is its identity, a file cited by
+  append-only or archived documentation keeps its path regardless of file
+  type, renaming such a file is not repairable, disposable material must not
+  be cited by an immutable record, and every collection declares one
+  discoverability mode. `docs/TASK_WORKFLOW.md` records the routing
+  consequence for backlog proposals and `docs/CONTRIBUTING.md` the practice
+  rule for contributors.
+- Collections: all ten now declare a mode. `docs/adr/`, `docs/backlog/`,
+  `docs/design/`, `docs/concepts_sandbox/`, `docs/paused/`, `docs/poc-1/`,
+  `docs/hrd/`, plus new `docs/acceptance/README.md` and `docs/ops/README.md`,
+  declare `index`. `docs/finished/` declares the naming convention
+  `ACME-NNNN_task-slug.md`, which all 167 archived tasks satisfy; a 167-row
+  index would add maintenance cost without adding retrieval value.
+  `docs/presentations/` holds only `.docx` files and is treated as an asset
+  directory.
+- Tooling: `tooling/docs/check-docs.mjs` reads each collection's declaration
+  and enforces index completeness, member `Status:` lines where declared, and
+  naming conventions. A new path-stability check compares the working tree
+  against `origin/main` and fails any rename of a file cited by
+  `docs/JOURNAL.md`, `docs/finished/`, `docs/adr/` or `docs/acceptance/`. CI
+  now checks out full history so that check runs there instead of skipping.
+- Scope decisions: the invariant binds by citation, not by file type. A
+  citation-graph survey found six non-Markdown link targets, five of them
+  source and test files cited by `docs/acceptance/` evidence, where a silent
+  rename would leave a frozen acceptance report pointing at nothing.
+  `docs/concepts_sandbox/temp/` is recorded as frozen rather than temporary:
+  the archived ACME-0038 named the mock path on 2026-08-02, so the file has
+  been immutable ever since and the directory name was the misleading part.
+- Verification: `pnpm docs:check` 310 files clean, `pnpm format:check` clean,
+  `pnpm lint` clean, `git diff --check` clean, and
+  `git diff --find-renames --diff-filter=R HEAD` empty. All five new checks
+  were negative-tested and the fixtures removed: unindexed member, missing
+  `Status:`, naming violation, undeclared collection, and a rename of
+  `docs/backlog/postgres-gate-test-hygiene.md` which correctly reported 11
+  citing immutable records. No checks skipped. No ADR: the invariant
+  constrains documentation practice, not a public contract, persistence or a
+  migration path.
+- Discovered during the work: `docs/ops/` held four operations documents with
+  no index at all, found by the new check rather than by the manual survey
+  that preceded it.
+- Handoff: ACME-0171 is active in `docs/CURRENT_TASK.md`, activated from
+  `docs/backlog/prose-path-citations-unchecked.md`. Paths cited as backticked
+  prose remain invisible to the checker; the Domain Test UI mock is referenced
+  five times and never as a link. The proposal keeps its path and carries its
+  activation in its `Status:` line, per this task's own invariant.
+- Signature: Claude
+
+## 2026-08-19 — Backlog addressing repaired, and the rule it produced
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: no task created; documentation hygiene plus concept work
+- Branch: `concept/docs-first_opensource`
+- Summary: Nine backlog proposals had been renamed with a `resolved-` prefix so
+  that resolved items were visible in a file listing. Every one of those files
+  already carried a `Status:` line under its title, so the rename added no
+  information, and it broke 39 link targets in `docs/JOURNAL.md`,
+  `docs/finished/`, ADR-0049, `docs/CURRENT_STATUS.md`,
+  `docs/acceptance/poc-1-reusable-execution-proof.md` and the V2 interface
+  plan. Because the journal is append-only and archived tasks are immutable,
+  repairing the citations was not available: the only permitted exit was
+  restoring the paths.
+- Change: restored the nine filenames with `git mv`. Rewrote
+  `docs/backlog/README.md` as the state surface — a naming rule, an
+  `Open Proposals` table with the two genuinely open items, and a
+  `Resolved and Retained` table naming the resolving task for each of the nine.
+  All eleven files are now indexed; the previous index listed six, four of them
+  through dead links.
+- Tooling: `tooling/docs/check-docs.mjs` now also requires every
+  `docs/backlog/*.md` to declare a `Status:` line and to appear in the backlog
+  index. The convention is a gate rather than a habit.
+- Concept work: `docs/concepts_sandbox/docs-first-open-source-packaging.md`
+  gained an idea-containment model explaining what a concepts sandbox is for,
+  and a `Stable Addressing and Status` section recording this failure and the
+  rule it produced. A new
+  `docs/concepts_sandbox/docs-first-extraction-plan.md` proposes the concrete
+  extraction of the docs-first model into an independent repository: frozen
+  baseline, line-level extraction ledger, seventeen numbered requirements,
+  conformance levels, templates, a dependency-free validator, profiles,
+  evidence handling and milestones. Both remain explicitly non-authoritative.
+- Verification: `pnpm docs:check` passes over 306 Markdown files, from 39
+  errors before. The new backlog checks were negative-tested with a probe file
+  that failed as expected and was removed. `prettier --check` and `eslint` pass
+  on the modified tooling file. `git diff --check` is clean. No code, contract
+  or product behavior changed.
+- Handoff: no task is activated and `docs/CURRENT_TASK.md` remains the
+  template. If the extraction is pursued, its first decisions are the name,
+  the license and consent for the external creative case study.
+- Signature: Claude
+
 ## 2026-08-19 — ACME-0167: canonical ACME runtime boundary
 
 - Date: 2026-08-19

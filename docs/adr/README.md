@@ -1,5 +1,10 @@
 # Architecture Decision Records
 
+Discoverability: index. Every member of this directory is listed below,
+and members are never renamed or moved to express a change of state.
+Member state: required. Every member declares a `Status:` line under its
+title.
+
 Use ADRs for decisions that constrain multiple packages or future migrations.
 
 ## Naming
@@ -86,3 +91,7 @@ current architecture.
 - [`0049-evidence-v2-surface-set.md`](0049-evidence-v2-surface-set.md)
 - [`0050-evidence-v2-pdf-ingestion-boundary.md`](0050-evidence-v2-pdf-ingestion-boundary.md)
 - [`0051-canonical-acme-runtime-boundary.md`](0051-canonical-acme-runtime-boundary.md)
+
+The starting point for a new decision is
+[`template.md`](template.md), which is a form rather than a decision and
+carries no status of its own.

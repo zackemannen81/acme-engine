@@ -1,6 +1,7 @@
 # V2 interface: features deferred from the 2.0 request
 
-Status: Proposal. Not activated. Recorded 2026-08-18 while planning
+Status: Resolved / not applicable Not activated. Recorded 2026-08-18 while planning
+POC #1 - accepted as is.
 [the Evidence Workbench 2.0 interface](../design/evidence-workbench-v2-interface-plan.md).
 
 ## Discovery context

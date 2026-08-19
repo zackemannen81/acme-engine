@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # The documentation path-stability check compares against the base
+          # ref. The default single-commit fetch would make it skip itself.
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
