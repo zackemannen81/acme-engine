@@ -87,6 +87,41 @@ function boundedText(value: string, label: string, maximum: number): string {
   return trimmed;
 }
 
+function boundedSecret(
+  value: string,
+  label: string,
+  minimum: number,
+  maximum = 4096,
+): string {
+  const byteLength = Buffer.byteLength(value, 'utf8');
+  if (value.trim().length === 0) {
+    throw new Error(`${label} must be a non-empty secret.`);
+  }
+  if (/[
+]/u.test(value)) {
+    throw new Error(`${label} must not contain CR or LF characters.`);
+  }
+  if (byteLength < minimum) {
+    throw new Error(`${label} must contain at least ${minimum} UTF-8 bytes.`);
+  }
+  if (byteLength > maximum) {
+    throw new Error(`${label} exceeds the runtime service configuration limit.`);
+  }
+  return value;
+}
+
+function requiredSecretEnv(
+  env: NodeJS.ProcessEnv,
+  name: string,
+  minimum: number,
+): string {
+  const value = env[name];
+  if (value === undefined) {
+    throw new Error(`${name} is required for ACME runtime service mode.`);
+  }
+  return boundedSecret(value, name, minimum);
+}
+
 function servicePort(value: string): number {
   if (!/^\d+$/u.test(value)) {
     throw new Error('ACME_RUNTIME_LISTEN_PORT must be a decimal TCP port.');
@@ -144,11 +179,6 @@ export function validateAcmeRuntimeServiceConfig(
   ) {
     throw new Error('Runtime service port must be from 0 through 65535.');
   }
-  const bearerToken = boundedText(value.bearerToken, 'bearerToken', 4096);
-  const bearerBytes = Buffer.byteLength(bearerToken, 'utf8');
-  if (bearerBytes < 32) {
-    throw new Error('bearerToken must contain at least 32 UTF-8 bytes.');
-  }
 
   const openAiBaseUrl =
     value.openAiBaseUrl === undefined
@@ -160,9 +190,9 @@ export function validateAcmeRuntimeServiceConfig(
     modelProvider: 'openai',
     hostname: boundedText(value.hostname, 'hostname', 253),
     port: value.port,
-    bearerToken,
+    bearerToken: boundedSecret(value.bearerToken, 'bearerToken', 32),
     engineBuild: boundedText(value.engineBuild, 'engineBuild', 300),
-    openAiApiKey: boundedText(value.openAiApiKey, 'openAiApiKey', 4096),
+    openAiApiKey: boundedSecret(value.openAiApiKey, 'openAiApiKey', 1),
     ...(openAiBaseUrl === undefined ? {} : { openAiBaseUrl }),
     modelSelection: validateModelSelection(value.modelSelection),
     openAiModel: boundedText(value.openAiModel, 'openAiModel', 200),
@@ -199,9 +229,9 @@ export function readAcmeRuntimeServiceConfig(
     modelProvider: 'openai',
     hostname: requiredEnv(env, 'ACME_RUNTIME_LISTEN_HOST', 253),
     port: servicePort(requiredEnv(env, 'ACME_RUNTIME_LISTEN_PORT', 5)),
-    bearerToken: requiredEnv(env, 'ACME_RUNTIME_BEARER_TOKEN'),
+    bearerToken: requiredSecretEnv(env, 'ACME_RUNTIME_BEARER_TOKEN', 32),
     engineBuild: requiredEnv(env, 'ACME_RUNTIME_ENGINE_BUILD', 300),
-    openAiApiKey: requiredEnv(env, 'OPENAI_API_KEY'),
+    openAiApiKey: requiredSecretEnv(env, 'OPENAI_API_KEY', 1),
     ...(openAiBaseUrl === undefined ? {} : { openAiBaseUrl }),
     modelSelection: {
       profile: requiredEnv(env, 'ACME_RUNTIME_MODEL_PROFILE', 200),
@@ -219,11 +249,7 @@ export function readAcmeRuntimeServiceConfig(
 export function createRuntimeBearerAuthorizer(
   token: string,
 ): AcmeRuntimeAuthorizer {
-  const expectedText = boundedText(token, 'bearerToken', 4096);
-  const expected = Buffer.from(expectedText, 'utf8');
-  if (expected.byteLength < 32) {
-    throw new Error('bearerToken must contain at least 32 UTF-8 bytes.');
-  }
+  const expected = Buffer.from(boundedSecret(token, 'bearerToken', 32), 'utf8');
 
   return (request: Request): boolean => {
     const authorization = request.headers.get('authorization');
@@ -251,69 +277,67 @@ export async function startAcmeRuntimeService(
   );
   const composition =
     options.composition ?? createComposition(config.repository, undefined);
-  const transport = options.transport ?? createFetchTransport();
-  const now = options.now ?? (() => new Date().toISOString());
 
-  const gateway = createOpenAiResponsesGateway({
-    transport,
-    now,
-    ...(config.openAiBaseUrl === undefined
-      ? {}
-      : { baseUrl: config.openAiBaseUrl }),
-    headers: () => ({ authorization: `Bearer ${config.openAiApiKey}` }),
-    profiles: [
-      {
-        selection: config.modelSelection,
-        model: config.openAiModel,
-        capabilities: {
-          structuredOutput: true,
-          tools: false,
-          vision: false,
-        },
-      },
-    ],
-  });
-
-  const host = createAcmeRuntimeHost({
-    engine: composition.engine(gateway),
-    authorize: createRuntimeBearerAuthorizer(config.bearerToken),
-    descriptor: Object.freeze({
-      protocolVersion: ACME_RUNTIME_PROTOCOL_VERSION,
-      engineBuild: config.engineBuild,
-      executePath: ACME_RUNTIME_EXECUTE_PATH,
-    }),
-  });
-  const listener = createAcmeRuntimeListener({
-    host,
-    hostname: config.hostname,
-    port: config.port,
-  });
-
-  let address: AcmeRuntimeListenerAddress;
   try {
-    address = await listener.listen();
+    const transport = options.transport ?? createFetchTransport();
+    const now = options.now ?? (() => new Date().toISOString());
+    const gateway = createOpenAiResponsesGateway({
+      transport,
+      now,
+      ...(config.openAiBaseUrl === undefined
+        ? {}
+        : { baseUrl: config.openAiBaseUrl }),
+      headers: () => ({ authorization: `Bearer ${config.openAiApiKey}` }),
+      profiles: [
+        {
+          selection: config.modelSelection,
+          model: config.openAiModel,
+          capabilities: {
+            structuredOutput: true,
+            tools: false,
+            vision: false,
+          },
+        },
+      ],
+    });
+
+    const host = createAcmeRuntimeHost({
+      engine: composition.engine(gateway),
+      authorize: createRuntimeBearerAuthorizer(config.bearerToken),
+      descriptor: Object.freeze({
+        protocolVersion: ACME_RUNTIME_PROTOCOL_VERSION,
+        engineBuild: config.engineBuild,
+        executePath: ACME_RUNTIME_EXECUTE_PATH,
+      }),
+    });
+    const listener = createAcmeRuntimeListener({
+      host,
+      hostname: config.hostname,
+      port: config.port,
+    });
+    const address = await listener.listen();
+
+    let closed = false;
+    return Object.freeze({
+      address,
+      engineBuild: config.engineBuild,
+      async close(): Promise<void> {
+        if (closed) return;
+        closed = true;
+        let listenerError: unknown;
+        try {
+          await listener.close();
+        } catch (error) {
+          listenerError = error;
+        }
+        await composition.close();
+        if (listenerError !== undefined) {
+          throw listenerError;
+        }
+      },
+    });
   } catch (error) {
     await composition.close();
     throw error;
   }
-
-  let closed = false;
-  return Object.freeze({
-    address,
-    engineBuild: config.engineBuild,
-    async close(): Promise<void> {
-      if (closed) return;
-      closed = true;
-      let listenerError: unknown;
-      try {
-        await listener.close();
-      } catch (error) {
-        listenerError = error;
-      }
-      await composition.close();
-      if (listenerError !== undefined) {
-        throw listenerError;
-      }
-    },
-  });
 }
