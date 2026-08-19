@@ -65,7 +65,11 @@ function exactKeys(
     .sort();
   const missing = required.filter((key) => !Object.hasOwn(value, key));
   if (unexpected.length > 0 || missing.length > 0) {
-    throw new HostRefusal(400, 'INVALID_RUNTIME_REQUEST', `${label} has an invalid shape.`);
+    throw new HostRefusal(
+      400,
+      'INVALID_RUNTIME_REQUEST',
+      `${label} has an invalid shape.`,
+    );
   }
 }
 
@@ -129,7 +133,9 @@ function isJsonValue(value: unknown): value is RuntimeJsonValue {
   return Object.values(value).every(isJsonValue);
 }
 
-function validateDescriptor(value: AcmeRuntimeDescriptor): AcmeRuntimeDescriptor {
+function validateDescriptor(
+  value: AcmeRuntimeDescriptor,
+): AcmeRuntimeDescriptor {
   if (value.protocolVersion !== ACME_RUNTIME_PROTOCOL_VERSION) {
     throw new Error(
       `Runtime descriptor protocolVersion must be ${ACME_RUNTIME_PROTOCOL_VERSION}.`,
@@ -174,7 +180,9 @@ function validateModel(value: unknown): ModelSelection {
   });
 }
 
-function validatePolicy(value: unknown): AcmeRuntimeExecutionPolicy | undefined {
+function validatePolicy(
+  value: unknown,
+): AcmeRuntimeExecutionPolicy | undefined {
   if (value === undefined) {
     return undefined;
   }
@@ -204,7 +212,12 @@ function validatePolicy(value: unknown): AcmeRuntimeExecutionPolicy | undefined 
   const policy: AcmeRuntimeExecutionPolicy = Object.freeze({
     ...(value.timeoutMs === undefined
       ? {}
-      : { timeoutMs: requirePositiveInteger(value.timeoutMs, 'engine.policy.timeoutMs') }),
+      : {
+          timeoutMs: requirePositiveInteger(
+            value.timeoutMs,
+            'engine.policy.timeoutMs',
+          ),
+        }),
     ...(value.maxModelCalls === undefined
       ? {}
       : {
@@ -267,7 +280,8 @@ function validatePolicy(value: unknown): AcmeRuntimeExecutionPolicy | undefined 
             );
           }
           return {
-            retention: value.retention as AcmeRuntimeExecutionPolicy['retention'],
+            retention:
+              value.retention as AcmeRuntimeExecutionPolicy['retention'],
           };
         })()),
   });
@@ -438,7 +452,11 @@ async function authorizeRequest(
 ): Promise<void> {
   try {
     if (!(await authorize(request))) {
-      throw new HostRefusal(401, 'UNAUTHORIZED', 'Runtime authorization failed.');
+      throw new HostRefusal(
+        401,
+        'UNAUTHORIZED',
+        'Runtime authorization failed.',
+      );
     }
   } catch (error) {
     if (error instanceof HostRefusal) {
@@ -469,7 +487,11 @@ async function readBoundedJson(request: Request): Promise<unknown> {
   }
 
   if (request.body === null) {
-    throw new HostRefusal(400, 'MISSING_BODY', 'Runtime execute request requires a body.');
+    throw new HostRefusal(
+      400,
+      'MISSING_BODY',
+      'Runtime execute request requires a body.',
+    );
   }
 
   const reader = request.body.getReader();
@@ -524,7 +546,10 @@ async function readBoundedJson(request: Request): Promise<unknown> {
 }
 
 function requireJsonContentType(request: Request): void {
-  const mediaType = request.headers.get('content-type')?.split(';', 1)[0]?.trim();
+  const mediaType = request.headers
+    .get('content-type')
+    ?.split(';', 1)[0]
+    ?.trim();
   if (mediaType !== 'application/json') {
     throw new HostRefusal(
       415,
