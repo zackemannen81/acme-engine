@@ -19,6 +19,8 @@ acme-engine/
 │   │   ├── src/
 │   │   │   ├── acme-runtime-host.ts
 │   │   │   ├── acme-runtime-listener.ts
+│   │   │   ├── acme-runtime-service-main.ts
+│   │   │   ├── acme-runtime-service.ts
 │   │   │   ├── acme-runtime-wire.ts
 │   │   │   ├── args.ts
 │   │   │   ├── composition.ts
@@ -512,6 +514,7 @@ acme-engine/
 │   ├── integration/
 │   │   ├── acme-runtime-host.test.ts
 │   │   ├── acme-runtime-listener.test.ts
+│   │   ├── acme-runtime-service.test.ts
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
@@ -1036,7 +1039,10 @@ content remains intentionally omitted here.
   `execution replay|inspect|stranded|discharge`, `state inspect`,
   `memory inspect`, `outbox inspect|drain|redrive` and
   `quality list|inspect|judge` over both the in-memory and durable SQLite
-  repositories.
+  repositories Its optional private `acme-runtime`
+  executable composes the canonical `acme-runtime/1` host/listener with
+  explicit PostgreSQL + OpenAI configuration, fail-closed bearer authorization
+  and graceful shutdown; it does not claim deployment.
 - `@acme/test-ui`: the Domain Test UI (ADR-0019 to ADR-0024, ADR-0027). Phases
   1–6 are view contracts for S1–S10, with the pure `acme-view-quality-evaluation/1`
   (S11) added by ACME-0067; ACME-0045–0053 add pure HTML renderers
