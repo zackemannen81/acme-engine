@@ -107,11 +107,12 @@ A canonical `acme-runtime/1` wire contract, Fetch-compatible runtime host and th
 - [x] Verify current `main` is byte-identical to POC #1 freeze `6a866f...`.
 - [x] Create fresh branch from current `main`.
 - [x] Freeze this docs-first charter.
-- [ ] Define canonical generic `acme-runtime/1` wire and injected descriptor.
-- [ ] Port Fetch runtime host against generic wire.
-- [ ] Port thin Node HTTP listener.
-- [ ] Port/adapt focused runtime and loopback tests.
-- [ ] Add protected-path freeze verification.
+- [x] Define canonical generic `acme-runtime/1` wire and injected descriptor.
+- [x] Port Fetch runtime host against generic wire.
+- [x] Port thin Node HTTP listener.
+- [x] Port/adapt focused runtime and loopback tests.
+- [x] Verify the PR file set contains no protected POC/core paths.
+- [x] Apply repository-canonical Prettier formatting to the runtime host after the first `format:check` refusal.
 - [ ] Run full canonical CI and repair only task-scoped failures.
 - [ ] Update `CURRENT_STATUS.md`, `SYSTEMDOC.md`, `JOURNAL.md` and `FILESTRUCTURE.md` as required.
 - [ ] Archive ACME-0167 and restore `CURRENT_TASK.md` template only after all gates pass.
@@ -124,6 +125,8 @@ A canonical `acme-runtime/1` wire contract, Fetch-compatible runtime host and th
 - Authentication is an injected authorization port. This task intentionally does not standardize bearer/OAuth/mTLS/etc.
 - No Postgres/OpenAI runnable composition belongs in this PR; that is a separate future task.
 - The protected-path zero-diff rule is a hard merge gate, not merely a review preference.
+- PR #32 was merged only into the separate review baseline, not into `main`; it remains reference history rather than the source for this clean PR.
+- PR #33 is the canonical clean implementation against current `main`. Its first CI refusal was formatting-only in `apps/cli/src/acme-runtime-host.ts`; repository Prettier 3.9.6 has now rewritten that file and the temporary formatter workflow self-removed.
 
 ## Charter Amendment Log
 
@@ -133,9 +136,9 @@ A canonical `acme-runtime/1` wire contract, Fetch-compatible runtime host and th
 
 - [ ] Focused runtime host tests pass.
 - [ ] Loopback listener tests pass.
-- [ ] Protected-path diff is empty.
+- [x] Protected-path PR file-list check is empty for all frozen paths.
 - [ ] Full canonical CI passes.
-- [ ] No live model call or external deployment is required or authorized by this task.
+- [x] No live model call or external deployment is required or authorized by this task.
 
 ## Documentation Updates
 
@@ -147,9 +150,9 @@ A canonical `acme-runtime/1` wire contract, Fetch-compatible runtime host and th
 
 ## Handoff and Follow-ups
 
-- Current state: Charter frozen; implementation branch created from current main.
-- Next recommended step: Canonicalize the wire contract before porting host/listener code.
-- Blockers: None.
+- Current state: Clean canonical runtime implementation is present on PR #33; Prettier repair has landed and a new full CI run is being requested on the formatted head.
+- Next recommended step: Let canonical CI expose any remaining type/runtime/test issue, then repair only task-scoped failures.
+- Blockers: None currently known beyond pending CI.
 - Child tasks: None.
 - Resume condition: N/A.
 - Open questions: None inside the frozen task; runnable composition is explicitly deferred.
