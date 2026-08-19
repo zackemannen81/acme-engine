@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-08-19 — ACME-0168: refresh the PostgreSQL restart fixture
+
+- Date: 2026-08-19
+- Author: OpenAI assistant for Felix integration
+- Task: ACME-0168, Complete. Archived to
+  `docs/finished/ACME-0168_postgres-restart-fixture.md`.
+- Change: Test-only repair. The Stage A restart fixture now derives current
+  structural source segment ids from the provider request, emits complete
+  segment coverage, and asserts zero new model calls on resumed projection
+  while total provider traffic remains exactly one call. No production, core,
+  POC #1 or Evidence behavior changed.
+- Verification: canonical CI run `32234497958` passed both `verify` and
+  `postgres`; the full docs/format/lint/typecheck/boundaries/unit/conformance/
+  integration/scenario/build chain and the complete PostgreSQL suite are green.
+- Handoff: PR #34 is the bounded baseline repair that unblocks ACME-0167 /
+  PR #33. `docs/CURRENT_TASK.md` is restored to the template.
+- Signature: OpenAI assistant
+
 ## 2026-08-19 — ACME-0166: POC #1 pack after the freeze
 
 - Date: 2026-08-19
