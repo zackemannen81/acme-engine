@@ -97,8 +97,11 @@ function boundedSecret(
   if (value.trim().length === 0) {
     throw new Error(`${label} must be a non-empty secret.`);
   }
-  if (/[
-]/u.test(value)) {
+  const hasLineBreak = Array.from(value).some((character) => {
+    const code = character.charCodeAt(0);
+    return code === 10 || code === 13;
+  });
+  if (hasLineBreak) {
     throw new Error(`${label} must not contain CR or LF characters.`);
   }
   if (byteLength < minimum) {
