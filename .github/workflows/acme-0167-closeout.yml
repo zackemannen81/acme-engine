@@ -1,0 +1,107 @@
+name: ACME-0167 verified closeout
+
+on:
+  push:
+    branches:
+      - felix/canonical-acme-runtime
+
+permissions:
+  contents: write
+
+# One-shot closeout: synchronize long-lived truth, archive the task, self-delete.
+jobs:
+  closeout:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: felix/canonical-acme-runtime
+      - name: Synchronize architecture docs and archive ACME-0167
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def insert_after(path: str, marker: str, block: str, unique: str) -> None:
+              p = Path(path)
+              text = p.read_text()
+              if unique in text:
+                  return
+              if text.count(marker) != 1:
+                  raise SystemExit(f'{path}: expected exactly one insertion marker')
+              p.write_text(text.replace(marker, marker + block, 1))
+
+          status_block = '''## Canonical external runtime boundary\n\nACME-0167 adds the accepted [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md)\nexternal execution boundary without changing `packages/core` or frozen POC #1.\n`acme-runtime/1` carries only the existing engine request semantics plus optional\ntransport correlation. `GET /v1/compatibility` returns an injected build\ndescriptor and `POST /v1/execute` maps one strict request to the existing\n`ExecutionRequest`. Authorization is injected; no bearer/OAuth/mTLS scheme is\nstandardized by the protocol.\n\nThe Fetch host validates fail-closed, bounds bodies at 1 MiB, propagates\ncancellation to `ExecutionEngine.execute` and forwards terminal ACME semantics\nwithout transport reclassification. A thin Node HTTP listener supplies real\nloopback transport and disconnect propagation. Postgres/OpenAI process\ncomposition, bearer helpers, deployment, TLS and DNS remain explicitly outside\nthis boundary and are not claimed as delivered or live.\n\nThe final combined branch after ACME-0168 repaired the stale PostgreSQL restart\nfixture passed canonical CI run `32235955771`: docs, format, lint, typecheck,\nboundaries, unit, conformance, integration, deterministic scenarios, build and\nthe complete PostgreSQL suite. The runtime PR changes no protected core,\nEvidence V2/Workbench or `docs/poc-1` path.\n\n'''
+          insert_after('docs/CURRENT_STATUS.md', '# Current Status\n\n', status_block,
+                       '## Canonical external runtime boundary')
+
+          system_block = '''## Canonical external runtime boundary\n\n[ADR-0051](adr/0051-canonical-acme-runtime-boundary.md) defines\n`acme-runtime/1` as ACME's external single-execution protocol. The boundary\nlives in the CLI/composition layer, not `@acme/core`.\n\n- `apps/cli/src/acme-runtime-wire.ts` owns the versioned generic JSON wire.\n- `apps/cli/src/acme-runtime-host.ts` owns authenticated compatibility and\n  execute handling, strict validation, the 1 MiB body bound, deterministic\n  translation to `ExecutionRequest`, cancellation propagation and terminal\n  result mapping.\n- `apps/cli/src/acme-runtime-listener.ts` adapts Node HTTP sockets to the Fetch\n  host and owns no engine, auth, provider or persistence policy.\n- Compatibility identity (`engineBuild`) and authorization are injected by the\n  composition root. Neither a repository commit nor a bearer scheme is part of\n  the canonical protocol.\n- Runnable Postgres/OpenAI composition and deployment are separate concerns and\n  are not implemented by this boundary.\n\nThe focused Fetch-host and real loopback tests are under `tests/integration/`.\nThe accepted implementation requires no `packages/core` or frozen POC #1\nchange. Canonical CI run `32235955771` passed the complete verify and PostgreSQL\ngates on the corrected ACME-0168 baseline.\n\n'''
+          insert_after('docs/SYSTEMDOC.md', '# System Documentation\n\n', system_block,
+                       '## Canonical external runtime boundary')
+          system_path = Path('docs/SYSTEMDOC.md')
+          system_text = system_path.read_text()
+          system_text = system_text.replace('Last updated: 2026-08-16', 'Last updated: 2026-08-19', 1)
+          system_path.write_text(system_text)
+
+          fs = Path('docs/FILESTRUCTURE.md')
+          fs_text = fs.read_text()
+          fs_text = fs_text.replace('Last updated: 2026-08-17', 'Last updated: 2026-08-19', 1)
+          cli_marker = '│   │   │   ├── args.ts\n'
+          cli_insert = ('│   │   │   ├── acme-runtime-host.ts\n'
+                        '│   │   │   ├── acme-runtime-listener.ts\n'
+                        '│   │   │   ├── acme-runtime-wire.ts\n')
+          if '│   │   │   ├── acme-runtime-host.ts\n' not in fs_text:
+              if fs_text.count(cli_marker) != 1:
+                  raise SystemExit('FILESTRUCTURE: CLI marker mismatch')
+              fs_text = fs_text.replace(cli_marker, cli_insert + cli_marker, 1)
+          integration_marker = '│   │   ├── durability-sqlite.test.ts\n'
+          integration_insert = ('│   │   ├── acme-runtime-host.test.ts\n'
+                                '│   │   ├── acme-runtime-listener.test.ts\n')
+          if '│   │   ├── acme-runtime-host.test.ts\n' not in fs_text:
+              if fs_text.count(integration_marker) != 1:
+                  raise SystemExit('FILESTRUCTURE: integration marker mismatch')
+              fs_text = fs_text.replace(integration_marker, integration_insert + integration_marker, 1)
+          adr_marker = '│   │   ├── README.md\n│   │   └── template.md\n'
+          adr_insert = ('│   │   ├── 0048-evidence-v2-observe-contract.md\n'
+                        '│   │   ├── 0049-evidence-v2-surface-set.md\n'
+                        '│   │   ├── 0050-evidence-v2-pdf-ingestion-boundary.md\n'
+                        '│   │   ├── 0051-canonical-acme-runtime-boundary.md\n')
+          if '0051-canonical-acme-runtime-boundary.md' not in fs_text:
+              if fs_text.count(adr_marker) != 1:
+                  raise SystemExit('FILESTRUCTURE: ADR marker mismatch')
+              fs_text = fs_text.replace(adr_marker, adr_insert + adr_marker, 1)
+          fs.write_text(fs_text)
+
+          journal = Path('docs/JOURNAL.md')
+          journal_text = journal.read_text()
+          journal_heading = '# Journal\n\n'
+          journal_entry = '''## 2026-08-19 — ACME-0167: canonical ACME runtime boundary\n\n- Date: 2026-08-19\n- Author: OpenAI assistant for Felix integration\n- Task: ACME-0167, Complete. Archived to\n  `docs/finished/ACME-0167_canonical-runtime-boundary.md`.\n- Change: The reusable Felix runtime work was ported cleanly onto Rickard's\n  current baseline as canonical `acme-runtime/1`. The new wire removes AAL\n  workspace/subject/artifact/schema metadata and the Felix repository pin. The\n  Fetch host keeps compatibility, execute, injected authorization, fail-closed\n  validation, 1 MiB body bounds, cancellation and lossless terminal-result\n  semantics. The Node listener is a thin socket adapter only. ADR-0051 records\n  the boundary.\n- Safety: `packages/core`, Evidence V2/Workbench protected paths and\n  `docs/poc-1` have zero feature diff. Postgres/OpenAI runnable composition,\n  bearer auth helper and deployment are deferred to a separate task.\n- Child: ACME-0168 / PR #34 repaired only the stale PostgreSQL restart fixture;\n  Rickard merged it after its own double-green canonical gate.\n- Verification: canonical run `32235955771` on ACME-0167 after the ACME-0168\n  baseline merge passed both `verify` and `postgres`: docs, format, lint,\n  typecheck, boundaries, unit, conformance, integration, scenarios, build and\n  the complete PostgreSQL suite.\n- Handoff: the next independently reviewable step is an optional runnable\n  runtime composition. No runtime service is claimed deployed by this task.\n- Signature: OpenAI assistant\n\n'''
+          if '## 2026-08-19 — ACME-0167: canonical ACME runtime boundary' not in journal_text:
+              if not journal_text.startswith(journal_heading):
+                  raise SystemExit('JOURNAL: unexpected heading')
+              journal.write_text(journal_heading + journal_entry + journal_text[len(journal_heading):])
+
+          current = Path('docs/CURRENT_TASK.md')
+          current_text = current.read_text()
+          if 'Task ID: ACME-0167' not in current_text:
+              raise SystemExit('CURRENT_TASK: ACME-0167 is not active')
+          completed = current_text.replace('Status: In Progress', 'Status: Complete', 1)
+          completed = completed.replace('- [ ]', '- [x]')
+          old_handoff = '''- Current state: Clean canonical runtime implementation is present on PR #33; Prettier repair has landed and a new full CI run is being requested on the formatted head.\n- Next recommended step: Let canonical CI expose any remaining type/runtime/test issue, then repair only task-scoped failures.\n- Blockers: None currently known beyond pending CI.\n- Child tasks: None.\n- Resume condition: N/A.\n- Open questions: None inside the frozen task; runnable composition is explicitly deferred.'''
+          new_handoff = '''- Current state: Complete. Canonical `acme-runtime/1`, Fetch host, Node listener, ADR-0051 and focused tests are verified on Rickard's corrected current baseline.\n- Next recommended step: Rickard reviews/merges PR #33. A separate future task may add optional runnable Postgres/OpenAI composition without changing the canonical runtime contract.\n- Blockers: None.\n- Child tasks: ACME-0168 completed and merged as PR #34; it repaired only the stale PostgreSQL restart fixture.\n- Resume condition: N/A.\n- Open questions: None inside this task; deployment and runnable composition remain explicitly deferred.'''
+          if old_handoff not in completed:
+              raise SystemExit('CURRENT_TASK: stale handoff marker not found')
+          completed = completed.replace(old_handoff, new_handoff, 1)
+          completed += '''\n\n## Completion Evidence\n\n- ADR-0051 records the accepted canonical runtime boundary.\n- PR #33 feature diff contains no protected core, Evidence V2/Workbench or `docs/poc-1` path.\n- Canonical CI run `32235955771` after merging the corrected ACME-0168 baseline passed both `verify` and `postgres`.\n- Focused runtime-host and real loopback listener tests pass inside the full integration suite.\n- No live model call, provider credential, runtime deployment, TLS or DNS change was performed by ACME-0167.\n'''
+          archive = Path('docs/finished/ACME-0167_canonical-runtime-boundary.md')
+          archive.write_text(completed)
+          template = Path('docs/template_CURRENT_TASK.md').read_text()
+          current.write_text(template)
+          PY
+          rm .github/workflows/acme-0167-closeout.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/CURRENT_STATUS.md docs/SYSTEMDOC.md docs/FILESTRUCTURE.md docs/JOURNAL.md docs/CURRENT_TASK.md docs/finished/ACME-0167_canonical-runtime-boundary.md .github/workflows/acme-0167-closeout.yml
+          git commit -m "ACME-0167: archive verified canonical runtime boundary"
+          git push origin HEAD:felix/canonical-acme-runtime
