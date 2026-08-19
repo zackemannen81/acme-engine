@@ -1,5 +1,28 @@
 # Current Status
 
+## Canonical external runtime boundary
+
+ACME-0167 adds the accepted [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md)
+external execution boundary without changing `packages/core` or frozen POC #1.
+`acme-runtime/1` carries only the existing engine request semantics plus optional
+transport correlation. `GET /v1/compatibility` returns an injected build
+descriptor and `POST /v1/execute` maps one strict request to the existing
+`ExecutionRequest`. Authorization is injected; no bearer/OAuth/mTLS scheme is
+standardized by the protocol.
+
+The Fetch host validates fail-closed, bounds bodies at 1 MiB, propagates
+cancellation to `ExecutionEngine.execute` and forwards terminal ACME semantics
+without transport reclassification. A thin Node HTTP listener supplies real
+loopback transport and disconnect propagation. Postgres/OpenAI process
+composition, bearer helpers, deployment, TLS and DNS remain explicitly outside
+this boundary and are not claimed as delivered or live.
+
+The final combined branch after ACME-0168 repaired the stale PostgreSQL restart
+fixture passed canonical CI run `32235955771`: docs, format, lint, typecheck,
+boundaries, unit, conformance, integration, deterministic scenarios, build and
+the complete PostgreSQL suite. The runtime PR changes no protected core,
+Evidence V2/Workbench or `docs/poc-1` path.
+
 ## Open: real-source acceptance blocked, application model being replaced
 
 The 2026-08-16 acceptance run against the complete 1,915-page `source-A` binder

@@ -1,5 +1,31 @@
 # Journal
 
+## 2026-08-19 — ACME-0167: canonical ACME runtime boundary
+
+- Date: 2026-08-19
+- Author: OpenAI assistant for Felix integration
+- Task: ACME-0167, Complete. Archived to
+  `docs/finished/ACME-0167_canonical-runtime-boundary.md`.
+- Change: The reusable Felix runtime work was ported cleanly onto Rickard's
+  current baseline as canonical `acme-runtime/1`. The new wire removes AAL
+  workspace/subject/artifact/schema metadata and the Felix repository pin. The
+  Fetch host keeps compatibility, execute, injected authorization, fail-closed
+  validation, 1 MiB body bounds, cancellation and lossless terminal-result
+  semantics. The Node listener is a thin socket adapter only. ADR-0051 records
+  the boundary.
+- Safety: `packages/core`, Evidence V2/Workbench protected paths and
+  `docs/poc-1` have zero feature diff. Postgres/OpenAI runnable composition,
+  bearer auth helper and deployment are deferred to a separate task.
+- Child: ACME-0168 / PR #34 repaired only the stale PostgreSQL restart fixture;
+  Rickard merged it after its own double-green canonical gate.
+- Verification: canonical run `32235955771` on ACME-0167 after the ACME-0168
+  baseline merge passed both `verify` and `postgres`: docs, format, lint,
+  typecheck, boundaries, unit, conformance, integration, scenarios, build and
+  the complete PostgreSQL suite.
+- Handoff: the next independently reviewable step is an optional runnable
+  runtime composition. No runtime service is claimed deployed by this task.
+- Signature: OpenAI assistant
+
 ## 2026-08-19 — ACME-0168: refresh the PostgreSQL restart fixture
 
 - Date: 2026-08-19

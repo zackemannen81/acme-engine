@@ -1,5 +1,29 @@
 # System Documentation
 
+## Canonical external runtime boundary
+
+[ADR-0051](adr/0051-canonical-acme-runtime-boundary.md) defines
+`acme-runtime/1` as ACME's external single-execution protocol. The boundary
+lives in the CLI/composition layer, not `@acme/core`.
+
+- `apps/cli/src/acme-runtime-wire.ts` owns the versioned generic JSON wire.
+- `apps/cli/src/acme-runtime-host.ts` owns authenticated compatibility and
+  execute handling, strict validation, the 1 MiB body bound, deterministic
+  translation to `ExecutionRequest`, cancellation propagation and terminal
+  result mapping.
+- `apps/cli/src/acme-runtime-listener.ts` adapts Node HTTP sockets to the Fetch
+  host and owns no engine, auth, provider or persistence policy.
+- Compatibility identity (`engineBuild`) and authorization are injected by the
+  composition root. Neither a repository commit nor a bearer scheme is part of
+  the canonical protocol.
+- Runnable Postgres/OpenAI composition and deployment are separate concerns and
+  are not implemented by this boundary.
+
+The focused Fetch-host and real loopback tests are under `tests/integration/`.
+The accepted implementation requires no `packages/core` or frozen POC #1
+change. Canonical CI run `32235955771` passed the complete verify and PostgreSQL
+gates on the corrected ACME-0168 baseline.
+
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
 count. Source review and the ledger embed the same card object.
@@ -55,7 +79,7 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-08-16
+Last updated: 2026-08-19
 Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
