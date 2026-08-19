@@ -72,6 +72,50 @@ function hasBalancedFences(source) {
   return marker === undefined;
 }
 
+async function checkBacklogIndex() {
+  const backlogDirectory = path.join(repoRoot, 'docs', 'backlog');
+  const problems = [];
+
+  let index;
+  try {
+    index = await readFile(path.join(backlogDirectory, 'README.md'), 'utf8');
+  } catch {
+    return ['docs/backlog/README.md: missing backlog index'];
+  }
+
+  const entries = await readdir(backlogDirectory, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (
+      !entry.isFile() ||
+      !entry.name.endsWith('.md') ||
+      entry.name === 'README.md'
+    ) {
+      continue;
+    }
+
+    const relativeFile = `docs/backlog/${entry.name}`;
+    const source = await readFile(
+      path.join(backlogDirectory, entry.name),
+      'utf8',
+    );
+
+    if (!/^Status:\s*\S/mu.test(source)) {
+      problems.push(
+        `${relativeFile}: missing a "Status:" line. A proposal declares its state in content, never in its filename or location.`,
+      );
+    }
+
+    if (!index.includes(`(${entry.name})`)) {
+      problems.push(
+        `${relativeFile}: not listed in docs/backlog/README.md, which is the index readers use to see what is open.`,
+      );
+    }
+  }
+
+  return problems;
+}
+
 const errors = [];
 const markdownFiles = await findMarkdownFiles(repoRoot);
 
@@ -101,6 +145,8 @@ for (const file of markdownFiles) {
     }
   }
 }
+
+errors.push(...(await checkBacklogIndex()));
 
 if (errors.length > 0) {
   process.stderr.write(`${errors.join('\n')}\n`);

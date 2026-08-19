@@ -1,5 +1,48 @@
 # Journal
 
+## 2026-08-19 — Backlog addressing repaired, and the rule it produced
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: no task created; documentation hygiene plus concept work
+- Branch: `concept/docs-first_opensource`
+- Summary: Nine backlog proposals had been renamed with a `resolved-` prefix so
+  that resolved items were visible in a file listing. Every one of those files
+  already carried a `Status:` line under its title, so the rename added no
+  information, and it broke 39 link targets in `docs/JOURNAL.md`,
+  `docs/finished/`, ADR-0049, `docs/CURRENT_STATUS.md`,
+  `docs/acceptance/poc-1-reusable-execution-proof.md` and the V2 interface
+  plan. Because the journal is append-only and archived tasks are immutable,
+  repairing the citations was not available: the only permitted exit was
+  restoring the paths.
+- Change: restored the nine filenames with `git mv`. Rewrote
+  `docs/backlog/README.md` as the state surface — a naming rule, an
+  `Open Proposals` table with the two genuinely open items, and a
+  `Resolved and Retained` table naming the resolving task for each of the nine.
+  All eleven files are now indexed; the previous index listed six, four of them
+  through dead links.
+- Tooling: `tooling/docs/check-docs.mjs` now also requires every
+  `docs/backlog/*.md` to declare a `Status:` line and to appear in the backlog
+  index. The convention is a gate rather than a habit.
+- Concept work: `docs/concepts_sandbox/docs-first-open-source-packaging.md`
+  gained an idea-containment model explaining what a concepts sandbox is for,
+  and a `Stable Addressing and Status` section recording this failure and the
+  rule it produced. A new
+  `docs/concepts_sandbox/docs-first-extraction-plan.md` proposes the concrete
+  extraction of the docs-first model into an independent repository: frozen
+  baseline, line-level extraction ledger, seventeen numbered requirements,
+  conformance levels, templates, a dependency-free validator, profiles,
+  evidence handling and milestones. Both remain explicitly non-authoritative.
+- Verification: `pnpm docs:check` passes over 306 Markdown files, from 39
+  errors before. The new backlog checks were negative-tested with a probe file
+  that failed as expected and was removed. `prettier --check` and `eslint` pass
+  on the modified tooling file. `git diff --check` is clean. No code, contract
+  or product behavior changed.
+- Handoff: no task is activated and `docs/CURRENT_TASK.md` remains the
+  template. If the extraction is pursued, its first decisions are the name,
+  the license and consent for the external creative case study.
+- Signature: Claude
+
 ## 2026-08-19 — ACME-0167: canonical ACME runtime boundary
 
 - Date: 2026-08-19

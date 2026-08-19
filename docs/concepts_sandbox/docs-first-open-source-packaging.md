@@ -101,6 +101,8 @@ bounded context loading**.
   active state.
 - Undecided ideas have a named, non-authoritative home, and they gain
   authority only by explicit restatement in an owning document.
+- Records have stable addresses. Status lives in content and in indexes,
+  never in filenames or locations.
 - A new actor must be able to resume from repository state alone.
 
 ### Reference document ownership
@@ -139,6 +141,77 @@ Draft / Ready / In Progress / Paused
 
 The protocol must define which fields freeze at `Ready`, what evidence permits
 completion and how a task is resumed without rewriting history.
+
+## Stable Addressing and Status
+
+### The rule
+
+A record's path is its identity. Status is expressed in the record's content
+and in its index, never in its filename or its location.
+
+### Why it is structural, not stylistic
+
+The protocol makes several classes of record immutable: journal entries are
+append-only, completed tasks are archived unmodified, accepted decisions are
+superseded rather than edited. Those records cite other records by path.
+
+A path cited by an immutable record is therefore itself immutable. Renaming or
+moving the target leaves exactly two exits, and the protocol forbids one of
+them:
+
+```text
+rename a cited record
+  → repair the citations       → requires rewriting append-only history: forbidden
+  → leave the citations broken → the repository fails its own retrieval promise
+  → restore the original path  → the only permitted exit
+```
+
+A repository that encodes status in filenames will eventually have to choose
+between broken references and rewritten history. The rule exists so that the
+choice never arises.
+
+The constraint binds any record cited by an immutable document, an index or an
+external link. Working files that nothing references may be reorganized
+freely.
+
+### Observed failure
+
+Recorded in the reference implementation on 2026-08-19. Nine backlog proposals
+were renamed with a `resolved-` prefix so that a reader could see resolved
+items in a file listing without opening anything.
+
+Every one of those files already carried a `Status:` line directly under its
+title. The rename therefore added no information, and it broke 39 links in the
+journal, the task archive, accepted decisions and design documents. The repair
+was to restore the paths and to move the reader-facing signal into the index.
+
+The instinct was sound and the mechanism was wrong. That distinction matters,
+because the protocol has to answer the instinct rather than suppress it.
+
+### The index is the status surface
+
+A reader wanting current state without opening anything needs one place that
+holds it. The protocol answers with an index, not with filenames.
+
+An index that carries this responsibility must be:
+
+- complete — every record in the collection appears exactly once;
+- current — updated in the same change as the record it describes;
+- resolved — each entry names the state and the task or decision that produced
+  it; and
+- checked — completeness verified mechanically rather than by discipline.
+
+An enforced index is strictly more informative than a filename convention. A
+`resolved-` prefix says only that something ended. An index row says what
+ended it, when, and where the evidence is.
+
+### Conformance checks
+
+- every path cited by an append-only or archived record still resolves;
+- no record encodes its state in its filename or its location;
+- each collection has an index naming every member exactly once; and
+- index entries state the current state and, where one exists, the resolving
+  record.
 
 ## Context-Minimization Model
 
@@ -398,7 +471,9 @@ A validator should test workflow scenarios, not only filenames:
   task;
 - internal links and Markdown fences remain valid;
 - speculative material is contained in the excluded idea area, is outside
-  the reading order and is never cited as authority; and
+  the reading order and is never cited as authority;
+- records cited by append-only or archived documents keep their paths, and
+  each collection index names every member exactly once; and
 - a newcomer can follow the documented reading path to the active authority.
 
 Conformance should have levels rather than a single badge:

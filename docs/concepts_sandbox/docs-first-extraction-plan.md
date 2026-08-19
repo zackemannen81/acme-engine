@@ -129,6 +129,7 @@ Create `extraction/ledger.md` with one row per rule or rule group:
 | `AGENTS.md` "Verification Baseline" | Record exactly what was skipped and why | CORE | `SPEC.md` C-12 | Verbatim intent |
 | `TASK_WORKFLOW.md` | Blocking prerequisite pauses the parent, activates a bounded child | CORE | `SPEC.md` C-07 | Verbatim intent |
 | `AGENTS.md` project identity block | ACME purpose, phase, milestone history | PROJECT | Dropped | Replaced by a placeholder section |
+| `docs/backlog/README.md` | A proposal keeps its path; state lives in the file and the index | CORE | `SPEC.md` C-16, C-17 | Added 2026-08-19 after an observed link break; not present in the original baseline |
 
 Three classes, applied to every line:
 
@@ -190,22 +191,35 @@ derived from the baseline:
   reading order.
 - **C-14** No normative document derives a requirement from that area.
 
+### Addressing
+
+- **C-16** A record cited by an append-only or archived document keeps its
+  path. Status is expressed in content, never in a filename or a location.
+- **C-17** Each collection of records has an index naming every member
+  exactly once, updated in the same change as the records it describes.
+
 ### Resumability
 
 - **C-15** A competent actor with no access to chat history can identify the
   active task, its authority documents, current reality and the next action
   from the repository alone.
 
-Fifteen requirements is deliberate. The specification must be readable in one
-sitting, and every requirement must be either machine-checkable or checkable
-by a named review ritual.
+Seventeen requirements is deliberate. The specification must be readable in
+one sitting, and every requirement must be either machine-checkable or
+checkable by a named review ritual.
+
+C-16 and C-17 were not in the first draft of this plan. They were added on
+2026-08-19 after the reference implementation broke 39 links by renaming
+nine backlog proposals to show their resolved state in the file listing.
+That is the intended way for this specification to grow: a rule earns its
+place by having been paid for once.
 
 ### Conformance levels
 
 | Level | Name | Requirements | Checked by |
 | --- | --- | --- | --- |
-| L1 | Structure | C-01, C-02, C-03, C-13 | Validator |
-| L2 | Workflow | C-04, C-05, C-06, C-07, C-11 | Validator, partly with git history |
+| L1 | Structure | C-01, C-02, C-03, C-13, C-17 | Validator |
+| L2 | Workflow | C-04, C-05, C-06, C-07, C-11, C-16 | Validator, partly with git history |
 | L3 | Handoff | C-08, C-09, C-15 | Validator plus the cold-start review ritual |
 | L4 | Evidence | C-10, C-12, C-14 | Validator plus review |
 
@@ -282,7 +296,9 @@ python3 conformance/validate.py . --level L3
 - internal links resolve and Markdown fences are balanced;
 - every sandbox document has date, owner, status and an authority boundary;
 - no document outside the sandbox links into the sandbox without an explicit
-  non-authority marker.
+  non-authority marker;
+- each collection index lists every member of its directory exactly once,
+  and every member declares a state in its own content.
 
 ### Checks that use git history
 
@@ -290,7 +306,11 @@ python3 conformance/validate.py . --level L3
   (C-06);
 - existing journal entries were not modified, only appended (C-09);
 - when the active task was reset, a matching archive file appeared in the same
-  or an earlier commit (C-11).
+  or an earlier commit (C-11);
+- no path cited by an append-only or archived document changed in this
+  revision range (C-16). Renaming such a record is a conformance failure
+  even when every citation is repaired in the same commit, because the
+  repair itself edits records that must not be edited.
 
 ### Checks that are deliberately human
 
