@@ -347,6 +347,24 @@ from its 2 accepted members and no accepted stance relation (the reviewer
 Status consensus counts are 0/0/0/1/0. `unavailable` is empty. Second
 principal 404, unauthenticated 401. Ledger **21 before and 21 after**.
 
+POC #1 code is frozen. The operator pack is [docs/poc-1/](poc-1/README.md):
+setup, user manual and technical overview. It describes the V2 workbench
+as delivered; it does not reopen the product.
+
+ACME-0165 put live instance extraction on the instance surface. The
+extractor itself is unchanged: the page plans outstanding windows, states
+the derived call count, and posts the existing run. HTML returns the
+reviewer to the instance; JSON keeps the `/api/` contract. A deployment
+without a live model does not offer the control.
+
+ACME-0164 applied the operator mock's visual language to the existing
+server-rendered V2 surfaces: navy header, dark sidebar, numbered
+navigation, card tables. Every current function the mock omitted —
+Consensus, sign-in, case create, PDF/text import, part detail, instance
+review and comparison — is in that shell. The mock's revision-ledger
+view was not added (it is not an ADR-0049 surface). The product is
+branded Evidence Workbench 2.0; it does not claim SKL / NFC identity.
+
 Remaining limitations: extraction is Pass 1 with no neighbour context and no
 actor roster. Credentials still come from a development authenticator, so a
 real upstream identity provider is unwired. `pnpm test:postgres` has two

@@ -1391,7 +1391,7 @@ export function createEvidenceV2App(
       // Extraction: plan states the bounded call count; run executes the
       // outstanding windows and reports a partial outcome honestly.
       const extractMatch =
-        /^\/api\/artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/extraction$/u.exec(
+        /^\/(?:api\/)?artifacts\/([^/]+)\/chains\/([^/]+)\/instances\/([^/]+)\/extraction$/u.exec(
           path,
         );
       if (
@@ -1452,7 +1452,17 @@ export function createEvidenceV2App(
             instanceKey,
             sourcePartIds: instance.sourcePartIds,
           });
-          return void sendJson(response, outcome.complete ? 201 : 207, outcome);
+          if (json)
+            return void sendJson(
+              response,
+              outcome.complete ? 201 : 207,
+              outcome,
+            );
+          response.writeHead(303, {
+            location: `/artifacts/${encodeURIComponent(artifactId)}/chains/${encodeURIComponent(chainId)}/instances/${encodeURIComponent(instanceKey)}`,
+          });
+          response.end();
+          return;
         }
       }
 
@@ -1514,6 +1524,15 @@ export function createEvidenceV2App(
                 chainId,
                 instanceKey,
               });
+        const extract =
+          options.extractor === undefined
+            ? undefined
+            : await options.extractor.plan({
+                artifactId,
+                chainId,
+                instanceKey,
+                sourcePartIds: instance.sourcePartIds,
+              });
         return void sendHtml(
           response,
           200,
@@ -1565,6 +1584,16 @@ export function createEvidenceV2App(
                     windowCount: compare.windows.length,
                     outstandingCount: compare.outstandingWindowIds.length,
                     committedCount: compare.committedWindowIds.length,
+                  },
+                }),
+            ...(extract === undefined
+              ? {}
+              : {
+                  extract: {
+                    plannedModelCalls: extract.plannedModelCalls,
+                    windowCount: extract.windows.length,
+                    outstandingCount: extract.outstandingWindowIds.length,
+                    committedCount: extract.committedWindowIds.length,
                   },
                 }),
           }),

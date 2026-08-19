@@ -556,6 +556,11 @@ acme-engine/
 │   └── typescript/
 │       └── tsconfig.base.json
 ├── docs/
+│   ├── poc-1/
+│   │   ├── README.md
+│   │   ├── setup-guide.md
+│   │   ├── user-manual.md
+│   │   └── technical-overview.md
 │   ├── ops/
 │   │   ├── evidence-artifact-operations.md
 │   │   ├── evidence-v2-supabase.md
@@ -963,11 +968,11 @@ content remains intentionally omitted here.
   transaction pooler on port 6543, and prints a content-free startup summary.
 - `apps/evidence-workbench-v2-web`: plain server-rendered HTML for sign-in and
   for Case → Source → Chain → Instance, the instance page showing its extraction
-  plan, per-window state and bounded occurrence list. Every case-scoped page
-  renders inside one shell carrying the case identity and the ADR-0049 surface
-  bar; `renderCaseStatus` is the status projection, `renderTimeline` and
-  `renderConsensus` are the last two surfaces, and `renderSurfaceGap`
-  remains for a surface that is not built.
+  plan, the Extract observations control, per-window state and bounded occurrence list. Every case-scoped page
+  renders inside one shell (navy header, dark sidebar, card tables) carrying
+  the case identity and the ADR-0049 surface bar; `renderCaseStatus` is the
+  status projection, `renderTimeline` and `renderConsensus` are the last two
+  surfaces, and `renderSurfaceGap` remains for a surface that is not built.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.
@@ -1103,6 +1108,8 @@ content remains intentionally omitted here.
 - `tooling/boundaries/`: dependency graph, core vocabulary and negative
   core, module, cross-module and SQLite-driver fixture verification.
 - `tooling/docs/`: internal Markdown link and fence verification.
+- `docs/poc-1/`: frozen POC #1 operator pack — setup, user manual and
+  technical overview. The entry for a reader who was not in the build.
 - `tooling/supabase/`: idempotent provisioning of the private V2 artifact
   bucket on a self-hosted Supabase Storage instance. An operator step, not a
   product one: the object-store port creates objects, never containers.

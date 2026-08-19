@@ -38,7 +38,19 @@ import { createAes256GcmPayloadEncryptor } from '@acme/core';
 import { createEvidenceV2PdfExtractor } from '@acme/adapter-evidence-v2-pdf';
 
 import { createEvidenceV2App } from '../src/app.js';
-import { createEvidenceV2Auth } from '../src/auth.js';
+import {
+  createEvidenceV2Auth,
+  EVIDENCE_V2_SESSION_COOKIE,
+} from '../src/auth.js';
+
+function sessionCookieOnly(cookieHeader: string): string {
+  return cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .filter((part) => part.startsWith(`${EVIDENCE_V2_SESSION_COOKIE}=`))
+    .join('; ');
+}
+import type { EvidenceV2Extractor } from '../src/extract.js';
 import type {
   EvidenceV2StoredText,
   EvidenceV2TextStore,
@@ -494,10 +506,42 @@ const CORPUS = [
   'Hussein berättar om resan.',
 ].join('\n');
 
+const stubExtractor = (): EvidenceV2Extractor & {
+  readonly runs: { count: number };
+} => {
+  const runs = { count: 0 };
+  return {
+    runs,
+    async plan(input) {
+      return {
+        instanceKey: input.instanceKey,
+        windows: [],
+        plannedModelCalls: 2,
+        outstandingWindowIds: ['window-1', 'window-2'],
+        committedWindowIds: [],
+      };
+    },
+    async run(input) {
+      runs.count += 1;
+      return {
+        instanceKey: input.instanceKey,
+        plannedModelCalls: 2,
+        actualModelCalls: 2,
+        committedWindowIds: ['window-1', 'window-2'],
+        occurrenceCount: 3,
+        failedWindowId: null,
+        failureCode: null,
+        complete: true,
+      };
+    },
+  };
+};
+
 describe('evidence v2 api', () => {
   let server: Server;
   let base: string;
   let repository: ReturnType<typeof memoryRepository>;
+  let extractor: ReturnType<typeof stubExtractor>;
 
   beforeEach(async () => {
     repository = memoryRepository();
@@ -550,11 +594,13 @@ describe('evidence v2 api', () => {
       },
     });
     await auth.bootstrap();
+    extractor = stubExtractor();
     const handler = createEvidenceV2App({
       repository,
       textStore: memoryTextStore(),
       auth,
       pdfExtractor: createEvidenceV2PdfExtractor(),
+      extractor,
       now: () => '2026-08-16T00:00:00.000Z',
     });
     server = createServer((request, response) => {
@@ -1311,7 +1357,7 @@ describe('evidence v2 api', () => {
       const noCsrf = await fetch(`${base}${path}`, {
         method: 'POST',
         headers: {
-          cookie: headers['cookie'] ?? '',
+          cookie: sessionCookieOnly(headers['cookie'] ?? ''),
           'content-type': 'application/json',
         },
         body,
@@ -1947,7 +1993,7 @@ describe('evidence v2 api', () => {
   it('refuses a write with a missing or wrong CSRF token', async () => {
     const { caseId, headers } = await seed();
     const noCsrf = {
-      cookie: headers['cookie'] ?? '',
+      cookie: sessionCookieOnly(headers['cookie'] ?? ''),
       'content-type': 'application/json',
     };
     const wrongCsrf = { ...noCsrf, 'x-acme-csrf': 'not-the-token' };
@@ -2185,7 +2231,7 @@ describe('evidence v2 api', () => {
         await fetch(`${base}/api/cases/${record.caseId}/artifacts`, {
           method: 'POST',
           headers: {
-            cookie: headers['cookie'] ?? '',
+            cookie: sessionCookieOnly(headers['cookie'] ?? ''),
             'content-type': 'application/json',
           },
           body: JSON.stringify({
@@ -2195,5 +2241,47 @@ describe('evidence v2 api', () => {
         })
       ).status,
     ).toBe(401);
+  });
+
+  it('states the extraction bound and runs it from the instance page', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const instancePath = `/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}`;
+    const html = await (
+      await fetch(`${base}${instancePath}`, { headers })
+    ).text();
+    expect(html).toContain('Extract observations');
+    expect(html).toContain('2 model calls');
+    expect(html).toContain(`${instancePath}/extraction`);
+
+    const ran = await fetch(`${base}${instancePath}/extraction`, {
+      method: 'POST',
+      headers: { cookie: headers['cookie'] ?? '' },
+      redirect: 'manual',
+    });
+    expect(ran.status).toBe(303);
+    expect(ran.headers.get('location')).toBe(instancePath);
+    expect(extractor.runs.count).toBe(1);
+
+    const json = (await (
+      await fetch(`${base}/api${instancePath}/extraction`, {
+        method: 'POST',
+        headers,
+      })
+    ).json()) as { actualModelCalls: number; complete: boolean };
+    expect(json.actualModelCalls).toBe(2);
+    expect(json.complete).toBe(true);
+    expect(extractor.runs.count).toBe(2);
+  });
+
+  it('hides another case\u2019s extraction behind 404, and refuses non-members', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const path = `${base}/api/artifacts/${artifactId}/chains/${seeded.chainId}/instances/${seeded.instanceKey}/extraction`;
+    const other = await signIn('second@acme.local', 'second-secret');
+    expect((await fetch(path, { headers: other, method: 'POST' })).status).toBe(
+      404,
+    );
+    expect((await fetch(path, { method: 'POST' })).status).toBe(401);
   });
 });

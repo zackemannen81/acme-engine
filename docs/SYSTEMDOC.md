@@ -1268,8 +1268,20 @@ not vacuously finished. In PostgreSQL the log is `review_decisions`, which takes
 INSERT only: no UPDATE and no DELETE is issued against it anywhere in the
 adapter, so append-only is a property of the code rather than a convention.
 
+**POC #1 operator pack.** After the V2 workbench freeze, [docs/poc-1/](poc-1/README.md)
+is the entry for a reader who was not in the build: setup, user manual and
+a technical overview of purpose, architecture and flows. Internal ADRs
+remain authority.
+
 **V2 workbench shell and status surface.** ACME-0157 gave the application one
-shell. `EVIDENCE_V2_SURFACES` in `@acme/evidence-v2-contracts` is the single
+shell. ACME-0164 restyled that shell from the operator mock: a navy header,
+a dark sidebar and card tables, still plain server-rendered HTML with no
+client framework. The product is branded Evidence Workbench 2.0; it does
+not claim SKL / NFC identity. Consensus sits in the sidebar because the
+product has it even though the mock omitted it. A mock-only revision
+ledger was not added: it is not an ADR-0049 surface.
+
+`EVIDENCE_V2_SURFACES` in `@acme/evidence-v2-contracts` is the single
 list of ADR-0049's surfaces and which of them this build serves; the surface
 bar and the status page both read it, which is what makes it impossible for a
 case to answer "there is no timeline" on one page and "the timeline is empty"
@@ -1357,7 +1369,9 @@ empty response is valid.
 plans the windows, states the exact bounded call count before spending anything,
 executes one engine call per outstanding window keyed by a content-derived
 request key, and persists each window's occurrences **in the same step that
-commits it**. A failed window fails alone: it is recorded with its failure code,
+commits it**. The instance page (ACME-0165) shows that planned count and
+posts the existing run; a re-run of a committed window spends nothing. A
+deployment without a live model does not offer the control. A failed window fails alone: it is recorded with its failure code,
 the run stops there, and everything already committed stays committed and
 visible. Re-running executes only windows with no committed execution, so a paid
 window is never paid for twice. An emergency ceiling guards a runaway only; it is

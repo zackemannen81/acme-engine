@@ -2,6 +2,9 @@
 
 This directory contains complete system and package design specifications.
 
+POC #1 is frozen. The operator pack is
+[`../poc-1/README.md`](../poc-1/README.md).
+
 Current implementation baseline:
 
 - [`acme-design-and-development-spec.md`](acme-design-and-development-spec.md)

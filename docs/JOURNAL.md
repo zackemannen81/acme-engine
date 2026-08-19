@@ -1,5 +1,61 @@
 # Journal
 
+## 2026-08-19 — ACME-0166: POC #1 pack after the freeze
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0166, Complete. Archived to
+  `docs/finished/ACME-0166_poc-1-operator-pack.md`.
+- Change: Code remains frozen. `docs/poc-1/` is the operator entry:
+  setup (file store or Supabase Storage, optional live model), user
+  manual over the delivered surfaces, technical overview of purpose,
+  authority ladder, composition and flows. Root README points here.
+- Verification: `pnpm docs:check`, `git diff --check`. No code change.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template.
+- Signature: Claude
+
+## 2026-08-19 — ACME-0165: extract observations from the instance page
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0165, Complete. Archived to
+  `docs/finished/ACME-0165_v2-instance-extract-control.md`.
+- Change: The instance surface now plans J3 and offers **Extract
+  observations**. The control states the derived call count (outstanding
+  windows) before spend and posts the existing extractor. HTML 303s back
+  to the instance; JSON is unchanged. No extractor, no control. Same-origin
+  form posts may prove CSRF via the CSRF cookie, so the button works in
+  the browser without a custom header.
+- Verification: typecheck clean; V2 API tests including the new bound +
+  303 + 404/401 cases. No live spend in this task.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. Press the
+  button on a live instance to spend the stated bound.
+- Signature: Claude
+
+## 2026-08-19 — ACME-0164: the mock's shell, the product's functions
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0164, Complete. Archived to
+  `docs/finished/ACME-0164_v2-workbench-visual-shell.md`.
+- Change: The V2 workbench now uses the operator mock's visual language —
+  navy header, dark sidebar, numbered surfaces, card tables — still as
+  plain server-rendered HTML. No React, no Tailwind, no new dependency.
+- **What the mock omitted stays in the product.** Consensus is item 7 in
+  the sidebar. Sign-in, case create, PDF/text import, part detail, instance
+  review and J4 comparison are restyled in the same chrome.
+- **What the mock invented stays out.** No SKL / NFC / ISO 17025 identity.
+  No crime-scene or lead-investigator fields. No revision-ledger surface
+  (that would be a new ADR-0049 entry).
+- Verified on the live API after rebuild: every case-scoped page carries
+  the shell and `7. Consensus`; Status has no `<svg>`; headings and page
+  bounds are unchanged.
+- Verification: typecheck, lint, format, boundaries, docs, build and
+  `git diff --check` clean; unit 966/966, conformance 78, integration 70,
+  scenario 26.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template.
+- Signature: Claude
+
 ## 2026-08-19 — ACME-0162: the same occurrences, in time and as consensus
 
 - Date: 2026-08-19

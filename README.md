@@ -33,7 +33,16 @@ contended write rather than assumed. Committed domain events leave the outbox
 through an explicit bounded drain with at-least-once delivery: nothing drains
 on its own, because scheduling belongs to whatever process operates ACME.
 
-## Start here
+## POC #1 (frozen)
+
+The Evidence Integrity Workbench is frozen as a self-runnable V2
+application. Start at [docs/poc-1/](docs/poc-1/README.md):
+
+- [Setup guide](docs/poc-1/setup-guide.md)
+- [User manual](docs/poc-1/user-manual.md)
+- [Technical overview](docs/poc-1/technical-overview.md)
+
+## Start here (contributors)
 
 1. Read [the active task](docs/CURRENT_TASK.md).
 2. Read [the task workflow](docs/TASK_WORKFLOW.md).

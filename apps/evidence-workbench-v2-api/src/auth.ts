@@ -166,7 +166,9 @@ export function createEvidenceV2Auth(
         return (await sessions.resolve(rawToken)).principal;
       }
       const header = request.headers[EVIDENCE_V2_CSRF_HEADER];
-      const csrf = typeof header === 'string' ? header : '';
+      const fromHeader = typeof header === 'string' ? header : '';
+      const fromCookie = cookieValue(request, EVIDENCE_V2_CSRF_COOKIE) ?? '';
+      const csrf = fromHeader.length > 0 ? fromHeader : fromCookie;
       return (await sessions.resolve(rawToken, csrf)).principal;
     },
 
