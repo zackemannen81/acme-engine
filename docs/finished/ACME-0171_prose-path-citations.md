@@ -1,6 +1,6 @@
 # Current Task
 
-Task ID: ACME-0170
+Task ID: ACME-0171
 Parent Task: None
 Status: Complete
 Owner: Claude
@@ -26,7 +26,7 @@ JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
 Activated from
 [`docs/backlog/prose-path-citations-unchecked.md`](../backlog/prose-path-citations-unchecked.md),
-proposed 2026-08-19 while scoping ACME-0169.
+proposed 2026-08-19 while scoping ACME-0170.
 
 `pnpm docs:check` validates Markdown link targets. It does not see a path
 written as backticked prose, and much of ACME's documentation cites files that
@@ -36,7 +36,7 @@ proposal and the archived `ACME-0038` — five times, never once as a link. If
 that file were renamed or deleted today, the check would stay green and all
 five references would rot silently.
 
-ACME-0169 closed the loud failure: a renamed record cited by a link now fails
+ACME-0170 closed the loud failure: a renamed record cited by a link now fails
 the build. This task closes the quiet one, where a normative document keeps
 naming a path that no longer exists.
 
@@ -117,7 +117,7 @@ present-tense surfaces.
 ## References
 
 - [`docs/backlog/prose-path-citations-unchecked.md`](../backlog/prose-path-citations-unchecked.md)
-- [`docs/finished/ACME-0169_addressing-and-discoverability.md`](ACME-0169_addressing-and-discoverability.md)
+- [`docs/finished/ACME-0170_addressing-and-discoverability.md`](ACME-0170_addressing-and-discoverability.md)
 - [`tooling/docs/check-docs.mjs`](../../tooling/docs/check-docs.mjs)
 - [`AGENTS.md`](../../AGENTS.md), Addressing and Discoverability
 
@@ -150,7 +150,7 @@ present-tense surfaces.
   edits to records that may not be edited. A warning is the only honest
   position between those two.
 - The backlog proposal keeps its path when this task closes. Its `Status:`
-  line and its index row carry the resolution, per the ACME-0169 invariant.
+  line and its index row carry the resolution, per the ACME-0170 invariant.
 
 ## Charter Amendment Log
 

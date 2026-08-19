@@ -1,6 +1,6 @@
 # Repository paths cited as prose are never validated
 
-Status: Resolved by ACME-0170 (2026-08-19). Discovered while scoping ACME-0169.
+Status: Resolved by ACME-0171 (2026-08-19). Discovered while scoping ACME-0170.
 Kept for discovery context; do not re-activate as open work. The check
 validates present-tense surfaces and warns on history, and the mock that
 motivated this proposal is now protected by the normative Test UI
@@ -30,10 +30,10 @@ that appear as links.
 
 ## Why this is outside the active task
 
-ACME-0169 makes the addressing invariant authoritative and enforces collection
+ACME-0170 makes the addressing invariant authoritative and enforces collection
 indexes and path stability. It deliberately does not change how citations
 themselves are written or parsed. Adding prose-path validation would expand a
-frozen charter and carries a design question that ACME-0169 does not need to
+frozen charter and carries a design question that ACME-0170 does not need to
 answer.
 
 ## The design question this needs
@@ -56,7 +56,7 @@ A workable scope is therefore surfaces that describe the present:
 
 ## Dependencies
 
-- ACME-0169, which establishes the addressing invariant this would extend.
+- ACME-0170, which establishes the addressing invariant this would extend.
 - No product, contract or persistence dependency.
 
 ## Suggested verification

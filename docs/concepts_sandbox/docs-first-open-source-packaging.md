@@ -89,7 +89,8 @@ bounded context loading**.
 ### Core invariants
 
 - There is one known entry point.
-- There is at most one active task.
+- There is at most one active task per working context, and the trunk never
+  states how many are active anywhere.
 - Every document has one semantic ownership role.
 - Current reality, intended direction and historical work are not conflated.
 - A task has an explicit goal, deliverable, scope and verification plan before
@@ -103,6 +104,8 @@ bounded context loading**.
   authority only by explicit restatement in an owning document.
 - Records have stable addresses. Status lives in content and in indexes,
   never in filenames or locations.
+- Task identities are claimed on the trunk before a charter freezes, and the
+  claim records identity only, never activity.
 - A new actor must be able to resume from repository state alone.
 
 ### Reference document ownership
@@ -207,6 +210,19 @@ An enforced index is strictly more informative than a filename convention. A
 `resolved-` prefix says only that something ended. An index row says what
 ended it, when, and where the evidence is.
 
+### Tense
+
+Validation of cited paths has to distinguish what a document is for. A document
+describing the present must name paths that exist. The archive names files
+after they are gone, and the active charter names its deliverables before they
+exist. Both legitimately cite paths that do not resolve, in opposite
+directions, and both should report without gating.
+
+A validator that ignores tense either fails on correct history or makes it
+impossible to charter work that creates a new file. The reference
+implementation hit the second case within an hour of shipping the first version
+of the check.
+
 ### Conformance checks
 
 - every path cited by an append-only or archived record still resolves;
@@ -230,6 +246,114 @@ The model should teach progressive context loading:
 This reduces human information overload and agent context-window pressure
 without hiding history. Old context remains addressable but is not part of
 every working set.
+
+## Multiple Actors and Identity Allocation
+
+### The gap this closes
+
+The invariants above were written as if one actor works at a time. Real use
+breaks that assumption immediately: two people, or a person and an agent, work
+on separate branches from the same trunk, and each needs a task identity.
+
+A task identity is an address in the same sense a path is. It appears in the
+active charter, in the archive filename, in journal entries, in branch names,
+in commit messages and in pull request titles. Two records sharing one identity
+is the same defect as two records sharing a path, and it is harder to repair,
+because published commit messages cannot be rewritten without discarding a
+review.
+
+### Observed failure
+
+Recorded in the reference implementation on 2026-08-19. Two tasks were frozen
+under the same identity on the same day, an hour apart. The second actor
+derived the next free identity from the archive directory and a search of the
+local tree. Neither can see an unmerged branch belonging to somebody else.
+
+The repair was asymmetric, and that asymmetry is the useful part. The first
+claim already existed in sixteen commit messages, a branch name, a pull request
+title and continuous integration history; renaming it would have required
+rewriting published history. The second existed in two archived records, two
+journal entries and a handful of cross-references on one branch. The later
+claim was renumbered.
+
+Nothing about that repair prevents the next collision. Two actors starting on
+the same day from the same trunk will always compute the same next number.
+
+### The rule
+
+An identity is claimed on the trunk before the charter that uses it freezes.
+The claim is a single line in a register that lives on the trunk, and the
+identity belongs to nobody until that line is merged.
+
+### The design constraint that actually matters
+
+A register does not prevent the race. Two actors can still claim the same
+identity within the same minute.
+
+What it can do is make the race loud. If the register is a strictly ascending
+list with one identity per line, appended at the end, two simultaneous claims
+edit the same region of the same file and the second one is a merge conflict. A
+sorted insert, a nested structure or a per-owner section would merge cleanly
+and reproduce the silent duplicate the register was meant to prevent.
+
+```text
+prevent the race            → impossible with distributed branches
+detect it after the fact    → too late; the identity is already published
+make it a merge conflict    → the only reliable outcome available
+```
+
+This generalizes beyond identities. Where a protocol needs coordination between
+actors who cannot see each other, the achievable goal is usually not exclusion
+but a guaranteed collision at a known point.
+
+### The register records identity, never activity
+
+A register that records "in progress" turns the trunk into a statement about
+how much work is active across the whole repository, which contradicts the
+active-task invariant directly.
+
+A register that records only that an identity is taken says nothing about
+activity, the way a reserved name says nothing about whether the thing is
+built. Task state keeps its existing owners: the active charter and the
+archive. The register joins them without competing with them.
+
+### Scope of the active-task invariant
+
+The invariant is not repository-wide, and stating it that way makes parallel
+work impossible while describing something no implementation actually enforces.
+
+The active-task document is a file in the working tree, so the version control
+system already provides exactly one per branch. Stating the rule per working
+context does not weaken it. It states it at the level where it is already
+enforced, and the trunk obeys it too.
+
+| Level | Holds | Invariant |
+| --- | --- | --- |
+| Working context, one branch or workspace | Active task | Exactly one active task |
+| Trunk | Identity register | Identity only, never activity |
+
+One actor holding three branches genuinely has divided scope, so per actor is
+the intent. Only per context is checkable, and a protocol should not write a
+rule that pretends to enforce what it cannot observe. Record the intent as
+practice and the observable part as the gate.
+
+### Merging a working context back
+
+A branch merges when its task is complete, so the trunk normally carries no
+active charter. A merged in-progress charter is an explicit exception, not the
+normal state, and two branches that both merge an active charter will conflict
+on that file — correctly, because they are making incompatible claims about the
+same slot.
+
+### Conformance checks
+
+- an identity register exists on the trunk and is append-only and strictly
+  ascending;
+- every identity in the register is unique;
+- the register records no task status;
+- every archived task at or above the register's stated floor has a claim;
+- the active task's identity has a claim; and
+- the active-task invariant is stated with its scope.
 
 ## Idea Containment and the Concepts Sandbox
 
@@ -465,7 +589,8 @@ or task states. Human-only operation remains a first-class mode.
 A validator should test workflow scenarios, not only filenames:
 
 - work cannot start without an active task;
-- one and only one task is active;
+- one and only one task is active in the working context under test;
+- task identities are claimed on the trunk, unique and free of task status;
 - frozen charter fields do not change silently;
 - a blocking prerequisite creates a paused parent and bounded child;
 - non-blocking discoveries are routed outside the active charter;

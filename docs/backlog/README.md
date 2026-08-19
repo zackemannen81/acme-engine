@@ -55,7 +55,8 @@ None of these are open work.
 | Proposal | Resolution |
 | --- | --- |
 | [`driver-error-classification.md`](driver-error-classification.md) | Resolved by ACME-0057 (2026-08-06) |
-| [`prose-path-citations-unchecked.md`](prose-path-citations-unchecked.md) | Resolved by ACME-0170 (2026-08-19) |
+| [`prose-path-citations-unchecked.md`](prose-path-citations-unchecked.md) | Resolved by ACME-0171 (2026-08-19) |
+| [`task-id-allocation-across-branches.md`](task-id-allocation-across-branches.md) | Resolved by ACME-0172 (2026-08-19) |
 | [`evidence-authentication-authorization-implementation.md`](evidence-authentication-authorization-implementation.md) | Implemented by ACME-0091 under ADR-0035 |
 | [`postgres-gate-test-hygiene.md`](postgres-gate-test-hygiene.md) | Fixed by ACME-0167 |
 | [`hrd-documentation-update.md`](hrd-documentation-update.md) | Resolved; documentation now matches the actual `docs/hrd/` content |

@@ -189,6 +189,93 @@ async function checkCollections() {
   return problems;
 }
 
+// The register allocates task identities. Its value is that a simultaneous
+// claim becomes a merge conflict, which only holds while rows are appended in
+// strictly ascending order. It carries no status column: task state belongs to
+// the active charter and the archive, and a trunk-level statement about active
+// work would contradict the one-active-task rule.
+const registerColumns = '| Task ID | Title | Owner | Claimed | Work |';
+
+async function checkTaskIdRegister() {
+  const problems = [];
+  const registerPath = path.join(repoRoot, 'docs', 'TASK_IDS.md');
+
+  let register;
+  try {
+    register = await readFile(registerPath, 'utf8');
+  } catch {
+    return ['docs/TASK_IDS.md: missing task identity register'];
+  }
+
+  // Compare the whole header line. A substring test would accept an appended
+  // column, which is exactly the failure this check exists to prevent.
+  const headerLine = register
+    .split(/\r?\n/u)
+    .find((line) => line.trimEnd().startsWith('| Task ID'));
+
+  if (headerLine === undefined || headerLine.trimEnd() !== registerColumns) {
+    problems.push(
+      `docs/TASK_IDS.md: the claim table must have exactly the columns "${registerColumns}". A status column would duplicate task state that the active charter and the archive already own.`,
+    );
+  }
+
+  const floorMatch = register.match(/^Floor:\s*ACME-(\d{4})\s*$/mu);
+  if (!floorMatch) {
+    problems.push(
+      'docs/TASK_IDS.md: no "Floor: ACME-NNNN" line. The floor states which identities predate the register and are addressed by the archive instead.',
+    );
+    return problems;
+  }
+  const floor = Number(floorMatch[1]);
+
+  const claimed = [];
+  for (const row of register.matchAll(/^\|\s*ACME-(\d{4})\s*\|/gmu)) {
+    claimed.push(Number(row[1]));
+  }
+
+  if (claimed.length === 0) {
+    problems.push('docs/TASK_IDS.md: the claim table has no rows');
+    return problems;
+  }
+
+  for (let index = 1; index < claimed.length; index += 1) {
+    if (claimed[index] <= claimed[index - 1]) {
+      problems.push(
+        `docs/TASK_IDS.md: ACME-${String(claimed[index]).padStart(4, '0')} is listed after ACME-${String(claimed[index - 1]).padStart(4, '0')}. Claims are appended in strictly ascending order; an out-of-order or duplicate row means two claims merged cleanly when they should have conflicted.`,
+      );
+    }
+  }
+
+  const claimedSet = new Set(claimed);
+
+  const archived = await readdir(path.join(repoRoot, 'docs', 'finished'));
+  for (const entry of archived) {
+    const archivedId = entry.match(/^ACME-(\d{4})_/u);
+    if (!archivedId) {
+      continue;
+    }
+    const id = Number(archivedId[1]);
+    if (id >= floor && !claimedSet.has(id)) {
+      problems.push(
+        `docs/finished/${entry}: ACME-${archivedId[1]} is archived but never claimed in docs/TASK_IDS.md.`,
+      );
+    }
+  }
+
+  const activeTask = await readFile(
+    path.join(repoRoot, 'docs', 'CURRENT_TASK.md'),
+    'utf8',
+  );
+  const activeId = activeTask.match(/^Task ID:\s*ACME-(\d{4})\s*$/mu);
+  if (activeId && !claimedSet.has(Number(activeId[1]))) {
+    problems.push(
+      `docs/CURRENT_TASK.md: ACME-${activeId[1]} is the active task but has no claim in docs/TASK_IDS.md. Claim the identity and merge it before freezing the charter.`,
+    );
+  }
+
+  return problems;
+}
+
 async function git(args) {
   const { stdout } = await execFile('git', args, {
     cwd: repoRoot,
@@ -287,7 +374,6 @@ async function checkPathStability() {
 // those findings are reported as warnings instead.
 const proseValidatedSurfaces = [
   'AGENTS.md',
-  'docs/CURRENT_TASK.md',
   'docs/CURRENT_STATUS.md',
   'docs/SYSTEMDOC.md',
   'docs/FILESTRUCTURE.md',
@@ -295,11 +381,23 @@ const proseValidatedSurfaces = [
   'docs/ops/',
   'docs/acceptance/',
 ];
-const proseExemptSurfaces = ['docs/JOURNAL.md', 'docs/finished/', 'docs/adr/'];
+// docs/CURRENT_TASK.md is exempt for the mirror image of the reason the
+// archive is: a charter names its deliverables before they exist, the way a
+// journal entry names files after they are gone. Both legitimately cite paths
+// that do not exist now.
+const proseExemptSurfaces = [
+  'docs/JOURNAL.md',
+  'docs/finished/',
+  'docs/adr/',
+  'docs/CURRENT_TASK.md',
+];
 
 function proseSurfaceKind(relativeFile) {
   const file = relativeFile.split(path.sep).join('/');
 
+  if (file === 'docs/CURRENT_TASK.md') {
+    return 'planned';
+  }
   // Exemption wins over the collection-index rule below, so the indexes of
   // docs/adr/ and docs/finished/ are exempt too. Their completeness is already
   // enforced by checkCollections and their links by the link check.
@@ -430,6 +528,8 @@ for (const file of markdownFiles) {
     const report = `${relativeFile}: cited path does not exist "${citation}"`;
     if (surface === 'validated') {
       errors.push(report);
+    } else if (surface === 'planned') {
+      warnings.push(`${report} (active charter, not yet created)`);
     } else {
       warnings.push(`${report} (historical record, not a gate)`);
     }
@@ -437,11 +537,12 @@ for (const file of markdownFiles) {
 }
 
 errors.push(...(await checkCollections()));
+errors.push(...(await checkTaskIdRegister()));
 errors.push(...(await checkPathStability()));
 
 if (warnings.length > 0) {
   process.stdout.write(
-    `${warnings.length} stale citation${warnings.length === 1 ? '' : 's'} in records that may not be edited:\n${warnings.join('\n')}\n\n`,
+    `${warnings.length} cited path${warnings.length === 1 ? '' : 's'} that do not exist, reported without gating:\n${warnings.join('\n')}\n\n`,
   );
 }
 

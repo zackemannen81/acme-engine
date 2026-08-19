@@ -147,10 +147,24 @@ architecture boundary.
 - `docs/adr/`: Architecture decisions and their consequences.
 - `docs/paused/`: Frozen parent tasks waiting on a resume condition.
 - `docs/backlog/`: Non-activated proposals outside the active charter.
+- `docs/TASK_IDS.md`: Task identity claims. Allocation only, never status.
 - `docs/concepts_sandbox/`: Explicitly excluded concept work, ideas and future
   visions. Never decided architecture, roadmap or current scope.
 - `docs/finished/`: Archived completed task specifications.
 - When a task is complete, archive `docs/CURRENT_TASK.md` into `docs/finished/` as `ACME-NNNN_task-slug.md`, then restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+
+### One Active Task, Per Branch
+
+- At most one task is active per branch, held in that branch's
+  `docs/CURRENT_TASK.md`. Git already provides exactly one copy per branch, so
+  this states the rule where it is already enforced rather than weakening it.
+- The trunk never states how many tasks are active anywhere. `docs/TASK_IDS.md`
+  records that an identity is taken, which says nothing about activity.
+- One person holding several branches really does have divided scope. Holding
+  one task at a time is the intent, but only the per-branch rule is checkable,
+  so the rest is practice rather than a gate.
+- A branch merges when its task is complete, so `main` normally carries the
+  restored template. A merged in-progress charter is an explicit exception.
 
 ### Addressing and Discoverability
 
@@ -173,13 +187,14 @@ architecture boundary.
   stability.
 - A repository path written as inline code is a citation, not decoration.
   Documents that describe the present must name paths that exist:
-  `AGENTS.md`, `docs/CURRENT_TASK.md`, `docs/CURRENT_STATUS.md`,
-  `docs/SYSTEMDOC.md`, `docs/FILESTRUCTURE.md`, `docs/design/`, `docs/ops/`,
-  `docs/acceptance/` and collection `README.md` files. A stale citation there
-  fails the check.
-- `docs/JOURNAL.md`, `docs/finished/` and `docs/adr/` are exempt. They record
-  what was true when written and legitimately name files that have since been
-  removed. A stale citation there is reported as a warning and never gates the
+  `AGENTS.md`, `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`,
+  `docs/FILESTRUCTURE.md`, `docs/design/`, `docs/ops/`, `docs/acceptance/`
+  and collection `README.md` files. A stale citation there fails the check.
+- `docs/JOURNAL.md`, `docs/finished/`, `docs/adr/` and `docs/CURRENT_TASK.md`
+  are exempt. The first three record what was true when written and
+  legitimately name files that have since been removed; the active charter
+  names its deliverables before they exist, which is the same situation
+  pointing the other way. A stale citation there is reported as a warning and never gates the
   build, because repairing it would mean editing records that may not be
   edited. Their collection indexes inherit the exemption.
 - Only paths that start at a real top-level entry and end in a file extension
@@ -194,7 +209,10 @@ architecture boundary.
 - If `docs/CURRENT_TASK.md` is blank, stale or already complete, create the
   next explicitly approved task from `docs/template_CURRENT_TASK.md`.
 - Before implementation, make sure `CURRENT_TASK.md` contains goal, success criteria, scope, checklist, verification plan, and documentation targets.
-- Assign a unique `ACME-NNNN` Task ID.
+- Claim the Task ID in `docs/TASK_IDS.md` and merge that claim to `main`
+  before moving the charter to `Ready`. The next free ID is one above the
+  highest of the register and `docs/finished/`. An unmerged claim is not
+  yours: a local count cannot see somebody else's branch.
 - Freeze the Task Charter when status changes from `Draft` to `Ready`.
 - Work from the checklist and keep it current while the task is in progress.
 - Documentation is part of the task, not a follow-up chore.

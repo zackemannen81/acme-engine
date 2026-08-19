@@ -188,6 +188,22 @@ The child must not silently absorb unrelated improvements.
 
 The parent's goal and Definition of Done remain unchanged.
 
+## Task Identity
+
+A Task ID is an identity in the same sense a path is. It appears in the active
+charter, the archive filename, journal entries, branch names, commit messages
+and pull request titles, and several of those cannot be rewritten afterwards.
+
+Claim the ID in `docs/TASK_IDS.md` and merge that claim to `main` before the
+charter moves to `Ready`. Append one row at the end of the table; never insert
+into the middle and never sort. Two people claiming simultaneously then edit the
+same region and the second gets a merge conflict rather than a silent duplicate.
+
+The register allocates identity only. It carries no status column, because task
+state already has owners in `docs/CURRENT_TASK.md` and `docs/finished/`, and a
+trunk-level statement about active work would contradict the one-active-task
+rule.
+
 ## Non-blocking Discoveries
 
 Non-blocking discoveries must not interrupt the active task.

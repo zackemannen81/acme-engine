@@ -1211,7 +1211,7 @@ classification is resolved (ACME-0057); the file remains as resolved context.
 Domain Test UI implementation notes remain for optional residuals. A resolved
 proposal declares its resolution in its `Status:` line and in the index; it is
 never renamed or moved to express that state, because journal entries, archived
-tasks and accepted ADRs cite proposals by path (ACME-0169).
+tasks and accepted ADRs cite proposals by path (ACME-0170).
 
 Every collection directly under `docs/` declares one discoverability mode in its
 `README.md`. `index` means every member is listed there; a naming convention
@@ -1220,9 +1220,16 @@ carries 167 archived tasks under `ACME-NNNN_task-slug.md`. Collections whose
 members carry lifecycle state also declare `Member state: required`.
 `pnpm docs:check` enforces the declarations, index completeness, member state,
 naming conventions and path stability against the base ref. It also validates
-repository paths written as inline code (ACME-0170): documents describing the
+repository paths written as inline code (ACME-0171): documents describing the
 present must name files that exist, while `docs/JOURNAL.md`, `docs/finished/`
 and `docs/adr/` only warn, because they record what was true when written.
+
+`docs/TASK_IDS.md` (ACME-0172) allocates task identities. Claims are appended
+in strictly ascending order so that two simultaneous claims become a merge
+conflict rather than a silent duplicate, and the register carries no status
+column: task state belongs to `docs/CURRENT_TASK.md` and `docs/finished/`.
+Identities below its stated floor predate the register and are addressed by
+the archive naming convention instead.
 
 `docs/concepts_sandbox/temp/` is frozen despite its name: the archived
 ACME-0038 cites the mock by path, so the file can no longer move.

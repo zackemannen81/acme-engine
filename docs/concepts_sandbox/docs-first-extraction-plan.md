@@ -130,6 +130,7 @@ Create `extraction/ledger.md` with one row per rule or rule group:
 | `TASK_WORKFLOW.md` | Blocking prerequisite pauses the parent, activates a bounded child | CORE | `SPEC.md` C-07 | Verbatim intent |
 | `AGENTS.md` project identity block | ACME purpose, phase, milestone history | PROJECT | Dropped | Replaced by a placeholder section |
 | `docs/backlog/README.md` | A proposal keeps its path; state lives in the file and the index | CORE | `SPEC.md` C-16, C-17 | Added 2026-08-19 after an observed link break; not present in the original baseline |
+| None | Identities are claimed on the trunk before a charter freezes | CORE | `SPEC.md` C-18, C-04 scope | Added 2026-08-19 after an observed identity collision between two branches; not present in the original baseline |
 
 Three classes, applied to every line:
 
@@ -160,7 +161,10 @@ derived from the baseline:
 
 ### Active work
 
-- **C-04** At most one task is active at any time.
+- **C-04** At most one task is active per working context, where a working
+  context is one branch or workspace of the repository. The protocol makes no
+  claim about how many tasks are active across all contexts, and the trunk
+  never states one.
 - **C-05** Work on a deliverable does not begin before the active task states
   goal, deliverable, scope, out-of-scope, definition of done and verification
   plan.
@@ -201,28 +205,39 @@ derived from the baseline:
   every member addressable without an index. A collection that has neither
   is unindexed, and its state is unknowable without opening every file.
 
+### Multiple actors
+
+- **C-18** Task identities are claimed on the trunk before the charter using
+  them freezes. The claim is one line in a strictly ascending, append-only
+  register, so that two simultaneous claims collide as a merge conflict rather
+  than merging cleanly into a silent duplicate. The register records that an
+  identity is taken and never records task status, which would make the trunk
+  contradict C-04.
+
 ### Resumability
 
 - **C-15** A competent actor with no access to chat history can identify the
   active task, its authority documents, current reality and the next action
   from the repository alone.
 
-Seventeen requirements is deliberate. The specification must be readable in
+Eighteen requirements is deliberate. The specification must be readable in
 one sitting, and every requirement must be either machine-checkable or
 checkable by a named review ritual.
 
 C-16 and C-17 were not in the first draft of this plan. They were added on
 2026-08-19 after the reference implementation broke 39 links by renaming
 nine backlog proposals to show their resolved state in the file listing.
-That is the intended way for this specification to grow: a rule earns its
-place by having been paid for once.
+C-18 and the scope qualifier on C-04 were added the same day, after two
+actors froze two different charters under one identity an hour apart. That
+is the intended way for this specification to grow: a rule earns its place
+by having been paid for once.
 
 ### Conformance levels
 
 | Level | Name | Requirements | Checked by |
 | --- | --- | --- | --- |
 | L1 | Structure | C-01, C-02, C-03, C-13, C-17 | Validator |
-| L2 | Workflow | C-04, C-05, C-06, C-07, C-11, C-16 | Validator, partly with git history |
+| L2 | Workflow | C-04, C-05, C-06, C-07, C-11, C-16, C-18 | Validator, partly with git history |
 | L3 | Handoff | C-08, C-09, C-15 | Validator plus the cold-start review ritual |
 | L4 | Evidence | C-10, C-12, C-14 | Validator plus review |
 
@@ -302,7 +317,14 @@ python3 conformance/validate.py . --level L3
   non-authority marker;
 - each collection is either fully indexed or fully covered by its declared
   naming convention, and every member of an indexed collection declares a
-  state in its own content.
+  state in its own content;
+- the identity register is strictly ascending, free of duplicates and free
+  of task status, and every archived task at or above its stated floor has a
+  claim; and
+- validation of cited paths distinguishes tense: documents describing the
+  present must resolve, while the active charter names deliverables before
+  they exist and the archive names files after they are gone, so both report
+  without gating.
 
 ### Checks that use git history
 
