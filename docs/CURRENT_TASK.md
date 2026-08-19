@@ -84,9 +84,9 @@ A private CLI executable/service mode named `acme-runtime` that starts the exist
 - [ ] integration suite including focused runtime-service tests
 - [ ] deterministic scenario suite
 - [ ] build
-- [ ] complete PostgreSQL adapter suite
-- [ ] protected-path zero-diff review
-- [ ] no live provider call and no credential required by CI
+- [x] complete PostgreSQL adapter suite
+- [x] protected-path zero-diff review
+- [x] no live provider call and no credential required by CI
 
 ## References
 
@@ -102,10 +102,10 @@ A private CLI executable/service mode named `acme-runtime` that starts the exist
 - [x] Confirm ACME-0169 is unused and start from current upstream `main` after PR #35.
 - [x] Read canonical runtime and current CLI composition boundaries.
 - [x] Freeze ACME-0169 charter.
-- [ ] Implement canonical runtime service configuration/composition.
-- [ ] Implement bearer helper and executable lifecycle entry point.
-- [ ] Add focused offline tests.
-- [ ] Open isolated PR and verify protected-path diff.
+- [x] Implement canonical runtime service configuration/composition.
+- [x] Implement bearer helper and executable lifecycle entry point.
+- [x] Add focused offline tests.
+- [x] Open isolated PR and verify protected-path diff.
 - [ ] Run and repair full canonical CI without expanding scope.
 - [ ] Synchronize long-lived documentation and archive task.
 - [ ] Run final docs-inclusive canonical CI and hand off to Rickard.
@@ -115,7 +115,8 @@ A private CLI executable/service mode named `acme-runtime` that starts the exist
 - This task consumes Rickard's explicit approval for item A in GitHub issue #36.
 - PR #33/ADR-0051 remain authoritative for the runtime protocol. Service composition may compose that boundary but must not redefine it.
 - PostgreSQL and OpenAI are one optional runnable composition, not requirements of the runtime protocol itself.
-- The service must be testable offline through injected composition/provider transport; CI must not make live OpenAI calls.
+- The service is tested offline through injected composition/provider transport; CI makes no live OpenAI call.
+- First canonical run `32245022575` proved PostgreSQL + emitted-package TypeScript green. `verify` stopped only at Prettier on the two newly added TypeScript files. Repo Prettier 3.9.6 then formatted those files through a self-cleaning one-shot branch workflow.
 
 ## Charter Amendment Log
 
@@ -123,7 +124,9 @@ A private CLI executable/service mode named `acme-runtime` that starts the exist
 
 ## Verification
 
-- Pending implementation and canonical CI.
+- First run `32245022575`: `postgres` passed completely; `verify` stopped at formatting before lint/typecheck/test/build stages.
+- Canonical formatter applied to `apps/cli/src/acme-runtime-service.ts` and `tests/integration/acme-runtime-service.test.ts`; helper workflow removed itself.
+- Full post-format canonical run pending.
 
 ## Documentation Updates
 
@@ -135,8 +138,8 @@ A private CLI executable/service mode named `acme-runtime` that starts the exist
 
 ## Handoff and Follow-ups
 
-- Current state: ACME-0169 charter frozen on a clean branch from current `main`.
-- Next recommended step: implement the optional PostgreSQL/OpenAI runtime process against canonical `acme-runtime/1`.
+- Current state: Draft PR #38 contains the optional canonical runtime composition, offline tests and no protected-path changes; canonical formatting has been applied.
+- Next recommended step: let full post-format canonical CI expose any remaining type/lint/test issue, then repair only task-scoped failures.
 - Blockers: None.
 - Child tasks: None.
 - Resume condition: N/A.
