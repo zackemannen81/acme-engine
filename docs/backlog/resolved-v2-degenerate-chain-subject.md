@@ -1,6 +1,6 @@
 # V2 chains: one degenerate subject label reaches the resume pointer
 
-Status: Proposal. Not activated. Observed during ACME-0157.
+Status: Resolved / not applicable. Not activated. Observed during ACME-0157.
 
 ## Discovery context
 

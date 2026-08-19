@@ -1,7 +1,7 @@
 # V2 structure: split parts at index-run transitions
 
-Status: Proposal. Not activated. Discovered during ACME-0151.
-
+Status: Resolved/not applicable. Not activated. Discovered during ACME-0151.
+POC #1 - accepted as is.
 ## Discovery context
 
 `evidence-v2-source-structure/1` classifies content character per part, and

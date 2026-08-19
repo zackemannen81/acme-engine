@@ -1,6 +1,6 @@
 # hrd content documentation drift
 
-Status: **Unsolved**
+Status: resolved
 Discovered by: Rickard Zakrisson
 ## Context
 A directory in the repo root named hrd (human readable documents) deviated from the clean structure of the repo there is already a docs/hrd folder with a proper structure and the content in the folders held personal intrest documents.

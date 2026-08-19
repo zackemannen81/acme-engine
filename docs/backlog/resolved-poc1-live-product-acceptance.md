@@ -1,7 +1,8 @@
 # POC #1 live product acceptance
 
-Status: Proposal. Not activated. Depends on ACME-0131 and on ADR-0044 being
+Status: not applicable. Not activated. Depends on ACME-0131 and on ADR-0044 being
 accepted.
+POC #1 - accepted as is.
 
 Purpose: define the acceptance run that is entitled to say POC #1 works.
 
