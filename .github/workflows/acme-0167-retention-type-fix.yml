@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
 
+# One-shot helper: self-deletes after repairing the exact optional property type.
 jobs:
   repair:
     if: github.actor != 'github-actions[bot]'
