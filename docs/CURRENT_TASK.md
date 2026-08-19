@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID:
+Task ID: ACME-0167
 Parent Task: None
-Status: Draft
-Owner:
-Created:
-Last updated:
-Charter frozen at:
+Status: In Progress
+Owner: Felix Nissen / Rickard Zakrisson review
+Created: 2026-08-19
+Last updated: 2026-08-19
+Charter frozen at: 2026-08-19T10:20+02:00
 
 ## Read First
 
@@ -21,66 +21,121 @@ Charter frozen at:
 - Relevant ADRs under `docs/adr/`
 
 ## Task Summary
-A task is never considered done until:
-JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Describe the task, why it is being done now and the intended outcome.
+Port the reusable external runtime boundary from the Felix integration candidate onto the current frozen POC #1 baseline as a canonical, application-neutral ACME runtime contract. The task exists because the previous Felix runtime proved useful but its wire contract carried AAL/application metadata and a Felix-fork commit pin that do not belong in the engine's generic external boundary.
+
+This task is deliberately a shell around the existing `ExecutionEngine`. It must not modify core or the frozen Evidence/POC #1 implementation.
 
 ## Task Charter
 
-The charter is editable while status is `Draft` and immutable once status is
-`Ready`.
+The charter is immutable from this point.
 
 ### Goal
 
-Define one primary outcome.
+Expose the existing `ExecutionEngine` through a small, strict, versioned and transport-neutral external runtime boundary without changing ACME core or POC #1 behavior.
 
 ### Primary Deliverable
 
-Name the concrete artifact or behavior that completes the task.
+A canonical `acme-runtime/1` wire contract, Fetch-compatible runtime host and thin Node HTTP listener with compatibility/execute endpoints and focused conformance/integration tests.
 
 ### In Scope
 
-- List work required for the primary deliverable.
+- Canonical ACME-generic runtime wire contract representing the existing `ExecutionRequest` fields needed for one execution.
+- `GET /v1/compatibility` with an injected runtime descriptor/build identity rather than a hard-coded repository/commit.
+- `POST /v1/execute` with fail-closed shape/version validation and deterministic mapping to `ExecutionRequest`.
+- Injected authorization port; no production authentication scheme is defined by the contract.
+- 1 MiB request body bound.
+- Request disconnect/cancellation propagation to `AbortSignal` and therefore the engine call.
+- Terminal result forwarding/mapping without transport-layer reclassification of ACME semantics.
+- Thin Node built-in HTTP listener bridging Node requests/responses to Fetch `Request`/`Response`.
+- Focused runtime-host and loopback listener tests.
+- A freeze guard proving the protected core/POC paths are byte-for-byte unchanged by this feature branch.
+- Documentation for the new external boundary and its explicit non-goals.
 
 ### Out of Scope
 
-- List adjacent work that must not be absorbed.
+- Any modification under `packages/core/**`.
+- Any modification under `apps/evidence-workbench-v2-api/**`.
+- Any modification under `apps/evidence-workbench-v2-web/**`.
+- Any modification under `packages/module-evidence-v2/**`.
+- Any modification under `packages/evidence-v2-contracts/**`.
+- Any modification under `packages/adapter-evidence-v2-postgres/**`.
+- Any modification under `packages/adapter-evidence-v2-pdf/**`.
+- Any modification under `docs/poc-1/**`.
+- AAL/Felix application metadata such as `workspaceId`, application subject/version, source artifact IDs, AAL task IDs/contracts/schema hashes or a `felixnissen/acme-engine` pin in the canonical runtime request.
+- Runnable Postgres/OpenAI service composition, provider choice, database choice, deployment, TLS/DNS or process supervisor.
+- A general production authentication model. Bearer authentication may be implemented later as an optional composition helper, not as the runtime contract.
+- Changes to the semantics, persistence or state transitions of `ExecutionEngine`.
 
 ### Definition of Done
 
-- Define objective, verifiable completion conditions.
+- `acme-runtime/1` exposes only engine-generic request/response/compatibility data.
+- Compatibility identity is injected at composition time and contains no fossilized Felix repository pin.
+- Host authenticates before execution, validates fail-closed, enforces 1 MiB body limit and forwards cancellation.
+- Host maps one valid request deterministically to the existing `ExecutionRequest` and forwards terminal engine semantics without invented transport outcomes.
+- Node listener passes real loopback HTTP tests for compatibility, execute, auth refusal, body bound and disconnect cancellation.
+- Protected POC/core paths have zero diff from the task base.
+- Full canonical repository CI passes: documentation, formatting, lint, typecheck, boundaries, unit, conformance, integration, deterministic scenarios, build and PostgreSQL.
+- Relevant long-lived docs are current and truthful.
 
 ### Minimum Verification Gates
 
-- [ ] Define checks that may be strengthened but not removed after `Ready`.
+- [ ] Static freeze check: zero diff from task base for every protected path listed above.
+- [ ] Runtime host focused tests.
+- [ ] Node listener loopback tests.
+- [ ] `pnpm docs:check`.
+- [ ] `pnpm format:check`.
+- [ ] `pnpm lint`.
+- [ ] `pnpm typecheck`.
+- [ ] Package-boundary check.
+- [ ] Unit suite.
+- [ ] Conformance suite.
+- [ ] Integration suite.
+- [ ] Deterministic scenarios.
+- [ ] Package build.
+- [ ] PostgreSQL adapter suite.
 
 ## References
 
-- Add relevant documents, code, decisions and external contracts.
+- POC #1 frozen commit: `6a866f126007fcf99309d8ee2eb4db86a34bb905`.
+- Current task branch begins from repository `main` whose tree is byte-identical to that POC #1 freeze.
+- Review reference only: accidental PR #30 / `integration/felix-runtime-candidate`.
+- Rickard integration-runtime review, 2026-08-19: retain host/listener/compatibility/execute/cancellation/body-bound/tests; canonicalize wire and defer runnable Postgres/OpenAI composition.
 
 ## Checklist
 
-- [ ] Break work into concrete, ordered steps.
-- [ ] Keep this checklist aligned with actual progress.
-- [ ] Add verification and documentation steps.
+- [x] Verify current `main` is byte-identical to POC #1 freeze `6a866f...`.
+- [x] Create fresh branch from current `main`.
+- [x] Freeze this docs-first charter.
+- [ ] Define canonical generic `acme-runtime/1` wire and injected descriptor.
+- [ ] Port Fetch runtime host against generic wire.
+- [ ] Port thin Node HTTP listener.
+- [ ] Port/adapt focused runtime and loopback tests.
+- [ ] Add protected-path freeze verification.
+- [ ] Run full canonical CI and repair only task-scoped failures.
+- [ ] Update `CURRENT_STATUS.md`, `SYSTEMDOC.md`, `JOURNAL.md` and `FILESTRUCTURE.md` as required.
+- [ ] Archive ACME-0167 and restore `CURRENT_TASK.md` template only after all gates pass.
 
 ## Decisions and Notes
-- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
-- Record decisions and assumptions within the frozen charter.
-- Classify discoveries using `docs/TASK_WORKFLOW.md`.
+
+- The runtime boundary is an application/transport shell around the existing engine, not an engine redesign.
+- `acme-runtime/1` must remain domain-neutral and application-neutral.
+- Runtime compatibility is retained, but build identity is injected at composition instead of hard-coded to a repository review point.
+- Authentication is an injected authorization port. This task intentionally does not standardize bearer/OAuth/mTLS/etc.
+- No Postgres/OpenAI runnable composition belongs in this PR; that is a separate future task.
+- The protected-path zero-diff rule is a hard merge gate, not merely a review preference.
 
 ## Charter Amendment Log
-
-Only non-semantic corrections are allowed after `Ready`.
 
 -none
 
 ## Verification
 
-- [ ] Define task-appropriate technical checks.
-- [ ] Define manual or scenario validation when relevant.
-- [ ] Document skipped checks and reasons.
+- [ ] Focused runtime host tests pass.
+- [ ] Loopback listener tests pass.
+- [ ] Protected-path diff is empty.
+- [ ] Full canonical CI passes.
+- [ ] No live model call or external deployment is required or authorized by this task.
 
 ## Documentation Updates
 
@@ -88,21 +143,19 @@ Only non-semantic corrections are allowed after `Ready`.
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
 - [ ] `docs/FILESTRUCTURE.md` when structure changes
-- [ ] ADRs when long-lived decisions change
+- [ ] ADR only if implementation discovers a long-lived architectural decision not already captured by this frozen charter.
 
 ## Handoff and Follow-ups
 
-- Current state:
-- Next recommended step:
-- Blockers:
-- Child tasks:
-- Resume condition:
-- Open questions:
+- Current state: Charter frozen; implementation branch created from current main.
+- Next recommended step: Canonicalize the wire contract before porting host/listener code.
+- Blockers: None.
+- Child tasks: None.
+- Resume condition: N/A.
+- Open questions: None inside the frozen task; runnable composition is explicitly deferred.
 
 ## Finalize When Complete
 
-- Archive this file under `docs/finished/`.
-- Restore this template or populate the next approved task.
+- Archive this file under `docs/finished/ACME-0167_canonical-runtime-boundary.md`.
+- Restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
 - Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changed, supersede this task instead of
-  rewriting it.
