@@ -280,8 +280,9 @@ function validatePolicy(
             );
           }
           return {
-            retention:
-              value.retention as AcmeRuntimeExecutionPolicy['retention'],
+            retention: value.retention as NonNullable<
+              AcmeRuntimeExecutionPolicy['retention']
+            >,
           };
         })()),
   });
