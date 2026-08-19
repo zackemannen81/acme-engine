@@ -386,6 +386,11 @@ function memoryRepository(): EvidenceV2Repository & {
             (item) =>
               item.caseId === caseId && item.provenance === 'reviewer-authored',
           ).length,
+          consensusSupported: 0,
+          consensusContested: 0,
+          consensusQualified: 0,
+          consensusUnresolved: 0,
+          consensusInsufficient: 0,
         },
         instancesWithoutExtraction: outstanding.length,
         instancesPendingReview: 0,
@@ -400,6 +405,32 @@ function memoryRepository(): EvidenceV2Repository & {
                 instanceOrdinal: first.instanceOrdinal,
               },
         unavailable: EVIDENCE_V2_SURFACE_GAPS,
+      };
+    },
+    async readCaseProjectionInputs(caseId) {
+      const scoped = [...artifacts.values()].filter(
+        (item) => item.caseId === caseId,
+      );
+      const ids = new Set(scoped.map((item) => item.artifactId));
+      const occurrenceBindings = [...occurrences.entries()].flatMap(
+        ([key, items]) => {
+          const artifactId = key.split('/')[0] ?? '';
+          const instanceKey = key.split('/').slice(1).join('/');
+          if (!ids.has(artifactId)) return [];
+          return items.map((occurrence) => ({ occurrence, instanceKey }));
+        },
+      );
+      return {
+        occurrences: occurrenceBindings,
+        reviews: reviews.filter((item) => ids.has(item.artifactId)),
+        claims: [...claims.values()].filter((item) => item.caseId === caseId),
+        groupings: groupings.filter((item) => item.caseId === caseId),
+        relations: [...relations.values()].filter(
+          (item) => item.caseId === caseId,
+        ),
+        relationReviews: relationReviews.filter(
+          (item) => item.caseId === caseId,
+        ),
       };
     },
   };
@@ -790,6 +821,7 @@ describe('evidence v2 api', () => {
       `/cases/${caseId}/documents`,
       `/cases/${caseId}/status`,
       `/cases/${caseId}/timeline`,
+      `/cases/${caseId}/consensus`,
       `/cases/${caseId}/relations`,
       `/artifacts/${artifactId}/parts`,
       `/artifacts/${artifactId}/chains`,
@@ -800,6 +832,7 @@ describe('evidence v2 api', () => {
       expect(html, path).toContain('nav class="surfaces"');
       expect(html, path).toContain(`/cases/${caseId}/status`);
       expect(html, path).toContain(`/cases/${caseId}/timeline`);
+      expect(html, path).toContain(`/cases/${caseId}/consensus`);
       expect(html, path).toContain('Test case');
       expect(html, path).toContain('aria-current="page"');
     }
@@ -816,24 +849,143 @@ describe('evidence v2 api', () => {
     expect(html).toContain('offset=1');
   });
 
-  it('reports an unbuilt surface as a named condition, never an empty list', async () => {
-    const { caseId, headers } = await seed();
-    const page = await fetch(`${base}/cases/${caseId}/timeline`, { headers });
-    expect(page.status).toBe(200);
-    const html = await page.text();
-    expect(html).toContain('Not built');
-    expect(html).toContain(EVIDENCE_V2_SURFACE_GAPS.timeline.deliveredBy);
-    // The defect this exists to prevent: an absent surface answering with an
-    // empty result as though the case had none (R-07).
-    expect(html).not.toContain('<tbody></tbody>');
+  it('projects the timeline as dated items plus a visibly unordered tail', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const claimId = await seedClaim(caseId, headers);
 
     const json = (await (
       await fetch(`${base}/api/cases/${caseId}/timeline`, { headers })
-    ).json()) as { state: string; deliveredBy: string };
-    expect(json.state).toBe('not-implemented');
-    expect(json.deliveredBy).toBe(
-      EVIDENCE_V2_SURFACE_GAPS.timeline.deliveredBy,
+    ).json()) as {
+      revision: { digest: string; caseId: string };
+      datedCount: number;
+      unorderedCount: number;
+      items: {
+        id: string;
+        kind: string;
+        ordered: boolean;
+        temporalKind: string;
+      }[];
+      total: number;
+    };
+    expect(json.revision.digest).toHaveLength(64);
+    expect(json.revision.caseId).toBe(caseId);
+    expect(json.total).toBe(2);
+    expect(json.items.map((item) => item.id).sort()).toEqual(
+      [seeded.occurrenceId, claimId].sort(),
     );
+    // A reviewer-authored occurrence from this corpus has no usable bound,
+    // and an empty claim has none either. Both belong in the unordered tail,
+    // never slotted onto a date.
+    expect(json.datedCount).toBe(0);
+    expect(json.unorderedCount).toBe(2);
+    expect(json.items.every((item) => item.ordered === false)).toBe(true);
+
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/timeline`, { headers })
+    ).text();
+    expect(html).toContain('<h1>Timeline</h1>');
+    expect(html).toContain('Unordered');
+    expect(html).not.toContain('Not built');
+    expect(html).toContain('accepted');
+  });
+
+  it('pages the timeline and states the bound', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    await seedOccurrence(caseId, artifactId, headers);
+    await seedClaim(caseId, headers);
+
+    const page = (await (
+      await fetch(`${base}/api/cases/${caseId}/timeline?limit=1`, { headers })
+    ).json()) as {
+      items: unknown[];
+      total: number;
+      offset: number;
+      limit: number;
+    };
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toBe(2);
+    expect(page.limit).toBe(1);
+
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/timeline?limit=1`, { headers })
+    ).text();
+    expect(html).toContain('1–1 of 2 · page bound 1 of at most 100');
+    expect(html).toContain('offset=1');
+  });
+
+  it('projects consensus per claim from accepted material and never invents a case verdict', async () => {
+    const { caseId, artifactId, headers } = await seed();
+    const seeded = await seedOccurrence(caseId, artifactId, headers);
+    const emptyClaimId = await seedClaim(caseId, headers);
+    const groupedCreated = await fetch(`${base}/api/cases/${caseId}/claims`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        label: 'The colour of the car',
+        statement: 'What colour the car was.',
+      }),
+    });
+    const groupedClaimId = (
+      (await groupedCreated.json()) as { claimId: string }
+    ).claimId;
+    await fetch(`${base}/api/cases/${caseId}/claims/${groupedClaimId}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        occurrenceId: seeded.occurrenceId,
+        action: 'include',
+        instanceKey: seeded.instanceKey,
+        rationale: 'Concerns the same proposition.',
+      }),
+    });
+
+    const json = (await (
+      await fetch(`${base}/api/cases/${caseId}/consensus`, { headers })
+    ).json()) as {
+      claims: {
+        claim: { claimId: string };
+        verdict: string;
+        acceptedContributorCount: number;
+        contributors: { occurrenceId: string }[];
+      }[];
+      aggregates: {
+        claimCount: number;
+        verdictCounts: Record<string, number>;
+      };
+      revision: { digest: string };
+    };
+    expect(json.aggregates.claimCount).toBe(2);
+    expect(json).not.toHaveProperty('verdict');
+    for (const forbidden of ['score', 'weight', 'confidence', 'rank']) {
+      expect(Object.keys(json)).not.toContain(forbidden);
+    }
+    const empty = json.claims.find(
+      (item) => item.claim.claimId === emptyClaimId,
+    );
+    const grouped = json.claims.find(
+      (item) => item.claim.claimId === groupedClaimId,
+    );
+    expect(empty?.verdict).toBe('insufficient-material');
+    expect(empty?.acceptedContributorCount).toBe(0);
+    expect(grouped?.verdict).toBe('unresolved');
+    expect(grouped?.acceptedContributorCount).toBe(1);
+    expect(grouped?.contributors[0]?.occurrenceId).toBe(seeded.occurrenceId);
+
+    const html = await (
+      await fetch(`${base}/cases/${caseId}/consensus`, { headers })
+    ).text();
+    expect(html).toContain('<h1>Consensus</h1>');
+    expect(html).toContain('insufficient-material');
+    expect(html).toContain('unresolved');
+    expect(html).not.toContain('Not built');
+
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    expect(overview.counts.consensusInsufficient).toBe(1);
+    expect(overview.counts.consensusUnresolved).toBe(1);
+    expect(overview.counts.consensusSupported).toBe(0);
   });
 
   it('reports status counts that agree with the list routes', async () => {
@@ -860,11 +1012,13 @@ describe('evidence v2 api', () => {
     expect(overview.resumeAt).not.toBeNull();
     expect(overview.resumeAt?.subjectLabel.length).toBeGreaterThan(0);
 
-    // Unbuilt surfaces report a condition, never zero. ACME-0160 retired
-    // `claims`, so `timeline` is the standing example now.
-    expect(Object.keys(overview.unavailable)).toContain('timeline');
-    expect(overview.unavailable['timeline']?.state).toBe('not-implemented');
-    expect(overview.counts).not.toHaveProperty('timeline');
+    // ACME-0162 retired the last ADR-0049 gaps. An empty case reports
+    // consensus counts of zero because the surface exists; that is a
+    // statement about the case, not about the product.
+    expect(Object.keys(overview.unavailable)).toEqual([]);
+    expect(overview.counts).toHaveProperty('consensusSupported');
+    expect(overview.counts.consensusSupported).toBe(0);
+    expect(overview.counts.consensusInsufficient).toBe(0);
 
     const html = await (
       await fetch(`${base}/cases/${caseId}/status`, { headers })
@@ -1477,7 +1631,8 @@ describe('evidence v2 api', () => {
       await fetch(`${base}/api/cases/${caseId}/status`, { headers })
     ).json()) as EvidenceV2CaseOverview;
     expect(Object.keys(overview.unavailable)).not.toContain('standing');
-    expect(Object.keys(overview.unavailable)).toContain('timeline');
+    expect(Object.keys(overview.unavailable)).not.toContain('timeline');
+    expect(Object.keys(overview.unavailable)).not.toContain('consensus');
     expect(overview.counts).toHaveProperty('accepted');
   });
 
@@ -1695,6 +1850,31 @@ describe('evidence v2 api', () => {
     expect(overview.counts).toHaveProperty('relations');
   });
 
+  it('shows Timeline and Consensus in the surface bar and no longer as unbuilt surfaces', async () => {
+    const { caseId, headers } = await seed();
+    for (const [path, heading] of [
+      [`/cases/${caseId}/timeline`, 'Timeline'],
+      [`/cases/${caseId}/consensus`, 'Consensus'],
+    ] as const) {
+      const html = await (await fetch(`${base}${path}`, { headers })).text();
+      expect(html).toContain(`<h1>${heading}</h1>`);
+      expect(html).toContain('aria-current="page"');
+      expect(html).not.toContain('Not built');
+    }
+
+    const overview = (await (
+      await fetch(`${base}/api/cases/${caseId}/status`, { headers })
+    ).json()) as EvidenceV2CaseOverview;
+    expect(Object.keys(overview.unavailable)).toEqual([]);
+    expect(overview.counts).toHaveProperty('consensusSupported');
+
+    const statusHtml = await (
+      await fetch(`${base}/cases/${caseId}/status`, { headers })
+    ).text();
+    expect(statusHtml).toContain('<h2>Consensus</h2>');
+    expect(statusHtml).not.toContain('Not built yet');
+  });
+
   it('refuses every route without a session', async () => {
     const { caseId, artifactId } = await seed();
     const paths = [
@@ -1710,6 +1890,9 @@ describe('evidence v2 api', () => {
       `/cases/${caseId}/status`,
       `/cases/${caseId}/documents`,
       `/cases/${caseId}/timeline`,
+      `/cases/${caseId}/consensus`,
+      `/api/cases/${caseId}/timeline`,
+      `/api/cases/${caseId}/consensus`,
       `/api/cases/${caseId}/status`,
     ];
     for (const path of paths) {
@@ -1738,6 +1921,8 @@ describe('evidence v2 api', () => {
       `/api/artifacts/${artifactId}/chains`,
       `/api/artifacts/${artifactId}/chains/${chainId}`,
       `/api/artifacts/${artifactId}/chain-decisions`,
+      `/api/cases/${caseId}/timeline`,
+      `/api/cases/${caseId}/consensus`,
     ];
     for (const route of routes) {
       const response = await fetch(`${base}${route}`, { headers: stranger });

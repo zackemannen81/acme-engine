@@ -601,14 +601,22 @@ describe('evidence v2 postgres persistence', () => {
     expect(overview.counts.pending).toBe(1);
     expect(overview.counts.reviewerAuthored).toBe(0);
 
-    // Unbuilt surfaces report a condition. Reporting zero claims would be a
-    // false statement about the case rather than a true one about the product.
-    expect(overview.unavailable['timeline']?.state).toBe('not-implemented');
-    // ACME-0159 and ACME-0160 retired these, so they must be gone rather
-    // than stale.
-    expect(overview.unavailable).not.toHaveProperty('standing');
-    expect(overview.unavailable).not.toHaveProperty('claims');
-    expect(overview.counts).not.toHaveProperty('timeline');
+    // ACME-0162 retired the last ADR-0049 gaps. Consensus counts stay 0
+    // here because the overview SQL does not fold J6; the app recomputes
+    // them on the status route from the same snapshot this port returns.
+    expect(overview.unavailable).toEqual({});
+    expect(overview.unavailable).not.toHaveProperty('timeline');
+    expect(overview.unavailable).not.toHaveProperty('consensus');
+    expect(overview.counts).toHaveProperty('consensusSupported');
+    expect(overview.counts.consensusSupported).toBe(0);
+
+    const snapshot = await repository.readCaseProjectionInputs('case-v2-test');
+    expect(snapshot.occurrences).toHaveLength(2);
+    expect(snapshot.reviews).toHaveLength(2);
+    expect(snapshot.claims).toHaveLength(1);
+    expect(snapshot.groupings).toHaveLength(3);
+    expect(snapshot.relations).toHaveLength(1);
+    expect(snapshot.relationReviews).toHaveLength(2);
 
     // An unrelated case sees nothing of this one.
     const empty = await repository.readCaseOverview('case-that-does-not-exist');

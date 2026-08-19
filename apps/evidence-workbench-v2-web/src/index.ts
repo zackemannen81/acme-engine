@@ -1246,6 +1246,169 @@ export function renderRelation(input: {
   });
 }
 
+export interface EvidenceV2TimelineRow {
+  readonly kind: 'occurrence' | 'claim';
+  readonly id: string;
+  readonly label: string;
+  readonly exactQuote: string | null;
+  readonly artifactId: string | null;
+  readonly partId: string | null;
+  readonly startLine: number | null;
+  readonly endLine: number | null;
+  readonly temporalKind: string;
+  readonly from: string | null;
+  readonly to: string | null;
+  readonly ordered: boolean;
+  readonly standing: string | null;
+}
+
+export function renderTimeline(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly revision: string;
+  readonly datedCount: number;
+  readonly unorderedCount: number;
+  readonly items: EvidenceV2ListPage<EvidenceV2TimelineRow>;
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const rowOf = (item: EvidenceV2TimelineRow): string => {
+    const source =
+      item.artifactId !== null && item.partId !== null
+        ? `<a href="/artifacts/${encodeURIComponent(item.artifactId)}/parts/${encodeURIComponent(item.partId)}">L${String(item.startLine)}–L${String(item.endLine)}</a>`
+        : item.kind === 'claim'
+          ? `<a href="/cases/${encodeURIComponent(input.caseId)}/claims/${encodeURIComponent(item.id)}">${escapeHtml(item.label)}</a>`
+          : escapeHtml(item.id);
+    const when = item.ordered
+      ? `${escapeHtml(item.temporalKind)} ${escapeHtml(item.from ?? '')}`
+      : `<span class="muted">unordered · ${escapeHtml(item.temporalKind)}</span>`;
+    return (
+      `<tr><td>${when}</td>` +
+      `<td class="muted">${escapeHtml(item.kind)}</td>` +
+      `<td>${source}</td>` +
+      `<td>${item.exactQuote === null ? '' : escapeHtml(item.exactQuote)}</td>` +
+      `<td class="muted">${escapeHtml(item.standing ?? '')}</td></tr>`
+    );
+  };
+  const dated = input.items.items.filter((item) => item.ordered);
+  const unordered = input.items.items.filter((item) => !item.ordered);
+  return layout({
+    title: `Timeline · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/timeline`,
+        label: 'Timeline',
+      },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'timeline',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>Timeline</h1>
+     <p class="muted">The same occurrences, in time. Unknown time is not
+     placed on the clock. Revision ${escapeHtml(input.revision.slice(0, 16))}…
+     · ${String(input.datedCount)} dated, ${String(input.unorderedCount)} unordered.</p>
+     <table><thead><tr><th>When</th><th>Kind</th><th>Source</th><th>Quote</th><th>Standing</th></tr></thead>
+     <tbody>${dated.map(rowOf).join('') || '<tr><td colspan="5" class="muted">No dated items on this page.</td></tr>'}</tbody></table>
+     <h2>Unordered</h2>
+     <p class="muted">These have no usable calendar bound. The order below is
+     by identity, not by time.</p>
+     <table><thead><tr><th>When</th><th>Kind</th><th>Source</th><th>Quote</th><th>Standing</th></tr></thead>
+     <tbody>${unordered.map(rowOf).join('') || '<tr><td colspan="5" class="muted">Nothing unordered on this page.</td></tr>'}</tbody></table>
+     ${pager(`/cases/${input.caseId}/timeline`, input.items)}`,
+  });
+}
+
+export function renderConsensus(input: {
+  readonly caseId: string;
+  readonly caseTitle: string;
+  readonly caseReference?: string;
+  readonly revision: string;
+  readonly aggregates: {
+    readonly claimCount: number;
+    readonly verdictCounts: Readonly<Record<string, number>>;
+  };
+  readonly claims: readonly {
+    readonly claim: { readonly claimId: string; readonly label: string };
+    readonly verdict: string;
+    readonly acceptedContributorCount: number;
+    readonly contributors: readonly {
+      readonly occurrenceId: string;
+      readonly artifactId: string;
+      readonly partId: string;
+      readonly startLine: number;
+      readonly endLine: number;
+      readonly exactQuote: string;
+    }[];
+  }[];
+  readonly viewer?: EvidenceV2Viewer;
+}): string {
+  const v = input.aggregates.verdictCounts;
+  const rows = input.claims
+    .map((item) => {
+      const sources = item.contributors
+        .map(
+          (contributor) =>
+            `<a href="/artifacts/${encodeURIComponent(contributor.artifactId)}/parts/${encodeURIComponent(contributor.partId)}">L${String(contributor.startLine)}</a>`,
+        )
+        .join(' ');
+      return (
+        `<tr><td><a href="/cases/${encodeURIComponent(input.caseId)}/claims/${encodeURIComponent(item.claim.claimId)}">${escapeHtml(item.claim.label)}</a></td>` +
+        `<td class="standing">${escapeHtml(item.verdict)}</td>` +
+        `<td>${String(item.acceptedContributorCount)}</td>` +
+        `<td>${sources}</td></tr>`
+      );
+    })
+    .join('');
+  return layout({
+    title: `Consensus · ${input.caseTitle}`,
+    breadcrumbs: [
+      { href: '/', label: 'Cases' },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}`,
+        label: input.caseTitle,
+      },
+      {
+        href: `/cases/${encodeURIComponent(input.caseId)}/consensus`,
+        label: 'Consensus',
+      },
+    ],
+    context: {
+      caseId: input.caseId,
+      caseTitle: input.caseTitle,
+      ...(input.caseReference === undefined
+        ? {}
+        : { caseReference: input.caseReference }),
+      active: 'consensus',
+    },
+    ...(input.viewer === undefined ? {} : { viewer: input.viewer }),
+    body: `<h1>Consensus</h1>
+     <p class="muted">What accepted material currently supports, contests,
+     qualifies or leaves unresolved. The claim is the only subject. Revision
+     ${escapeHtml(input.revision.slice(0, 16))}…</p>
+     <dl class="counts">
+       <dt>Claims</dt><dd>${String(input.aggregates.claimCount)}</dd>
+       <dt>Supported</dt><dd>${String(v['supported'] ?? 0)}</dd>
+       <dt>Contested</dt><dd>${String(v['contested'] ?? 0)}</dd>
+       <dt>Qualified</dt><dd>${String(v['qualified'] ?? 0)}</dd>
+       <dt>Unresolved</dt><dd>${String(v['unresolved'] ?? 0)}</dd>
+       <dt>Insufficient material</dt><dd>${String(v['insufficient-material'] ?? 0)}</dd>
+     </dl>
+     <table><thead><tr><th>Claim</th><th>Verdict</th><th>Accepted</th><th>Sources</th></tr></thead>
+     <tbody>${rows || '<tr><td colspan="4" class="muted">No claims yet. Consensus has nothing to compute.</td></tr>'}</tbody></table>`,
+  });
+}
+
 /**
  * The status surface: what this case contains, and where to resume.
  *
@@ -1280,6 +1443,14 @@ export function renderCaseStatus(input: {
         `<p class="delivered">Delivered by ${escapeHtml(gap.deliveredBy)}.</p></div>`,
     )
     .join('');
+  const gapBlock =
+    gaps.length === 0
+      ? ''
+      : `<h2>Not built yet</h2>
+     <p class="muted">These report their own condition rather than a number.
+     Reporting zero would be a statement about this case; the true statement is
+     about the product.</p>
+     ${gaps}`;
   return layout({
     title: `Status · ${input.caseTitle}`,
     breadcrumbs: [
@@ -1344,6 +1515,16 @@ export function renderCaseStatus(input: {
        ${row('Grouped occurrences', c.groupedOccurrences)}
        ${row('Claims spanning several instances', c.crossInstanceClaims)}
      </dl>
+     <h2>Consensus</h2>
+     <p class="muted">Per claim, from accepted material only. The case does
+     not have a verdict of its own.</p>
+     <dl class="counts">
+       ${row('Supported', c.consensusSupported)}
+       ${row('Contested', c.consensusContested)}
+       ${row('Qualified', c.consensusQualified)}
+       ${row('Unresolved', c.consensusUnresolved)}
+       ${row('Insufficient material', c.consensusInsufficient)}
+     </dl>
      <h2>Relations</h2>
      <p class="muted">A relation never deletes an endpoint. Standing is
      folded from the append-only review log.</p>
@@ -1356,10 +1537,6 @@ export function renderCaseStatus(input: {
        ${row('Model-proposed', c.modelProposedRelations)}
        ${row('Reviewer-authored', c.reviewerAuthoredRelations)}
      </dl>
-     <h2>Not built yet</h2>
-     <p class="muted">These report their own condition rather than a number.
-     Reporting zero would be a statement about this case; the true statement is
-     about the product.</p>
-     ${gaps}`,
+     ${gapBlock}`,
   });
 }

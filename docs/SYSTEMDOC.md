@@ -1198,6 +1198,33 @@ The Relations surface is a bounded case-scoped list (ADR-0049 §3), not a
 graph. Every row shows type, rationale, provenance, standing and both
 endpoints resolved to their exact sources.
 
+**V2 timeline and consensus.** ACME-0162 closed the last two ADR-0049
+surfaces. `projectEvidenceV2Timeline` lays every occurrence and every claim
+on a clock at a content-derived case revision — a digest of the input row
+identities, not the engine revision (R-06). Dated items keep their typed
+bound. Items with unknown or absent time sort last and are marked unordered
+so a stable identifier order cannot be mistaken for a date. Two occurrences
+remain two rows even when they quote the same words or share a claim. The
+list is bounded and paged.
+
+`projectEvidenceV2Consensus` is J6: a deterministic fold over accepted
+occurrences and accepted relations only, recomputed on every read, with no
+model and no spend. The claim is the only subject. Vocabulary is
+`supported`, `contested`, `qualified`, `unresolved`,
+`insufficient-material`. An accepted `contradicts` that touches the claim
+makes it `contested`; otherwise `qualifies` makes it `qualified`; otherwise
+`supports` makes it `supported`; accepted `adds` alone, or accepted members
+with no stance relation, is `unresolved`. A claim with no accepted members
+is `insufficient-material`, never a refutation. `adds` is material, not a
+stance. Chain-level and case-level views are counts of those verdicts and
+carry no vocabulary of their own. The projection object has no `score`,
+`weight`, `confidence`, `rank` or case-level `verdict`.
+
+`readCaseProjectionInputs` is the one case-scoped snapshot those folds
+read. Status consensus counts are computed from the same fold, not from
+SQL. `EVIDENCE_V2_SURFACE_GAPS` is empty: every surface in
+`EVIDENCE_V2_SURFACES` is available.
+
 **V2 review and standing.** `evidence-v2-review/1` in
 `@acme/module-evidence-v2` is an append-only decision and
 `deriveEvidenceV2Standings` folds the log to effective standing. Nothing stores
@@ -1250,7 +1277,9 @@ on another (R-07). `EVIDENCE_V2_SURFACE_GAPS` names, per unbuilt surface, why
 it is unbuilt and which task delivers it. An unbuilt surface is a reachable
 route answering 200 with that condition — never a redirect, never an error, and
 never an empty list, because an empty list for an absent surface is a statement
-about the case where the true statement is about the product.
+about the case where the true statement is about the product. ACME-0162
+retired the last two entries; the map is empty and every surface in the bar
+is served.
 
 `readCaseOverview` on the repository port is the status projection: two
 aggregate statements over the case's stored rows, nothing stored, no structure
@@ -1337,8 +1366,8 @@ under a key of their own, separate from the session key, and ephemeral when the
 deployment supplies none.
 
 An occurrence is canonical evidence under the authority ladder, not accepted
-evidence: review and standing do not exist yet, and neither do claims, relations
-or consensus projection.
+evidence: review and standing fold separately, and consensus reads only the
+accepted set.
 
 The recorded live run that first measured those engine properties — planned 2,
 spent 2, re-run 0, 27 occurrences, payloads encrypted under a ledger key

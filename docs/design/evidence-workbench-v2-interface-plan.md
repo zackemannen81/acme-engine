@@ -73,20 +73,20 @@ it; the recorded ACME-0154 run used a throwaway database per proof rule 1.
 | Requested feature | V1 boundary | Today | Lands in |
 | --- | --- | --- | --- |
 | Skapa nytt / öppna befintligt case | In (`Case` surface) | Delivered | — |
-| Importera / ladda upp `.pdf` | **Out.** §7 refuses PDF; ADR-0040 §3 admits only operator-prepared text with outside-PDF provenance | Text import only | ADR-0050, then ACME-0158 |
+| Importera / ladda upp `.pdf` | **Out.** §7 refuses PDF; ADR-0040 §3 admits only operator-prepared text with outside-PDF provenance | Delivered | ADR-0050, then ACME-0158 |
 | Segmentera och slica dokumentet | In (J1) | Delivered | — |
 | Identifiera separata beviskedjor | In (J2) | Delivered | — |
 | Välj kedja, analysera steg för steg, uppdatera atomärt | In (J3) | Delivered | — |
 | Extrahera observationer | In (L1) | Delivered | — |
-| Extrahera *claims* | In (L2 projection) | Not built | ACME-0160 |
-| Hantera observationer som kandidater, lägg till nya | In (`Review`/`Standing`, L1) | Not built | ACME-0159 |
-| Bedöm relation: bestrider/tillför/bekräftar/villkorar | In (L3 `Relation`, J4) | Not built | ACME-0161 |
-| Markera beviskedjan som klar | In (derived standing, not a stored flag) | Not built | ACME-0159 |
-| Global Timeline-vy, kronologisk | In as P3; not named as a surface in §6 | Not built | ADR-0049, then ACME-0162 |
-| Case status / stats-vy | In as "Global: case overview — counts and where to resume". Charts and dashboards are **out** | Not built | ACME-0157 |
+| Extrahera *claims* | In (L2 projection) | Delivered | ACME-0160 |
+| Hantera observationer som kandidater, lägg till nya | In (`Review`/`Standing`, L1) | Delivered | ACME-0159 |
+| Bedöm relation: bestrider/tillför/bekräftar/villkorar | In (L3 `Relation`, J4) | Delivered | ACME-0161 |
+| Markera beviskedjan som klar | In (derived standing, not a stored flag) | Delivered | ACME-0159 |
+| Global Timeline-vy, kronologisk | In as P3; not named as a surface in §6 | Delivered | ADR-0049, then ACME-0162 |
+| Case status / stats-vy | In as "Global: case overview — counts and where to resume". Charts and dashboards are **out** | Delivered | ACME-0157 |
 | Dokumentvy | In (`Source` surface) | Delivered | polished in ACME-0157 |
 | Kedjevy | In (`Chain` surface) | Delivered | polished in ACME-0157 |
-| Relations-vy | Relations are in; **graph visualisation is out** (§6); **persons need an actor roster, which is out** (§7) | Not built | ADR-0049, then ACME-0161 |
+| Relations-vy | Relations are in; **graph visualisation is out** (§6); **persons need an actor roster, which is out** (§7) | Delivered | ADR-0049, then ACME-0161 |
 | Samlad analysrapport | **Out.** §7 excludes assessment documents and any generated report | Not built | Deferred — [backlog](../backlog/v2-interface-deferred-features.md) |
 
 Two things the request does not mention but the flow cannot work without, and

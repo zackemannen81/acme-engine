@@ -190,14 +190,11 @@ concrete next instance. Measured on the ACME-0156 Supabase case: **650 parts,
 exactly with what the list routes report.
 
 The rule that surface carries is that an unbuilt surface reports its own
-condition and never a number. Timeline, Relations, Claims, Consensus and
-Standing each answer with a named `not-implemented` state and the task that
-delivers them, from one shared list that navigation and the status page both
-read — so the two cannot disagree. Reporting `0 claims` would be a false
-statement about the case where the true statement is about the product, and a
-navigation entry rendering an empty list for an absent surface is R-07 rebuilt
-deliberately. Every list page now also states its own bound rather than
-implying it (R-08).
+condition and never a number. ACME-0162 retired the last two entries, so
+`EVIDENCE_V2_SURFACE_GAPS` is empty and every surface in the ADR-0049 bar
+is served. The named-gap machinery remains: if a surface were unbuilt it
+would still answer with a condition rather than an empty list (R-07). Every
+list page now also states its own bound rather than implying it (R-08).
 
 One finding was recorded rather than fixed: 1 of the 351 chains carries a
 subject label of leftover punctuation and sorts first, so the resume pointer
@@ -331,10 +328,28 @@ Recorded through the product's own routes: import 201, class
 non-PDF refused 400 `EVIDENCE_V2_PDF_NOT_PDF`. Two-process extractor
 determinism is pinned by test.
 
-Remaining limitations: consensus projection and the timeline surface still
-report their own condition. Extraction is Pass 1 with no neighbour context
-and no actor roster. Credentials still come from a development authenticator, so
-a real upstream identity provider is unwired. `pnpm test:postgres` has two
+ACME-0162 added the last two ADR-0049 surfaces. The Timeline is a
+case-scoped chronological projection over every occurrence and every claim at
+a content-derived case revision: typed bounds stay typed, unknown or absent
+time sorts last and is labelled unordered, and two occurrences stay two rows
+even when they quote the same words. J6 consensus is a fold over accepted
+occurrences and accepted relations only. The claim is the only subject;
+chain and case levels count verdicts and invent none. Absence of accepted
+members is `insufficient-material`, never a refutation. `adds` is material,
+not a stance. Nothing is stored, and the fold spends nothing.
+
+Recorded on the live case, spending nothing: 80 timeline rows (79
+occurrences + 1 claim), **2 dated** with a typed `range` bound and **78
+unordered**; 28 Hussein quotes on the page; the claim `Hussein om resan`
+sits in the unordered tail. Consensus reports that claim as `unresolved`
+from its 2 accepted members and no accepted stance relation (the reviewer
+`adds` was rejected; the three model-proposed relations are still pending).
+Status consensus counts are 0/0/0/1/0. `unavailable` is empty. Second
+principal 404, unauthenticated 401. Ledger **21 before and 21 after**.
+
+Remaining limitations: extraction is Pass 1 with no neighbour context and no
+actor roster. Credentials still come from a development authenticator, so a
+real upstream identity provider is unwired. `pnpm test:postgres` has two
 pre-existing frozen-app failures unrelated to the V2 work, recorded in
 [the backlog](backlog/postgres-gate-test-hygiene.md).
 

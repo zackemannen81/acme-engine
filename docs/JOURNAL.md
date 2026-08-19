@@ -1,5 +1,40 @@
 # Journal
 
+## 2026-08-19 — ACME-0162: the same occurrences, in time and as consensus
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0162, Complete. Archived to
+  `docs/finished/ACME-0162_v2-timeline-and-consensus.md`.
+- Change: Timeline and J6 consensus are authorized case-scoped reads. They
+  store nothing and spend nothing. Every ADR-0049 surface is now served;
+  `EVIDENCE_V2_SURFACE_GAPS` is empty.
+- **Timeline (P3).** Every occurrence and every claim appears at a
+  content-derived case revision — a digest of input row identities, not the
+  engine revision (R-06). Dated items keep their typed bound. Unknown or
+  absent time sorts last and is labelled unordered. Two occurrences stay two
+  rows even when they quote the same words.
+- **Consensus (J6).** Per claim, from accepted occurrences and accepted
+  relations only. `contradicts` → contested; else `qualifies` → qualified;
+  else `supports` → supported; else material without a stance verb →
+  unresolved; no accepted members → insufficient-material. `adds` is
+  material, not a stance. The case has no verdict of its own.
+- **Recorded read** on the live case, spending nothing: 80 timeline rows
+  (79 occurrences + 1 claim), **2 dated** (`range` 2004-10-22) and **78
+  unordered**; 28 Hussein quotes; claim `Hussein om resan` in the unordered
+  tail. Consensus reports that claim as `unresolved` from 2 accepted
+  members and no accepted stance relation. Status counts 0/0/0/1/0.
+  `unavailable` empty. Second principal 404, unauthenticated 401. Ledger
+  **21 before and 21 after**.
+- Verification: typecheck, lint, format, boundaries, docs, build and
+  `git diff --check` clean; unit 966/966 (up from 955); conformance 78,
+  integration 70, scenario 26. `evidence-v2-persistence` **10/10**;
+  postgres 45 of 47, the same two frozen-app failures as before.
+- Handoff: `docs/CURRENT_TASK.md` restored to the template. ACME-0163
+  (Supabase Auth) is optional. Reports, actor roster and graph visualisation
+  remain deferred.
+- Signature: Claude
+
 ## 2026-08-19 — ACME-0158: the process model now starts inside the product
 
 - Date: 2026-08-19

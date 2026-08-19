@@ -18,6 +18,7 @@ import {
   type EvidenceV2ExtractionWindowState,
   type EvidenceV2CaseRecord,
   type EvidenceV2ChainDetail,
+  type EvidenceV2CaseProjectionInputs,
   type EvidenceV2ImportWrite,
   type EvidenceV2Page,
   type EvidenceV2PageRequest,
@@ -1068,6 +1069,89 @@ export function createEvidenceV2PostgresRepository(
       );
     },
 
+    async readCaseProjectionInputs(caseId) {
+      const artifactIds = `SELECT artifact_id FROM ${schema}.artifacts WHERE case_id = $1`;
+      const [
+        occurrenceRows,
+        reviewRows,
+        claimRows,
+        groupingRows,
+        relationRows,
+        relationReviewRows,
+      ] = await Promise.all([
+        rowsOf(
+          pool,
+          `SELECT instance_key, record_json FROM ${schema}.occurrences
+              WHERE artifact_id IN (${artifactIds})
+              ORDER BY occurrence_id`,
+          [caseId],
+        ),
+        rowsOf(
+          pool,
+          `SELECT decision_json FROM ${schema}.review_decisions
+              WHERE artifact_id IN (${artifactIds})
+              ORDER BY appended_seq`,
+          [caseId],
+        ),
+        rowsOf(
+          pool,
+          `SELECT record_json FROM ${schema}.claims
+              WHERE case_id = $1 ORDER BY created_at, claim_id`,
+          [caseId],
+        ),
+        rowsOf(
+          pool,
+          `SELECT decision_json FROM ${schema}.claim_groupings
+              WHERE case_id = $1 ORDER BY appended_seq`,
+          [caseId],
+        ),
+        rowsOf(
+          pool,
+          `SELECT record_json FROM ${schema}.relations
+              WHERE case_id = $1 ORDER BY created_at, relation_id`,
+          [caseId],
+        ),
+        rowsOf(
+          pool,
+          `SELECT decision_json FROM ${schema}.relation_reviews
+              WHERE case_id = $1 ORDER BY appended_seq`,
+          [caseId],
+        ),
+      ]);
+      return {
+        occurrences: occurrenceRows.map((row) => ({
+          occurrence: JSON.parse(
+            String(row['record_json']),
+          ) as EvidenceV2Occurrence,
+          instanceKey: String(row['instance_key']),
+        })),
+        reviews: reviewRows.map(
+          (row) =>
+            JSON.parse(
+              String(row['decision_json']),
+            ) as EvidenceV2ReviewDecision,
+        ),
+        claims: claimRows.map(
+          (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Claim,
+        ),
+        groupings: groupingRows.map(
+          (row) =>
+            JSON.parse(
+              String(row['decision_json']),
+            ) as EvidenceV2ClaimGroupingDecision,
+        ),
+        relations: relationRows.map(
+          (row) => JSON.parse(String(row['record_json'])) as EvidenceV2Relation,
+        ),
+        relationReviews: relationReviewRows.map(
+          (row) =>
+            JSON.parse(
+              String(row['decision_json']),
+            ) as EvidenceV2RelationReviewDecision,
+        ),
+      } satisfies EvidenceV2CaseProjectionInputs;
+    },
+
     /**
      * The case overview.
      *
@@ -1248,6 +1332,11 @@ export function createEvidenceV2PostgresRepository(
           rejectedRelations: count('rejected_relations'),
           modelProposedRelations: count('model_proposed_relations'),
           reviewerAuthoredRelations: count('reviewer_authored_relations'),
+          consensusSupported: 0,
+          consensusContested: 0,
+          consensusQualified: 0,
+          consensusUnresolved: 0,
+          consensusInsufficient: 0,
         },
         instancesWithoutExtraction: count('instances_without_extraction'),
         instancesPendingReview: count('instances_pending_review'),

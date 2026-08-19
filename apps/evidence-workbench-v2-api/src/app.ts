@@ -4,7 +4,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   EVIDENCE_V2_ARTIFACT_RECORD_VERSION,
   EVIDENCE_V2_CASE_RECORD_VERSION,
-  EVIDENCE_V2_SURFACE_GAPS,
   clampEvidenceV2Page,
   EVIDENCE_V2_PDF_EXTRACTOR_METHOD,
   EVIDENCE_V2_PDF_EXTRACTOR_RULE_VERSION,
@@ -30,12 +29,15 @@ import {
   deriveEvidenceV2ClaimId,
   deriveEvidenceV2ClaimMemberships,
   projectEvidenceV2Claim,
+  deriveEvidenceV2CaseRevision,
   deriveEvidenceV2ChainCompletion,
   deriveEvidenceV2InstanceCompletion,
+  deriveEvidenceV2RelationStandings,
+  projectEvidenceV2Consensus,
+  projectEvidenceV2Timeline,
   deriveEvidenceV2OccurrenceId,
   deriveEvidenceV2RelationId,
   deriveEvidenceV2RelationReviewDecisionId,
-  deriveEvidenceV2RelationStandings,
   deriveEvidenceV2ReviewDecisionId,
   deriveEvidenceV2SourceStructure,
   deriveEvidenceV2Standings,
@@ -65,10 +67,11 @@ import {
   renderClaim,
   renderClaims,
   renderParts,
+  renderConsensus,
   renderRelation,
   renderRelations,
   renderSignIn,
-  renderSurfaceGap,
+  renderTimeline,
 } from '@acme/evidence-workbench-v2-web';
 
 import {
@@ -629,6 +632,106 @@ export function createEvidenceV2App(
     };
   }
 
+  async function projectCase(caseId: string) {
+    const inputs = await repository.readCaseProjectionInputs(caseId);
+    const revision = deriveEvidenceV2CaseRevision({
+      caseId,
+      occurrenceIds: inputs.occurrences.map(
+        (item) => item.occurrence.occurrenceId,
+      ),
+      reviewDecisionIds: inputs.reviews.map((item) => item.decisionId),
+      claimIds: inputs.claims.map((item) => item.claimId),
+      groupingDecisionIds: inputs.groupings.map((item) => item.decisionId),
+      relationIds: inputs.relations.map((item) => item.relationId),
+      relationReviewIds: inputs.relationReviews.map((item) => item.decisionId),
+    });
+    const standingByOccurrence = new Map(
+      deriveEvidenceV2Standings(
+        inputs.occurrences.map((item) => item.occurrence.occurrenceId),
+        inputs.reviews,
+      ).map((item) => [item.occurrenceId, item.standing]),
+    );
+    const relationStanding = deriveEvidenceV2RelationStandings(
+      inputs.relations,
+      inputs.relationReviews,
+    );
+    const acceptedRelations = inputs.relations.filter((relation) => {
+      const standing = relationStanding.find(
+        (item) => item.relationId === relation.relationId,
+      );
+      return standing?.standing === 'accepted';
+    });
+    const timeline = projectEvidenceV2Timeline({
+      caseId,
+      revision,
+      occurrences: inputs.occurrences.map((item) => ({
+        occurrenceId: item.occurrence.occurrenceId,
+        artifactId: item.occurrence.artifactId,
+        instanceKey: item.instanceKey,
+        partId: item.occurrence.partId,
+        startLine: item.occurrence.startLine,
+        endLine: item.occurrence.endLine,
+        exactQuote: item.occurrence.exactQuote,
+        temporalBound: item.occurrence.temporalBound,
+        standing:
+          standingByOccurrence.get(item.occurrence.occurrenceId) ?? 'pending',
+      })),
+      claims: inputs.claims.map((claim) => {
+        const members = deriveEvidenceV2ClaimMemberships(
+          claim.claimId,
+          inputs.groupings,
+        );
+        const acceptedBounds = members
+          .filter(
+            (member) =>
+              standingByOccurrence.get(member.occurrenceId) === 'accepted',
+          )
+          .map((member) => {
+            const occurrence = inputs.occurrences.find(
+              (item) => item.occurrence.occurrenceId === member.occurrenceId,
+            );
+            return occurrence?.occurrence.temporalBound ?? null;
+          });
+        return { claim, acceptedBounds };
+      }),
+    });
+    const consensus = projectEvidenceV2Consensus({
+      caseId,
+      revision,
+      acceptedRelations,
+      claims: inputs.claims.map((claim) => {
+        const members = deriveEvidenceV2ClaimMemberships(
+          claim.claimId,
+          inputs.groupings,
+        );
+        const acceptedMembers = members
+          .filter(
+            (member) =>
+              standingByOccurrence.get(member.occurrenceId) === 'accepted',
+          )
+          .flatMap((member) => {
+            const binding = inputs.occurrences.find(
+              (item) => item.occurrence.occurrenceId === member.occurrenceId,
+            );
+            if (binding === undefined) return [];
+            return [
+              {
+                occurrenceId: binding.occurrence.occurrenceId,
+                artifactId: binding.occurrence.artifactId,
+                instanceKey: binding.instanceKey,
+                partId: binding.occurrence.partId,
+                startLine: binding.occurrence.startLine,
+                endLine: binding.occurrence.endLine,
+                exactQuote: binding.occurrence.exactQuote,
+              },
+            ];
+          });
+        return { claim, acceptedMembers };
+      }),
+    });
+    return { revision, timeline, consensus };
+  }
+
   async function partView(artifactId: string, partId: string) {
     const artifact = await repository.readArtifact(artifactId);
     if (artifact === undefined) return undefined;
@@ -976,7 +1079,18 @@ export function createEvidenceV2App(
         if (record === undefined)
           return void sendText(response, 404, 'No such case.');
         const overview = await repository.readCaseOverview(caseId);
-        if (json) return void sendJson(response, 200, overview);
+        const { consensus } = await projectCase(caseId);
+        const counts = {
+          ...overview.counts,
+          consensusSupported: consensus.aggregates.verdictCounts.supported,
+          consensusContested: consensus.aggregates.verdictCounts.contested,
+          consensusQualified: consensus.aggregates.verdictCounts.qualified,
+          consensusUnresolved: consensus.aggregates.verdictCounts.unresolved,
+          consensusInsufficient:
+            consensus.aggregates.verdictCounts['insufficient-material'],
+        };
+        const withConsensus = { ...overview, counts };
+        if (json) return void sendJson(response, 200, withConsensus);
         return void sendHtml(
           response,
           200,
@@ -984,38 +1098,73 @@ export function createEvidenceV2App(
             caseId,
             caseTitle: record.title,
             caseReference: record.caseReference,
-            overview,
+            overview: withConsensus,
             viewer,
           }),
         );
       }
 
-      // Surfaces ADR-0049 names that ACME-0162 still delivers. They are
-      // reachable and they state their own condition. A surface that does not
-      // exist must never answer with an empty list (R-07).
-      const gapMatch = /^\/(?:api\/)?cases\/([^/]+)\/timeline$/u.exec(path);
-      if (method === 'GET' && gapMatch?.[1] !== undefined) {
-        const caseId = decodeURIComponent(gapMatch[1]);
+      const timelineMatch = /^\/(?:api\/)?cases\/([^/]+)\/timeline$/u.exec(
+        path,
+      );
+      if (method === 'GET' && timelineMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(timelineMatch[1]);
         if (!(await authorizeCase(caseId, 'workspace.read'))) return;
         const record = await repository.readCase(caseId);
         if (record === undefined)
           return void sendText(response, 404, 'No such case.');
-        const gap = EVIDENCE_V2_SURFACE_GAPS.timeline;
+        const { timeline } = await projectCase(caseId);
+        const paged = {
+          items: timeline.items.slice(page.offset, page.offset + page.limit),
+          total: timeline.items.length,
+          offset: page.offset,
+          limit: page.limit,
+        };
         if (json)
-          return void sendJson(response, 200, { surface: 'timeline', ...gap });
+          return void sendJson(response, 200, {
+            revision: timeline.revision,
+            datedCount: timeline.datedCount,
+            unorderedCount: timeline.unorderedCount,
+            ...paged,
+          });
         return void sendHtml(
           response,
           200,
-          renderSurfaceGap({
-            context: {
-              caseId,
-              caseTitle: record.title,
-              caseReference: record.caseReference,
-              active: 'timeline',
-            },
-            heading: 'Timeline',
-            gap,
+          renderTimeline({
+            caseId,
+            caseTitle: record.title,
+            caseReference: record.caseReference,
             viewer,
+            revision: timeline.revision.digest,
+            datedCount: timeline.datedCount,
+            unorderedCount: timeline.unorderedCount,
+            items: paged,
+          }),
+        );
+      }
+
+      const consensusMatch = /^\/(?:api\/)?cases\/([^/]+)\/consensus$/u.exec(
+        path,
+      );
+      if (method === 'GET' && consensusMatch?.[1] !== undefined) {
+        const caseId = decodeURIComponent(consensusMatch[1]);
+        if (!(await authorizeCase(caseId, 'workspace.read'))) return;
+        const record = await repository.readCase(caseId);
+        if (record === undefined)
+          return void sendText(response, 404, 'No such case.');
+        const { consensus } = await projectCase(caseId);
+        if (json) return void sendJson(response, 200, consensus);
+        return void sendHtml(
+          response,
+          200,
+          renderConsensus({
+            caseId,
+            caseTitle: record.title,
+            caseReference: record.caseReference,
+            viewer,
+            revision: consensus.revision.digest,
+            aggregates: consensus.aggregates,
+            claims: consensus.claims,
           }),
         );
       }

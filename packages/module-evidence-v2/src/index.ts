@@ -180,3 +180,26 @@ export {
   type EvidenceV2CompareState,
   type EvidenceV2CompareTaskInput,
 } from './compare-module.js';
+export {
+  EVIDENCE_V2_CASE_REVISION_SCHEMA_VERSION,
+  deriveEvidenceV2CaseRevision,
+  projectEvidenceV2Timeline,
+  type EvidenceV2CaseRevision,
+  type EvidenceV2TimelineClaimInput,
+  type EvidenceV2TimelineItem,
+  type EvidenceV2TimelineOccurrenceInput,
+  type EvidenceV2TimelineProjection,
+} from './timeline.js';
+export {
+  EVIDENCE_V2_CONSENSUS_SCHEMA_VERSION,
+  EvidenceV2ConsensusVerdicts,
+  projectEvidenceV2ClaimConsensus,
+  projectEvidenceV2Consensus,
+  verdictOf,
+  type EvidenceV2ClaimConsensus,
+  type EvidenceV2ConsensusClaimInput,
+  type EvidenceV2ConsensusContributor,
+  type EvidenceV2ConsensusProjection,
+  type EvidenceV2ConsensusRelation,
+  type EvidenceV2ConsensusVerdict,
+} from './consensus.js';

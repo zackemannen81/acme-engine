@@ -409,8 +409,8 @@ acme-engine/
 │   │   ├── README.md
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── src/{chain.ts,claim.ts,compare-contract.ts,compare-module.ts,compare-window.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,relation.ts,review.ts,source-structure.ts}
-│   │   └── test/{chain.test.ts,claim.test.ts,compare.test.ts,observe.test.ts,relation.test.ts,review.test.ts,source-structure.test.ts}
+│   │   ├── src/{chain.ts,claim.ts,compare-contract.ts,compare-module.ts,compare-window.ts,consensus.ts,index.ts,module.ts,observe-contract.ts,observe-window.ts,occurrence.ts,relation.ts,review.ts,source-structure.ts,timeline.ts}
+│   │   └── test/{chain.test.ts,claim.test.ts,compare.test.ts,consensus.test.ts,observe.test.ts,relation.test.ts,review.test.ts,source-structure.test.ts,timeline.test.ts}
 │   ├── module-narrative/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -936,7 +936,11 @@ content remains intentionally omitted here.
   J4: `evidence-v2-relation/1` with typed endpoints and comparable scope,
   append-only relation review, the `evidence-v2-compare/1` contract in a
   separate engine namespace so observe state is untouched, and a planner over
-  frozen accepted occurrences of earlier instances. It depends on `@acme/core` for the
+  frozen accepted occurrences of earlier instances. Its fifth layer is the
+  two read-only projections: `projectEvidenceV2Timeline` (P3, every
+  occurrence, unknown time unordered) and `projectEvidenceV2Consensus` (J6,
+  accepted material only, claim-scoped verdicts, no case-level verdict). It
+  depends on `@acme/core` for the
   prompt-contract and module types only, and `pnpm boundaries` forbids it from
   importing the frozen application.
 - `@acme/evidence-v2-contracts`: the V2 stored records and the single
@@ -961,8 +965,9 @@ content remains intentionally omitted here.
   for Case → Source → Chain → Instance, the instance page showing its extraction
   plan, per-window state and bounded occurrence list. Every case-scoped page
   renders inside one shell carrying the case identity and the ADR-0049 surface
-  bar; `renderCaseStatus` is the status projection and `renderSurfaceGap`
-  answers for a surface that is not built.
+  bar; `renderCaseStatus` is the status projection, `renderTimeline` and
+  `renderConsensus` are the last two surfaces, and `renderSurfaceGap`
+  remains for a surface that is not built.
 - `@acme/evidence-artifacts`: strict immutable representation, envelope,
   staging, lifecycle, content-free audit and backup contracts plus AES-256-GCM
   envelope encryption, versioned KEK keyring and object/key provider ports.

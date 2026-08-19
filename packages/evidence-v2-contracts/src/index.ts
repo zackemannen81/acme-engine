@@ -244,14 +244,45 @@ export interface EvidenceV2ComparisonWindowState {
  * answer "there is no timeline" on one page and "the timeline is empty" on
  * another.
  */
+export type EvidenceV2SurfaceState = 'available' | 'not-implemented';
+
 export const EVIDENCE_V2_SURFACES = [
-  { id: 'case', label: 'Case', state: 'available' },
-  { id: 'documents', label: 'Documents', state: 'available' },
-  { id: 'chains', label: 'Chains', state: 'available' },
-  { id: 'claims', label: 'Claims', state: 'available' },
-  { id: 'timeline', label: 'Timeline', state: 'not-implemented' },
-  { id: 'relations', label: 'Relations', state: 'available' },
-  { id: 'status', label: 'Status', state: 'available' },
+  { id: 'case', label: 'Case', state: 'available' as EvidenceV2SurfaceState },
+  {
+    id: 'documents',
+    label: 'Documents',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'chains',
+    label: 'Chains',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'claims',
+    label: 'Claims',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'timeline',
+    label: 'Timeline',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'relations',
+    label: 'Relations',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'consensus',
+    label: 'Consensus',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    state: 'available' as EvidenceV2SurfaceState,
+  },
 ] as const;
 
 export type EvidenceV2SurfaceId = (typeof EVIDENCE_V2_SURFACES)[number]['id'];
@@ -270,20 +301,8 @@ export interface EvidenceV2SurfaceGap {
 }
 
 export const EVIDENCE_V2_SURFACE_GAPS: Readonly<
-  Record<'timeline' | 'consensus', EvidenceV2SurfaceGap>
-> = {
-  timeline: {
-    state: 'not-implemented',
-    reason: 'The temporal projection over occurrences and claims is not built.',
-    deliveredBy: 'ACME-0162',
-  },
-  consensus: {
-    state: 'not-implemented',
-    reason:
-      'The consensus projection has no reviewed material to compute from.',
-    deliveredBy: 'ACME-0162',
-  },
-};
+  Record<string, EvidenceV2SurfaceGap>
+> = {};
 
 /**
  * What one case contains, and where to resume.
@@ -326,6 +345,11 @@ export interface EvidenceV2CaseOverview {
     readonly rejectedRelations: number;
     readonly modelProposedRelations: number;
     readonly reviewerAuthoredRelations: number;
+    readonly consensusSupported: number;
+    readonly consensusContested: number;
+    readonly consensusQualified: number;
+    readonly consensusUnresolved: number;
+    readonly consensusInsufficient: number;
   };
   /** Instances with no committed extraction window. Work, not evidence. */
   readonly instancesWithoutExtraction: number;
@@ -485,10 +509,28 @@ export interface EvidenceV2Repository {
   ): Promise<readonly EvidenceV2ComparisonWindowState[]>;
 
   /**
+   * Every stored row the timeline and consensus projections fold. One
+   * case-scoped read, no structure re-derivation (R-10).
+   */
+  readCaseProjectionInputs(
+    caseId: string,
+  ): Promise<EvidenceV2CaseProjectionInputs>;
+
+  /**
    * The case overview projection. One read, aggregate queries, no structure
    * re-derivation and no snapshot clone (R-10).
    */
   readCaseOverview(caseId: string): Promise<EvidenceV2CaseOverview>;
+}
+
+/** The stored rows J6 and the timeline fold. Nothing is derived here. */
+export interface EvidenceV2CaseProjectionInputs {
+  readonly occurrences: readonly EvidenceV2OccurrenceBinding[];
+  readonly reviews: readonly EvidenceV2ReviewDecision[];
+  readonly claims: readonly EvidenceV2Claim[];
+  readonly groupings: readonly EvidenceV2ClaimGroupingDecision[];
+  readonly relations: readonly EvidenceV2Relation[];
+  readonly relationReviews: readonly EvidenceV2RelationReviewDecision[];
 }
 
 export function clampEvidenceV2Page(
