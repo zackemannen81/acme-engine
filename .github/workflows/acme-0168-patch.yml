@@ -1,0 +1,65 @@
+name: ACME-0168 stale fixture repair
+
+on:
+  push:
+    branches:
+      - felix/acme-0168-postgres-restart-fixture
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: felix/acme-0168-postgres-restart-fixture
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Port verified PostgreSQL restart fixture repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/postgres/evidence-stage-a-import.test.ts')
+          text = path.read_text()
+
+          marker = """        expect(request.body).toContain(\n          'The court records one source-bound fact.',\n        );\n"""
+          insert = """        expect(request.body).toContain(\n          'The court records one source-bound fact.',\n        );\n        const strings: string[] = [];\n        const collect = (value: unknown): void => {\n          if (typeof value === 'string') strings.push(value);\n          else if (Array.isArray(value)) value.forEach(collect);\n          else if (typeof value === 'object' && value !== null)\n            Object.values(value).forEach(collect);\n        };\n        collect(JSON.parse(request.body));\n        const encodedInput = strings.find(\n          (value) =>\n            value.includes('evidence-observe-artifact-input/3') &&\n            value.includes('sourceSegments'),\n        );\n        if (encodedInput === undefined)\n          throw new Error('Observation provider input was missing.');\n        const observationInput = JSON.parse(encodedInput) as {\n          artifactVersion: {\n            sourceSegments: Array<{\n              sourceSegmentId: string;\n              text: string;\n              role?: 'extractable' | 'context';\n            }>;\n          };\n        };\n        const extractable =\n          observationInput.artifactVersion.sourceSegments.filter(\n            (segment) => segment.role !== 'context',\n          );\n        const factSegments = extractable.filter((segment) =>\n          segment.text.includes('source-bound fact'),\n        );\n        expect(factSegments).toHaveLength(2);\n"""
+          if text.count(marker) != 1:
+              raise SystemExit(f'expected one provider marker, found {text.count(marker)}')
+          text = text.replace(marker, insert, 1)
+
+          old_output = """                      observations: [\n                        {\n                          kind: 'exhibit-assertion',\n                          sourceSegmentId: 'line-000002-segment-0001',\n                          sourceActorReference: null,\n                          temporalBound: {\n                            kind: 'unknown',\n                            role: 'document-time',\n                            reason:\n                              'The cited source line supplies no exact time.',\n                          },\n                        },\n                        {\n                          kind: 'exhibit-assertion',\n                          sourceSegmentId: 'line-000003-segment-0001',\n                          sourceActorReference: null,\n                          temporalBound: {\n                            kind: 'unknown',\n                            role: 'document-time',\n                            reason:\n                              'The cited source line supplies no exact time.',\n                          },\n                        },\n                      ],\n                      segmentCoverage: [\n                        {\n                          sourceSegmentId: 'line-000002-segment-0001',\n                          status: 'observations_extracted',\n                        },\n                        {\n                          sourceSegmentId: 'line-000003-segment-0001',\n                          status: 'observations_extracted',\n                        },\n                      ],\n"""
+          new_output = """                      observations: factSegments.map((segment) => ({\n                        kind: 'exhibit-assertion',\n                        sourceSegmentId: segment.sourceSegmentId,\n                        sourceActorReference: null,\n                        temporalBound: {\n                          kind: 'unknown',\n                          role: 'document-time',\n                          reason:\n                            'The cited source segment supplies no exact time.',\n                        },\n                      })),\n                      segmentCoverage: extractable.map((segment) => ({\n                        sourceSegmentId: segment.sourceSegmentId,\n                        status: factSegments.some(\n                          (fact) =>\n                            fact.sourceSegmentId === segment.sourceSegmentId,\n                        )\n                          ? 'observations_extracted'\n                          : 'no_observation',\n                      })),\n"""
+          if text.count(old_output) != 1:
+              raise SystemExit(f'expected one stale output block, found {text.count(old_output)}')
+          text = text.replace(old_output, new_output, 1)
+
+          old_resume = """        reasonCode: 'LIVE_OBSERVATION_RESUMED',\n        actualModelCalls: 1,\n"""
+          new_resume = """        reasonCode: 'LIVE_OBSERVATION_RESUMED',\n        actualModelCalls: 0,\n"""
+          if text.count(old_resume) != 1:
+              raise SystemExit(f'expected one stale resume assertion, found {text.count(old_resume)}')
+          text = text.replace(old_resume, new_resume, 1)
+
+          path.write_text(text)
+          PY
+          pnpm exec prettier --write tests/postgres/evidence-stage-a-import.test.ts
+      - name: Commit test-only repair and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/acme-0168-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/postgres/evidence-stage-a-import.test.ts .github/workflows/acme-0168-patch.yml
+          git commit -m "ACME-0168: refresh PostgreSQL restart fixture"
+          git push origin HEAD:felix/acme-0168-postgres-restart-fixture
