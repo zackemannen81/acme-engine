@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-17
+Last updated: 2026-08-19
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -17,6 +17,9 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
+│   │   │   ├── acme-runtime-host.ts
+│   │   │   ├── acme-runtime-listener.ts
+│   │   │   ├── acme-runtime-wire.ts
 │   │   │   ├── args.ts
 │   │   │   ├── composition.ts
 │   │   │   ├── index.ts
@@ -507,6 +510,8 @@ acme-engine/
 │   │   ├── postgres-gates.test.ts
 │   │   └── quality-evaluation-postgres.conformance.test.ts
 │   ├── integration/
+│   │   ├── acme-runtime-host.test.ts
+│   │   ├── acme-runtime-listener.test.ts
 │   │   ├── durability-sqlite.test.ts
 │   │   ├── outbox-drain.test.ts
 │   │   ├── execution-engine.test.ts
@@ -614,6 +619,10 @@ acme-engine/
 │   │   ├── 0045-real-material-scale-and-recovery.md
 │   │   ├── 0046-source-chronology-and-claim-projection.md
 │   │   ├── 0047-evidence-application-model-reset.md
+│   │   ├── 0048-evidence-v2-observe-contract.md
+│   │   ├── 0049-evidence-v2-surface-set.md
+│   │   ├── 0050-evidence-v2-pdf-ingestion-boundary.md
+│   │   ├── 0051-canonical-acme-runtime-boundary.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
