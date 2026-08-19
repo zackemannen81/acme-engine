@@ -108,7 +108,9 @@ function boundedSecret(
     throw new Error(`${label} must contain at least ${minimum} UTF-8 bytes.`);
   }
   if (byteLength > maximum) {
-    throw new Error(`${label} exceeds the runtime service configuration limit.`);
+    throw new Error(
+      `${label} exceeds the runtime service configuration limit.`,
+    );
   }
   return value;
 }
