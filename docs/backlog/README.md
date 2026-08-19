@@ -16,6 +16,10 @@ as `docs/CURRENT_TASK.md`.
 
 ## Naming and Status Rules
 
+Discoverability: index. Every member of this directory is listed below.
+Member state: required. Every member declares a `Status:` line under its
+title.
+
 A proposal's filename is a permanent identifier, not a status field.
 
 `docs/JOURNAL.md`, `docs/finished/` and accepted ADRs are append-only or
@@ -51,6 +55,7 @@ None of these are open work.
 | Proposal | Resolution |
 | --- | --- |
 | [`driver-error-classification.md`](driver-error-classification.md) | Resolved by ACME-0057 (2026-08-06) |
+| [`prose-path-citations-unchecked.md`](prose-path-citations-unchecked.md) | Resolved by ACME-0170 (2026-08-19) |
 | [`evidence-authentication-authorization-implementation.md`](evidence-authentication-authorization-implementation.md) | Implemented by ACME-0091 under ADR-0035 |
 | [`postgres-gate-test-hygiene.md`](postgres-gate-test-hygiene.md) | Fixed by ACME-0167 |
 | [`hrd-documentation-update.md`](hrd-documentation-update.md) | Resolved; documentation now matches the actual `docs/hrd/` content |

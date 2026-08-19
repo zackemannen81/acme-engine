@@ -1208,5 +1208,21 @@ authority.
 The `docs/backlog/` proposals record residual work. ADR-0035's authentication/
 authorization proposal is retained as implemented discovery context. Driver-error
 classification is resolved (ACME-0057); the file remains as resolved context.
-Domain Test UI implementation notes remain for optional residuals. Resolved
-proposals may stay for discovery context or be removed once finished.
+Domain Test UI implementation notes remain for optional residuals. A resolved
+proposal declares its resolution in its `Status:` line and in the index; it is
+never renamed or moved to express that state, because journal entries, archived
+tasks and accepted ADRs cite proposals by path (ACME-0169).
+
+Every collection directly under `docs/` declares one discoverability mode in its
+`README.md`. `index` means every member is listed there; a naming convention
+means every member is addressable without a list, which is how `docs/finished/`
+carries 167 archived tasks under `ACME-NNNN_task-slug.md`. Collections whose
+members carry lifecycle state also declare `Member state: required`.
+`pnpm docs:check` enforces the declarations, index completeness, member state,
+naming conventions and path stability against the base ref. It also validates
+repository paths written as inline code (ACME-0170): documents describing the
+present must name files that exist, while `docs/JOURNAL.md`, `docs/finished/`
+and `docs/adr/` only warn, because they record what was true when written.
+
+`docs/concepts_sandbox/temp/` is frozen despite its name: the archived
+ACME-0038 cites the mock by path, so the file can no longer move.

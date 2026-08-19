@@ -1,5 +1,10 @@
 # Paused Tasks
 
+Discoverability: index. Every member of this directory is listed below,
+and members are never renamed or moved to express a change of state.
+Member state: required. Every member declares a `Status:` line under its
+title.
+
 This directory contains frozen parent tasks that are temporarily paused for a
 named prerequisite, child task or external condition.
 

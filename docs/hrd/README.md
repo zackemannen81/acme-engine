@@ -1,5 +1,8 @@
 # HRD — human-readable documents and presentation content
 
+Discoverability: index. Every member of this directory is listed below,
+and members are never renamed or moved to express a change of state.
+
 Operator-saved screenshots, provider logs and other explanatory artifacts.
 They are not normative.
 

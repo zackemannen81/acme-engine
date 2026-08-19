@@ -1,5 +1,8 @@
 # POC #1 — Evidence Integrity Workbench
 
+Discoverability: index. Every member of this directory is listed below,
+and members are never renamed or moved to express a change of state.
+
 Status: Koden är fryst. Det här paketet är ingången för den som ska
 sätta upp, använda eller förstå applikationen.
 

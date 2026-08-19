@@ -195,8 +195,11 @@ derived from the baseline:
 
 - **C-16** A record cited by an append-only or archived document keeps its
   path. Status is expressed in content, never in a filename or a location.
-- **C-17** Each collection of records has an index naming every member
-  exactly once, updated in the same change as the records it describes.
+- **C-17** Each collection of records is discoverable either through an
+  index naming every member exactly once and updated in the same change as
+  those members, or through a deterministic naming convention that makes
+  every member addressable without an index. A collection that has neither
+  is unindexed, and its state is unknowable without opening every file.
 
 ### Resumability
 
@@ -297,8 +300,9 @@ python3 conformance/validate.py . --level L3
 - every sandbox document has date, owner, status and an authority boundary;
 - no document outside the sandbox links into the sandbox without an explicit
   non-authority marker;
-- each collection index lists every member of its directory exactly once,
-  and every member declares a state in its own content.
+- each collection is either fully indexed or fully covered by its declared
+  naming convention, and every member of an indexed collection declares a
+  state in its own content.
 
 ### Checks that use git history
 

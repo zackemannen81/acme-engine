@@ -201,7 +201,15 @@ Record them under `docs/backlog/` with:
 - dependencies
 - suggested verification
 
-They become tasks only when explicitly activated.
+They become tasks only when explicitly activated. Add the proposal to
+`docs/backlog/README.md` in the same change; an unindexed proposal is invisible
+to everyone who is not browsing the directory.
+
+Resolving a proposal updates its `Status:` line and its index row. It never
+renames or moves the file. Journal entries, archived tasks and accepted ADRs
+cite proposals by path, and those records cannot be edited to follow a rename.
+The same applies to activation: a proposal keeps its path after it becomes a
+task, and the task records which proposal it came from.
 
 ## Superseding a Task
 

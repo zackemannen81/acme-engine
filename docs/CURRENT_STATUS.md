@@ -1624,7 +1624,8 @@ Not delivered: remote hosting; browser CI (T4); a plan `measurements` block
 through ScenarioRunner `composition.gateway: openai` (ACME-0064); S10 remains
 single-execute by decision (ADR-0023). Proposal:
 `docs/backlog/domain-test-ui-implementation.md`. A non-authority visual mock
-lives under `docs/concepts_sandbox/temp/`.
+lives under `docs/concepts_sandbox/temp/`. That mock is cited by the archived
+ACME-0038, so its path is frozen and the directory is no longer temporary.
 
 ### Post-execution quality evaluation
 

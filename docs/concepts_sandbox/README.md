@@ -14,6 +14,10 @@ Each document should state:
 - owner: `<name or signature>`
 - status: `<current status>`
 
+Discoverability: index. Every member of this directory is listed below.
+Member state: required. Every document declares date, updated date, owner
+and status.
+
 ## Known contents
 
 | Path | Notes |
@@ -27,4 +31,19 @@ Each document should state:
 | `legal-evidence-on-acme/` | Design sketch: legal/evidence — interrogation support, classification, cross-ref, assessments with strict provenance. |
 | `three-domain-platform-proof/` | Index + criteria for treating Kids + Research + Legal as a general platform proof (still concept only). |
 | `acme_cm_001_memory_conflict_benchmark/` | Memory conflict benchmark materials (related stress tests for memory policy). |
+| `acme_cm_001_memory_conflict_benchmark.md` | Title stub pointing at the benchmark directory above. Idea bank, not decided architecture. |
+| `temp/` | Frozen, despite the name. See the note below. |
 | `temp/testregistry_workbench_professional_test_engineering_suite.html` | Visual mock for a Domain Test UI / TestRegistry Workbench. Informs layout discussion only. Normative behavior is `docs/design/domain-test-ui-specification.md` (ACME-0038). |
+
+## `temp/` is frozen, not temporary
+
+The archived `docs/finished/ACME-0038_domain-test-ui-specification-rewrite.md`
+names the mock by path, and the normative
+`docs/design/domain-test-ui-specification.md` cites the same path as the
+layout hypothesis it deliberately did not treat as authority. An archived task
+cannot be edited, so the mock became permanently addressed on 2026-08-02 and
+the directory name has been misleading ever since.
+
+Do not rename, move or delete anything under `temp/`. Do not add new
+disposable material there either: anything an immutable record cites is frozen
+from that moment, whatever the directory is called.

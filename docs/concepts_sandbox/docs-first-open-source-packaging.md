@@ -195,7 +195,9 @@ holds it. The protocol answers with an index, not with filenames.
 
 An index that carries this responsibility must be:
 
-- complete — every record in the collection appears exactly once;
+- complete — every record in the collection appears exactly once, unless the
+  collection is instead covered by a deterministic naming convention that
+  makes each member addressable without a list;
 - current — updated in the same change as the record it describes;
 - resolved — each entry names the state and the task or decision that produced
   it; and
@@ -209,7 +211,8 @@ ended it, when, and where the evidence is.
 
 - every path cited by an append-only or archived record still resolves;
 - no record encodes its state in its filename or its location;
-- each collection has an index naming every member exactly once; and
+- each collection is either fully indexed or fully covered by a declared
+  naming convention; and
 - index entries state the current state and, where one exists, the resolving
   record.
 

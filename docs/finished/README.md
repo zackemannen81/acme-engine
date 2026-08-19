@@ -1,5 +1,11 @@
 # Finished Tasks
 
+Discoverability: naming convention `ACME-NNNN_task-slug.md`. This archive is
+not indexed file by file. Every member is addressable by its immutable Task
+ID, and an archived task is never renamed or moved.
+Member state: required. Every member declares a `Status:` line under its
+title.
+
 Completed `docs/CURRENT_TASK.md` files are archived here with their immutable
 Task ID and a descriptive slug:
 

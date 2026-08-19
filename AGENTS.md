@@ -152,6 +152,41 @@ architecture boundary.
 - `docs/finished/`: Archived completed task specifications.
 - When a task is complete, archive `docs/CURRENT_TASK.md` into `docs/finished/` as `ACME-NNNN_task-slug.md`, then restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
 
+### Addressing and Discoverability
+
+- A record's path is its identity. Status is declared in the record's content
+  and in its collection index, never in a filename or a location.
+- A file cited by append-only or archived documentation keeps its path. This
+  binds every file type, not only Markdown: source files, fixtures and mocks
+  cited by a journal entry, an archived task, an accepted ADR or an acceptance
+  record are frozen at that path from the moment they are cited.
+- Renaming such a file is not repairable. Fixing the citations would require
+  editing records that must not be edited, so the only permitted outcome is
+  restoring the original path.
+- Do not cite disposable material from an immutable record. Give it a stable
+  path first, or describe it instead of linking it.
+- Every collection under `docs/` declares one discoverability mode in its
+  `README.md`: `index`, meaning every member is listed there, or a naming
+  convention that makes every member addressable without a list. Collections
+  whose members carry lifecycle state also declare `Member state: required`.
+- `pnpm docs:check` enforces the declarations, index completeness and path
+  stability.
+- A repository path written as inline code is a citation, not decoration.
+  Documents that describe the present must name paths that exist:
+  `AGENTS.md`, `docs/CURRENT_TASK.md`, `docs/CURRENT_STATUS.md`,
+  `docs/SYSTEMDOC.md`, `docs/FILESTRUCTURE.md`, `docs/design/`, `docs/ops/`,
+  `docs/acceptance/` and collection `README.md` files. A stale citation there
+  fails the check.
+- `docs/JOURNAL.md`, `docs/finished/` and `docs/adr/` are exempt. They record
+  what was true when written and legitimately name files that have since been
+  removed. A stale citation there is reported as a warning and never gates the
+  build, because repairing it would mean editing records that may not be
+  edited. Their collection indexes inherit the exemption.
+- Only paths that start at a real top-level entry and end in a file extension
+  are checked. Package-relative fragments such as `src/extract.ts` name no
+  single file and are left alone; write them from the repository root when the
+  exact file matters.
+
 ## Task Workflow
 
 ### Start

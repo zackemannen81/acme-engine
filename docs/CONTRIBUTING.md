@@ -99,6 +99,19 @@ under `docs/paused/`; non-activated proposals live under `docs/backlog/`.
 - Do not mix mechanical cleanup with behavioral changes.
 - A commit message should describe the outcome, not merely the files touched.
 
+## Files Cited by Documentation
+
+- Do not rename, move or delete a file that documentation cites. Citations from
+  `docs/JOURNAL.md`, `docs/finished/`, accepted ADRs and `docs/acceptance/`
+  cannot be repaired afterwards, because those records may not be edited.
+- This binds source files, tests, fixtures and mocks, not only Markdown. An
+  acceptance record naming a test file freezes that test's path.
+- Do not cite disposable material from an immutable record. Give it a stable
+  path first, or describe it instead of linking it. A directory called `temp`
+  stops being temporary the moment an archived task names a file inside it.
+- Express state in content and in the collection index. A filename is an
+  address, not a status field.
+
 ## Architecture Changes
 
 Create an ADR when a decision affects:
