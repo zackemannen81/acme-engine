@@ -42,7 +42,9 @@ function serviceConfig(
 
 const neverTransport: ProviderTransport = {
   async send() {
-    throw new Error('Runtime service test unexpectedly attempted a provider call.');
+    throw new Error(
+      'Runtime service test unexpectedly attempted a provider call.',
+    );
   },
 };
 
@@ -114,10 +116,16 @@ describe('canonical runnable ACME runtime service', () => {
     };
 
     expect(() =>
-      readAcmeRuntimeServiceConfig({ ...base, ACME_RUNTIME_REPOSITORY: 'memory' }),
+      readAcmeRuntimeServiceConfig({
+        ...base,
+        ACME_RUNTIME_REPOSITORY: 'memory',
+      }),
     ).toThrow(/must be exactly "postgres"/u);
     expect(() =>
-      readAcmeRuntimeServiceConfig({ ...base, ACME_RUNTIME_MODEL_PROVIDER: 'mock' }),
+      readAcmeRuntimeServiceConfig({
+        ...base,
+        ACME_RUNTIME_MODEL_PROVIDER: 'mock',
+      }),
     ).toThrow(/must be exactly "openai"/u);
 
     const withoutBuild = { ...base };
@@ -180,10 +188,9 @@ describe('canonical runnable ACME runtime service', () => {
         executePath: ACME_RUNTIME_EXECUTE_PATH,
       });
 
-      const denied = await fetch(
-        `${service.address.origin}/v1/compatibility`,
-        { headers: compatibilityHeaders('wrong-token-of-a-different-length') },
-      );
+      const denied = await fetch(`${service.address.origin}/v1/compatibility`, {
+        headers: compatibilityHeaders('wrong-token-of-a-different-length'),
+      });
       expect(denied.status).toBe(401);
     } finally {
       await service.close();

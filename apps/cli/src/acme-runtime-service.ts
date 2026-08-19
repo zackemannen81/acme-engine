@@ -137,7 +137,11 @@ export function validateAcmeRuntimeServiceConfig(
   if (value.modelProvider !== 'openai') {
     throw new Error('Runtime service modelProvider must be exactly "openai".');
   }
-  if (!Number.isSafeInteger(value.port) || value.port < 0 || value.port > 65_535) {
+  if (
+    !Number.isSafeInteger(value.port) ||
+    value.port < 0 ||
+    value.port > 65_535
+  ) {
     throw new Error('Runtime service port must be from 0 through 65535.');
   }
   const bearerToken = boundedText(value.bearerToken, 'bearerToken', 4096);
@@ -182,7 +186,11 @@ export function readAcmeRuntimeServiceConfig(
   }
   requirePostgresConfiguration(env);
 
-  const providerHint = optionalEnv(env, 'ACME_RUNTIME_MODEL_PROVIDER_HINT', 200);
+  const providerHint = optionalEnv(
+    env,
+    'ACME_RUNTIME_MODEL_PROVIDER_HINT',
+    200,
+  );
   const modelHint = optionalEnv(env, 'ACME_RUNTIME_MODEL_HINT', 200);
   const openAiBaseUrl = optionalEnv(env, 'ACME_RUNTIME_OPENAI_BASE_URL', 2048);
 
@@ -223,7 +231,10 @@ export function createRuntimeBearerAuthorizer(
       return false;
     }
     const actual = Buffer.from(authorization.slice('Bearer '.length), 'utf8');
-    return actual.byteLength === expected.byteLength && timingSafeEqual(actual, expected);
+    return (
+      actual.byteLength === expected.byteLength &&
+      timingSafeEqual(actual, expected)
+    );
   };
 }
 
