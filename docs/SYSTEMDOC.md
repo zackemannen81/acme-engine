@@ -16,13 +16,25 @@ lives in the CLI/composition layer, not `@acme/core`.
 - Compatibility identity (`engineBuild`) and authorization are injected by the
   composition root. Neither a repository commit nor a bearer scheme is part of
   the canonical protocol.
-- Runnable Postgres/OpenAI composition and deployment are separate concerns and
-  are not implemented by this boundary.
+- `apps/cli/src/acme-runtime-service.ts` is ACME-0169's optional runnable
+  composition. It accepts only explicit PostgreSQL + OpenAI service
+  configuration, constructs the existing repository and provider adapters,
+  injects the canonical descriptor and local bearer authorizer, starts the
+  existing listener and closes resources idempotently.
+- `apps/cli/src/acme-runtime-service-main.ts` is the private
+  `acme-runtime` executable entry point. It emits one bounded non-secret
+  startup record and handles SIGINT/SIGTERM through the service close boundary.
+- Service bearer authorization is composition-local and compares equal-length
+  UTF-8 token bytes with `timingSafeEqual`; the canonical host remains
+  authorization-scheme agnostic.
+- There is no production memory/mock fallback or inferred model. Deployment,
+  public URL, TLS, DNS and secret distribution remain outside this composition
+  and are not claimed.
 
-The focused Fetch-host and real loopback tests are under `tests/integration/`.
-The accepted implementation requires no `packages/core` or frozen POC #1
-change. Canonical CI run `32235955771` passed the complete verify and PostgreSQL
-gates on the corrected ACME-0168 baseline.
+Focused Fetch-host, loopback and offline service lifecycle tests are under
+`tests/integration/`. ACME-0169 requires no `packages/core`, Evidence
+V2/Workbench or frozen POC #1 change. PR #38's final head passed canonical CI
+run `32245847498`, including the complete verify and PostgreSQL gates.
 
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
