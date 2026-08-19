@@ -85,3 +85,4 @@ current architecture.
 - [`0048-evidence-v2-observe-contract.md`](0048-evidence-v2-observe-contract.md)
 - [`0049-evidence-v2-surface-set.md`](0049-evidence-v2-surface-set.md)
 - [`0050-evidence-v2-pdf-ingestion-boundary.md`](0050-evidence-v2-pdf-ingestion-boundary.md)
+- [`0051-canonical-acme-runtime-boundary.md`](0051-canonical-acme-runtime-boundary.md)
