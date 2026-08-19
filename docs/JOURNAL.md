@@ -1,5 +1,63 @@
 # Journal
 
+## 2026-08-19 — ACME-0173: the docs-first model is extracted to its own repository
+
+- Date: 2026-08-19
+- Author: Claude
+- Task: ACME-0173, Complete. Archived to
+  `docs/finished/ACME-0173_protocol-repository-bootstrap.md`.
+- Branch: `task/acme-0173-protocol-repo-bootstrap`
+- Change: `zackemannen81/docs-first_continuity-protocol` now exists at commit
+  `3e38ffa`, private, default branch `main`. It holds a frozen verbatim copy of
+  ACME's workflow documents, an extraction ledger classifying them, and its own
+  operating docs-first instance. ACME gained no dependency on it; the relation
+  is one way and ACME's normative documents are untouched apart from the
+  concepts index note.
+- Baseline: tag `protocol-baseline-2026-08-19` points at
+  `75e4b5ee72201d02ad57f22b1a5fcfb3244d521e` and is pushed. Fifteen files were
+  written with `git show <tag>:<path>` and every one was compared by SHA-256
+  against the tag; all matched. The tag exists so the copy stays provable
+  rather than asserted, and the comparison is repeatable by anyone.
+- Not copied, deliberately and recorded in the new repository's provenance: the
+  active charter, because it holds Felix's in-progress ACME-0169 and an
+  in-flight charter is neither verbatim evidence nor ours to take;
+  `docs/JOURNAL.md`, because 6500 lines of client, product and personal
+  material must never be copied raw and journal evidence belongs to the
+  evidence milestone, aggregated and anonymized; and ACME's status,
+  architecture, brief and decisions, because the extracted thing is the
+  workflow, not the product it was used on.
+- Ledger: twenty-eight rule groups classified CORE, PROFILE or PROJECT, with the
+  tie-break that an unclear rule is PROFILE so the core stays small. Four rules
+  are marked as hours old rather than months: path stability, collection
+  discoverability, tense-aware citation validation and trunk identity claims
+  were each added on 2026-08-19 after a real failure here. The new repository's
+  status document repeats that, so the eventual evidence report cannot treat
+  newly added rules as equally proven.
+- Identity prefix: `DFC`, encoding the descriptive method rather than a brand.
+  The project name is undecided, and ACME-0170 made identities immutable once
+  cited, so a prefix carrying the name would need a rename the rule forbids.
+- Self-hosting: the new repository runs the model from its first commit, so its
+  first conformance test is itself. A written technician test sits in its
+  concepts sandbox, including its own weaknesses: the assessor wrote the
+  repository, and there is no specification yet to conform to.
+- Verification: ACME `pnpm docs:check` 315 files 0 errors, `pnpm format:check`
+  clean, `pnpm lint` clean, `git diff --check` clean. New repository: sixteen
+  own documents plus the ledger reviewed for links and fences, zero problems.
+  Skipped: the new repository has no tooling, so its verification is manual.
+  Twenty-two links inside `baseline/` do not resolve because the baseline is a
+  partial verbatim copy pointing into ACME; that is recorded as correct rather
+  than repaired, since repairing it would mean editing the frozen tree.
+- Active-task slot: this branch borrowed it for ACME-0173 and handed it back.
+  `docs/CURRENT_TASK.md` is restored to `main`'s content, which is Felix's
+  in-progress ACME-0169 charter, not the template. A branch does not clear
+  state it does not own, and ACME-0169 stays open until its owner closes it.
+- Handoff: in the new repository, DFC-0001 is chartered as `Draft` and
+  unassigned. It writes `SPEC.md` from the CORE rows of the ledger, and its
+  identity must be claimed on that repository's `main` before the charter
+  freezes. The repository is private and unlicensed, and is therefore not open
+  source.
+- Signature: Claude
+
 ## 2026-08-19 — ACME-0172: task identities are claimed on the trunk
 
 - Date: 2026-08-19

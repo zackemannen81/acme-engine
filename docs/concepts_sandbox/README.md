@@ -24,7 +24,7 @@ and status.
 | --- | --- |
 | `POC_interfacing.md` | Concept notes only |
 | `docs-first-open-source-packaging.md` | Candidate extraction of ACME's latest docs-first workflow into an agent-neutral continuity protocol, templates, profiles and conformance model. Includes the idea-containment model that explains what a concepts sandbox is for, stable addressing, and multi-actor identity allocation. |
-| `docs-first-extraction-plan.md` | Candidate operational plan for lifting the docs-first model out of ACME into an independent repository: baseline freeze, extraction ledger, numbered specification requirements, templates, validator, profiles, evidence handling and milestones. No repository, name or license decided. |
+| `docs-first-extraction-plan.md` | Candidate operational plan for lifting the docs-first model out of ACME into an independent repository: baseline freeze, extraction ledger, numbered specification requirements, templates, validator, profiles, evidence handling and milestones. Its M0 was executed by ACME-0173 into the separate private `docs-first_continuity-protocol` repository; the plan itself remains non-authority and no name or license is decided. |
 | `acme-open-source-strategy.md` | Candidate uncrippled-community-core, licensing, compatibility, certification and staged public-release strategy for ACME. No release decision. |
 | `audioleaf-kids-on-acme/` | Design sketch: full AudioLeaf Kids book path on ACME (architecture, package API, task/event map). |
 | `research-paper-composer-on-acme/` | Design sketch: research paper composer/validator on ACME (evidence, outline, draft, validate, revise). |
