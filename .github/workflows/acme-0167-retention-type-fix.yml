@@ -1,0 +1,50 @@
+name: ACME-0167 retention type repair
+
+on:
+  push:
+    branches:
+      - felix/canonical-acme-runtime
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: felix/canonical-acme-runtime
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Repair exact optional retention type
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apps/cli/src/acme-runtime-host.ts')
+          text = path.read_text()
+          old = "value.retention as AcmeRuntimeExecutionPolicy['retention']"
+          new = "value.retention as NonNullable<AcmeRuntimeExecutionPolicy['retention']>"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one retention type occurrence, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+          pnpm exec prettier --write apps/cli/src/acme-runtime-host.ts
+      - name: Commit repair and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/acme-0167-retention-type-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/cli/src/acme-runtime-host.ts .github/workflows/acme-0167-retention-type-fix.yml
+          git commit -m "ACME-0167: satisfy exact optional policy typing"
+          git push origin HEAD:felix/canonical-acme-runtime
