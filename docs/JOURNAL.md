@@ -1,5 +1,40 @@
 # Journal
 
+## 2026-08-19 — ACME-0169: optional runnable canonical runtime composition
+
+- Date: 2026-08-19
+- Author: OpenAI assistant
+- Task: ACME-0169, Complete. Archived to
+  `docs/finished/ACME-0169_optional-runnable-canonical-runtime-composition.md`.
+- Delivery: PR #38 adds the private `acme-runtime` executable and one
+  fail-closed service composition over the existing canonical
+  `acme-runtime/1` host/listener, PostgreSQL execution repository and OpenAI
+  Responses adapter. Production configuration is explicit for repository,
+  provider, model, build identity, listener and bearer authorization; there is
+  no memory/mock fallback or hidden model default.
+- Lifecycle and security: the composition-local bearer helper uses
+  `timingSafeEqual` for equal-length UTF-8 token bytes. Missing or invalid
+  configuration fails before listen, failed bind closes composition resources,
+  and normal shutdown is idempotent through SIGINT/SIGTERM.
+- Boundary: no `packages/core`, canonical wire, Evidence V2/Workbench or
+  `docs/poc-1` path changed. The executable is runnable but not deployed; no
+  public URL, TLS, DNS, secret distribution or hosted infrastructure is claimed.
+- Approval: Rickard approved ACME-0169 in PR #38 with `0169 Approved /Z`; the
+  PR merged to `main` as `0a6d9c47ad6807d3fb072ed45358e5cfdbf12f10`.
+- Verification: final head `7f561b1332de43bb63f78a6cbed0b639522d3473`
+  passed canonical CI run `32245847498`: docs, format, lint, typecheck,
+  boundaries, unit, conformance, integration including focused runtime-service
+  tests, deterministic scenarios, build and the complete PostgreSQL suite.
+  Protected-path review is zero-diff; CI made no live provider call and needed
+  no provider credential.
+- Documentation: `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`,
+  `docs/FILESTRUCTURE.md` and this journal now describe the delivered optional
+  composition without claiming deployment.
+- Handoff: `docs/CURRENT_TASK.md` is restored to the template. Stable
+  Connectors and domain-translation reference documentation remain separate
+  work requiring their own claimed and frozen tasks.
+- Signature: OpenAI assistant
+
 ## 2026-08-19 — ACME-0172: task identities are claimed on the trunk
 
 - Date: 2026-08-19
