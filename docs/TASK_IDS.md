@@ -43,3 +43,4 @@ above the floor as well as the active task.
 | ACME-0171 | prose path citations | Claude | 2026-08-19 | concept/docs-first_opensource |
 | ACME-0172 | task ID claim register | Claude | 2026-08-19 | concept/docs-first_opensource |
 | ACME-0173 | docs-first protocol repository bootstrap | Claude | 2026-08-19 | task/acme-0173-protocol-repo-bootstrap |
+| ACME-0174 | deterministic reuse observability | felixnissen | 2026-08-26 | contrib/acme-0174-reuse-observability |
