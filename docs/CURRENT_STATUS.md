@@ -1,5 +1,24 @@
 # Current Status
 
+## Open-source source distribution
+
+ACME repository source is open source under Apache License 2.0, as decided by
+[ADR-0052](adr/0052-apache-2.0-open-source-distribution.md). The standard terms
+are in the root `LICENSE`, and the root package manifest identifies
+`Apache-2.0`. Its npm `private: true` flag remains an accidental-publication
+guard only: no npm package has been published, and open-source source
+distribution does not by itself announce a versioned release, deployment,
+hosted service, support commitment or separate commercial product.
+
+ACME-0175 also completed a content-redacted secret audit of the current tree,
+ignored environment files and every reachable Git revision. No environment
+file is tracked or appears in history, and no high-confidence provider-key,
+platform-token or private-key signature was found. One local `.env.local`
+contains a credential-like `OPENAI_API_KEY`, but Git ignores it and has never
+tracked it; the file and value remain local and were not copied into audit
+evidence. The scoped proof and limitations are recorded in
+[the ACME-0175 acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
+
 ## Canonical external runtime boundary
 
 ACME-0167 adds the accepted [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md)

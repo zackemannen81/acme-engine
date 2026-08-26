@@ -3,6 +3,13 @@
 ACME uses a docs-first workflow. The active task is always defined in
 `docs/CURRENT_TASK.md`.
 
+## License
+
+ACME repository source is licensed under Apache License 2.0. Unless a file
+explicitly says otherwise, contributions submitted for inclusion are expected
+to be distributable under the same license. Do not submit code or assets whose
+terms are incompatible, and never commit credentials or personal data.
+
 ## Required Reading
 
 1. `AGENTS.md`

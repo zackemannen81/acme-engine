@@ -7,6 +7,10 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Project name: ACME
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
+- Distribution: Repository source is open source under Apache License 2.0.
+  Root npm `private: true` prevents accidental registry publication; it does
+  not make the source proprietary or change the license. Publication,
+  deployment and versioned releases require separate explicit authority.
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
 - Current phase: Milestones 1 and 2 delivered; experimental live path proven.
   The contract layer, pure StateEngine and MemoryEngine, in-memory and durable

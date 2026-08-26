@@ -1,13 +1,16 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-08-15
+Last updated: 2026-08-26
 
 ## Identity
 
 - Name: ACME
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
+- Distribution: Open-source repository source under Apache License 2.0. The
+  npm workspace remains private only as a publication guard; no package,
+  deployment, hosted service or versioned release is implied.
 - Phase: Milestones 1 and 2 delivered; experimental live path proven
   (see `docs/CURRENT_STATUS.md`)
 

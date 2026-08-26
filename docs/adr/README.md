@@ -91,6 +91,7 @@ current architecture.
 - [`0049-evidence-v2-surface-set.md`](0049-evidence-v2-surface-set.md)
 - [`0050-evidence-v2-pdf-ingestion-boundary.md`](0050-evidence-v2-pdf-ingestion-boundary.md)
 - [`0051-canonical-acme-runtime-boundary.md`](0051-canonical-acme-runtime-boundary.md)
+- [`0052-apache-2.0-open-source-distribution.md`](0052-apache-2.0-open-source-distribution.md)
 
 The starting point for a new decision is
 [`template.md`](template.md), which is a form rather than a decision and

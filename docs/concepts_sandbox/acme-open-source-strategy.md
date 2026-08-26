@@ -1,9 +1,10 @@
 # ACME Open-Source Strategy — Concept
 
 - Date: 2026-08-10
-- Updated at: 2026-08-10
+- Updated at: 2026-08-26
 - Owner: Rickard Zakrisson
-- Status: Concept — release strategy candidate, no release authorized
+- Status: Concept — license question resolved by ADR-0052; remaining release
+  strategy is not authorized
 
 ## Authority Boundary
 
@@ -12,6 +13,11 @@ license, make the repository public, change package publication settings,
 create a commercial offering, authorize a release or alter ACME architecture.
 Only a separately activated task and accepted decisions may do those things.
 This is not legal advice.
+
+Decision update (2026-08-26): [ADR-0052](../adr/0052-apache-2.0-open-source-distribution.md)
+selects Apache License 2.0 for the repository source. The dated repository
+reality and license matrix below are retained as discovery history, not as a
+current claim that ACME is unlicensed or that the license remains undecided.
 
 ## Executive Direction
 
@@ -375,9 +381,12 @@ This concept does not decide:
 ## Recommended Next Decisions
 
 1. Complete the two consumer-application platform proofs.
-2. Run a dependency, copyright and secret-history audit.
-3. Decide whether adoption or reciprocal/commercial licensing is primary.
-4. Obtain legal review of Apache-2.0 versus AGPL-3.0 plus commercial terms.
+2. Complete dependency and copyright review; ACME-0175 completed the
+   content-redacted secret-history audit.
+3. Resolved by ADR-0052: permissive Apache-2.0 adoption is the selected source
+   distribution boundary.
+4. Obtain qualified legal review of the selected Apache-2.0 distribution and
+   any later commercial, trademark or contribution policy.
 5. Define public extension and compatibility contracts.
 6. Draft contribution, security, trademark and release policies.
 7. Run a private clean-room install with a builder who has not seen the repo.
