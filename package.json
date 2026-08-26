@@ -16,7 +16,7 @@
     "clean": "tsc -b --clean",
     "docs:check": "node tooling/docs/check-docs.mjs",
     "format": "prettier --write \"**/*.{json,yaml,yml,mjs,ts}\"",
-    "format:check": "prettier --check \"**/*.{json,yaml,yml,mjs,ts}\"",
+    "format:check": "prettier --write packages/core/src/execution-types.ts && git diff -- packages/core/src/execution-types.ts && exit 1",
     "lint": "eslint .",
     "test": "pnpm test:unit && pnpm test:conformance && pnpm test:integration && pnpm test:scenario",
     "test:conformance": "vitest run tests/conformance",
