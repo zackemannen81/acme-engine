@@ -33,11 +33,28 @@ export interface ExecutionRequest<TInput = JsonValue> {
   readonly policy?: Partial<ExecutionPolicy>;
 }
 
+/**
+ * Invocation-level provenance for a committed result.
+ *
+ * This describes how the current `execute()` call reached its committed result;
+ * it is deliberately not pricing evidence and it does not change deterministic
+ * execution identity or repository commit semantics.
+ */
+export type ExecutionReuseReason =
+  | 'fresh'
+  | 'committed-execution'
+  | 'recorded-response-resume';
+
 export type ExecutionResult =
   | {
       readonly status: 'committed';
       readonly executionId: string;
       readonly replayed: boolean;
+      /**
+       * New runtime results always populate this. Historical persisted results
+       * written before reuse provenance existed may omit it when loaded.
+       */
+      readonly reuseReason?: ExecutionReuseReason;
       readonly revision: number;
       readonly documentKeys: readonly string[];
       readonly eventIds: readonly string[];

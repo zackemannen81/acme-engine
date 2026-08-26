@@ -184,6 +184,7 @@ describe('ExecutionEngine neutral integration', () => {
       status: 'committed',
       executionId: subject.executionId,
       replayed: false,
+      reuseReason: 'fresh',
       revision: 1,
       documentKeys: ['neutral-document-1'],
       eventIds: [],
@@ -245,7 +246,11 @@ describe('ExecutionEngine neutral integration', () => {
         retention: 'none',
       },
     });
-    expect(repeated).toEqual({ ...first, replayed: true });
+    expect(repeated).toEqual({
+      ...first,
+      replayed: true,
+      reuseReason: 'committed-execution',
+    });
     expect(subject.gateway.invocations()).toHaveLength(1);
     expect(subject.ids).toHaveBeenCalledTimes(3);
     expect(subject.repository.snapshot()).toEqual(beforeReplay);
@@ -589,6 +594,11 @@ describe('ExecutionEngine neutral integration', () => {
   it('resumes an interrupted execution from the recorded model call', async () => {
     const clean = fixture();
     const cleanResult = await clean.engine.execute(clean.request);
+    expect(cleanResult).toMatchObject({
+      status: 'committed',
+      replayed: false,
+      reuseReason: 'fresh',
+    });
     const cleanDigest = (
       await clean.repository.loadReplayEvidence(clean.executionId)
     )?.preparedCommit.operationDigest;
@@ -616,9 +626,11 @@ describe('ExecutionEngine neutral integration', () => {
       ids: createIds().ids,
       gateway: forbiddenGateway,
     });
-    await expect(resumed.execute(subject.request)).resolves.toEqual(
-      cleanResult,
-    );
+    const resumedResult = await resumed.execute(subject.request);
+    expect(resumedResult).toEqual({
+      ...cleanResult,
+      reuseReason: 'recorded-response-resume',
+    });
     expect(subject.gateway.invocations()).toHaveLength(1);
     expect(
       (await subject.repository.loadReplayEvidence(subject.executionId))
@@ -802,6 +814,7 @@ describe('ExecutionEngine neutral integration', () => {
     await expect(resumed.execute(subject.request)).resolves.toMatchObject({
       status: 'committed',
       revision: 1,
+      reuseReason: 'fresh',
     });
     expect(subject.gateway.invocations()).toHaveLength(1);
   });
