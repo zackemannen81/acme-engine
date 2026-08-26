@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0169
+Task ID:
 Parent Task: None
-Status: In Progress
-Owner: Felix Nissen / Rickard Zakrisson review
-Created: 2026-08-19
-Last updated: 2026-08-19
-Charter frozen at: 2026-08-19T12:48+02:00
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,136 +18,91 @@ Charter frozen at: 2026-08-19T12:48+02:00
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/adr/0051-canonical-acme-runtime-boundary.md`
-- GitHub issue #36, Rickard decision A
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-Add one optional runnable standalone process that composes the already-canonical `acme-runtime/1` host/listener with the existing PostgreSQL execution repository and OpenAI Responses gateway. This is the upstream form of the verified Felix runtime-service experiment, rewritten against current canonical runtime APIs and current `main` rather than porting the old AAL contract.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
-The charter is frozen. Goal, primary deliverable, scope and Definition of Done must not expand inside ACME-0169.
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
 
 ### Goal
 
-Make canonical `acme-runtime/1` optionally runnable as an explicit fail-closed ACME process without changing engine semantics, core, the runtime wire contract or frozen POC #1.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-A private CLI executable/service mode named `acme-runtime` that starts the existing canonical runtime host/listener using explicit PostgreSQL + OpenAI composition and shuts down cleanly.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Add service configuration parsing with explicit repository/provider/model/listen/build/auth choices.
-- Require PostgreSQL for the first runnable composition; reuse the existing CLI PostgreSQL composition.
-- Require OpenAI Responses for the first runnable provider composition; reuse the existing OpenAI adapter and fetch transport.
-- Require an explicit runtime build identity for the canonical compatibility descriptor; no repository/fork pin may be hard-coded.
-- Add an optional bearer authorizer helper local to the runnable composition, using constant-time comparison.
-- Add `acme-runtime` executable entry point with graceful SIGINT/SIGTERM shutdown and bounded non-secret startup output.
-- Add focused offline tests for configuration, composition wiring, auth and lifecycle using injected composition/provider transport where practical.
-- Update package/bin exports and long-lived docs required by the task.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- Any change to `packages/core/**`.
-- Any change to canonical `acme-runtime/1` wire semantics or compatibility endpoint shape.
-- Any change to Evidence V2/Workbench or `docs/poc-1/**`.
-- New provider abstraction semantics, provider auto-detection or hidden model defaults.
-- Memory/mock fallback in service mode.
-- Runtime deployment, public URL, TLS, DNS, secret distribution, scheduler or hosted infrastructure.
-- OAuth, application ReviewItem/materialization, business mutation or Arbetsyta queue/orchestration.
-- Stable Connectors abstraction (separate approved task after this task closes).
-- Domain-translation reference documentation (separate docs task after this task closes).
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- `acme-runtime` can be built as a Node executable and starts only from complete explicit production configuration.
-- Missing/unsupported repository, provider, model, build identity, auth or listener configuration fails before opening the listener.
-- Default service composition uses PostgreSQL + OpenAI through existing adapters; there is no production memory/mock fallback and no hidden model default.
-- Runtime descriptor is canonical `acme-runtime/1` and receives `engineBuild` from explicit service configuration.
-- Bearer authorization rejects absent/wrong credentials and compares equal-length secret bytes in constant time; the canonical host remains auth-scheme agnostic.
-- Listener and composition resources close idempotently and failed listen closes composition resources.
-- Focused tests plus all canonical repository gates pass.
-- Protected paths have zero task diff: `packages/core`, Evidence V2/Workbench protected paths, and `docs/poc-1`.
-- Long-lived docs describe the optional runnable composition without claiming deployment.
-- Task is archived and `CURRENT_TASK` restored only after final docs-inclusive canonical CI is green.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] `pnpm format:check`
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] package-boundary gate
-- [ ] unit suite
-- [ ] conformance suite
-- [ ] integration suite including focused runtime-service tests
-- [ ] deterministic scenario suite
-- [ ] build
-- [x] complete PostgreSQL adapter suite
-- [x] protected-path zero-diff review
-- [x] no live provider call and no credential required by CI
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
 
 ## References
 
-- `docs/adr/0051-canonical-acme-runtime-boundary.md`
-- `apps/cli/src/acme-runtime-host.ts`
-- `apps/cli/src/acme-runtime-listener.ts`
-- `apps/cli/src/composition.ts`
-- Felix reference implementation: `felixnissen/acme-engine` PR #7 (`FELIX-ACME-0001`)
-- Rickard decision: issue #36 comment `A yes — Behåll som alternativ/valbar körbar för canonical acme-runtime/1`
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [x] Confirm ACME-0169 is unused and start from current upstream `main` after PR #35.
-- [x] Read canonical runtime and current CLI composition boundaries.
-- [x] Freeze ACME-0169 charter.
-- [x] Implement canonical runtime service configuration/composition.
-- [x] Implement bearer helper and executable lifecycle entry point.
-- [x] Add focused offline tests.
-- [x] Open isolated PR and verify protected-path diff.
-- [ ] Run and repair full canonical CI without expanding scope.
-- [ ] Synchronize long-lived documentation and archive task.
-- [ ] Run final docs-inclusive canonical CI and hand off to Rickard.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- This task consumes Rickard's explicit approval for item A in GitHub issue #36.
-- PR #33/ADR-0051 remain authoritative for the runtime protocol. Service composition may compose that boundary but must not redefine it.
-- PostgreSQL and OpenAI are one optional runnable composition, not requirements of the runtime protocol itself.
-- The service is tested offline through injected composition/provider transport; CI makes no live OpenAI call.
-- First canonical run `32245022575` proved PostgreSQL + emitted-package TypeScript green. `verify` stopped only at Prettier on the two newly added TypeScript files. Repo Prettier 3.9.6 then formatted those files through a self-cleaning one-shot branch workflow.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
 
 -none
 
 ## Verification
 
-- First run `32245022575`: `postgres` passed completely; `verify` stopped at formatting before lint/typecheck/test/build stages.
-- Canonical formatter applied to `apps/cli/src/acme-runtime-service.ts` and `tests/integration/acme-runtime-service.test.ts`; helper workflow removed itself.
-- Full post-format canonical run pending.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
 
 ## Documentation Updates
 
 - [ ] `docs/CURRENT_STATUS.md`
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md`
-- [ ] ADR update/new ADR only if implementation changes a long-lived decision beyond ADR-0051
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: Draft PR #38 contains the optional canonical runtime composition, offline tests and no protected-path changes; canonical formatting has been applied.
-- Next recommended step: let full post-format canonical CI expose any remaining type/lint/test issue, then repair only task-scoped failures.
-- Blockers: None.
-- Child tasks: None.
-- Resume condition: N/A.
-- Open questions: None inside the frozen charter.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
 - Archive this file under `docs/finished/`.
-- Restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+- Restore this template or populate the next approved task.
 - Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changes, supersede this task instead of rewriting it.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

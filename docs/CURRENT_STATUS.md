@@ -13,15 +13,24 @@ standardized by the protocol.
 The Fetch host validates fail-closed, bounds bodies at 1 MiB, propagates
 cancellation to `ExecutionEngine.execute` and forwards terminal ACME semantics
 without transport reclassification. A thin Node HTTP listener supplies real
-loopback transport and disconnect propagation. Postgres/OpenAI process
-composition, bearer helpers, deployment, TLS and DNS remain explicitly outside
-this boundary and are not claimed as delivered or live.
+loopback transport and disconnect propagation.
 
-The final combined branch after ACME-0168 repaired the stale PostgreSQL restart
-fixture passed canonical CI run `32235955771`: docs, format, lint, typecheck,
-boundaries, unit, conformance, integration, deterministic scenarios, build and
-the complete PostgreSQL suite. The runtime PR changes no protected core,
-Evidence V2/Workbench or `docs/poc-1` path.
+ACME-0169 adds the optional private `acme-runtime` Node executable. It composes
+the canonical host/listener with the existing PostgreSQL execution repository
+and OpenAI Responses adapter from complete explicit configuration. Service mode
+fails before listening unless repository, provider, model, build identity,
+bearer token and listener choices are present; it has no memory/mock production
+fallback or hidden model default. Its local bearer helper uses constant-time
+comparison for equal-length token bytes, and listener/composition resources
+close idempotently on shutdown or failed bind. This is a runnable composition,
+not a deployment: no public URL, TLS, DNS, secret distribution or hosted
+infrastructure is claimed.
+
+PR #38 was approved by Rickard and merged. Its final head passed canonical CI
+run `32245847498`, including documentation, format, lint, typecheck, boundaries,
+unit, conformance, integration, deterministic scenarios, build and the complete
+PostgreSQL suite. Protected core, Evidence V2/Workbench and `docs/poc-1` paths
+have zero task diff.
 
 ## Open: real-source acceptance blocked, application model being replaced
 
