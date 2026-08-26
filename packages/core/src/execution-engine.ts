@@ -760,7 +760,11 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
       const result = acceptance.execution.result;
       if (result !== undefined) {
         return result.status === 'committed'
-          ? deepFreeze({ ...result, replayed: true })
+          ? deepFreeze({
+              ...result,
+              replayed: true,
+              reuseReason: 'committed-execution',
+            })
           : result;
       }
     }
@@ -1211,6 +1215,10 @@ class SingleTaskExecutionEngine implements ExecutionEngine {
       status: 'committed',
       executionId,
       replayed: false,
+      reuseReason:
+        resumption?.recordedResponse === undefined
+          ? 'fresh'
+          : 'recorded-response-resume',
       revision: committed.revision,
       documentKeys: committed.documentKeys,
       eventIds: committed.eventIds,
