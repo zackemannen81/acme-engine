@@ -23,4 +23,5 @@ cited file keeps its path, so that a frozen report never points at nothing.
 | [`ACME-0133-frozen-acceptance-report.md`](ACME-0133-frozen-acceptance-report.md) | Frozen immutable evaluation output, outcome-blind |
 | [`ACME-0136-frozen-acceptance-report.md`](ACME-0136-frozen-acceptance-report.md) | Frozen immutable evaluation output, outcome-blind |
 | [`ACME-0136-post-freeze-comparison.md`](ACME-0136-post-freeze-comparison.md) | Separate from the frozen report; compared 2026-08-16 |
+| [`ACME-0175-open-source-secret-audit.md`](ACME-0175-open-source-secret-audit.md) | Verified scoped credential audit, 2026-08-26 |
 | [`poc-1-reusable-execution-proof.md`](poc-1-reusable-execution-proof.md) | Measured and scoped, 2026-08-17, from the ACME-0154 run under ACME-0155 |

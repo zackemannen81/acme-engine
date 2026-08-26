@@ -2,6 +2,12 @@
 
 **Adaptive Context Memory Engine**
 
+ACME is open-source software licensed under the
+[Apache License 2.0](LICENSE). The source license and publication state are
+separate: this workspace deliberately remains `private: true` in npm metadata
+to prevent accidental registry publication, and no package, hosted service or
+versioned release is implied by making the repository source open source.
+
 ACME is a greenfield project for building and evaluating a domain-neutral,
 replayable AI execution engine. Narrative is the first reference module, not
 the engine itself.
@@ -53,6 +59,7 @@ application. Start at [docs/poc-1/](docs/poc-1/README.md):
 ## Repository map
 
 ```text
+LICENSE                   Apache License 2.0 for the repository source
 AGENTS.md                 Agent and contributor guardrails
 docs/PROJECT_BRIEF.md     Approved direction and scope
 docs/CURRENT_TASK.md      Active task and acceptance criteria
@@ -82,6 +89,16 @@ packages/module-research/ Research observe-evidence reference module
 packages/testing/         Conformance kits and ScenarioRunner v1/v2 support
 tooling/                   Shared configuration and repository checks
 ```
+
+## License and distribution boundary
+
+Repository source is available under Apache-2.0, including its explicit patent
+grant and permission for commercial use, modification and redistribution.
+Third-party dependencies and incorporated materials retain their own license
+terms. The license does not grant trademark rights and creates no promise of
+support, warranty, certification, deployment, hosted operation or a separate
+commercial product. See [ADR-0052](docs/adr/0052-apache-2.0-open-source-distribution.md)
+for the durable boundary.
 
 ## Current objective
 

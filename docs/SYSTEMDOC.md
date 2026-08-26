@@ -1,5 +1,27 @@
 # System Documentation
 
+## Source distribution and publication boundary
+
+[ADR-0052](adr/0052-apache-2.0-open-source-distribution.md) makes the ACME
+repository source open source under Apache License 2.0. The root `LICENSE` is
+the normative license text and `package.json` declares `Apache-2.0` while
+retaining `private: true`. That manifest flag controls npm publication safety;
+it is not an access-control mechanism and does not alter source-license rights.
+
+This source-distribution boundary does not publish a package, create a release
+or deploy a service. Apache-2.0 permits commercial use and proprietary
+embedding subject to its terms, but grants no trademark rights and promises no
+support, warranty, certification, hosting or separate commercial edition.
+Third-party components continue under their own upstream licenses.
+
+Credentials remain environment-only. `.gitignore` excludes `.env` and
+`.env.*` while allowing placeholder-only `.env.example` files. Audit evidence
+must be content-redacted: record the rule, path/revision and classification,
+never a candidate value. A confirmed exposed secret requires removal from the
+current tree, immediate owner/provider escalation and rotation; removing a
+file alone neither revokes the credential nor erases Git history. The current
+proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
+
 ## Canonical external runtime boundary
 
 [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md) defines

@@ -1,11 +1,18 @@
 # File Structure
 
-Last updated: 2026-08-19
+Last updated: 2026-08-26
+
+The repository source is open source under the root Apache-2.0 `LICENSE`.
+`package.json` remains npm-private as a publication guard, not as a source
+access or licensing statement.
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
 ```text
 acme-engine/
+├── LICENSE
+├── README.md
+├── package.json
 ├── .github/
 │   └── workflows/
 │       └── ci.yml

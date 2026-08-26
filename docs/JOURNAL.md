@@ -1,5 +1,45 @@
 # Journal
 
+## 2026-08-26 — ACME-0175: Apache-2.0 source distribution and credential audit
+
+- Date: 2026-08-26
+- Author: Codex
+- Task: ACME-0175, Complete. Archived to
+  `docs/finished/ACME-0175_open-source-commercial-readiness.md`.
+- Decision: [ADR-0052](adr/0052-apache-2.0-open-source-distribution.md)
+  makes ACME repository source open source under Apache License 2.0. The root
+  standard `LICENSE` text and `package.json` SPDX identifier now agree.
+- Boundary: root npm `private: true` remains an accidental-publication guard,
+  not a proprietary-source statement. No package, release, tag, deployment,
+  hosted service, certification, support promise or separate commercial
+  edition was created. Apache-2.0 permits commercial use but grants no
+  trademark rights or warranty.
+- Documentation: root README, project identity, contribution rules, current
+  status, system documentation, file structure and the historical strategy
+  concept now distinguish source licensing from publication and deployment.
+  [The acceptance record](acceptance/ACME-0175-open-source-secret-audit.md)
+  preserves the content-redacted audit evidence and response policy.
+- Credential audit: 911 current repository files and all 227 reachable Git
+  revisions were inventoried. There are zero tracked `.env*` paths, zero such
+  paths in reachable history and zero boundary-aware high-confidence key/token
+  or private-key hits in the working repository or history. The five generic
+  assignment paths reduce to runtime environment reads, documentation
+  placeholders and one explicit synthetic local-development credential.
+- Local environment: one `.env.local` exists with a credential-like
+  `OPENAI_API_KEY`; it is ignored, untracked and absent from reachable
+  history. Its value was never printed or copied, and the file was left
+  untouched. With no exposure evidence, the audit does not indicate rotation.
+- Verification: `pnpm docs:check` passed 318 Markdown files with 31 pre-existing
+  historical-path warnings and zero gates; `pnpm format:check` passed;
+  `git diff --check` passed; the normalized root license exactly matches the
+  verified Apache-2.0 reference; protected runtime/product path diff is zero.
+  No runtime test was required because behavior and runtime source are
+  unchanged.
+- External effects: `origin/main` was fast-forwarded locally to `626eff2` and
+  work was performed on `felix/acme-0175-open-source-commercial-readiness`.
+  Nothing was pushed, published, tagged, released or deployed.
+- Signature: Codex
+
 ## 2026-08-19 — ACME-0173: the docs-first model is extracted to its own repository
 
 - Date: 2026-08-19
