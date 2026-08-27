@@ -174,6 +174,7 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
       status: 'committed',
       executionId,
       replayed: false,
+      reuseReason: 'fresh',
       revision: 1,
       documentKeys: ['chapter-phase-5'],
       eventIds: ['event-narrative-phase-5-001'],
@@ -219,7 +220,11 @@ describe('NarrativeModule Phase 5 offline acceptance', () => {
     expect(id.next).toHaveBeenCalledTimes(6);
 
     const repeated = await engine.execute(request);
-    expect(repeated).toEqual({ ...first, replayed: true });
+    expect(repeated).toEqual({
+      ...first,
+      replayed: true,
+      reuseReason: 'committed-execution',
+    });
     expect(repository.snapshot()).toEqual(committedEvidence);
     expect(gateway.invocations()).toHaveLength(1);
     expect(id.next).toHaveBeenCalledTimes(6);
