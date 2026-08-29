@@ -41,9 +41,7 @@ export interface ExecutionRequest<TInput = JsonValue> {
  * execution identity or repository commit semantics.
  */
 export type ExecutionReuseReason =
-  | 'fresh'
-  | 'committed-execution'
-  | 'recorded-response-resume';
+  'fresh' | 'committed-execution' | 'recorded-response-resume';
 
 export type ExecutionResult =
   | {

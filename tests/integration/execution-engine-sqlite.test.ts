@@ -167,6 +167,7 @@ describe('ExecutionEngine durable SQLite integration', () => {
       status: 'committed',
       executionId,
       replayed: false,
+      reuseReason: 'fresh',
       revision: 1,
       documentKeys: ['neutral-document-1'],
       eventIds: [],
@@ -201,7 +202,11 @@ describe('ExecutionEngine durable SQLite integration', () => {
       forbiddenIds,
       gateway,
     ).execute(executionRequest);
-    expect(repeated).toEqual({ ...committed, replayed: true });
+    expect(repeated).toEqual({
+      ...committed,
+      replayed: true,
+      reuseReason: 'committed-execution',
+    });
     expect(gateway.invocations()).toHaveLength(1);
     expect(recovered.snapshot()).toEqual(snapshotBeforeClose);
   });
@@ -307,6 +312,7 @@ describe('ExecutionEngine durable SQLite integration', () => {
       status: 'committed',
       executionId,
       replayed: false,
+      reuseReason: 'recorded-response-resume',
       revision: 1,
       documentKeys: ['neutral-document-1'],
       eventIds: [],

@@ -339,6 +339,7 @@ describe('ResearchModule Phase 5 offline acceptance', () => {
       status: 'committed',
       executionId: stepA.executionId,
       replayed: false,
+      reuseReason: 'fresh',
       revision: 1,
       documentKeys: ['research-phase-5-a'],
       eventIds: [],
@@ -513,7 +514,11 @@ describe('ResearchModule Phase 5 offline acceptance', () => {
     for (const step of executed) {
       // Repeating a committed request returns the recorded result.
       const repeated = await step.engine.execute(step.request);
-      expect(repeated).toEqual({ ...step.result, replayed: true });
+      expect(repeated).toEqual({
+        ...step.result,
+        replayed: true,
+        reuseReason: 'committed-execution',
+      });
       expect(step.gateway.invocations()).toHaveLength(1);
     }
 
