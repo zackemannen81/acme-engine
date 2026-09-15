@@ -1,7 +1,9 @@
 import {
   AcmeError,
+  isJsonModelOutput,
   type JsonValue,
   type ModelContentPart,
+  type ModelFunctionTool,
   type ModelRequest,
 } from '@acme/core';
 
@@ -23,20 +25,35 @@ function invalid(message: string, details?: JsonValue): never {
 
 function partText(part: ModelContentPart, index: number): string {
   if (part.type !== 'text') {
-    // Vision and tool results are out of scope for this adapter. Dropping them
-    // would silently change the request, so they are rejected instead.
-    invalid('The OpenAI Responses adapter accepts text content only.', {
-      partIndex: index,
-      partType: part.type,
-    });
+    invalid(
+      'The OpenAI Responses adapter cannot flatten this content part as text.',
+      {
+        partIndex: index,
+        partType: part.type,
+      },
+    );
   }
   return part.text;
+}
+
+function toolParameters(tool: ModelFunctionTool, index: number): JsonValue {
+  try {
+    return lowerStrictStructuredOutputSchema(tool.parameters);
+  } catch (error) {
+    if (error instanceof AcmeError) {
+      throw error;
+    }
+    invalid('Function tool parameters could not be lowered for the provider.', {
+      toolIndex: index,
+      toolName: tool.name,
+    });
+  }
 }
 
 export interface ResponsesBodyBuild {
   readonly body: JsonValue;
   /** Hash of the lowered schema that is actually sent on the wire. */
-  readonly providerWireSchemaHash: string;
+  readonly providerWireSchemaHash?: string;
 }
 
 /**
@@ -69,34 +86,117 @@ export function buildResponsesBody(
   const input: JsonValue[] = [];
 
   request.messages.forEach((message, messageIndex) => {
-    const text = message.content
-      .map((part, partIndex) => partText(part, partIndex))
-      .join('');
-    if (message.role === 'tool') {
-      invalid('Tool messages are out of scope for this adapter.', {
-        messageIndex,
-      });
-    }
     if (message.role === 'system') {
+      const text = message.content
+        .map((part, partIndex) => partText(part, partIndex))
+        .join('');
       instructions.push(text);
       return;
     }
-    input.push({
-      role: message.role,
-      content: [{ type: 'input_text', text }],
-    });
+    if (message.role === 'tool') {
+      for (const part of message.content) {
+        if (part.type !== 'tool-result') {
+          invalid('Tool messages may only contain tool-result parts.', {
+            messageIndex,
+            partType: part.type,
+          });
+        }
+        input.push({
+          type: 'function_call_output',
+          call_id: part.toolCallId,
+          output: JSON.stringify(part.value),
+        });
+      }
+      return;
+    }
+    const textParts = message.content.filter((part) => part.type === 'text');
+    const toolCallParts = message.content.filter(
+      (part) => part.type === 'tool-call',
+    );
+    const other = message.content.filter(
+      (part) => part.type !== 'text' && part.type !== 'tool-call',
+    );
+    if (other.length > 0) {
+      invalid('The OpenAI Responses adapter cannot map this content part.', {
+        messageIndex,
+        partType: other[0]?.type ?? 'unknown',
+      });
+    }
+    if (textParts.length > 0) {
+      input.push({
+        role: message.role,
+        content: [
+          {
+            type: 'input_text',
+            text: textParts
+              .map((part, partIndex) => partText(part, partIndex))
+              .join(''),
+          },
+        ],
+      });
+    }
+    for (const part of toolCallParts) {
+      if (part.type !== 'tool-call') {
+        continue;
+      }
+      input.push({
+        type: 'function_call',
+        call_id: part.toolCallId,
+        name: part.name,
+        arguments: JSON.stringify(part.arguments),
+      });
+    }
   });
 
   if (input.length === 0) {
     invalid('A model request requires at least one non-system message.');
   }
 
-  // Preflight: an unlowerable schema raises UNSUPPORTED_CAPABILITY before any
-  // transport call, so a bad contract never spends tokens.
-  const wireSchema = lowerStrictStructuredOutputSchema(
-    request.output.jsonSchema,
-  );
-  const providerWireSchemaHash = computeProviderWireSchemaHash(wireSchema);
+  const tools =
+    request.tools === undefined
+      ? undefined
+      : request.tools.map((tool, index) =>
+          immutableJson({
+            type: 'function',
+            name: tool.name,
+            ...(tool.description === undefined
+              ? {}
+              : { description: tool.description }),
+            parameters: toolParameters(tool, index),
+            strict: true,
+          }),
+        );
+
+  if (isJsonModelOutput(request.output)) {
+    const wireSchema = lowerStrictStructuredOutputSchema(
+      request.output.jsonSchema,
+    );
+    return {
+      body: immutableJson({
+        model,
+        ...(instructions.length === 0
+          ? {}
+          : { instructions: instructions.join('\n\n') }),
+        input,
+        ...(tools === undefined ? {} : { tools }),
+        text: {
+          format: {
+            type: 'json_schema',
+            name: request.output.schemaName,
+            schema: wireSchema,
+            strict: true,
+          },
+        },
+        ...(request.temperature === undefined
+          ? {}
+          : { temperature: request.temperature }),
+        ...(request.maxOutputTokens === undefined
+          ? {}
+          : { max_output_tokens: request.maxOutputTokens }),
+      }),
+      providerWireSchemaHash: computeProviderWireSchemaHash(wireSchema),
+    };
+  }
 
   return {
     body: immutableJson({
@@ -105,14 +205,8 @@ export function buildResponsesBody(
         ? {}
         : { instructions: instructions.join('\n\n') }),
       input,
-      text: {
-        format: {
-          type: 'json_schema',
-          name: request.output.schemaName,
-          schema: wireSchema,
-          strict: true,
-        },
-      },
+      ...(tools === undefined ? {} : { tools }),
+      text: { format: { type: 'text' } },
       ...(request.temperature === undefined
         ? {}
         : { temperature: request.temperature }),
@@ -120,6 +214,5 @@ export function buildResponsesBody(
         ? {}
         : { max_output_tokens: request.maxOutputTokens }),
     }),
-    providerWireSchemaHash,
   };
 }

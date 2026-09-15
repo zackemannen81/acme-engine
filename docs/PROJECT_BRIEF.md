@@ -210,6 +210,13 @@ call is recoverable without calling the provider again, an interrupted
 transaction is proven to leave no partial state, and committed events can
 leave the outbox.
 
+ACME also exposes a distinct model-only execution runtime,
+`acme-model-runtime/1` ([ADR-0053](adr/0053-model-only-execution-runtime.md)).
+An external product may hand ACME one already-prepared text/tool model request
+and receive streamed provider execution, cancellation and durable evidence
+without invoking ACME domain modules, memory or state. That path does not
+replace or overload `acme-runtime/1` full task execution.
+
 ACME-0077 through ACME-0087, with corrective child ACME-0089, delivered
 Evidence Integrity slices 0–8: the fixed synthetic corpus, observation,
 relation, timeline and assessment tasks, the complete primary reviewer journey,

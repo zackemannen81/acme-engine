@@ -8,6 +8,7 @@ import type {
   ProviderTransport,
   ProviderTransportRequest,
   ProviderTransportResult,
+  ProviderTransportStreamEvent,
 } from '../src/transport.js';
 
 export const fixtureNow = '2026-07-31T12:00:00.000Z';
@@ -164,18 +165,41 @@ export function fixtureTransport(
 ): RecordingTransport {
   const sent: ProviderTransportRequest[] = [];
   let index = 0;
+  const nextResult = (
+    request: ProviderTransportRequest,
+  ): ProviderTransportResult => {
+    sent.push(request);
+    const result = results[Math.min(index, results.length - 1)];
+    index += 1;
+    if (result === undefined) {
+      throw new Error('The fixture transport has no scripted result.');
+    }
+    return result;
+  };
   return {
     sent,
     async send(request) {
-      sent.push(request);
-      const result = results[Math.min(index, results.length - 1)];
-      index += 1;
-      if (result === undefined) {
-        throw new Error('The fixture transport has no scripted result.');
+      return nextResult(request);
+    },
+    async *stream(request): AsyncIterable<ProviderTransportStreamEvent> {
+      const result = nextResult(request);
+      if (result.kind === 'no-response') {
+        yield result;
+        return;
       }
-      return result;
+      yield {
+        kind: 'response-start',
+        status: result.status,
+        headers: result.headers,
+      };
+      yield { kind: 'chunk', text: result.body };
+      yield { kind: 'response-end' };
     },
   };
+}
+
+export function sseBody(events: readonly string[]): string {
+  return `${events.join('\n\n')}\n\n`;
 }
 
 export function ok(body: string): ProviderTransportResult {

@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-26
+Last updated: 2026-09-15
 
 The repository source is open source under the root Apache-2.0 `LICENSE`.
 `package.json` remains npm-private as a publication guard, not as a source
@@ -24,6 +24,8 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
+│   │   │   ├── acme-model-runtime-host.ts
+│   │   │   ├── acme-model-runtime-wire.ts
 │   │   │   ├── acme-runtime-host.ts
 │   │   │   ├── acme-runtime-listener.ts
 │   │   │   ├── acme-runtime-service-main.ts
@@ -147,10 +149,12 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/
 │   │   │   ├── index.ts
+│   │   │   ├── model-execution-repository.ts
 │   │   │   ├── quality-evaluation-store.ts
 │   │   │   └── repository.ts
 │   │   └── test/
 │   │       ├── encrypted-payload.test.ts
+│   │       ├── model-execution-repository.test.ts
 │   │       └── repository.test.ts
 │   ├── adapter-model-mock/
 │   │   ├── package.json
@@ -169,6 +173,7 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   ├── request.ts
 │   │   │   ├── schema-lower.ts
+│   │   │   ├── sse.ts
 │   │   │   ├── transport.ts
 │   │   │   ├── transport-fetch.ts
 │   │   │   └── wire.ts
@@ -191,6 +196,7 @@ acme-engine/
 │   │   │   ├── driver-errors.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrations.ts
+│   │   │   ├── model-execution-repository.ts
 │   │   │   ├── quality-evaluation-store.ts
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
@@ -198,6 +204,7 @@ acme-engine/
 │   │       ├── driver-errors.test.ts
 │   │       ├── encrypted-payload.test.ts
 │   │       ├── migrations.test.ts
+│   │       ├── model-execution-repository.test.ts
 │   │       └── quality-evaluation-store.test.ts
 │   ├── adapter-postgres/
 │   │   ├── package.json
@@ -260,6 +267,9 @@ acme-engine/
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
 │   │   │   ├── model-call-usage.ts
+│   │   │   ├── model-execution-engine.ts
+│   │   │   ├── model-execution-identity.ts
+│   │   │   ├── model-execution-types.ts
 │   │   │   ├── model-request-hash.ts
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
@@ -270,6 +280,7 @@ acme-engine/
 │   │   │   ├── response-pipeline.ts
 │   │   │   ├── repository-digest.ts
 │   │   │   ├── repository-model-call.ts
+│   │   │   ├── repository-model-execution.ts
 │   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
 │   │   │   ├── state-projection.ts
@@ -279,7 +290,9 @@ acme-engine/
 │   │   │   ├── execution-identity.test.ts
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
+│   │   │   ├── model-execution-engine.test.ts
 │   │   │   ├── model-request-hash.test.ts
+│   │   │   ├── model-validation-text-tools.test.ts
 │   │   │   ├── outbox.test.ts
 │   │   │   ├── payload-encryptor.test.ts
 │   │   │   ├── repository-digest.test.ts
@@ -519,6 +532,7 @@ acme-engine/
 │   │   ├── postgres-gates.test.ts
 │   │   └── quality-evaluation-postgres.conformance.test.ts
 │   ├── integration/
+│   │   ├── acme-model-runtime-listener.test.ts
 │   │   ├── acme-runtime-host.test.ts
 │   │   ├── acme-runtime-listener.test.ts
 │   │   ├── acme-runtime-service.test.ts
@@ -527,6 +541,7 @@ acme-engine/
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
 │   │   ├── execution-repair.test.ts
+│   │   ├── model-execution-boundary.test.ts
 │   │   ├── evidence-coverage-windows.test.ts
 │   │   ├── evidence-observe-engine.test.ts
 │   │   ├── scenario-live-offline.test.ts
@@ -633,6 +648,8 @@ acme-engine/
 │   │   ├── 0049-evidence-v2-surface-set.md
 │   │   ├── 0050-evidence-v2-pdf-ingestion-boundary.md
 │   │   ├── 0051-canonical-acme-runtime-boundary.md
+│   │   ├── 0052-apache-2.0-open-source-distribution.md
+│   │   ├── 0053-model-only-execution-runtime.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -674,6 +691,7 @@ acme-engine/
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
+│   │   ├── acme-model-runtime-1.md
 │   │   ├── domain-test-ui-specification.md
 │   │   ├── evidence-integrity-workbench-product-completion-plan.md
 │   │   ├── evidence-integrity-workbench-product-definition.md

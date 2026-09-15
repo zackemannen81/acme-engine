@@ -101,4 +101,28 @@ describe(ACME_MODEL_REQUEST_HASH_ALGORITHM, () => {
       }),
     ).not.toBe(computeModelRequestHash(original));
   });
+
+  it('keeps historical json identities when tools are omitted', () => {
+    expect(computeModelRequestHash(request())).toBe(
+      'b0ae4b222a04c393ed24e1364b93d828211af5885f721de55f72ff5e76b46bd3',
+    );
+    expect(
+      computeModelRequestHash({
+        ...request(),
+        output: { mode: 'text' },
+      }),
+    ).not.toBe(computeModelRequestHash(request()));
+    expect(
+      computeModelRequestHash({
+        ...request(),
+        tools: [
+          {
+            type: 'function',
+            name: 'lookup',
+            parameters: { type: 'object' },
+          },
+        ],
+      }),
+    ).not.toBe(computeModelRequestHash(request()));
+  });
 });

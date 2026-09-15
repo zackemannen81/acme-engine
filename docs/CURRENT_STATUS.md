@@ -19,6 +19,24 @@ tracked it; the file and value remain local and were not copied into audit
 evidence. The scoped proof and limitations are recorded in
 [the ACME-0175 acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Model-only execution runtime
+
+ACME-0176 adds the accepted [ADR-0053](adr/0053-model-only-execution-runtime.md)
+model-only execution owner and the frozen `acme-model-runtime/1` wire in
+[the protocol document](design/acme-model-runtime-1.md). `POST /v1/execute`
+remains full `ExecutionEngine` task execution under ADR-0051.
+
+The owner executes one already-prepared text/tool model request with streaming,
+cancellation, idempotent durable evidence and provider isolation. It does not
+invoke domain modules, memory, state or `ExecutionEngine.execute()`. Historical
+structured-JSON `ModelRequest` identities are unchanged. The OpenAI Responses
+adapter now honors text output, function tools, tool-result continuation and
+SSE without weakening ADR-0014.
+
+Machine-readable twin: `apps/cli/src/acme-model-runtime-wire.ts`. Fetch host:
+`apps/cli/src/acme-model-runtime-host.ts`. A runnable service composition for
+this protocol is not claimed.
+
 ## Canonical external runtime boundary
 
 ACME-0167 adds the accepted [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md)

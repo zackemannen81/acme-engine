@@ -1,5 +1,39 @@
 # Journal
 
+## 2026-09-15 — ACME-0176: model-only execution runtime
+
+- Date: 2026-09-15
+- Author: Grok
+- Task: ACME-0176, Complete. Archived to
+  `docs/finished/ACME-0176_model-execution-runtime.md`.
+- Decision: [ADR-0053](adr/0053-model-only-execution-runtime.md) adds a
+  domain-neutral model-only owner distinct from `ExecutionEngine`. The frozen
+  consumer wire is `acme-model-runtime/1` in
+  [the protocol document](design/acme-model-runtime-1.md). Machine-readable
+  twin: `apps/cli/src/acme-model-runtime-wire.ts`. `POST /v1/execute` remains
+  full task execution under ADR-0051.
+- Contract: `ModelRequest.output` is `json | text`. Optional function tools and
+  `tool-call` / `tool-result` parts are caller-owned. Historical JSON request
+  hash `b0ae4b222a04c393ed24e1364b93d828211af5885f721de55f72ff5e76b46bd3` is
+  unchanged. ACME returns tool calls without executing them.
+- Runtime: `GET /v1/model/compatibility` and `POST /v1/model/execute` (SSE).
+  Authorization is a composition port. Reservation is written before dispatch.
+  Same request identity is idempotent; conflicting reuse fails closed;
+  ambiguous/in-flight evidence never auto-retries. SQLite restart recovers a
+  retained response without a second provider call.
+- OpenAI: Responses adapter honors text, function tools, tool-result
+  continuation and SSE while keeping ADR-0014 classification. `generate`
+  remains the buffered `ExecutionEngine` path.
+- Verification: `pnpm docs:check`, format, lint, typecheck, boundaries,
+  unit (153/1018), conformance (12/80), integration (19/94), scenarios (7/26)
+  and `git diff --check` passed. Live provider not used. PostgreSQL not
+  runnable here (no `ACME_POSTGRES_URL`); model-only persistence is a sibling
+  in-memory/SQLite store and existing postgres schema is unchanged.
+- Downstream: A008 can build against `docs/design/acme-model-runtime-1.md`
+  without chat history. A runnable `acme-model-runtime` process composition is
+  a later task.
+- Signature: Grok
+
 ## 2026-08-26 — ACME-0175: Apache-2.0 source distribution and credential audit
 
 - Date: 2026-08-26
