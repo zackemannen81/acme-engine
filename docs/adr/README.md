@@ -93,6 +93,7 @@ current architecture.
 - [`0051-canonical-acme-runtime-boundary.md`](0051-canonical-acme-runtime-boundary.md)
 - [`0052-apache-2.0-open-source-distribution.md`](0052-apache-2.0-open-source-distribution.md)
 - [`0053-model-only-execution-runtime.md`](0053-model-only-execution-runtime.md)
+- [`0054-model-runtime-v2-multi-provider-routing.md`](0054-model-runtime-v2-multi-provider-routing.md)
 
 The starting point for a new decision is
 [`template.md`](template.md), which is a form rather than a decision and

@@ -369,7 +369,12 @@ function validateRequestValue(value: JsonObject): ModelRequest {
 
   let topP: number | undefined;
   if (Object.hasOwn(value, 'topP')) {
-    if (typeof value.topP !== 'number' || !Number.isFinite(value.topP) || value.topP < 0 || value.topP > 1) {
+    if (
+      typeof value.topP !== 'number' ||
+      !Number.isFinite(value.topP) ||
+      value.topP < 0 ||
+      value.topP > 1
+    ) {
       invalid('Model request topP must be a finite number from 0 to 1.');
     }
     topP = value.topP;
@@ -377,8 +382,13 @@ function validateRequestValue(value: JsonObject): ModelRequest {
 
   let reasoningBudget: number | undefined;
   if (Object.hasOwn(value, 'reasoningBudget')) {
-    if (!Number.isSafeInteger(value.reasoningBudget) || (value.reasoningBudget as number) < -1) {
-      invalid('Model request reasoningBudget must be a safe integer greater than or equal to -1.');
+    if (
+      !Number.isSafeInteger(value.reasoningBudget) ||
+      (value.reasoningBudget as number) < -1
+    ) {
+      invalid(
+        'Model request reasoningBudget must be a safe integer greater than or equal to -1.',
+      );
     }
     reasoningBudget = value.reasoningBudget as number;
   }
@@ -393,7 +403,10 @@ function validateRequestValue(value: JsonObject): ModelRequest {
 
   let reasoningEffort: string | undefined;
   if (Object.hasOwn(value, 'reasoningEffort')) {
-    reasoningEffort = text(value.reasoningEffort, 'Model request reasoningEffort');
+    reasoningEffort = text(
+      value.reasoningEffort,
+      'Model request reasoningEffort',
+    );
   }
 
   let seed: number | undefined;

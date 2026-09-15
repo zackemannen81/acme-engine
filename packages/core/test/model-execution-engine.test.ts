@@ -363,7 +363,11 @@ describe('ModelExecutionEngine', () => {
         model: selection,
         request: textRequest,
       },
-      { onEvent: (event) => events.push(event) },
+      {
+        onEvent: (event) => {
+          events.push(event);
+        },
+      },
     );
     expect(result.status).toBe('succeeded');
     expect(
@@ -534,7 +538,11 @@ describe('ModelExecutionEngine', () => {
     });
     const result = await engine.execute(
       { requestKey: 'late-failure-1', model: selection, request: textRequest },
-      { onEvent: (event) => events.push(event) },
+      {
+        onEvent: (event) => {
+          events.push(event);
+        },
+      },
     );
     expect(result.status).toBe('failed');
     expect(events.map((event) => event.sequence)).toEqual([0, 1, 2]);

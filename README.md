@@ -84,6 +84,7 @@ packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
 packages/adapter-model-mock/ Exact finite model-call scripts
 packages/adapter-model-openai/ OpenAI Responses mapping behind a transport port
+packages/adapter-model-chat-completions/ OpenAI-compatible Chat Completions mapping
 packages/module-narrative/ Narrative observe-document reference module
 packages/module-research/ Research observe-evidence reference module
 packages/testing/         Conformance kits and ScenarioRunner v1/v2 support

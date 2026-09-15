@@ -17,10 +17,25 @@ import {
   ACME_MODEL_RUNTIME_EXECUTE_PATH,
   ACME_MODEL_RUNTIME_HEADER,
   ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+  ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION,
   type AcmeModelRuntimeDescriptor,
   type AcmeModelRuntimeErrorEnvelope,
+  type AcmeModelRuntimeProtocolVersion,
   type AcmeModelRuntimeRequest,
 } from './acme-model-runtime-wire.js';
+
+const SUPPORTED_PROTOCOLS = new Set<AcmeModelRuntimeProtocolVersion>([
+  ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+  ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION,
+]);
+
+const V1_REQUEST_FORBIDDEN_KEYS = [
+  'enableThinking',
+  'reasoningBudget',
+  'reasoningEffort',
+  'seed',
+  'topP',
+] as const;
 
 const RETENTION_MODES = new Set(['none', 'hash-only', 'encrypted-payload']);
 
@@ -105,9 +120,9 @@ function requirePositiveInteger(value: unknown, label: string): number {
 function validateDescriptor(
   value: AcmeModelRuntimeDescriptor,
 ): AcmeModelRuntimeDescriptor {
-  if (value.protocolVersion !== ACME_MODEL_RUNTIME_PROTOCOL_VERSION) {
+  if (!SUPPORTED_PROTOCOLS.has(value.protocolVersion)) {
     throw new Error(
-      `Model runtime descriptor protocolVersion must be ${ACME_MODEL_RUNTIME_PROTOCOL_VERSION}.`,
+      'Model runtime descriptor protocolVersion must be acme-model-runtime/1 or acme-model-runtime/2.',
     );
   }
   requireText(value.engineBuild, 'descriptor.engineBuild', 300);
@@ -179,6 +194,7 @@ function validatePolicy(value: unknown): AcmeModelRuntimeRequest['policy'] {
 
 export function validateAcmeModelRuntimeRequest(
   value: unknown,
+  expectedProtocol: AcmeModelRuntimeProtocolVersion = ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
 ): AcmeModelRuntimeRequest {
   if (!isRecord(value)) {
     throw new HostRefusal(
@@ -201,7 +217,7 @@ export function validateAcmeModelRuntimeRequest(
     ['protocolVersion', 'requestKey', 'model', 'request'],
     'request',
   );
-  if (value.protocolVersion !== ACME_MODEL_RUNTIME_PROTOCOL_VERSION) {
+  if (value.protocolVersion !== expectedProtocol) {
     throw new HostRefusal(
       409,
       'MODEL_RUNTIME_PROTOCOL_MISMATCH',
@@ -213,6 +229,21 @@ export function validateAcmeModelRuntimeRequest(
     requireText(value.correlationId, 'correlationId', 300);
   }
   const model = validateModel(value.model);
+  if (
+    expectedProtocol === ACME_MODEL_RUNTIME_PROTOCOL_VERSION &&
+    isRecord(value.request)
+  ) {
+    const forbidden = V1_REQUEST_FORBIDDEN_KEYS.filter((key) =>
+      Object.hasOwn(value.request as Record<string, unknown>, key),
+    );
+    if (forbidden.length > 0) {
+      throw new HostRefusal(
+        400,
+        'INVALID_MODEL_RUNTIME_REQUEST',
+        'request has an invalid shape.',
+      );
+    }
+  }
   let request;
   try {
     request = validateModelRequest(value.request as never);
@@ -239,7 +270,7 @@ export function validateAcmeModelRuntimeRequest(
   }
   const policy = validatePolicy(value.policy);
   return Object.freeze({
-    protocolVersion: ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+    protocolVersion: expectedProtocol,
     requestKey: value.requestKey,
     ...(value.correlationId === undefined
       ? {}
@@ -285,11 +316,11 @@ function refusalResponse(error: HostRefusal): Response {
   return jsonResponse(body, error.status);
 }
 
-function checkProtocolHeader(request: Request): void {
-  if (
-    request.headers.get(ACME_MODEL_RUNTIME_HEADER) !==
-    ACME_MODEL_RUNTIME_PROTOCOL_VERSION
-  ) {
+function checkProtocolHeader(
+  request: Request,
+  protocolVersion: AcmeModelRuntimeProtocolVersion,
+): void {
+  if (request.headers.get(ACME_MODEL_RUNTIME_HEADER) !== protocolVersion) {
     throw new HostRefusal(
       409,
       'MODEL_RUNTIME_PROTOCOL_MISMATCH',
@@ -411,11 +442,12 @@ function requireJsonContentType(request: Request): void {
 }
 
 function encodeSse(
+  protocolVersion: AcmeModelRuntimeProtocolVersion,
   event: ModelStreamEvent,
   result?: ModelExecutionResult,
 ): string {
   const payload: Record<string, unknown> = {
-    protocolVersion: ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+    protocolVersion,
     type: event.type,
     sequence: event.sequence,
   };
@@ -473,7 +505,7 @@ export function createAcmeModelRuntimeHost(
     async fetch(request: Request): Promise<Response> {
       try {
         await authorizeRequest(options.authorize, request);
-        checkProtocolHeader(request);
+        checkProtocolHeader(request, descriptor.protocolVersion);
         const path = new URL(request.url).pathname;
 
         if (path === ACME_MODEL_RUNTIME_COMPATIBILITY_PATH) {
@@ -498,6 +530,7 @@ export function createAcmeModelRuntimeHost(
           requireJsonContentType(request);
           const runtimeRequest = validateAcmeModelRuntimeRequest(
             await readBoundedJson(request),
+            descriptor.protocolVersion,
           );
           const encoder = new TextEncoder();
           const stream = new ReadableStream<Uint8Array>({
@@ -514,7 +547,11 @@ export function createAcmeModelRuntimeHost(
                         event.type !== 'completed' &&
                         event.type !== 'failed'
                       ) {
-                        controller.enqueue(encoder.encode(encodeSse(event)));
+                        controller.enqueue(
+                          encoder.encode(
+                            encodeSse(descriptor.protocolVersion, event),
+                          ),
+                        );
                       }
                     },
                   },
@@ -531,7 +568,11 @@ export function createAcmeModelRuntimeHost(
                         sequence: pending.length,
                         error: result.error,
                       });
-                controller.enqueue(encoder.encode(encodeSse(terminal, result)));
+                controller.enqueue(
+                  encoder.encode(
+                    encodeSse(descriptor.protocolVersion, terminal, result),
+                  ),
+                );
                 controller.close();
               } catch (error) {
                 if (error instanceof HostRefusal) {
@@ -548,7 +589,7 @@ export function createAcmeModelRuntimeHost(
               'cache-control': 'no-store',
               'content-type': 'text/event-stream; charset=utf-8',
               'x-content-type-options': 'nosniff',
-              [ACME_MODEL_RUNTIME_HEADER]: ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+              [ACME_MODEL_RUNTIME_HEADER]: descriptor.protocolVersion,
             },
           });
         }

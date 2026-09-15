@@ -1,5 +1,37 @@
 # Journal
 
+## 2026-09-15 — ACME-0180: model runtime v2 and multi-provider routing
+
+- Date: 2026-09-15
+- Author: Grok
+- Task: ACME-0180, Complete. Archived to
+  `docs/finished/ACME-0180_multi-provider-runtime.md`.
+- Decision: [ADR-0054](adr/0054-model-runtime-v2-multi-provider-routing.md)
+  keeps `acme-model-runtime/1` frozen and adds
+  [acme-model-runtime/2](design/acme-model-runtime-2.md). Provider routing is
+  exact `providerHint` match at composition time; missing/unknown routes fail
+  before dispatch. No fallback, no model-strategy inference.
+- Request: optional `topP`, `reasoningBudget`, `enableThinking`,
+  `reasoningEffort` and `seed` join `ModelRequest`. Historical
+  `acme-model-request-hash-1` golden
+  `b0ae4b222a04c393ed24e1364b93d828211af5885f721de55f72ff5e76b46bd3` is
+  unchanged when those fields are absent. v1 wire still rejects them.
+- Adapters: OpenAI Responses maps `topP` and `reasoningEffort` and refuses
+  `stop`/`seed`/`enableThinking`/`reasoningBudget`. New
+  `@acme/adapter-model-chat-completions` maps NVIDIA-hosted Chat Completions
+  (Nemotron/Kimi-style and later DeepSeek/Muse/Laguna) with tools, SSE,
+  reasoning, continuation, usage and ADR-0014 classification.
+- Runtime: routed `ModelGateway` plus runnable `acme-model-runtime` process
+  (`apps/cli/src/acme-model-runtime-service.ts`) from environment-only OpenAI,
+  NVIDIA and optional compatible credentials. Listen payload names providers
+  and omits secrets.
+- Verification: `pnpm docs:check`, format, typecheck, boundaries, focused
+  109/109 including v1 loopback 4/4, `git diff --check`. No live provider
+  call.
+- Downstream: A008-0118 can consume `acme-model-runtime/2`. A008 GO / Stage 4
+  remain out of scope.
+- Signature: Grok
+
 ## 2026-09-15 — ACME-0179: whitespace tool-call fragments remain opaque
 
 - Date: 2026-09-15

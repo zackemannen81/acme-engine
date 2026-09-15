@@ -23,6 +23,42 @@ function invalid(message: string, details?: JsonValue): never {
   });
 }
 
+function unsupported(control: string, details?: JsonValue): never {
+  throw new AcmeError({
+    code: 'UNSUPPORTED_CAPABILITY',
+    message: `The OpenAI Responses adapter cannot honor ${control}.`,
+    stage: 'calling-model',
+    retryable: false,
+    ...(details === undefined ? {} : { details }),
+  });
+}
+
+function mappedGenerationFields(
+  request: ModelRequest,
+): Record<string, JsonValue> {
+  if (request.reasoningBudget !== undefined) {
+    unsupported('reasoningBudget');
+  }
+  if (request.enableThinking !== undefined) {
+    unsupported('enableThinking');
+  }
+  if (request.seed !== undefined) {
+    unsupported('seed');
+  }
+  return {
+    ...(request.temperature === undefined
+      ? {}
+      : { temperature: request.temperature }),
+    ...(request.topP === undefined ? {} : { top_p: request.topP }),
+    ...(request.maxOutputTokens === undefined
+      ? {}
+      : { max_output_tokens: request.maxOutputTokens }),
+    ...(request.reasoningEffort === undefined
+      ? {}
+      : { reasoning: { effort: request.reasoningEffort } }),
+  };
+}
+
 function partText(part: ModelContentPart, index: number): string {
   if (part.type !== 'text') {
     invalid(
@@ -187,12 +223,7 @@ export function buildResponsesBody(
             strict: true,
           },
         },
-        ...(request.temperature === undefined
-          ? {}
-          : { temperature: request.temperature }),
-        ...(request.maxOutputTokens === undefined
-          ? {}
-          : { max_output_tokens: request.maxOutputTokens }),
+        ...mappedGenerationFields(request),
       }),
       providerWireSchemaHash: computeProviderWireSchemaHash(wireSchema),
     };
@@ -207,12 +238,7 @@ export function buildResponsesBody(
       input,
       ...(tools === undefined ? {} : { tools }),
       text: { format: { type: 'text' } },
-      ...(request.temperature === undefined
-        ? {}
-        : { temperature: request.temperature }),
-      ...(request.maxOutputTokens === undefined
-        ? {}
-        : { max_output_tokens: request.maxOutputTokens }),
+      ...mappedGenerationFields(request),
     }),
   };
 }

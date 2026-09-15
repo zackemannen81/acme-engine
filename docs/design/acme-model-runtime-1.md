@@ -4,7 +4,9 @@ Status: Accepted
 Last updated: 2026-09-15
 
 This is the frozen external wire for ACME model-only execution. It is the
-integration contract another process or repository may build against.
+integration contract another process or repository may build against. The
+additive successor is [`acme-model-runtime-2.md`](acme-model-runtime-2.md);
+this document remains the v1 contract.
 
 Architecture authority: [ADR-0053](../adr/0053-model-only-execution-runtime.md).
 Machine-readable twin: `apps/cli/src/acme-model-runtime-wire.ts`.

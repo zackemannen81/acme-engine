@@ -104,6 +104,43 @@ describe('OpenAI Responses request mapping', () => {
     );
   });
 
+  it('maps topP and reasoningEffort onto Responses fields', () => {
+    const { body } = buildResponsesBody(
+      { ...fixtureRequest, topP: 0.9, reasoningEffort: 'high' },
+      fixtureModel,
+    );
+    expect(body).toMatchObject({
+      top_p: 0.9,
+      reasoning: { effort: 'high' },
+    });
+  });
+
+  it.each(['seed', 'enableThinking', 'reasoningBudget'] as const)(
+    'refuses %s rather than silently dropping it',
+    (control) => {
+      expect(() =>
+        buildResponsesBody(
+          {
+            ...fixtureRequest,
+            ...(control === 'seed'
+              ? { seed: 7 }
+              : control === 'enableThinking'
+                ? { enableThinking: true }
+                : { reasoningBudget: 256 }),
+          },
+          fixtureModel,
+        ),
+      ).toThrowError(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            code: 'UNSUPPORTED_CAPABILITY',
+            message: expect.stringContaining(control),
+          }),
+        }),
+      );
+    },
+  );
+
   it('rejects non-text content rather than silently dropping it', () => {
     expect(() =>
       buildResponsesBody(

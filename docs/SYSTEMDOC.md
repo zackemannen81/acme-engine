@@ -63,7 +63,9 @@ run `32245847498`, including the complete verify and PostgreSQL gates.
 [ADR-0053](adr/0053-model-only-execution-runtime.md) adds a domain-neutral
 model-only owner distinct from `ExecutionEngine`. The frozen external wire is
 [`docs/design/acme-model-runtime-1.md`](design/acme-model-runtime-1.md)
-(`acme-model-runtime/1`). It is not an extension of `acme-runtime/1`.
+(`acme-model-runtime/1`). [ADR-0054](adr/0054-model-runtime-v2-multi-provider-routing.md)
+adds the additive [`acme-model-runtime/2`](design/acme-model-runtime-2.md)
+without changing v1. Neither protocol is an extension of `acme-runtime/1`.
 
 - `ModelRequest.output` is a discriminated `json | text` union. Historical JSON
   requests omit `tools` and keep `acme-model-request-hash-1` identities.
@@ -81,7 +83,9 @@ model-only owner distinct from `ExecutionEngine`. The frozen external wire is
 - The OpenAI Responses adapter honors text output, function tools, tool-result
   continuation and SSE while retaining ADR-0014 delivery/ambiguity
   classification. `generate` remains the buffered contract used by
-  `ExecutionEngine`.
+  `ExecutionEngine`. On `acme-model-runtime/2` it maps `topP` and
+  `reasoningEffort` and refuses `stop`, `seed`, `enableThinking` and
+  `reasoningBudget` rather than dropping them.
 - ModelExecutionEngine owns the sequence visible to its consumer. Gateway stream sequence is validated separately; every emitted event is renumbered contiguously from zero, so a terminal failure after partial streaming cannot reset the external sequence or mask the underlying structured error.
 - Tool-call `argumentsDelta` values are opaque JSON string fragments. A non-empty fragment is preserved byte-for-byte even when it contains only whitespace; an empty fragment is invalid, and only the final assembled argument value is JSON-parsed.
 - Multi-turn Responses history is role-aware: caller/user text maps to
@@ -94,8 +98,19 @@ model-only owner distinct from `ExecutionEngine`. The frozen external wire is
   reservation-before-dispatch, idempotent terminal reuse and retained-response
   restart. Ambiguous and in-flight evidence never auto-retries.
 
-The Node listener may adapt sockets for this host. A runnable
-`acme-model-runtime` service composition is a later task.
+[ADR-0054](adr/0054-model-runtime-v2-multi-provider-routing.md) adds
+[`acme-model-runtime/2`](design/acme-model-runtime-2.md) without changing v1.
+Optional `topP`, `reasoningBudget`, `enableThinking`, `reasoningEffort` and
+`seed` join the provider-neutral request. A routed gateway selects only the
+configured `providerHint` and fails closed when the route is missing.
+`@acme/adapter-model-chat-completions` is the OpenAI-compatible Chat
+Completions adapter; NVIDIA-hosted Nemotron/Kimi-style selections share that
+wire. The optional `acme-model-runtime` Node executable composes v2, the
+router, OpenAI Responses, NVIDIA Chat Completions and extra compatible
+endpoints from environment-only credentials and does not print secrets.
+
+The Node listener may adapt sockets for this host. The runnable
+`acme-model-runtime` service is an opt-in composition, not a deployment.
 
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
@@ -152,8 +167,8 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-08-19
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, an OpenAI Responses mapping with strict-schema lowering and a confirmed live success path, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
+Last updated: 2026-09-15
+Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, OpenAI Responses and OpenAI-compatible Chat Completions mappings, acme-model-runtime/1 and /2, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.

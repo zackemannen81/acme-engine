@@ -11,6 +11,11 @@ import type {
 
 export const ACME_MODEL_RUNTIME_PROTOCOL_VERSION =
   'acme-model-runtime/1' as const;
+export const ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION =
+  'acme-model-runtime/2' as const;
+export type AcmeModelRuntimeProtocolVersion =
+  | typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION
+  | typeof ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION;
 export const ACME_MODEL_RUNTIME_EXECUTE_PATH = '/v1/model/execute' as const;
 export const ACME_MODEL_RUNTIME_COMPATIBILITY_PATH =
   '/v1/model/compatibility' as const;
@@ -19,13 +24,13 @@ export const ACME_MODEL_RUNTIME_ERROR_VERSION =
 export const ACME_MODEL_RUNTIME_HEADER = 'x-acme-model-runtime-protocol';
 
 export interface AcmeModelRuntimeDescriptor {
-  readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+  readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
   readonly engineBuild: string;
   readonly executePath: typeof ACME_MODEL_RUNTIME_EXECUTE_PATH;
 }
 
 export interface AcmeModelRuntimeRequest {
-  readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+  readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
   readonly requestKey: string;
   readonly correlationId?: string;
   readonly model: ModelSelection;
@@ -59,19 +64,19 @@ export interface AcmeModelRuntimeFailedResult {
 
 export type AcmeModelRuntimeStreamEvent =
   | {
-      readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+      readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
       readonly type: 'reasoning-delta';
       readonly sequence: number;
       readonly text: string;
     }
   | {
-      readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+      readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
       readonly type: 'content-delta';
       readonly sequence: number;
       readonly text: string;
     }
   | {
-      readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+      readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
       readonly type: 'tool-call-delta';
       readonly sequence: number;
       readonly index: number;
@@ -80,14 +85,14 @@ export type AcmeModelRuntimeStreamEvent =
       readonly argumentsDelta?: string;
     }
   | {
-      readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+      readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
       readonly type: 'completed';
       readonly sequence: number;
       readonly response: NormalizedModelResponse;
       readonly result: AcmeModelRuntimeSucceededResult;
     }
   | {
-      readonly protocolVersion: typeof ACME_MODEL_RUNTIME_PROTOCOL_VERSION;
+      readonly protocolVersion: AcmeModelRuntimeProtocolVersion;
       readonly type: 'failed';
       readonly sequence: number;
       readonly error: AcmeModelRuntimeErrorBody | AcmeErrorData;

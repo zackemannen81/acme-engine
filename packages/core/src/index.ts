@@ -13,6 +13,7 @@ export * from './hashing.js';
 export * from './memory.js';
 export * from './memory-engine.js';
 export * from './model.js';
+export * from './model-gateway-router.js';
 export * from './model-call-usage.js';
 export * from './model-execution-engine.js';
 export * from './model-execution-identity.js';

@@ -16,6 +16,9 @@ Current implementation baseline:
 - [`acme-model-runtime-1.md`](acme-model-runtime-1.md) — frozen
   `acme-model-runtime/1` external model-only execution wire (ADR-0053).
   Distinct from `acme-runtime/1` full task execution.
+- [`acme-model-runtime-2.md`](acme-model-runtime-2.md) — additive
+  `acme-model-runtime/2` wire and explicit multi-provider routing
+  (ADR-0054). v1 remains accepted and unchanged.
 
 Team implementation guides:
 

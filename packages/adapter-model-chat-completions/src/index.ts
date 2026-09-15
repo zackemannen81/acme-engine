@@ -1,5 +1,6 @@
 export {
   ChatCompletionsGateway,
+  buildChatCompletionsBody,
   createChatCompletionsGateway,
   type ChatCompletionsControls,
   type ChatCompletionsGatewayOptions,

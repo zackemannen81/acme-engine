@@ -87,8 +87,12 @@ describe('model request text and tools', () => {
       { reasoningEffort: '' },
       { seed: -1 },
     ] as const) {
-      expect(() => validateModelRequest({ ...base, ...patch } as ModelRequest)).toThrowError(
-        expect.objectContaining({ data: expect.objectContaining({ code: 'INVALID_REQUEST' }) }),
+      expect(() =>
+        validateModelRequest({ ...base, ...patch } as ModelRequest),
+      ).toThrowError(
+        expect.objectContaining({
+          data: expect.objectContaining({ code: 'INVALID_REQUEST' }),
+        }),
       );
     }
   });

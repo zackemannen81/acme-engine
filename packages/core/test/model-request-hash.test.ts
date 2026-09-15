@@ -115,8 +115,12 @@ describe(ACME_MODEL_REQUEST_HASH_ALGORITHM, () => {
       reasoningEffort: 'high',
       seed: 7,
     };
-    expect(computeModelRequestHash(controlled)).not.toBe(computeModelRequestHash(original));
-    expect(computeModelRequestHash(controlled)).toBe(computeModelRequestHash({ ...controlled }));
+    expect(computeModelRequestHash(controlled)).not.toBe(
+      computeModelRequestHash(original),
+    );
+    expect(computeModelRequestHash(controlled)).toBe(
+      computeModelRequestHash({ ...controlled }),
+    );
   });
 
   it('keeps historical json identities when tools are omitted', () => {

@@ -44,8 +44,21 @@ error data across package/runtime class-identity boundaries; unknown ordinary
 exceptions still fail closed as non-retryable `INTERNAL`.
 
 Machine-readable twin: `apps/cli/src/acme-model-runtime-wire.ts`. Fetch host:
-`apps/cli/src/acme-model-runtime-host.ts`. A runnable service composition for
-this protocol is not claimed.
+`apps/cli/src/acme-model-runtime-host.ts`.
+
+ACME-0180 adds accepted [ADR-0054](adr/0054-model-runtime-v2-multi-provider-routing.md)
+and the additive [`acme-model-runtime/2`](design/acme-model-runtime-2.md) wire.
+`acme-model-runtime/1` remains accepted and unchanged; v1 requests still reject
+`topP`, `reasoningBudget`, `enableThinking`, `reasoningEffort` and `seed`.
+Those controls are optional on the provider-neutral `ModelRequest` and do not
+change historical hashes when absent. A routed `ModelGateway` dispatches only
+by caller-owned `providerHint`. `@acme/adapter-model-chat-completions` maps
+NVIDIA-hosted and other OpenAI-compatible Chat Completions profiles. The
+runnable `acme-model-runtime` composition starts from environment-only
+credentials for OpenAI Responses, NVIDIA Chat Completions and optional extra
+compatible endpoints, and it does not emit credential values. It is a
+runnable composition, not a deployment. A008 GO / Stage 4 remains out of
+scope.
 
 ## Canonical external runtime boundary
 

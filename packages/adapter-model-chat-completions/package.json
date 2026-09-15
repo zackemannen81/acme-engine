@@ -1,13 +1,26 @@
-﻿{
+{
   "name": "@acme/adapter-model-chat-completions",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./transport-fetch": { "types": "./dist/transport-fetch.d.ts", "default": "./dist/transport-fetch.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./transport-fetch": {
+      "types": "./dist/transport-fetch.d.ts",
+      "default": "./dist/transport-fetch.js"
+    }
   },
-  "scripts": { "build": "tsc -b --pretty false", "typecheck": "tsc -b --pretty false" },
-  "dependencies": { "@acme/core": "workspace:*" }
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme/core": "workspace:*"
+  }
 }
