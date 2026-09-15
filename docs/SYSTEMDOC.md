@@ -82,6 +82,7 @@ model-only owner distinct from `ExecutionEngine`. The frozen external wire is
   continuation and SSE while retaining ADR-0014 delivery/ambiguity
   classification. `generate` remains the buffered contract used by
   `ExecutionEngine`.
+- ModelExecutionEngine owns the sequence visible to its consumer. Gateway stream sequence is validated separately; every emitted event is renumbered contiguously from zero, so a terminal failure after partial streaming cannot reset the external sequence or mask the underlying structured error.
 - Multi-turn Responses history is role-aware: caller/user text maps to
   `input_text`, while prior assistant text maps to `output_text`; tool-call and
   tool-result items keep their dedicated wire shapes.

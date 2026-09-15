@@ -358,6 +358,22 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
     rawRequest: ModelExecutionRequest,
     options: ModelExecuteOptions = {},
   ): Promise<ModelExecutionResult> {
+    let nextSequence = 0;
+    const callerOnEvent = options.onEvent;
+    const executionOptions: ModelExecuteOptions =
+      callerOnEvent === undefined
+        ? options
+        : {
+            ...options,
+            onEvent: async (event) => {
+              const numbered = deepFreeze({
+                ...event,
+                sequence: nextSequence,
+              }) as ModelStreamEvent;
+              nextSequence += 1;
+              await callerOnEvent(numbered);
+            },
+          };
     const envelope = validateEnvelope(rawRequest);
     const policy = resolveModelExecutionPolicy(envelope.policy);
     const requiredCapabilities = requiredCapabilitiesOf(envelope);
@@ -406,7 +422,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         error,
         diagnostic: diagnosticOf(error, { kind: 'conflict' }),
       });
-      await options.onEvent?.({
+      await executionOptions.onEvent?.({
         type: 'failed',
         sequence: 0,
         error,
@@ -416,7 +432,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
 
     try {
       if (acceptance.kind === 'existing') {
-        return await this.#resume(acceptance.execution, options, now);
+        return await this.#resume(acceptance.execution, executionOptions, now);
       }
       return await this.#dispatch(envelope, {
         modelExecutionId,
@@ -424,7 +440,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         requiredCapabilities,
         policy,
         now,
-        options,
+        options: executionOptions,
       });
     } catch (error) {
       const data = errorData(error, 'calling-model');
@@ -446,7 +462,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         diagnostic,
         terminalAt: now,
       });
-      await options.onEvent?.({
+      await executionOptions.onEvent?.({
         type: 'failed',
         sequence: 0,
         error: data,

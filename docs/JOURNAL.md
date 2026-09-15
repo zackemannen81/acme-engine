@@ -1,5 +1,17 @@
 # Journal
 
+## 2026-09-15 — ACME-0178: contiguous terminal sequence after streamed failure
+
+- Date: 2026-09-15
+- Author: OpenAI assistant
+- Task: ACME-0178, Complete. A008 live testing exposed that a late model failure after streamed deltas could cross the outer ModelExecutionEngine error boundary as `sequence: 0`, violating `acme-model-runtime/1` and masking the real structured failure.
+- Reproduction: focused core regression observed `[0, 1, 0]` where the frozen wire requires `[0, 1, 2]`.
+- Change: ModelExecutionEngine now owns one outgoing sequence allocator per execution. Gateway/provider stream sequence is still validated independently before forwarding; emitted events are then numbered contiguously for the execution consumer. Success, replay, conflict and structured error semantics are unchanged.
+- Wire proof: loopback HTTP/SSE integration streams two content deltas from a fake provider, then a malformed late completion. The runtime exposes `content-delta 0`, `content-delta 1`, `failed 2` and preserves `MODEL_INVALID_RESPONSE`.
+- Verification: focused core 9/9, loopback integration 3/3, combined 12/12, `@acme/core` typecheck, docs/format/diff gates. No live provider call or new spend was used for verification.
+- Handoff: restart the local model runtime and rerun the same A008 GUI tool-loop. If another underlying failure exists, A008 should now display its real ACME classification instead of a false malformed-sequence error.
+- Signature: OpenAI assistant
+
 ## 2026-09-15 — ACME-0177: A008 live consumer history/error repair
 
 - Date: 2026-09-15

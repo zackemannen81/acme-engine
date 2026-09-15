@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0178
+Task ID:
 Parent Task: None
-Status: Ready
-Owner: OpenAI assistant
-Created: 2026-09-15
-Last updated: 2026-09-15
-Charter frozen at: 2026-09-15T07:20+02:00
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,102 +18,91 @@ Charter frozen at: 2026-09-15T07:20+02:00
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/adr/0053-model-only-execution-runtime.md`
-- `docs/design/acme-model-runtime-1.md`
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-A008 live testing exposed a protocol defect: after streaming non-terminal events, a later model-execution failure can be emitted with `sequence: 0`, violating the frozen contiguous SSE sequence contract and masking the real structured ACME failure.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
+
 ### Goal
 
-Keep every model-only execution event stream contiguous through terminal success or failure.
+Define one primary outcome.
+
 ### Primary Deliverable
 
-A bounded `ModelExecutionEngine` repair plus regressions proving that a failure after streamed deltas receives the next sequence number and preserves its structured error.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Add a regression for partial stream followed by terminal failure.
-- Make model-execution output sequencing execution-owned and contiguous.
-- Keep gateway/provider stream ordering validation unchanged.
-- Preserve existing success, replay, conflict and error semantics.
-- Update current runtime documentation and journal evidence.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- A008 changes.
-- Provider retry or repair policy.
-- New wire fields or `acme-model-runtime/2`.
-- Provider, memory, state, domain or cognition changes.
-- Push, deployment, release or new live provider spend.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- A partial stream followed by failure emits contiguous `0..N` events.
-- The terminal event retains the original `AcmeErrorData`.
-- Normal success sequences remain unchanged.
-- Focused core/runtime tests, typecheck, docs/format and `git diff --check` pass.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] Focused `ModelExecutionEngine` regression.
-- [ ] Existing model-execution tests remain green.
-- [ ] `@acme/core` typecheck.
-- [ ] `pnpm docs:check` and `pnpm format:check`.
-- [ ] `git diff --check`.
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
+
 ## References
 
-- `packages/core/src/model-execution-engine.ts`
-- `packages/core/test/model-execution-engine.test.ts`
-- `apps/cli/src/acme-model-runtime-host.ts`
-- `docs/adr/0053-model-only-execution-runtime.md`
-- `docs/design/acme-model-runtime-1.md`
-- A008 live evidence: `ACME stream sequence was 0, expected 146.`
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [ ] Add failing partial-stream/late-failure regression.
-- [ ] Implement the smallest sequence-ownership repair.
-- [ ] Verify success-path sequence behavior is unchanged.
-- [ ] Run focused and repository documentation gates.
-- [ ] Update durable docs and archive the task.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- The frozen wire already requires contiguous sequence numbers; this task repairs implementation to that existing contract and adds no new semantics.
-- Gateway stream sequence remains independently validated before any event is exposed to a consumer.
-- No ADR is required because ADR-0053 already decides ordered SSE behavior.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
 
 -none
 
 ## Verification
 
-- [ ] Record focused regression result.
-- [ ] Record typecheck and repository gates.
-- [ ] Record that no new live provider call was used for verification.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
+
 ## Documentation Updates
 
 - [ ] `docs/CURRENT_STATUS.md`
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md` only if structure changes
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
 
 ## Handoff and Follow-ups
 
-- Current state: charter frozen; implementation not yet changed.
-- Next recommended step: reproduce the sequence reset in a focused core test.
-- Blockers: none.
-- Child tasks: none.
-- Resume condition: none.
-- Open questions: none.
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
 
 ## Finalize When Complete
 
-- Archive under `docs/finished/ACME-0178_contiguous-terminal-sequence.md`.
-- Restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
 - Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

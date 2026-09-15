@@ -208,6 +208,7 @@ describe('ModelExecutionEngine', () => {
       'content-delta',
       'completed',
     ]);
+    expect(events.map((event) => event.sequence)).toEqual([0, 1, 2]);
   });
 
   it('returns a tool call without executing it and accepts a later tool result', async () => {
@@ -408,6 +409,50 @@ describe('ModelExecutionEngine', () => {
       kind: 'invalid-request',
       httpStatus: 400,
     });
+  });
+
+  it('keeps terminal failure sequence contiguous after streamed deltas', async () => {
+    const events: ModelStreamEvent[] = [];
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: streamingGateway({
+        async capabilities() {
+          return { structuredOutput: true, tools: false, vision: false };
+        },
+        async *stream() {
+          yield { type: 'content-delta', sequence: 0, text: 'part' };
+          yield { type: 'content-delta', sequence: 1, text: 'ial' };
+          yield {
+            type: 'failed',
+            sequence: 2,
+            error: {
+              code: 'MODEL_INVALID_RESPONSE',
+              message: 'Late provider stream failure.',
+              stage: 'calling-model',
+              retryable: false,
+            },
+          };
+        },
+      }),
+    });
+    const result = await engine.execute(
+      { requestKey: 'late-failure-1', model: selection, request: textRequest },
+      { onEvent: (event) => events.push(event) },
+    );
+    expect(result.status).toBe('failed');
+    expect(events.map((event) => event.sequence)).toEqual([0, 1, 2]);
+    expect(events.map((event) => event.type)).toEqual([
+      'content-delta',
+      'content-delta',
+      'failed',
+    ]);
+    const terminal = events.at(-1);
+    expect(terminal?.type).toBe('failed');
+    if (terminal?.type === 'failed') {
+      expect(terminal.error.code).toBe('MODEL_INVALID_RESPONSE');
+    }
   });
 
   it('maps an unknown ordinary exception to INTERNAL', async () => {

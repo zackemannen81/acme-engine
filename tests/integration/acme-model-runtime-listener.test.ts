@@ -232,6 +232,42 @@ describe('acme-model-runtime/1 loopback', () => {
     );
   });
 
+  it('keeps wire sequence contiguous when a provider stream fails after deltas', async () => {
+    const sse = [
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"Hel"}\n\n',
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"lo"}\n\n',
+      'event: response.completed\ndata: {"type":"response.completed","response":{"status":"completed"}}\n\n',
+    ].join('');
+    await withFakeProvider(
+      () => sse,
+      async (baseUrl) => {
+        await withModelRuntime(baseUrl, async (origin) => {
+          const response = await fetch(`${origin}/v1/model/execute`, {
+            method: 'POST',
+            headers: {
+              ...runtimeHeaders(),
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(executeBody('loopback-late-failure-1')),
+          });
+          expect(response.status).toBe(200);
+          const events = await readSse(response);
+          expect(events.map((event) => event.sequence)).toEqual([0, 1, 2]);
+          expect(events.map((event) => event.type)).toEqual([
+            'content-delta',
+            'content-delta',
+            'failed',
+          ]);
+          const terminal = events.at(-1);
+          expect(terminal?.error).toMatchObject({
+            code: 'MODEL_INVALID_RESPONSE',
+            retryable: false,
+          });
+        });
+      },
+    );
+  });
+
   it('propagates client disconnect as cancellation to the local provider', async () => {
     await withFakeProvider(
       async function* (signal) {

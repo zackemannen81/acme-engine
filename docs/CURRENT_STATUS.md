@@ -33,6 +33,8 @@ structured-JSON `ModelRequest` identities are unchanged. The OpenAI Responses
 adapter now honors text output, function tools, tool-result continuation and
 SSE without weakening ADR-0014.
 
+ACME-0178 repairs the model-only event boundary exposed by A008 live testing: after any streamed deltas, a terminal failure now receives the next execution-owned sequence number instead of resetting to zero. Gateway/provider sequence ordering is still validated independently, and the original structured ACME failure remains visible to the consumer.
+
 ACME-0177 closes the first live A008 consumer regressions on that path. OpenAI
 multi-turn history maps user text as `input_text` and prior assistant text as
 `output_text`. Model-only execution also preserves complete structured ACME
