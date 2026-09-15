@@ -25,12 +25,17 @@ const capabilityKeys = [
   'vision',
 ] as const;
 const requestKeys = [
+  'enableThinking',
   'maxOutputTokens',
   'messages',
   'output',
+  'reasoningBudget',
+  'reasoningEffort',
+  'seed',
   'stop',
   'temperature',
   'tools',
+  'topP',
 ] as const;
 const responseKeys = [
   'finishReason',
@@ -362,6 +367,40 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     temperature = value.temperature;
   }
 
+  let topP: number | undefined;
+  if (Object.hasOwn(value, 'topP')) {
+    if (typeof value.topP !== 'number' || !Number.isFinite(value.topP) || value.topP < 0 || value.topP > 1) {
+      invalid('Model request topP must be a finite number from 0 to 1.');
+    }
+    topP = value.topP;
+  }
+
+  let reasoningBudget: number | undefined;
+  if (Object.hasOwn(value, 'reasoningBudget')) {
+    if (!Number.isSafeInteger(value.reasoningBudget) || (value.reasoningBudget as number) < -1) {
+      invalid('Model request reasoningBudget must be a safe integer greater than or equal to -1.');
+    }
+    reasoningBudget = value.reasoningBudget as number;
+  }
+
+  let enableThinking: boolean | undefined;
+  if (Object.hasOwn(value, 'enableThinking')) {
+    if (typeof value.enableThinking !== 'boolean') {
+      invalid('Model request enableThinking must be a boolean.');
+    }
+    enableThinking = value.enableThinking;
+  }
+
+  let reasoningEffort: string | undefined;
+  if (Object.hasOwn(value, 'reasoningEffort')) {
+    reasoningEffort = text(value.reasoningEffort, 'Model request reasoningEffort');
+  }
+
+  let seed: number | undefined;
+  if (Object.hasOwn(value, 'seed')) {
+    seed = nonNegativeInteger(value.seed, 'Model request seed');
+  }
+
   let stop: readonly string[] | undefined;
   if (Object.hasOwn(value, 'stop')) {
     if (!Array.isArray(value.stop) || value.stop.length === 0) {
@@ -387,6 +426,7 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     output: validateOutput(value.output as JsonValue),
     ...(tools === undefined ? {} : { tools }),
     ...(temperature === undefined ? {} : { temperature }),
+    ...(topP === undefined ? {} : { topP }),
     ...(Object.hasOwn(value, 'maxOutputTokens')
       ? {
           maxOutputTokens: positiveInteger(
@@ -396,6 +436,10 @@ function validateRequestValue(value: JsonObject): ModelRequest {
         }
       : {}),
     ...(stop === undefined ? {} : { stop }),
+    ...(reasoningBudget === undefined ? {} : { reasoningBudget }),
+    ...(enableThinking === undefined ? {} : { enableThinking }),
+    ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
+    ...(seed === undefined ? {} : { seed }),
   });
 }
 

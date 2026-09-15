@@ -57,8 +57,13 @@ export interface ModelRequest {
   readonly output: ModelOutputSpec;
   readonly tools?: readonly ModelFunctionTool[];
   readonly temperature?: number;
+  readonly topP?: number;
   readonly maxOutputTokens?: number;
   readonly stop?: readonly string[];
+  readonly reasoningBudget?: number;
+  readonly enableThinking?: boolean;
+  readonly reasoningEffort?: string;
+  readonly seed?: number;
 }
 
 export function isJsonModelOutput(

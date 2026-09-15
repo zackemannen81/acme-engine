@@ -59,6 +59,40 @@ describe('model request text and tools', () => {
     expect(validateModelRequest(request)).toEqual(request);
   });
 
+  it('accepts the v2 generation control surface', () => {
+    const request: ModelRequest = {
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Hi' }] }],
+      output: { mode: 'text' },
+      temperature: 0.7,
+      topP: 0.9,
+      maxOutputTokens: 4096,
+      reasoningBudget: 2048,
+      enableThinking: true,
+      reasoningEffort: 'high',
+      seed: 42,
+      stop: ['END'],
+    };
+    expect(validateModelRequest(request)).toEqual(request);
+  });
+
+  it('rejects malformed v2 generation controls', () => {
+    const base: ModelRequest = {
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Hi' }] }],
+      output: { mode: 'text' },
+    };
+    for (const patch of [
+      { topP: 1.1 },
+      { reasoningBudget: -2 },
+      { enableThinking: 'yes' },
+      { reasoningEffort: '' },
+      { seed: -1 },
+    ] as const) {
+      expect(() => validateModelRequest({ ...base, ...patch } as ModelRequest)).toThrowError(
+        expect.objectContaining({ data: expect.objectContaining({ code: 'INVALID_REQUEST' }) }),
+      );
+    }
+  });
+
   it('rejects empty tools arrays', () => {
     expect(() =>
       validateModelRequest({
