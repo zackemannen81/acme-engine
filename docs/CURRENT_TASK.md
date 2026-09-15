@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0174
+Task ID: ACME-0176
 Parent Task: None
 Status: Ready
-Owner: felixnissen (fork contribution)
-Created: 2026-08-26
-Last updated: 2026-08-26
-Charter frozen at: 2026-08-26
+Owner: Grok (delegated)
+Created: 2026-09-15
+Last updated: 2026-09-15
+Charter frozen at: 2026-09-15; project direction revision `6b347b9`
 
 ## Read First
 
@@ -18,121 +18,201 @@ Charter frozen at: 2026-08-26
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/adr/0012-milestone-1-execution-identity-and-replay.md`
+- `docs/adr/0014-live-provider-boundary-and-transport-port.md`
 - `docs/adr/0017-durable-execution-resume.md`
-- `packages/core/src/execution-engine.ts`
-- `packages/core/src/execution-types.ts`
-- `packages/core/src/model-call-usage.ts`
+- `docs/adr/0051-canonical-acme-runtime-boundary.md`
 
 ## Task Summary
 
-Make ACME's existing deterministic reuse observable without changing its execution semantics. A caller must be able to distinguish a fresh execution from reuse of an already committed execution and from recovery that continues using a previously recorded successful model response.
+ACME can durably execute domain tasks and can expose the full `ExecutionEngine`
+through `acme-runtime/1`, but its provider-neutral `ModelRequest` is currently
+structured-JSON-only and the OpenAI adapter is buffered/text-only with no tool
+or streaming contract.An external AI product must be able to hand ACME one fully prepared model call
+and receive reliable provider execution without invoking ACME domain modules,
+semantic interpretation, memory or state. The existing `/v1/execute` path is
+therefore explicitly not the integration surface for this task.
 
 ## Task Charter
 
-The charter is frozen at `Ready`.
+The charter is frozen. Do not widen this task into product orchestration or an
+A008-specific implementation.
 
 ### Goal
 
-Expose truthful, machine-readable reuse provenance for committed execution results so callers such as CLI/runtime consumers can measure reuse and recovery without inferring it from logs or pretending unknown token/cost data is zero.
+Add a domain-neutral **model-only execution runtime** that can execute one
+already-prepared text/tool model request with streaming, cancellation,
+idempotent durable evidence and provider isolation, while preserving every
+existing structured-JSON execution behavior.
 
 ### Primary Deliverable
 
-A backward-compatible reuse-provenance field on committed `ExecutionResult` values, produced by the canonical execution engine and covered by focused tests for all three execution paths.
+A versioned model-execution contract and runnable ACME runtime surface, distinct
+from full `ExecutionEngine` task execution, backed by ACME's provider gateway,
+model-call evidence and durability rules. It must support plain-text output,
+function-tool schemas/tool-call results and ordered streaming events.
 
 ### In Scope
 
-- Define a versioned/small reuse provenance vocabulary for committed results:
-  - `fresh` — this invocation performed the execution path and did not substitute a previously recorded successful response;
-  - `committed-execution` — this invocation returned the already committed result for the same deterministic execution identity;
-  - `recorded-response-resume` — this invocation completed an interrupted execution using its recorded successful primary model response without a second provider call.
-- Return that provenance from `ExecutionEngine.execute` without changing execution identity, request fingerprinting, retry policy, repository schema or commit digest.
-- Keep the persisted committed result semantically compatible; reuse provenance describes the current invocation, not a mutation of historical evidence.
-- Add focused tests proving provider-call counts for fresh, committed reuse and recorded-response resume.
-- Expose the field through existing JSON/CLI/runtime result surfaces that already serialize `ExecutionResult` without adding a new transport.
-- Document the distinction from usage/cost accounting: reuse provenance says why a call was avoided; token/cost savings may only be calculated from actually recorded provider usage.
+- Extend `ModelRequest.output` to a discriminated `json | text` contract; existing
+  JSON requests and their canonical request hashes remain compatible.
+- Add provider-neutral function-tool definitions and normalized tool-call output.
+- Admit caller-supplied tool-result messages for a subsequent model execution.- Add an ordered provider-neutral stream contract for reasoning/content deltas,
+  fragmented tool-call deltas and terminal normalized completion/evidence.
+- Extend the existing OpenAI Responses gateway/transport to honor `text` output,
+  function tools, tool-result continuation and SSE streaming while retaining the
+  ADR-0014 delivery/ambiguity classifications.
+- Add a model-only execution owner that validates one prepared request, checks
+  capabilities, computes request identity, reserves the model call before
+  dispatch, records success/failure/ambiguity, applies retention and exposes
+  usage/cost/evidence without invoking application semantics.
+- Expose that owner through a **new versioned external model-execution runtime
+  protocol/surface**. Do not overload `acme-runtime/1` `/v1/execute`, whose
+  meaning remains full `ExecutionEngine` task execution.
+- Keep authentication as a composition port and apply explicit request, stream
+  event and retained-payload bounds.
+- Treat supplied messages, tool schemas, tool results and selected model as
+  caller-owned execution input. ACME may validate their execution shape but may
+  not choose, remove, enrich or reinterpret them semantically.
+- Preserve ACME's conservative ambiguity rule: after dispatch, an unobserved or
+  ambiguous provider outcome is evidence, not permission for an automatic retry.
+- Preserve recoverability of a successfully retained model response without a
+  second provider call.
+- Expose safe diagnostic evidence sufficient to distinguish timeout, cancel,
+  provider HTTP failure, malformed/truncated stream, ambiguous delivery and
+  completed response, without exposing credentials or retained payload by
+  default.
 
 ### Out of Scope
 
-- New semantic/vector/model-response cache.
-- Pricing tables or inferred costs.
-- Provider auto-routing or free-first policy (Verket concern).
-- Repository schema migrations.
-- Changing ADR-0017 ambiguity/retry rules.
-- New scheduler/orchestrator behavior.
-- Counting a historical committed execution reuse event after the caller has discarded the returned invocation result; durable cross-invocation analytics may be a later task.
-- Any Evidence Workbench/product-domain changes.
+- Any A008 source, type, naming, memory model, orchestration rule or product
+  behavior; ACME remains a reusable execution runtime.- DomainModule, ContractRegistry task projection, ResponsePipeline semantic
+  interpretation, MemoryEngine, StateEngine, domain reducers and state commits.
+- Tool approval, tool execution, agent loops, delegation, context retrieval,
+  model selection strategy or deciding whether another model call is useful.
+- Semantic repair of malformed tool calls or guessed completion of truncated
+  provider output.
+- Automatic retry of an ambiguous or already-dispatched call.
+- New provider families, multimodal expansion, deployment, TLS/DNS or a public
+  authentication scheme.
+- Changes to Evidence V2, the frozen Evidence Workbench/POC #1 application or
+  the established meaning of `acme-runtime/1`.
 
 ### Definition of Done
 
-- A normal successful execution returns reuse provenance `fresh`.
-- Repeating the same deterministic request after commit returns `committed-execution`, keeps `replayed: true`, and performs zero additional provider calls.
-- Resuming after a recorded successful primary response returns `recorded-response-resume`, performs zero additional provider calls during the resumed invocation, and preserves ADR-0017 behavior.
-- Failed/blocked/conflicted/cancelled results are unchanged.
-- No persistence schema or operation-digest input changes.
-- Existing usage accounting continues to treat missing usage/cost as unknown, never zero.
-- Focused tests and repository gates are recorded honestly; unavailable Actions runners are documented rather than treated as a pass.
+- Existing structured-JSON `ModelRequest` fixtures, validation, request hashes,
+  gateway conformance and replay/durability tests remain compatible.
+- A text/no-tool execution emits ordered stream deltas and a validated terminal
+  normalized result through the model-only runtime.
+- Function tools are mapped structurally, fragmented provider tool-call output
+  is assembled deterministically, and ACME returns the call without executing it.
+- A later caller-prepared request containing the corresponding tool result is
+  accepted and executed as a distinct bounded model execution.
+- Cancellation propagates through model-only runtime -> gateway -> provider
+  transport; timeout/network/HTTP/truncated-stream cases retain honest evidence.
+- Same request identity is idempotent; a conflicting reuse fails closed; a
+  successfully retained response survives process/repository restart without a
+  second provider call. Ambiguous/in-flight evidence never auto-retries.
+- A real loopback model-only runtime transport test proves request, SSE stream,
+  terminal result and disconnect cancellation with a deterministic fake provider.- Tests prove the model-only path invokes no DomainModule, domain contract
+  projection, MemoryEngine, StateEngine or domain commit path.
+- Canonical ACME documentation distinguishes full task execution from model-only
+  execution and records the new runtime protocol without weakening ADR-0014/17.
+- Required canonical code gates pass with no live provider call.
 
 ### Minimum Verification Gates
 
-- [ ] Focused core/integration tests for all three reuse paths.
-- [ ] Typecheck/build once an executable runner is available.
-- [ ] Confirm no adapter schema migration is required.
-- [ ] Confirm no live provider call is required for verification.
-- [ ] Review changed paths for Evidence Workbench/product isolation.
+- [ ] Core validation/hash regression for historical JSON requests plus new text
+  and tool request forms.
+- [ ] Shared gateway conformance covers text, tools and ordered streaming without
+  weakening existing buffered/structured-output cases.
+- [ ] OpenAI fixture tests cover fragmented content/tool SSE, usage, finish
+  reasons, malformed/truncated stream, HTTP failures, timeout and cancellation.
+- [ ] In-memory and durable persistence prove reservation-before-dispatch,
+  idempotent terminal reuse, retained-response restart and ambiguous no-retry.
+- [ ] A boundary test fails if the model-only path calls domain modules, memory,
+  state, reducers or full `ExecutionEngine.execute()`.
+- [ ] Real loopback HTTP/SSE model-runtime proof uses a deterministic local
+  provider and validates disconnect cancellation.
+- [ ] `pnpm docs:check`, format, lint, typecheck, boundaries, unit, conformance,
+  integration, scenarios, build and applicable PostgreSQL gates pass.
+- [ ] `git diff --check` passes; no live provider call, deployment or publication.
 
 ## References
 
-- `packages/core/src/execution-engine.ts`
-- `packages/core/src/execution-types.ts`
-- `packages/core/src/model-call-usage.ts`
-- `packages/core/test/model-call-usage.test.ts`
-- `docs/adr/0012-milestone-1-execution-identity-and-replay.md`
+- `docs/PROJECT_BRIEF.md`
+- `docs/adr/0014-live-provider-boundary-and-transport-port.md`
 - `docs/adr/0017-durable-execution-resume.md`
-
+- `docs/adr/0051-canonical-acme-runtime-boundary.md`
+- `packages/core/src/model.ts`
+- `packages/core/src/repository-model-call.ts`
+- `packages/adapter-model-openai/src/request.ts`
+- `packages/adapter-model-openai/src/transport.ts`
 ## Checklist
 
-- [ ] Define invocation reuse provenance contract.
-- [ ] Wire fresh/committed/recovery result paths.
-- [ ] Add focused tests without live credentials.
-- [ ] Verify repository/persistence semantics did not change.
-- [ ] Update durable docs and handoff.
-- [ ] Archive only after available verification gates are satisfied or blockers are explicitly recorded.
+- [ ] Record an ADR for the model-only execution boundary and its relationship
+  to ADR-0014, ADR-0017 and ADR-0051.
+- [ ] Generalize the provider-neutral model contract for text output and tools
+  without changing historical JSON semantics or identities.
+- [ ] Add ordered streaming primitives and extend gateway conformance.
+- [ ] Extend the OpenAI Responses adapter/transport for text, tools, tool-result
+  continuation and SSE.
+- [ ] Implement the model-only durable execution owner using existing ACME
+  execution/model-call evidence rules where they apply.
+- [ ] Add the separate versioned external model-execution runtime surface.
+- [ ] Add deterministic failure, cancellation, idempotency, restart and
+  domain-boundary regressions.
+- [ ] Run canonical gates and update owning documentation.
+- [ ] Archive, hand off and restore `docs/CURRENT_TASK.md` before completion.
 
 ## Decisions and Notes
 
-- Reuse provenance belongs to the returned invocation result because `committed-execution` is a property of this invocation, not of the historical commit stored in the repository.
-- `replayed` remains for compatibility. The new field disambiguates *why* no fresh provider work was needed.
-- Savings analytics must combine provenance with recorded usage evidence; this task does not estimate missing usage.
+- `/v1/execute` is intentionally not reused. It is a full domain-task execution
+  surface and would cross the non-cognitive model-execution boundary.
+- Tool schemas and tool-call results are execution data. ACME does not approve or
+  execute tools and does not infer what a tool call means.
+- Streaming is observability/delivery of one model execution. Stream events do
+  not become domain events, memory or canonical application state.
+- No mechanical retry policy may weaken ADR-0014's ambiguous-call rule. A later
+  retry design requires an explicit architecture decision with duplicate-call
+  safety evidence.
+- The implementation must remain useful to clients other than A008.
 
 ## Charter Amendment Log
 
--none
-
+- none
 ## Verification
 
-- [ ] Focused tests.
-- [ ] Repository CI when runners execute.
+- [ ] Record exact focused and canonical gate commands/results.
+- [ ] Record proof that historical structured-JSON execution remains unchanged.
+- [ ] Record proof that no domain/memory/state authority is reachable from the
+  model-only runtime path.
+- [ ] Record skipped checks and reasons; live-provider verification is not
+  required by this charter.
 
 ## Documentation Updates
 
+- [ ] `docs/PROJECT_BRIEF.md` if the general execution-runtime direction needs a
+  durable clarification.
 - [ ] `docs/CURRENT_STATUS.md`
 - [ ] `docs/SYSTEMDOC.md`
 - [ ] `docs/JOURNAL.md`
-- [ ] `docs/FILESTRUCTURE.md` only if structure changes
-- [ ] ADR only if implementation requires a new long-lived architectural decision beyond clarifying existing ADR-0012/0017 semantics
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] new/updated ADR and `docs/adr/README.md`
 
 ## Handoff and Follow-ups
 
-- Current state: task claimed on fork main and activated on isolated contribution branch.
-- Next recommended step: implement the result-level provenance contract with no repository schema change.
-- Blockers: GitHub Actions jobs on this account currently terminate before checkout (`steps: null`); this is a verification-infrastructure blocker, not evidence of a code failure.
-- Child tasks: none.
-- Resume condition: repository state is sufficient.
-- Open questions: whether a later task should persist invocation-level reuse analytics for aggregate dashboards.
+- Current state: charter only; model-only execution does not exist yet.
+- Next recommended step: implement this task before A008 Stage 3.5 consumes it.
+- Blockers: none inside ACME; downstream A008 work depends on this contract.
+- Child tasks: only if a prerequisite blocks this frozen deliverable.
+- Resume condition: n/a.
+- Open questions: exact protocol name/path and stream framing are implementation
+  choices inside this charter, but must be versioned and distinct from
+  `acme-runtime/1` full task execution.
 
 ## Finalize When Complete
 
-- Archive this file under `docs/finished/`.
-- Restore `docs/CURRENT_TASK.md` from the template.
-- Add a signed `docs/JOURNAL.md` entry.
+- Archive under `docs/finished/ACME-0176_*.md`.
+- Restore `docs/CURRENT_TASK.md` from `docs/template_CURRENT_TASK.md`.
+- Add a signed `docs/JOURNAL.md` entry and leave downstream integration evidence
+  sufficient for A008 to build against without chat-history assumptions.
