@@ -1,4 +1,4 @@
-import { canonicalJson } from '@acme/core';
+import { canonicalJson, type ModelRequest } from '@acme/core';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -20,6 +20,7 @@ import {
   noResponse,
   ok,
   refusedResponseBody,
+  sseBody,
   status,
   truncatedResponseBody,
   unknownItemResponseBody,
@@ -56,13 +57,33 @@ describe('OpenAI Responses request mapping', () => {
         format: {
           type: 'json_schema',
           name: 'fixture_output_1',
-          schema: fixtureRequest.output.jsonSchema,
+          schema:
+            fixtureRequest.output.mode === 'json'
+              ? fixtureRequest.output.jsonSchema
+              : undefined,
           strict: true,
         },
       },
       temperature: 0,
       max_output_tokens: 2048,
     });
+  });
+
+  it('maps prior assistant text as output_text in multi-turn history', () => {
+    const request: ModelRequest = {
+      messages: [
+        { role: 'user', content: [{ type: 'text', text: 'First' }] },
+        { role: 'assistant', content: [{ type: 'text', text: 'Answer' }] },
+        { role: 'user', content: [{ type: 'text', text: 'Second' }] },
+      ],
+      output: { mode: 'text' },
+    };
+    const { body } = buildResponsesBody(request, fixtureModel);
+    expect((body as { input: readonly unknown[] }).input).toEqual([
+      { role: 'user', content: [{ type: 'input_text', text: 'First' }] },
+      { role: 'assistant', content: [{ type: 'output_text', text: 'Answer' }] },
+      { role: 'user', content: [{ type: 'input_text', text: 'Second' }] },
+    ]);
   });
 
   it('is deterministic for the same request', () => {
@@ -82,6 +103,43 @@ describe('OpenAI Responses request mapping', () => {
       }),
     );
   });
+
+  it('maps topP and reasoningEffort onto Responses fields', () => {
+    const { body } = buildResponsesBody(
+      { ...fixtureRequest, topP: 0.9, reasoningEffort: 'high' },
+      fixtureModel,
+    );
+    expect(body).toMatchObject({
+      top_p: 0.9,
+      reasoning: { effort: 'high' },
+    });
+  });
+
+  it.each(['seed', 'enableThinking', 'reasoningBudget'] as const)(
+    'refuses %s rather than silently dropping it',
+    (control) => {
+      expect(() =>
+        buildResponsesBody(
+          {
+            ...fixtureRequest,
+            ...(control === 'seed'
+              ? { seed: 7 }
+              : control === 'enableThinking'
+                ? { enableThinking: true }
+                : { reasoningBudget: 256 }),
+          },
+          fixtureModel,
+        ),
+      ).toThrowError(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            code: 'UNSUPPORTED_CAPABILITY',
+            message: expect.stringContaining(control),
+          }),
+        }),
+      );
+    },
+  );
 
   it('rejects non-text content rather than silently dropping it', () => {
     expect(() =>
@@ -362,5 +420,292 @@ describe('OpenAI Responses gateway guards', () => {
     expect(transport.sent[0]?.headers).toEqual({
       'content-type': 'application/json',
     });
+  });
+});
+
+const textRequest = Object.freeze({
+  messages: Object.freeze([
+    Object.freeze({
+      role: 'user' as const,
+      content: Object.freeze([
+        Object.freeze({ type: 'text' as const, text: 'Say hello.' }),
+      ]),
+    }),
+  ]),
+  output: Object.freeze({ mode: 'text' as const }),
+});
+
+const textBody = JSON.stringify({
+  id: 'resp_text_001',
+  model: fixtureModel,
+  status: 'completed',
+  output: [
+    {
+      type: 'message',
+      content: [{ type: 'output_text', text: 'Hello' }],
+    },
+  ],
+  usage: { input_tokens: 3, output_tokens: 1, total_tokens: 4 },
+});
+
+const toolRequest = Object.freeze({
+  messages: Object.freeze([
+    Object.freeze({
+      role: 'user' as const,
+      content: Object.freeze([
+        Object.freeze({ type: 'text' as const, text: 'Weather?' }),
+      ]),
+    }),
+  ]),
+  output: Object.freeze({ mode: 'text' as const }),
+  tools: Object.freeze([
+    Object.freeze({
+      type: 'function' as const,
+      name: 'get_weather',
+      parameters: Object.freeze({
+        type: 'object',
+        properties: Object.freeze({
+          city: Object.freeze({ type: 'string' }),
+        }),
+        required: Object.freeze(['city']),
+        additionalProperties: false,
+      }),
+    }),
+  ]),
+});
+
+const toolBody = JSON.stringify({
+  id: 'resp_tool_001',
+  model: fixtureModel,
+  status: 'completed',
+  output: [
+    {
+      type: 'function_call',
+      id: 'fc_1',
+      call_id: 'call_1',
+      name: 'get_weather',
+      arguments: '{"city":"Paris"}',
+    },
+  ],
+  usage: { input_tokens: 8, output_tokens: 6, total_tokens: 14 },
+});
+
+function toolsGateway(transport: ProviderTransport) {
+  return createOpenAiResponsesGateway({
+    transport,
+    now: () => fixtureNow,
+    profiles: [
+      {
+        selection: fixtureSelection,
+        model: fixtureModel,
+        capabilities: { ...fixtureCapabilities, tools: true },
+      },
+    ],
+  });
+}
+
+describe('OpenAI Responses text and tools', () => {
+  it('maps text output without a json schema', () => {
+    const { body, providerWireSchemaHash } = buildResponsesBody(
+      textRequest,
+      fixtureModel,
+    );
+    expect(providerWireSchemaHash).toBeUndefined();
+    expect(body).toMatchObject({
+      model: fixtureModel,
+      text: { format: { type: 'text' } },
+    });
+    expect(body).not.toHaveProperty('tools');
+  });
+
+  it('maps function tools and tool-result continuation', () => {
+    const continued = {
+      ...toolRequest,
+      messages: [
+        ...toolRequest.messages,
+        {
+          role: 'assistant' as const,
+          content: [
+            {
+              type: 'tool-call' as const,
+              toolCallId: 'call_1',
+              name: 'get_weather',
+              arguments: { city: 'Paris' },
+            },
+          ],
+        },
+        {
+          role: 'tool' as const,
+          content: [
+            {
+              type: 'tool-result' as const,
+              toolCallId: 'call_1',
+              value: { celsius: 18 },
+            },
+          ],
+        },
+      ],
+    };
+    const { body } = buildResponsesBody(continued, fixtureModel);
+    expect(body).toMatchObject({
+      tools: [
+        expect.objectContaining({
+          type: 'function',
+          name: 'get_weather',
+          strict: true,
+        }),
+      ],
+    });
+    const input = (body as { input: readonly unknown[] }).input;
+    expect(input).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'function_call',
+          call_id: 'call_1',
+          name: 'get_weather',
+        }),
+        expect.objectContaining({
+          type: 'function_call_output',
+          call_id: 'call_1',
+        }),
+      ]),
+    );
+  });
+
+  it('normalizes a tool call without executing it', async () => {
+    const response = await toolsGateway(
+      fixtureTransport(ok(toolBody)),
+    ).generate(
+      toolRequest,
+      callContext({ requiredCapabilities: { tools: true } }),
+    );
+    expect(response.finishReason).toBe('tool');
+    expect(response.toolCalls).toEqual([
+      {
+        toolCallId: 'call_1',
+        name: 'get_weather',
+        arguments: { city: 'Paris' },
+      },
+    ]);
+  });
+
+  it('rejects malformed tool-call arguments instead of guessing', async () => {
+    const body = JSON.stringify({
+      id: 'resp_tool_bad',
+      model: fixtureModel,
+      status: 'completed',
+      output: [
+        {
+          type: 'function_call',
+          call_id: 'call_1',
+          name: 'get_weather',
+          arguments: '{',
+        },
+      ],
+    });
+    await expect(
+      toolsGateway(fixtureTransport(ok(body))).generate(
+        toolRequest,
+        callContext({ requiredCapabilities: { tools: true } }),
+      ),
+    ).rejects.toMatchObject({
+      data: { code: 'MODEL_INVALID_RESPONSE' },
+    });
+  });
+});
+
+async function drainStream(
+  subject: ReturnType<typeof gateway>,
+  request: ModelRequest,
+  context = callContext({ requiredCapabilities: {} }),
+) {
+  if (subject.stream === undefined) {
+    throw new Error('Expected OpenAI gateway stream support.');
+  }
+  const events = [];
+  for await (const event of subject.stream(request, context)) {
+    events.push(event);
+  }
+  return events;
+}
+
+describe('OpenAI Responses SSE', () => {
+  it('emits ordered content deltas and a completed response', async () => {
+    const sse = sseBody([
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"Hel"}',
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"lo"}',
+      `event: response.completed\ndata: ${JSON.stringify({ type: 'response.completed', response: JSON.parse(textBody) })}`,
+    ]);
+    const transport = fixtureTransport(ok(sse));
+    const events = await drainStream(gateway(transport), textRequest);
+    expect(events.map((event) => event.type)).toEqual([
+      'content-delta',
+      'content-delta',
+      'completed',
+    ]);
+    const terminal = events.at(-1);
+    expect(terminal?.type).toBe('completed');
+    if (terminal?.type === 'completed') {
+      expect(terminal.response.text).toBe('Hello');
+    }
+    expect(JSON.parse(transport.sent[0]?.body ?? '{}')).toMatchObject({
+      stream: true,
+    });
+  });
+
+  it('assembles fragmented tool-call argument deltas', async () => {
+    const sse = sseBody([
+      'event: response.output_item.added\ndata: {"type":"response.output_item.added","output_index":0,"item":{"type":"function_call","call_id":"call_1","name":"get_weather","arguments":""}}',
+      'event: response.function_call_arguments.delta\ndata: {"type":"response.function_call_arguments.delta","output_index":0,"delta":"{\\"city\\":"}',
+      'event: response.function_call_arguments.delta\ndata: {"type":"response.function_call_arguments.delta","output_index":0,"delta":"\\"Paris\\"}"}',
+      `event: response.completed\ndata: ${JSON.stringify({ type: 'response.completed', response: JSON.parse(toolBody) })}`,
+    ]);
+    const events = await drainStream(
+      toolsGateway(fixtureTransport(ok(sse))),
+      toolRequest,
+      callContext({ requiredCapabilities: { tools: true } }),
+    );
+    expect(events.some((event) => event.type === 'tool-call-delta')).toBe(true);
+    const terminal = events.at(-1);
+    expect(terminal?.type).toBe('completed');
+    if (terminal?.type === 'completed') {
+      expect(terminal.response.toolCalls?.[0]?.arguments).toEqual({
+        city: 'Paris',
+      });
+    }
+  });
+
+  it('classifies a truncated stream after HTTP 200 as invalid, not ambiguous', async () => {
+    const sse = sseBody([
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"Hel"}',
+    ]);
+    await expect(
+      drainStream(gateway(fixtureTransport(ok(sse))), textRequest),
+    ).rejects.toMatchObject({
+      data: { code: 'MODEL_INVALID_RESPONSE' },
+    });
+    await expect(
+      drainStream(gateway(fixtureTransport(ok(sse))), textRequest),
+    ).rejects.not.toBeInstanceOf(AmbiguousModelCallError);
+  });
+
+  it('keeps HTTP failures non-ambiguous on the stream path', async () => {
+    await expect(
+      drainStream(
+        gateway(fixtureTransport(status(401, errorBody('nope')))),
+        textRequest,
+      ),
+    ).rejects.toMatchObject({
+      data: { code: 'MODEL_AUTH', retryable: false },
+    });
+  });
+
+  it('treats stream no-response with unknown delivery as ambiguous', async () => {
+    await expect(
+      drainStream(
+        gateway(fixtureTransport(noResponse('timeout', 'unknown'))),
+        textRequest,
+      ),
+    ).rejects.toBeInstanceOf(AmbiguousModelCallError);
   });
 });

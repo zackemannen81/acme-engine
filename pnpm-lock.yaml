@@ -53,6 +53,9 @@ importers:
       '@acme/adapter-memory':
         specifier: workspace:*
         version: link:../../packages/adapter-memory
+      '@acme/adapter-model-chat-completions':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-chat-completions
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
@@ -391,6 +394,12 @@ importers:
       '@acme/evaluation':
         specifier: workspace:*
         version: link:../evaluation
+
+  packages/adapter-model-chat-completions:
+    dependencies:
+      '@acme/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/adapter-model-mock:
     dependencies:

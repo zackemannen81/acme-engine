@@ -11,6 +11,11 @@ export {
   type Migration,
 } from './migrations.js';
 export {
+  createSqliteModelExecutionRepository,
+  SqliteModelExecutionRepository,
+  type SqliteModelExecutionRepositoryOptions,
+} from './model-execution-repository.js';
+export {
   createSqliteExecutionRepository,
   SqliteExecutionRepository,
   type SqliteExecutionRepositoryOptions,

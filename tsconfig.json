@@ -32,6 +32,9 @@
       "path": "./packages/adapter-model-openai"
     },
     {
+      "path": "./packages/adapter-model-chat-completions"
+    },
+    {
       "path": "./packages/core"
     },
     {

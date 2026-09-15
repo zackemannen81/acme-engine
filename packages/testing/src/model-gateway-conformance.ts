@@ -6,6 +6,7 @@ import {
   type ModelGateway,
   type ModelRequest,
   type ModelSelection,
+  type ModelStreamEvent,
   type NormalizedModelResponse,
 } from '@acme/core';
 import { describe, expect, it } from 'vitest';
@@ -133,6 +134,30 @@ export function modelGatewayConformance(
       expect(caught).toBeInstanceOf(AcmeError);
       expect((caught as AcmeError).data).toEqual(subject.failure.expectedError);
       expectDeeplyFrozen((caught as AcmeError).data);
+    });
+
+    it('streams ordered events ending in a completed normalized response when stream is implemented', async () => {
+      const subject = options.createSubject();
+      if (subject.gateway.stream === undefined) {
+        return;
+      }
+      const events: ModelStreamEvent[] = [];
+      for await (const event of subject.gateway.stream(
+        subject.success.request,
+        subject.success.context,
+      )) {
+        events.push(event);
+      }
+      expect(events.length).toBeGreaterThan(0);
+      events.forEach((event, index) => {
+        expect(event.sequence).toBe(index);
+      });
+      const terminal = events.at(-1);
+      expect(terminal?.type).toBe('completed');
+      if (terminal?.type === 'completed') {
+        expect(terminal.response).toEqual(subject.success.expectedResponse);
+        expectDeeplyFrozen(terminal.response);
+      }
     });
   });
 }

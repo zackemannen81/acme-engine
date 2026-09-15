@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-08-26
+Last updated: 2026-09-15
 
 The repository source is open source under the root Apache-2.0 `LICENSE`.
 `package.json` remains npm-private as a publication guard, not as a source
@@ -24,6 +24,10 @@ acme-engine/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── src/
+│   │   │   ├── acme-model-runtime-host.ts
+│   │   │   ├── acme-model-runtime-service.ts
+│   │   │   ├── acme-model-runtime-service-main.ts
+│   │   │   ├── acme-model-runtime-wire.ts
 │   │   │   ├── acme-runtime-host.ts
 │   │   │   ├── acme-runtime-listener.ts
 │   │   │   ├── acme-runtime-service-main.ts
@@ -39,6 +43,8 @@ acme-engine/
 │   │   │   └── scenario.ts
 │   │   └── test/
 │   │       ├── cli.test.ts
+│   │       ├── model-runtime-host.test.ts
+│   │       ├── model-runtime-service.test.ts
 │   │       └── outbox-file-dispatcher.test.ts
 │   ├── evidence-workbench-api/
 │   │   ├── README.md
@@ -147,10 +153,12 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/
 │   │   │   ├── index.ts
+│   │   │   ├── model-execution-repository.ts
 │   │   │   ├── quality-evaluation-store.ts
 │   │   │   └── repository.ts
 │   │   └── test/
 │   │       ├── encrypted-payload.test.ts
+│   │       ├── model-execution-repository.test.ts
 │   │       └── repository.test.ts
 │   ├── adapter-model-mock/
 │   │   ├── package.json
@@ -169,6 +177,7 @@ acme-engine/
 │   │   │   ├── index.ts
 │   │   │   ├── request.ts
 │   │   │   ├── schema-lower.ts
+│   │   │   ├── sse.ts
 │   │   │   ├── transport.ts
 │   │   │   ├── transport-fetch.ts
 │   │   │   └── wire.ts
@@ -176,6 +185,18 @@ acme-engine/
 │   │       ├── fixtures.ts
 │   │       ├── gateway.test.ts
 │   │       ├── schema-lower.test.ts
+│   │       └── transport-fetch.test.ts
+│   ├── adapter-model-chat-completions/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/
+│   │   │   ├── gateway.ts
+│   │   │   ├── index.ts
+│   │   │   ├── transport.ts
+│   │   │   └── transport-fetch.ts
+│   │   └── test/
+│   │       ├── fixtures.ts
+│   │       ├── gateway.test.ts
 │   │       └── transport-fetch.test.ts
 │   ├── live-safety/
 │   │   ├── README.md
@@ -191,6 +212,7 @@ acme-engine/
 │   │   │   ├── driver-errors.ts
 │   │   │   ├── index.ts
 │   │   │   ├── migrations.ts
+│   │   │   ├── model-execution-repository.ts
 │   │   │   ├── quality-evaluation-store.ts
 │   │   │   ├── repository.ts
 │   │   │   └── rows.ts
@@ -198,6 +220,7 @@ acme-engine/
 │   │       ├── driver-errors.test.ts
 │   │       ├── encrypted-payload.test.ts
 │   │       ├── migrations.test.ts
+│   │       ├── model-execution-repository.test.ts
 │   │       └── quality-evaluation-store.test.ts
 │   ├── adapter-postgres/
 │   │   ├── package.json
@@ -260,6 +283,10 @@ acme-engine/
 │   │   │   ├── memory-engine.ts
 │   │   │   ├── model.ts
 │   │   │   ├── model-call-usage.ts
+│   │   │   ├── model-execution-engine.ts
+│   │   │   ├── model-execution-identity.ts
+│   │   │   ├── model-execution-types.ts
+│   │   │   ├── model-gateway-router.ts
 │   │   │   ├── model-request-hash.ts
 │   │   │   ├── model-response-hash.ts
 │   │   │   ├── model-validation.ts
@@ -270,6 +297,7 @@ acme-engine/
 │   │   │   ├── response-pipeline.ts
 │   │   │   ├── repository-digest.ts
 │   │   │   ├── repository-model-call.ts
+│   │   │   ├── repository-model-execution.ts
 │   │   │   ├── repository.ts
 │   │   │   ├── state-engine.ts
 │   │   │   ├── state-projection.ts
@@ -279,7 +307,10 @@ acme-engine/
 │   │   │   ├── execution-identity.test.ts
 │   │   │   ├── hashing.test.ts
 │   │   │   ├── memory-engine.test.ts
+│   │   │   ├── model-execution-engine.test.ts
+│   │   │   ├── model-gateway-router.test.ts
 │   │   │   ├── model-request-hash.test.ts
+│   │   │   ├── model-validation-text-tools.test.ts
 │   │   │   ├── outbox.test.ts
 │   │   │   ├── payload-encryptor.test.ts
 │   │   │   ├── repository-digest.test.ts
@@ -492,6 +523,7 @@ acme-engine/
 ├── tests/
 │   ├── conformance/
 │   │   ├── adapter-memory.test.ts
+│   │   ├── adapter-model-chat-completions.test.ts
 │   │   ├── adapter-model-mock.test.ts
 │   │   ├── adapter-model-openai.test.ts
 │   │   ├── adapter-sqlite.test.ts
@@ -519,6 +551,8 @@ acme-engine/
 │   │   ├── postgres-gates.test.ts
 │   │   └── quality-evaluation-postgres.conformance.test.ts
 │   ├── integration/
+│   │   ├── acme-model-runtime-listener.test.ts
+│   │   ├── acme-model-runtime-v2.test.ts
 │   │   ├── acme-runtime-host.test.ts
 │   │   ├── acme-runtime-listener.test.ts
 │   │   ├── acme-runtime-service.test.ts
@@ -527,6 +561,7 @@ acme-engine/
 │   │   ├── execution-engine.test.ts
 │   │   ├── execution-engine-sqlite.test.ts
 │   │   ├── execution-repair.test.ts
+│   │   ├── model-execution-boundary.test.ts
 │   │   ├── evidence-coverage-windows.test.ts
 │   │   ├── evidence-observe-engine.test.ts
 │   │   ├── scenario-live-offline.test.ts
@@ -633,6 +668,9 @@ acme-engine/
 │   │   ├── 0049-evidence-v2-surface-set.md
 │   │   ├── 0050-evidence-v2-pdf-ingestion-boundary.md
 │   │   ├── 0051-canonical-acme-runtime-boundary.md
+│   │   ├── 0052-apache-2.0-open-source-distribution.md
+│   │   ├── 0053-model-only-execution-runtime.md
+│   │   ├── 0054-model-runtime-v2-multi-provider-routing.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -674,6 +712,8 @@ acme-engine/
 │   ├── design/
 │   │   ├── README.md
 │   │   ├── acme-design-and-development-spec.md
+│   │   ├── acme-model-runtime-1.md
+│   │   ├── acme-model-runtime-2.md
 │   │   ├── domain-test-ui-specification.md
 │   │   ├── evidence-integrity-workbench-product-completion-plan.md
 │   │   ├── evidence-integrity-workbench-product-definition.md
@@ -924,7 +964,13 @@ content remains intentionally omitted here.
   the provider's strict structured-output subset before dispatch, with local
   preflight refusal for unlowerable constructs. A `fetch` transport is
   published from the separate `./transport-fetch` entry point, so the default
-  surface stays network-free.
+  surface stays network-free. v2 generation controls that this surface can
+  honor are mapped; the rest fail closed before dispatch.
+- `@acme/adapter-model-chat-completions`: OpenAI-compatible Chat Completions
+  mapping behind the same transport port. Profiles inject endpoint, model,
+  capabilities and thinking-template mapping. Text, tools, continuation, SSE,
+  usage and ADR-0014 classification are in scope; ACME structured JSON output
+  is refused on this surface.
 - `@acme/live-safety`: pure provider-neutral credential-field refusal,
   explicit opt-in, environment-credential and nested budget primitives shared
   by live application surfaces. It performs no I/O and owns no authorization.

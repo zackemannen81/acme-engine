@@ -20,6 +20,7 @@
     "@acme/adapter-memory": "workspace:*",
     "@acme/adapter-model-mock": "workspace:*",
     "@acme/adapter-model-openai": "workspace:*",
+    "@acme/adapter-model-chat-completions": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
     "@acme/adapter-postgres": "workspace:*",
     "@acme/core": "workspace:*",
@@ -35,6 +36,7 @@
   },
   "bin": {
     "acme": "./dist/main.js",
-    "acme-runtime": "./dist/acme-runtime-service-main.js"
+    "acme-runtime": "./dist/acme-runtime-service-main.js",
+    "acme-model-runtime": "./dist/acme-model-runtime-service-main.js"
   }
 }

@@ -19,6 +19,47 @@ tracked it; the file and value remain local and were not copied into audit
 evidence. The scoped proof and limitations are recorded in
 [the ACME-0175 acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Model-only execution runtime
+
+ACME-0176 adds the accepted [ADR-0053](adr/0053-model-only-execution-runtime.md)
+model-only execution owner and the frozen `acme-model-runtime/1` wire in
+[the protocol document](design/acme-model-runtime-1.md). `POST /v1/execute`
+remains full `ExecutionEngine` task execution under ADR-0051.
+
+The owner executes one already-prepared text/tool model request with streaming,
+cancellation, idempotent durable evidence and provider isolation. It does not
+invoke domain modules, memory, state or `ExecutionEngine.execute()`. Historical
+structured-JSON `ModelRequest` identities are unchanged. The OpenAI Responses
+adapter now honors text output, function tools, tool-result continuation and
+SSE without weakening ADR-0014.
+
+ACME-0178 repairs the model-only event boundary exposed by A008 live testing: after any streamed deltas, a terminal failure now receives the next execution-owned sequence number instead of resetting to zero. Gateway/provider sequence ordering is still validated independently, and the original structured ACME failure remains visible to the consumer.
+
+ACME-0179 repairs the next A008 live tool-stream regression: `argumentsDelta` is an opaque JSON string fragment, so non-empty whitespace-only fragments are preserved instead of being rejected by ordinary trimmed-text validation. Truly empty fragments remain invalid, and final assembled tool arguments are still parsed strictly without repair.
+
+ACME-0177 closes the first live A008 consumer regressions on that path. OpenAI
+multi-turn history maps user text as `input_text` and prior assistant text as
+`output_text`. Model-only execution also preserves complete structured ACME
+error data across package/runtime class-identity boundaries; unknown ordinary
+exceptions still fail closed as non-retryable `INTERNAL`.
+
+Machine-readable twin: `apps/cli/src/acme-model-runtime-wire.ts`. Fetch host:
+`apps/cli/src/acme-model-runtime-host.ts`.
+
+ACME-0180 adds accepted [ADR-0054](adr/0054-model-runtime-v2-multi-provider-routing.md)
+and the additive [`acme-model-runtime/2`](design/acme-model-runtime-2.md) wire.
+`acme-model-runtime/1` remains accepted and unchanged; v1 requests still reject
+`topP`, `reasoningBudget`, `enableThinking`, `reasoningEffort` and `seed`.
+Those controls are optional on the provider-neutral `ModelRequest` and do not
+change historical hashes when absent. A routed `ModelGateway` dispatches only
+by caller-owned `providerHint`. `@acme/adapter-model-chat-completions` maps
+NVIDIA-hosted and other OpenAI-compatible Chat Completions profiles. The
+runnable `acme-model-runtime` composition starts from environment-only
+credentials for OpenAI Responses, NVIDIA Chat Completions and optional extra
+compatible endpoints, and it does not emit credential values. It is a
+runnable composition, not a deployment. A008 GO / Stage 4 remains out of
+scope.
+
 ## Canonical external runtime boundary
 
 ACME-0167 adds the accepted [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md)

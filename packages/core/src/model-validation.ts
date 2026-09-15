@@ -1,14 +1,18 @@
 import type { JsonValue } from './common.js';
-import { AcmeError } from './errors.js';
+import { AcmeError, type AcmeErrorData } from './errors.js';
 import { canonicalJson } from './hashing.js';
 import type {
   GatewayCallContext,
   ModelCapabilities,
   ModelContentPart,
+  ModelFunctionTool,
   ModelMessage,
+  ModelOutputSpec,
   ModelRequest,
   ModelSelection,
+  ModelStreamEvent,
   NormalizedModelResponse,
+  NormalizedToolCall,
   NormalizedUsage,
 } from './model.js';
 
@@ -21,11 +25,17 @@ const capabilityKeys = [
   'vision',
 ] as const;
 const requestKeys = [
+  'enableThinking',
   'maxOutputTokens',
   'messages',
   'output',
+  'reasoningBudget',
+  'reasoningEffort',
+  'seed',
   'stop',
   'temperature',
+  'tools',
+  'topP',
 ] as const;
 const responseKeys = [
   'finishReason',
@@ -35,8 +45,16 @@ const responseKeys = [
   'providerResponseId',
   'receivedAt',
   'text',
+  'toolCalls',
   'usage',
 ] as const;
+const toolDefinitionKeys = [
+  'description',
+  'name',
+  'parameters',
+  'type',
+] as const;
+const toolCallKeys = ['arguments', 'name', 'toolCallId'] as const;
 const usageKeys = [
   'currency',
   'estimatedCostMinor',
@@ -103,6 +121,13 @@ function exactKeys(
 
 function text(value: JsonValue | undefined, label: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
+    invalid(`${label} must be a non-empty string.`);
+  }
+  return value;
+}
+
+function nonEmptyString(value: JsonValue | undefined, label: string): string {
+  if (typeof value !== 'string' || value.length === 0) {
     invalid(`${label} must be a non-empty string.`);
   }
   return value;
@@ -230,6 +255,20 @@ function validateContentPart(
       value: candidate.value as JsonValue,
     });
   }
+  if (type === 'tool-call') {
+    exactKeys(
+      candidate,
+      ['arguments', 'name', 'toolCallId', 'type'],
+      ['arguments', 'name', 'toolCallId', 'type'],
+      label,
+    );
+    return deepFreeze({
+      type,
+      toolCallId: text(candidate.toolCallId, `${label} toolCallId`),
+      name: text(candidate.name, `${label} name`),
+      arguments: candidate.arguments as JsonValue,
+    });
+  }
   invalid(`${label} has an unsupported type.`);
 }
 
@@ -262,12 +301,12 @@ function validateMessage(value: JsonValue, index: number): ModelMessage {
   });
 }
 
-function validateRequestValue(value: JsonObject): ModelRequest {
-  exactKeys(value, requestKeys, ['messages', 'output'], 'Model request');
-  if (!Array.isArray(value.messages) || value.messages.length === 0) {
-    invalid('Model request messages must be a non-empty array.');
+function validateOutput(value: JsonValue): ModelOutputSpec {
+  const output = object(value, 'Model request output');
+  if (output.mode === 'text') {
+    exactKeys(output, ['mode'], ['mode'], 'Model request output');
+    return deepFreeze({ mode: 'text' as const });
   }
-  const output = object(value.output, 'Model request output');
   exactKeys(
     output,
     ['jsonSchema', 'mode', 'schemaName'],
@@ -275,9 +314,44 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     'Model request output',
   );
   if (output.mode !== 'json') {
-    invalid('Model request output mode must be "json".');
+    invalid('Model request output mode must be "json" or "text".');
   }
   object(output.jsonSchema, 'Model request output jsonSchema');
+  return deepFreeze({
+    mode: 'json' as const,
+    schemaName: text(output.schemaName, 'Model request output schemaName'),
+    jsonSchema: output.jsonSchema as JsonValue,
+  });
+}
+
+function validateTool(value: JsonValue, index: number): ModelFunctionTool {
+  const label = `Model request tool ${index}`;
+  const candidate = object(value, label);
+  exactKeys(
+    candidate,
+    toolDefinitionKeys,
+    ['name', 'parameters', 'type'],
+    label,
+  );
+  if (candidate.type !== 'function') {
+    invalid(`${label} type must be "function".`);
+  }
+  object(candidate.parameters, `${label} parameters`);
+  return deepFreeze({
+    type: 'function' as const,
+    name: text(candidate.name, `${label} name`),
+    ...(Object.hasOwn(candidate, 'description')
+      ? { description: text(candidate.description, `${label} description`) }
+      : {}),
+    parameters: candidate.parameters as JsonValue,
+  });
+}
+
+function validateRequestValue(value: JsonObject): ModelRequest {
+  exactKeys(value, requestKeys, ['messages', 'output'], 'Model request');
+  if (!Array.isArray(value.messages) || value.messages.length === 0) {
+    invalid('Model request messages must be a non-empty array.');
+  }
 
   let temperature: number | undefined;
   if (Object.hasOwn(value, 'temperature')) {
@@ -293,6 +367,53 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     temperature = value.temperature;
   }
 
+  let topP: number | undefined;
+  if (Object.hasOwn(value, 'topP')) {
+    if (
+      typeof value.topP !== 'number' ||
+      !Number.isFinite(value.topP) ||
+      value.topP < 0 ||
+      value.topP > 1
+    ) {
+      invalid('Model request topP must be a finite number from 0 to 1.');
+    }
+    topP = value.topP;
+  }
+
+  let reasoningBudget: number | undefined;
+  if (Object.hasOwn(value, 'reasoningBudget')) {
+    if (
+      !Number.isSafeInteger(value.reasoningBudget) ||
+      (value.reasoningBudget as number) < -1
+    ) {
+      invalid(
+        'Model request reasoningBudget must be a safe integer greater than or equal to -1.',
+      );
+    }
+    reasoningBudget = value.reasoningBudget as number;
+  }
+
+  let enableThinking: boolean | undefined;
+  if (Object.hasOwn(value, 'enableThinking')) {
+    if (typeof value.enableThinking !== 'boolean') {
+      invalid('Model request enableThinking must be a boolean.');
+    }
+    enableThinking = value.enableThinking;
+  }
+
+  let reasoningEffort: string | undefined;
+  if (Object.hasOwn(value, 'reasoningEffort')) {
+    reasoningEffort = text(
+      value.reasoningEffort,
+      'Model request reasoningEffort',
+    );
+  }
+
+  let seed: number | undefined;
+  if (Object.hasOwn(value, 'seed')) {
+    seed = nonNegativeInteger(value.seed, 'Model request seed');
+  }
+
   let stop: readonly string[] | undefined;
   if (Object.hasOwn(value, 'stop')) {
     if (!Array.isArray(value.stop) || value.stop.length === 0) {
@@ -303,16 +424,22 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     );
   }
 
+  let tools: readonly ModelFunctionTool[] | undefined;
+  if (Object.hasOwn(value, 'tools')) {
+    if (!Array.isArray(value.tools) || value.tools.length === 0) {
+      invalid('Model request tools must be a non-empty array.');
+    }
+    tools = value.tools.map((tool, index) => validateTool(tool, index));
+  }
+
   return deepFreeze({
     messages: value.messages.map((message, index) =>
       validateMessage(message, index),
     ),
-    output: deepFreeze({
-      mode: 'json' as const,
-      schemaName: text(output.schemaName, 'Model request output schemaName'),
-      jsonSchema: output.jsonSchema as JsonValue,
-    }),
+    output: validateOutput(value.output as JsonValue),
+    ...(tools === undefined ? {} : { tools }),
     ...(temperature === undefined ? {} : { temperature }),
+    ...(topP === undefined ? {} : { topP }),
     ...(Object.hasOwn(value, 'maxOutputTokens')
       ? {
           maxOutputTokens: positiveInteger(
@@ -322,6 +449,10 @@ function validateRequestValue(value: JsonObject): ModelRequest {
         }
       : {}),
     ...(stop === undefined ? {} : { stop }),
+    ...(reasoningBudget === undefined ? {} : { reasoningBudget }),
+    ...(enableThinking === undefined ? {} : { enableThinking }),
+    ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
+    ...(seed === undefined ? {} : { seed }),
   });
 }
 
@@ -387,6 +518,17 @@ function isoTimestamp(value: JsonValue | undefined, label: string): string {
   return candidate;
 }
 
+function validateToolCall(value: JsonValue, index: number): NormalizedToolCall {
+  const label = `Normalized model response toolCall ${index}`;
+  const candidate = object(value, label);
+  exactKeys(candidate, toolCallKeys, toolCallKeys, label);
+  return deepFreeze({
+    toolCallId: text(candidate.toolCallId, `${label} toolCallId`),
+    name: text(candidate.name, `${label} name`),
+    arguments: candidate.arguments as JsonValue,
+  });
+}
+
 function validateResponseValue(value: JsonObject): NormalizedModelResponse {
   exactKeys(
     value,
@@ -415,6 +557,15 @@ function validateResponseValue(value: JsonObject): NormalizedModelResponse {
     invalid('Normalized model response text must be a string.');
   }
   const metadata = object(value.metadata, 'Normalized model response metadata');
+  let toolCalls: readonly NormalizedToolCall[] | undefined;
+  if (Object.hasOwn(value, 'toolCalls')) {
+    if (!Array.isArray(value.toolCalls) || value.toolCalls.length === 0) {
+      invalid('Normalized model response toolCalls must be a non-empty array.');
+    }
+    toolCalls = value.toolCalls.map((call, index) =>
+      validateToolCall(call, index),
+    );
+  }
   return deepFreeze({
     provider: text(value.provider, 'Normalized model response provider'),
     model: text(value.model, 'Normalized model response model'),
@@ -432,6 +583,7 @@ function validateResponseValue(value: JsonObject): NormalizedModelResponse {
     ),
     finishReason: value.finishReason,
     text: value.text,
+    ...(toolCalls === undefined ? {} : { toolCalls }),
     usage: validateUsage(value.usage as JsonValue),
     metadata,
   });
@@ -472,6 +624,123 @@ export function validateNormalizedModelResponse(
 ): NormalizedModelResponse {
   const cloned = cloneJson(value, 'Normalized model response');
   return validateResponseValue(object(cloned, 'Normalized model response'));
+}
+
+function validateStreamEventValue(value: JsonObject): ModelStreamEvent {
+  const type = value.type;
+  const sequence = nonNegativeInteger(
+    value.sequence,
+    'Model stream event sequence',
+  );
+  if (type === 'reasoning-delta' || type === 'content-delta') {
+    exactKeys(
+      value,
+      ['sequence', 'text', 'type'],
+      ['sequence', 'text', 'type'],
+      'Model stream event',
+    );
+    if (typeof value.text !== 'string') {
+      invalid('Model stream event text must be a string.');
+    }
+    return deepFreeze({ type, sequence, text: value.text });
+  }
+  if (type === 'tool-call-delta') {
+    exactKeys(
+      value,
+      ['argumentsDelta', 'index', 'name', 'sequence', 'toolCallId', 'type'],
+      ['index', 'sequence', 'type'],
+      'Model stream event',
+    );
+    return deepFreeze({
+      type,
+      sequence,
+      index: nonNegativeInteger(value.index, 'Model stream event index'),
+      ...(Object.hasOwn(value, 'toolCallId')
+        ? {
+            toolCallId: text(value.toolCallId, 'Model stream event toolCallId'),
+          }
+        : {}),
+      ...(Object.hasOwn(value, 'name')
+        ? { name: text(value.name, 'Model stream event name') }
+        : {}),
+      ...(Object.hasOwn(value, 'argumentsDelta')
+        ? {
+            argumentsDelta: nonEmptyString(
+              value.argumentsDelta,
+              'Model stream event argumentsDelta',
+            ),
+          }
+        : {}),
+    });
+  }
+  if (type === 'completed') {
+    exactKeys(
+      value,
+      ['response', 'sequence', 'type'],
+      ['response', 'sequence', 'type'],
+      'Model stream event',
+    );
+    return deepFreeze({
+      type,
+      sequence,
+      response: validateResponseValue(
+        object(value.response, 'Model stream event response'),
+      ),
+    });
+  }
+  if (type === 'failed') {
+    exactKeys(
+      value,
+      ['error', 'sequence', 'type'],
+      ['error', 'sequence', 'type'],
+      'Model stream event',
+    );
+    const error = object(value.error, 'Model stream event error');
+    exactKeys(
+      error,
+      ['causeRef', 'code', 'details', 'message', 'retryable', 'stage'],
+      ['code', 'message', 'retryable', 'stage'],
+      'Model stream event error',
+    );
+    if (typeof error.code !== 'string' || typeof error.message !== 'string') {
+      invalid('Model stream event error is invalid.');
+    }
+    if (
+      typeof error.stage !== 'string' ||
+      typeof error.retryable !== 'boolean'
+    ) {
+      invalid('Model stream event error is invalid.');
+    }
+    return deepFreeze({
+      type,
+      sequence,
+      error: deepFreeze({
+        code: error.code as AcmeErrorData['code'],
+        message: error.message,
+        stage: error.stage as AcmeErrorData['stage'],
+        retryable: error.retryable,
+        ...(Object.hasOwn(error, 'details')
+          ? { details: error.details as JsonValue }
+          : {}),
+        ...(Object.hasOwn(error, 'causeRef')
+          ? {
+              causeRef: text(
+                error.causeRef,
+                'Model stream event error causeRef',
+              ),
+            }
+          : {}),
+      }),
+    });
+  }
+  invalid('Model stream event type is invalid.');
+}
+
+export function validateModelStreamEvent(
+  value: ModelStreamEvent,
+): ModelStreamEvent {
+  const cloned = cloneJson(value, 'Model stream event');
+  return validateStreamEventValue(object(cloned, 'Model stream event'));
 }
 
 export function validateGatewayCallContext(

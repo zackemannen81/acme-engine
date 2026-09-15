@@ -30,6 +30,37 @@ export {
   type AcmeRuntimeServiceOptions,
 } from './acme-runtime-service.js';
 export {
+  ACME_MODEL_RUNTIME_MAX_REQUEST_BYTES,
+  createAcmeModelRuntimeHost,
+  toModelExecutionRequest,
+  validateAcmeModelRuntimeRequest,
+  type AcmeModelRuntimeAuthorizer,
+  type AcmeModelRuntimeHost,
+  type AcmeModelRuntimeHostOptions,
+} from './acme-model-runtime-host.js';
+export {
+  ACME_MODEL_RUNTIME_COMPATIBILITY_PATH,
+  ACME_MODEL_RUNTIME_ERROR_VERSION,
+  ACME_MODEL_RUNTIME_EXECUTE_PATH,
+  ACME_MODEL_RUNTIME_HEADER,
+  ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+  ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION,
+  type AcmeModelRuntimeDescriptor,
+  type AcmeModelRuntimeErrorEnvelope,
+  type AcmeModelRuntimeProtocolVersion,
+  type AcmeModelRuntimeRequest,
+} from './acme-model-runtime-wire.js';
+export {
+  NVIDIA_CHAT_COMPLETIONS_ENDPOINT,
+  createModelRuntimeBearerAuthorizer,
+  readAcmeModelRuntimeServiceConfig,
+  startAcmeModelRuntimeService,
+  validateAcmeModelRuntimeServiceConfig,
+  type AcmeModelRuntimeService,
+  type AcmeModelRuntimeServiceConfig,
+  type AcmeModelRuntimeServiceOptions,
+} from './acme-model-runtime-service.js';
+export {
   EXIT_OK,
   EXIT_OUTCOME,
   EXIT_USAGE,
