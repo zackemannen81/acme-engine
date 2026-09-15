@@ -62,13 +62,10 @@ describe('evidence v2 observe contract', () => {
     // A provider constrains the wire schema name to [a-zA-Z0-9_-]+. The first
     // live call was rejected with HTTP 400 because the schema version, which
     // carries a slash, was used here.
-    expect(request.output).toMatchObject({
-      mode: 'json',
-      schemaName: EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
-    });
-    if (request.output.mode === 'json') {
-      expect(request.output.schemaName).toMatch(/^[a-zA-Z0-9_-]+$/u);
-    }
+    expect(request.output.schemaName).toBe(
+      EVIDENCE_V2_OBSERVE_OUTPUT_SCHEMA_NAME,
+    );
+    expect(request.output.schemaName).toMatch(/^[a-zA-Z0-9_-]+$/u);
     // No provider tuning parameter: a model may reject one, and this one
     // rejects temperature.
     expect(request.temperature).toBeUndefined();

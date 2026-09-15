@@ -43,16 +43,3 @@ export class AcmeError extends Error {
     this.data = Object.freeze({ ...data });
   }
 }
-
-/**
- * Raised when a model call may have executed at the provider. ADR-0014 makes
- * this terminal for its execution and never automatically retried.
- */
-export class AmbiguousModelCallError extends AcmeError {
-  readonly ambiguous = true as const;
-
-  constructor(data: AcmeErrorData, options?: ErrorOptions) {
-    super(data, options);
-    this.name = 'AmbiguousModelCallError';
-  }
-}

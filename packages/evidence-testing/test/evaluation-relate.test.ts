@@ -45,10 +45,7 @@ describe('evaluation relate candidates', () => {
       'ascending lexicographic order',
     );
     expect(JSON.stringify(active)).toContain('ascending lexicographic order');
-    expect(active.output).toMatchObject({
-      mode: 'json',
-      schemaName: 'evidence_relate_observations_1_2_0',
-    });
+    expect(active.output.schemaName).toBe('evidence_relate_observations_1_2_0');
     expect(
       computeModelRequestHash(
         evidenceRelateObservationsContractV2.buildRequest(
@@ -57,10 +54,9 @@ describe('evaluation relate candidates', () => {
         ),
       ),
     ).toBe('1f49ca0835d94ab9236ea5a53aa1650f07a53454c94aacf94f16ccbac1b89f4f');
-    expect(historical.output).toMatchObject({
-      mode: 'json',
-      schemaName: 'evidence_relate_observations_1_0_0',
-    });
+    expect(historical.output.schemaName).toBe(
+      'evidence_relate_observations_1_0_0',
+    );
     const registry = createContractRegistry([
       evidenceRelateObservationsContractV1,
       evidenceRelateObservationsContractV2,

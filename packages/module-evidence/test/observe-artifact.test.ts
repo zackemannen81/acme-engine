@@ -375,10 +375,6 @@ describe('evidence.observe-artifact', () => {
       type: 'text',
       text: expect.stringContaining('YYYY-MM-DDTHH:MM:SSZ'),
     });
-    expect(request.output.mode).toBe('json');
-    if (request.output.mode !== 'json') {
-      throw new Error('Expected json model output.');
-    }
     const jsonSchema = request.output.jsonSchema as {
       readonly properties?: {
         readonly observations?: {

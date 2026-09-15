@@ -58,45 +58,6 @@ Focused Fetch-host, loopback and offline service lifecycle tests are under
 V2/Workbench or frozen POC #1 change. PR #38's final head passed canonical CI
 run `32245847498`, including the complete verify and PostgreSQL gates.
 
-## Model-only execution runtime
-
-[ADR-0053](adr/0053-model-only-execution-runtime.md) adds a domain-neutral
-model-only owner distinct from `ExecutionEngine`. The frozen external wire is
-[`docs/design/acme-model-runtime-1.md`](design/acme-model-runtime-1.md)
-(`acme-model-runtime/1`). It is not an extension of `acme-runtime/1`.
-
-- `ModelRequest.output` is a discriminated `json | text` union. Historical JSON
-  requests omit `tools` and keep `acme-model-request-hash-1` identities.
-- Optional function tools and `tool-call` / `tool-result` content parts are
-  caller-owned execution input. ACME maps them structurally and returns tool
-  calls without executing them.
-- `ModelExecutionEngine` validates one prepared request, checks capabilities,
-  reserves the model call before dispatch, records success/failure/ambiguity,
-  applies retention and exposes usage/cost/safe diagnostics. It does not
-  invoke DomainModule, MemoryEngine, StateEngine or `ExecutionEngine.execute()`.
-- `GET /v1/model/compatibility` and `POST /v1/model/execute` live in
-  `apps/cli/src/acme-model-runtime-host.ts`. Execute returns ordered SSE.
-  Authorization remains a composition port. Request bodies are bounded at
-  1 MiB.
-- The OpenAI Responses adapter honors text output, function tools, tool-result
-  continuation and SSE while retaining ADR-0014 delivery/ambiguity
-  classification. `generate` remains the buffered contract used by
-  `ExecutionEngine`.
-- ModelExecutionEngine owns the sequence visible to its consumer. Gateway stream sequence is validated separately; every emitted event is renumbered contiguously from zero, so a terminal failure after partial streaming cannot reset the external sequence or mask the underlying structured error.
-- Tool-call `argumentsDelta` values are opaque JSON string fragments. A non-empty fragment is preserved byte-for-byte even when it contains only whitespace; an empty fragment is invalid, and only the final assembled argument value is JSON-parsed.
-- Multi-turn Responses history is role-aware: caller/user text maps to
-  `input_text`, while prior assistant text maps to `output_text`; tool-call and
-  tool-result items keep their dedicated wire shapes.
-- Model-only execution preserves structurally complete `AcmeErrorData` when an
-  error crosses a package/runtime boundary with a different JavaScript class
-  identity. Unclassified ordinary exceptions remain non-retryable `INTERNAL`.
-- In-memory and SQLite `ModelExecutionRepository` adapters persist
-  reservation-before-dispatch, idempotent terminal reuse and retained-response
-  restart. Ambiguous and in-flight evidence never auto-retries.
-
-The Node listener may adapt sockets for this host. A runnable
-`acme-model-runtime` service composition is a later task.
-
 Primary observation surfaces share `evidence-observation-card/1`: quote,
 source title, citation, review standing, asserted event time and relation
 count. Source review and the ledger embed the same card object.

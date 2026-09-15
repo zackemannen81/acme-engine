@@ -206,13 +206,10 @@ describe('evidence v2 compare contract', () => {
     expect(prompt).toContain('occ-p1');
     expect(prompt).toContain('Han säger att bilen var grön.');
     expect(prompt).toContain('Cite occurrence ids only');
-    expect(request.output).toMatchObject({
-      mode: 'json',
-      schemaName: EVIDENCE_V2_COMPARE_OUTPUT_SCHEMA_NAME,
-    });
-    if (request.output.mode === 'json') {
-      expect(request.output.schemaName).toMatch(/^[a-zA-Z0-9_-]+$/u);
-    }
+    expect(request.output.schemaName).toBe(
+      EVIDENCE_V2_COMPARE_OUTPUT_SCHEMA_NAME,
+    );
+    expect(request.output.schemaName).toMatch(/^[a-zA-Z0-9_-]+$/u);
     expect(request.temperature).toBeUndefined();
   });
 

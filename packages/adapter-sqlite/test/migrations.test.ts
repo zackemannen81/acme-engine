@@ -69,8 +69,6 @@ describe('sqlite migrations', () => {
       'memory_candidates',
       'memory_records',
       'model_calls',
-      'model_execution_calls',
-      'model_executions',
       'outbox',
       'quality_evaluations',
       'schema_migrations',

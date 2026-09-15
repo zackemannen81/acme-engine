@@ -39,24 +39,6 @@ export type ProviderTransportResult =
       readonly message?: string;
     };
 
-export type ProviderTransportStreamEvent =
-  | {
-      readonly kind: 'response-start';
-      readonly status: number;
-      readonly headers: Readonly<Record<string, string>>;
-    }
-  | { readonly kind: 'chunk'; readonly text: string }
-  | { readonly kind: 'response-end' }
-  | {
-      readonly kind: 'no-response';
-      readonly reason: 'timeout' | 'aborted' | 'network';
-      readonly delivery: ProviderTransportDelivery;
-      readonly message?: string;
-    };
-
 export interface ProviderTransport {
   send(request: ProviderTransportRequest): Promise<ProviderTransportResult>;
-  stream?(
-    request: ProviderTransportRequest,
-  ): AsyncIterable<ProviderTransportStreamEvent>;
 }

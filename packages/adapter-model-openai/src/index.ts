@@ -15,7 +15,6 @@ export {
   type ProviderTransportDelivery,
   type ProviderTransportRequest,
   type ProviderTransportResult,
-  type ProviderTransportStreamEvent,
 } from './transport.js';
 export {
   OPENAI_PROVIDER,

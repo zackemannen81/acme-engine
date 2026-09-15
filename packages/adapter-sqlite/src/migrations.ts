@@ -223,46 +223,6 @@ const qualityEvaluationsSchema: readonly string[] = [
     ON quality_evaluations (execution_id, evaluation_id)`,
 ];
 
-/**
- * Model-only execution ledger (ADR-0053 / ACME-0176). Sibling tables: no
- * foreign key to domain executions, so the non-cognitive path cannot be
- * confused with ExecutionEngine task rows.
- */
-const modelExecutionSchema: readonly string[] = [
-  `CREATE TABLE model_executions (
-    model_execution_id TEXT PRIMARY KEY,
-    request_key TEXT NOT NULL UNIQUE,
-    request_fingerprint TEXT NOT NULL,
-    request_hash TEXT NOT NULL,
-    selection_json TEXT NOT NULL,
-    request_json TEXT NOT NULL,
-    required_capabilities_json TEXT NOT NULL,
-    policy_json TEXT NOT NULL,
-    status TEXT NOT NULL,
-    error_json TEXT,
-    diagnostic_json TEXT,
-    result_json TEXT,
-    record_json TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  )`,
-  `CREATE TABLE model_execution_calls (
-    model_call_id TEXT PRIMARY KEY,
-    model_execution_id TEXT NOT NULL REFERENCES model_executions(model_execution_id),
-    call_key TEXT NOT NULL,
-    attempt INTEGER NOT NULL,
-    purpose TEXT NOT NULL,
-    selection_json TEXT NOT NULL,
-    request_hash TEXT NOT NULL,
-    record_json TEXT NOT NULL,
-    status TEXT NOT NULL,
-    response_hash TEXT,
-    started_at TEXT NOT NULL,
-    completed_at TEXT,
-    UNIQUE (model_execution_id, call_key, attempt)
-  )`,
-];
-
 export const migrations: readonly Migration[] = Object.freeze([
   Object.freeze({
     version: 1,
@@ -273,11 +233,6 @@ export const migrations: readonly Migration[] = Object.freeze([
     version: 2,
     name: 'quality-evaluations-append-only',
     statements: Object.freeze(qualityEvaluationsSchema),
-  }),
-  Object.freeze({
-    version: 3,
-    name: 'model-only-execution-ledger',
-    statements: Object.freeze(modelExecutionSchema),
   }),
 ]);
 

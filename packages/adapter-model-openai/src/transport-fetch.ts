@@ -3,7 +3,6 @@ import type {
   ProviderTransportDelivery,
   ProviderTransportRequest,
   ProviderTransportResult,
-  ProviderTransportStreamEvent,
 } from './transport.js';
 
 export interface FetchTransportOptions {
@@ -88,82 +87,6 @@ export function createFetchTransport(
           message:
             error instanceof Error ? error.message : 'The transport failed.',
         };
-      }
-    },
-    async *stream(
-      request: ProviderTransportRequest,
-    ): AsyncIterable<ProviderTransportStreamEvent> {
-      if (request.signal.aborted) {
-        yield {
-          kind: 'no-response',
-          reason: 'aborted',
-          delivery: 'not-sent',
-          message: 'The call was cancelled before dispatch.',
-        };
-        return;
-      }
-
-      const timeout = AbortSignal.timeout(request.timeoutMs);
-      const signal = AbortSignal.any([request.signal, timeout]);
-
-      let response: Response;
-      try {
-        response = await send(request.url, {
-          method: request.method,
-          headers: { ...request.headers },
-          body: request.body,
-          signal,
-        });
-      } catch (error: unknown) {
-        yield {
-          kind: 'no-response',
-          reason: reasonOf(error, timeout.aborted),
-          delivery: 'unknown',
-          message:
-            error instanceof Error ? error.message : 'The transport failed.',
-        };
-        return;
-      }
-
-      yield {
-        kind: 'response-start',
-        status: response.status,
-        headers: headerRecord(response.headers),
-      };
-
-      if (response.body === null) {
-        yield { kind: 'response-end' };
-        return;
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
-          }
-          yield {
-            kind: 'chunk',
-            text: decoder.decode(value, { stream: true }),
-          };
-        }
-        const tail = decoder.decode();
-        if (tail.length > 0) {
-          yield { kind: 'chunk', text: tail };
-        }
-        yield { kind: 'response-end' };
-      } catch (error: unknown) {
-        yield {
-          kind: 'no-response',
-          reason: reasonOf(error, timeout.aborted),
-          delivery: 'unknown',
-          message:
-            error instanceof Error ? error.message : 'The transport failed.',
-        };
-      } finally {
-        reader.releaseLock();
       }
     },
   };
