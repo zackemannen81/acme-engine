@@ -48,3 +48,4 @@ above the floor as well as the active task.
 | ACME-0176 | model-only text/tool streaming execution runtime | Grok (delegated) | 2026-09-15 | prepare ACME as non-cognitive provider-execution substrate for A008 and other clients |
 | ACME-0177 | OpenAI multi-turn history and structured error preservation | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME test |
 | ACME-0178 | contiguous terminal sequence after streamed failure | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME test |
+| ACME-0179 | Preserve whitespace tool-call argument fragments | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME tool streaming |
