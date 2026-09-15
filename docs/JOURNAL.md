@@ -1,5 +1,16 @@
 # Journal
 
+## 2026-09-15 — ACME-0179: whitespace tool-call fragments remain opaque
+
+- Date: 2026-09-15
+- Author: OpenAI assistant
+- Task: ACME-0179, Complete. A008 live tool execution reached seven completed tool calls before ACME rejected a provider argument fragment containing only whitespace as if it were empty ordinary text.
+- Cause: `ModelStreamEvent.argumentsDelta` reused the generic trimmed non-empty text validator even though `acme-model-runtime/1` defines it as an opaque JSON string fragment. Whitespace between JSON tokens is valid and provider chunk boundaries are arbitrary.
+- Change: `argumentsDelta` now requires a string with `length > 0` and is otherwise preserved byte-for-byte. Ordinary text fields keep trimmed non-empty validation; an actually empty argument fragment remains invalid; final assembled tool arguments remain strict JSON with no repair.
+- Regression: core first failed only the new whitespace-fragment case, then passed 11/11 including explicit empty-fragment rejection. A loopback fake OpenAI SSE run carries a whitespace-only function-argument fragment through gateway, core and `/v1/model/execute` and completes with `{ city: "Paris" }`. Combined focused proof: 15/15.
+- No A008, cognition, memory, domain, state, retry-policy or wire-version change.
+- Signature: OpenAI assistant
+
 ## 2026-09-15 — ACME-0178: contiguous terminal sequence after streamed failure
 
 - Date: 2026-09-15

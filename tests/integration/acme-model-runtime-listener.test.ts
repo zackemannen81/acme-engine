@@ -268,6 +268,80 @@ describe('acme-model-runtime/1 loopback', () => {
     );
   });
 
+  it('preserves whitespace-only function argument fragments through the model runtime', async () => {
+    const toolCompletedPayload = {
+      type: 'response.completed',
+      response: {
+        id: 'resp_tool_ws_1',
+        model: 'gpt-fixture-1',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_1',
+            call_id: 'call_1',
+            name: 'get_weather',
+            arguments: '{"city": "Paris"}',
+          },
+        ],
+        usage: { input_tokens: 8, output_tokens: 6, total_tokens: 14 },
+      },
+    };
+    const sse = [
+      `event: response.output_item.added\ndata: ${JSON.stringify({ type: 'response.output_item.added', output_index: 0, item: { type: 'function_call', call_id: 'call_1', name: 'get_weather', arguments: '' } })}\n\n`,
+      `event: response.function_call_arguments.delta\ndata: ${JSON.stringify({ type: 'response.function_call_arguments.delta', output_index: 0, delta: '{"city":' })}\n\n`,
+      `event: response.function_call_arguments.delta\ndata: ${JSON.stringify({ type: 'response.function_call_arguments.delta', output_index: 0, delta: ' ' })}\n\n`,
+      `event: response.function_call_arguments.delta\ndata: ${JSON.stringify({ type: 'response.function_call_arguments.delta', output_index: 0, delta: '"Paris"}' })}\n\n`,
+      `event: response.completed\ndata: ${JSON.stringify(toolCompletedPayload)}\n\n`,
+    ].join('');
+    await withFakeProvider(
+      () => sse,
+      async (baseUrl) => {
+        await withModelRuntime(baseUrl, async (origin) => {
+          const body: AcmeModelRuntimeRequest = {
+            ...executeBody('loopback-tool-whitespace-1'),
+            request: {
+              ...textRequest,
+              tools: [
+                {
+                  type: 'function',
+                  name: 'get_weather',
+                  parameters: { type: 'object' },
+                },
+              ],
+            },
+            requiredCapabilities: { tools: true },
+          };
+          const response = await fetch(`${origin}/v1/model/execute`, {
+            method: 'POST',
+            headers: {
+              ...runtimeHeaders(),
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(body),
+          });
+          expect(response.status).toBe(200);
+          const events = await readSse(response);
+          expect(
+            events.some(
+              (event) =>
+                event.type === 'tool-call-delta' &&
+                event.argumentsDelta === ' ',
+            ),
+          ).toBe(true);
+          const terminal = events.at(-1);
+          expect(terminal?.type).toBe('completed');
+          expect(
+            (
+              terminal?.response as
+                { toolCalls?: Array<{ arguments?: unknown }> } | undefined
+            )?.toolCalls?.[0]?.arguments,
+          ).toEqual({ city: 'Paris' });
+        });
+      },
+    );
+  });
+
   it('propagates client disconnect as cancellation to the local provider', async () => {
     await withFakeProvider(
       async function* (signal) {

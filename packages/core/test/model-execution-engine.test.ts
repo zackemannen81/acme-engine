@@ -312,6 +312,101 @@ describe('ModelExecutionEngine', () => {
     expect(calls).toBe(2);
   });
 
+  it('accepts whitespace-only tool-call argument fragments', async () => {
+    const events: ModelStreamEvent[] = [];
+    const toolResponse: NormalizedModelResponse = {
+      ...textResponse,
+      finishReason: 'tool',
+      text: '',
+      toolCalls: [
+        {
+          toolCallId: 'call_1',
+          name: 'get_weather',
+          arguments: { city: 'Paris' },
+        },
+      ],
+    };
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: streamingGateway({
+        async capabilities() {
+          return { structuredOutput: true, tools: true, vision: false };
+        },
+        async *stream() {
+          yield {
+            type: 'tool-call-delta',
+            sequence: 0,
+            index: 0,
+            argumentsDelta: '{\"city\":',
+          };
+          yield {
+            type: 'tool-call-delta',
+            sequence: 1,
+            index: 0,
+            argumentsDelta: ' ',
+          };
+          yield {
+            type: 'tool-call-delta',
+            sequence: 2,
+            index: 0,
+            argumentsDelta: '\"Paris\"}',
+          };
+          yield { type: 'completed', sequence: 3, response: toolResponse };
+        },
+      }),
+    });
+    const result = await engine.execute(
+      {
+        requestKey: 'tool-whitespace-1',
+        model: selection,
+        request: textRequest,
+      },
+      { onEvent: (event) => events.push(event) },
+    );
+    expect(result.status).toBe('succeeded');
+    expect(
+      events.some(
+        (event) =>
+          event.type === 'tool-call-delta' && event.argumentsDelta === ' ',
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects truly empty tool-call argument fragments', async () => {
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: streamingGateway({
+        async capabilities() {
+          return { structuredOutput: true, tools: true, vision: false };
+        },
+        async *stream() {
+          yield {
+            type: 'tool-call-delta',
+            sequence: 0,
+            index: 0,
+            argumentsDelta: '',
+          };
+          yield { type: 'completed', sequence: 1, response: textResponse };
+        },
+      }),
+    });
+    const result = await engine.execute({
+      requestKey: 'tool-empty-1',
+      model: selection,
+      request: textRequest,
+    });
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') return;
+    expect(result.error).toMatchObject({
+      code: 'INVALID_REQUEST',
+      retryable: false,
+    });
+  });
+
   it('reuses the same request identity without a second provider call', async () => {
     let streams = 0;
     const engine = createModelExecutionEngine({

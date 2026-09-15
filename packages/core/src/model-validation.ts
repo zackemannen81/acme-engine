@@ -121,6 +121,13 @@ function text(value: JsonValue | undefined, label: string): string {
   return value;
 }
 
+function nonEmptyString(value: JsonValue | undefined, label: string): string {
+  if (typeof value !== 'string' || value.length === 0) {
+    invalid(`${label} must be a non-empty string.`);
+  }
+  return value;
+}
+
 function boolean(value: JsonValue | undefined, label: string): boolean {
   if (typeof value !== 'boolean') {
     invalid(`${label} must be a boolean.`);
@@ -601,7 +608,7 @@ function validateStreamEventValue(value: JsonObject): ModelStreamEvent {
         : {}),
       ...(Object.hasOwn(value, 'argumentsDelta')
         ? {
-            argumentsDelta: text(
+            argumentsDelta: nonEmptyString(
               value.argumentsDelta,
               'Model stream event argumentsDelta',
             ),
