@@ -1,5 +1,24 @@
 # Journal
 
+## 2026-09-15 — ACME-0177: A008 live consumer history/error repair
+
+- Date: 2026-09-15
+- Author: OpenAI assistant
+- Task: ACME-0177, Complete.
+- Trigger: the first live A008 → ACME → OpenAI multi-turn GUI run streamed a
+  valid assistant response, then OpenAI rejected the next request because the
+  prior assistant message was serialized as `input_text`. The same run exposed
+  that a correctly classified provider `INVALID_REQUEST` degraded to `INTERNAL`
+  when JavaScript class identity differed across the runtime/package boundary.
+- Repair: OpenAI Responses history now maps user text to `input_text` and prior
+  assistant text to `output_text`. Model-only execution mirrors the established
+  ExecutionEngine structural error-data fallback, preserving code/message/stage/
+  retryability/details while leaving unknown ordinary exceptions as `INTERNAL`.
+- Regression: focused tests first reproduced both failures, then passed 52/52;
+  an additional guard proves an unstructured `Error` remains `INTERNAL`.
+- No A008, cognition, memory, domain, state, retry-policy or wire-version change.
+- Signature: OpenAI assistant
+
 ## 2026-09-15 — ACME-0176: model-only execution runtime
 
 - Date: 2026-09-15

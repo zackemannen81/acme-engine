@@ -101,6 +101,16 @@ function errorData(error: unknown, stage: ExecutionStatus): AcmeErrorData {
   if (error instanceof AcmeError) {
     return error.data;
   }
+  if (
+    isObject(error) &&
+    isObject(error.data) &&
+    typeof error.data.code === 'string' &&
+    typeof error.data.message === 'string' &&
+    typeof error.data.stage === 'string' &&
+    typeof error.data.retryable === 'boolean'
+  ) {
+    return deepFreeze(error.data as unknown as AcmeErrorData);
+  }
   return Object.freeze({
     code: 'INTERNAL',
     message: 'Model execution failed with an unexpected internal error.',

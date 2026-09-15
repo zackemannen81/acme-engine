@@ -69,6 +69,23 @@ describe('OpenAI Responses request mapping', () => {
     });
   });
 
+  it('maps prior assistant text as output_text in multi-turn history', () => {
+    const request: ModelRequest = {
+      messages: [
+        { role: 'user', content: [{ type: 'text', text: 'First' }] },
+        { role: 'assistant', content: [{ type: 'text', text: 'Answer' }] },
+        { role: 'user', content: [{ type: 'text', text: 'Second' }] },
+      ],
+      output: { mode: 'text' },
+    };
+    const { body } = buildResponsesBody(request, fixtureModel);
+    expect((body as { input: readonly unknown[] }).input).toEqual([
+      { role: 'user', content: [{ type: 'input_text', text: 'First' }] },
+      { role: 'assistant', content: [{ type: 'output_text', text: 'Answer' }] },
+      { role: 'user', content: [{ type: 'input_text', text: 'Second' }] },
+    ]);
+  });
+
   it('is deterministic for the same request', () => {
     expect(
       canonicalJson(buildResponsesBody(fixtureRequest, fixtureModel).body),

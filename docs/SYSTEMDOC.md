@@ -82,6 +82,12 @@ model-only owner distinct from `ExecutionEngine`. The frozen external wire is
   continuation and SSE while retaining ADR-0014 delivery/ambiguity
   classification. `generate` remains the buffered contract used by
   `ExecutionEngine`.
+- Multi-turn Responses history is role-aware: caller/user text maps to
+  `input_text`, while prior assistant text maps to `output_text`; tool-call and
+  tool-result items keep their dedicated wire shapes.
+- Model-only execution preserves structurally complete `AcmeErrorData` when an
+  error crosses a package/runtime boundary with a different JavaScript class
+  identity. Unclassified ordinary exceptions remain non-retryable `INTERNAL`.
 - In-memory and SQLite `ModelExecutionRepository` adapters persist
   reservation-before-dispatch, idempotent terminal reuse and retained-response
   restart. Ambiguous and in-flight evidence never auto-retries.

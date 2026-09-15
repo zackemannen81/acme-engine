@@ -33,6 +33,12 @@ structured-JSON `ModelRequest` identities are unchanged. The OpenAI Responses
 adapter now honors text output, function tools, tool-result continuation and
 SSE without weakening ADR-0014.
 
+ACME-0177 closes the first live A008 consumer regressions on that path. OpenAI
+multi-turn history maps user text as `input_text` and prior assistant text as
+`output_text`. Model-only execution also preserves complete structured ACME
+error data across package/runtime class-identity boundaries; unknown ordinary
+exceptions still fail closed as non-retryable `INTERNAL`.
+
 Machine-readable twin: `apps/cli/src/acme-model-runtime-wire.ts`. Fetch host:
 `apps/cli/src/acme-model-runtime-host.ts`. A runnable service composition for
 this protocol is not claimed.

@@ -372,6 +372,70 @@ describe('ModelExecutionEngine', () => {
     }
   });
 
+  it('preserves structured ACME error data across runtime boundaries', async () => {
+    const foreign = Object.assign(new Error('foreign AcmeError copy'), {
+      data: {
+        code: 'INVALID_REQUEST' as const,
+        message: 'The provider rejected the request.',
+        stage: 'calling-model' as const,
+        retryable: false,
+        details: { status: 400, providerMessage: 'bad request' },
+      },
+    });
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: streamingGateway({
+        async capabilities() {
+          return { structuredOutput: true, tools: false, vision: false };
+        },
+        async *stream() {
+          throw foreign;
+          yield { type: 'completed', sequence: 0, response: textResponse };
+        },
+      }),
+    });
+    const result = await engine.execute({
+      requestKey: 'foreign-error-1',
+      model: selection,
+      request: textRequest,
+    });
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') return;
+    expect(result.error).toEqual(foreign.data);
+    expect(result.diagnostic).toMatchObject({
+      kind: 'invalid-request',
+      httpStatus: 400,
+    });
+  });
+
+  it('maps an unknown ordinary exception to INTERNAL', async () => {
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: streamingGateway({
+        async capabilities() {
+          return { structuredOutput: true, tools: false, vision: false };
+        },
+        async *stream() {
+          throw new Error('boom');
+          yield { type: 'completed', sequence: 0, response: textResponse };
+        },
+      }),
+    });
+    const result = await engine.execute({
+      requestKey: 'unknown-error-1',
+      model: selection,
+      request: textRequest,
+    });
+    expect(result.status).toBe('failed');
+    if (result.status !== 'failed') return;
+    expect(result.error).toMatchObject({ code: 'INTERNAL', retryable: false });
+    expect(result.diagnostic.kind).toBe('internal');
+  });
+
   it('records ambiguous delivery and does not retry', async () => {
     let streams = 0;
     const engine = createModelExecutionEngine({
