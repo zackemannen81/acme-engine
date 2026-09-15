@@ -101,4 +101,45 @@ describe(ACME_MODEL_REQUEST_HASH_ALGORITHM, () => {
       }),
     ).not.toBe(computeModelRequestHash(original));
   });
+
+  it('keeps the historical golden when v2 controls are absent and hashes them when present', () => {
+    const original = request();
+    expect(computeModelRequestHash(original)).toBe(
+      'b0ae4b222a04c393ed24e1364b93d828211af5885f721de55f72ff5e76b46bd3',
+    );
+    const controlled: ModelRequest = {
+      ...original,
+      topP: 0.9,
+      reasoningBudget: 256,
+      enableThinking: true,
+      reasoningEffort: 'high',
+      seed: 7,
+    };
+    expect(computeModelRequestHash(controlled)).not.toBe(computeModelRequestHash(original));
+    expect(computeModelRequestHash(controlled)).toBe(computeModelRequestHash({ ...controlled }));
+  });
+
+  it('keeps historical json identities when tools are omitted', () => {
+    expect(computeModelRequestHash(request())).toBe(
+      'b0ae4b222a04c393ed24e1364b93d828211af5885f721de55f72ff5e76b46bd3',
+    );
+    expect(
+      computeModelRequestHash({
+        ...request(),
+        output: { mode: 'text' },
+      }),
+    ).not.toBe(computeModelRequestHash(request()));
+    expect(
+      computeModelRequestHash({
+        ...request(),
+        tools: [
+          {
+            type: 'function',
+            name: 'lookup',
+            parameters: { type: 'object' },
+          },
+        ],
+      }),
+    ).not.toBe(computeModelRequestHash(request()));
+  });
 });

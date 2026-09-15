@@ -136,7 +136,10 @@ describe('research.observe-evidence contract', () => {
     );
 
     expect(request.temperature).toBeUndefined();
-    expect(request.output.schemaName).toBe('research_observe_evidence_1_0_0');
+    expect(request.output).toMatchObject({
+      mode: 'json',
+      schemaName: 'research_observe_evidence_1_0_0',
+    });
     expect(researchObserveEvidenceContract.retention).toBe('hash-only');
     expect(researchObserveEvidenceContract.requiredCapabilities).toEqual({
       structuredOutput: true,

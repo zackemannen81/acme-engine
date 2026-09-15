@@ -15,6 +15,7 @@ import {
   type ModelGateway,
   type ModelRequest,
   type ModelSelection,
+  type ModelStreamEvent,
   type NormalizedModelResponse,
 } from '@acme/core';
 
@@ -448,6 +449,47 @@ class DeterministicScriptedModelGateway implements ScriptedModelGateway {
     return cloneCanonical(
       state.call.outcome.response,
       'Scripted normalized model response',
+    );
+  }
+
+  async *stream(
+    request: ModelRequest,
+    context: GatewayCallContext,
+  ): AsyncIterable<ModelStreamEvent> {
+    const response = await this.generate(request, context);
+    let sequence = 0;
+    if (response.text.length > 0) {
+      yield cloneCanonical(
+        {
+          type: 'content-delta' as const,
+          sequence,
+          text: response.text,
+        },
+        'Scripted content delta',
+      );
+      sequence += 1;
+    }
+    for (const [index, call] of (response.toolCalls ?? []).entries()) {
+      yield cloneCanonical(
+        {
+          type: 'tool-call-delta' as const,
+          sequence,
+          index,
+          toolCallId: call.toolCallId,
+          name: call.name,
+          argumentsDelta: JSON.stringify(call.arguments),
+        },
+        'Scripted tool-call delta',
+      );
+      sequence += 1;
+    }
+    yield cloneCanonical(
+      {
+        type: 'completed' as const,
+        sequence,
+        response,
+      },
+      'Scripted completed stream event',
     );
   }
 

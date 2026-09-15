@@ -38,9 +38,21 @@ const MessageItemSchema = z.object({
   content: z.array(ContentPartSchema).default([]),
 });
 
+const FunctionCallItemSchema = z.object({
+  type: z.literal('function_call'),
+  id: z.string().optional(),
+  call_id: z.string().optional(),
+  name: z.string().optional(),
+  arguments: z.string().optional(),
+});
+
 const UnknownItemSchema = z.object({ type: z.string() });
 
-const OutputItemSchema = z.union([MessageItemSchema, UnknownItemSchema]);
+const OutputItemSchema = z.union([
+  MessageItemSchema,
+  FunctionCallItemSchema,
+  UnknownItemSchema,
+]);
 
 const UsageSchema = z.object({
   input_tokens: z.number().int().nonnegative().optional(),
@@ -95,4 +107,33 @@ export function hasRefusal(response: OpenAiResponse): boolean {
     const message = item as z.infer<typeof MessageItemSchema>;
     return message.content.some((part) => part.type === 'refusal');
   });
+}
+
+export function collectToolCalls(response: OpenAiResponse): readonly {
+  readonly toolCallId: string;
+  readonly name: string;
+  readonly arguments: string;
+}[] {
+  const calls: {
+    readonly toolCallId: string;
+    readonly name: string;
+    readonly arguments: string;
+  }[] = [];
+  for (const item of response.output) {
+    if (item.type !== 'function_call') {
+      continue;
+    }
+    const call = item as z.infer<typeof FunctionCallItemSchema>;
+    const toolCallId = call.call_id ?? call.id;
+    const name = call.name;
+    if (toolCallId === undefined || name === undefined) {
+      continue;
+    }
+    calls.push({
+      toolCallId,
+      name,
+      arguments: call.arguments ?? '',
+    });
+  }
+  return calls;
 }

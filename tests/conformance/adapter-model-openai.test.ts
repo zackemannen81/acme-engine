@@ -61,7 +61,11 @@ const successBody = JSON.stringify({
   usage: { input_tokens: 12, output_tokens: 4, total_tokens: 16 },
 });
 
-const { providerWireSchemaHash } = buildResponsesBody(successRequest, model);
+const built = buildResponsesBody(successRequest, model);
+if (built.providerWireSchemaHash === undefined) {
+  throw new Error('JSON fixture must produce a provider wire schema hash.');
+}
+const providerWireSchemaHash = built.providerWireSchemaHash;
 
 const successResponse: NormalizedModelResponse = {
   provider: 'openai',

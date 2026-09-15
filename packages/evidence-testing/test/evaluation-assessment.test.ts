@@ -48,13 +48,18 @@ describe('evaluation assessment candidates', () => {
       'ascending lexicographic order',
     );
     expect(JSON.stringify(active)).toContain('ascending lexicographic order');
-    expect(historicalV1.output.schemaName).toBe(
-      'evidence_propose_assessment_1_0_0',
-    );
-    expect(historicalV2.output.schemaName).toBe(
-      'evidence_propose_assessment_1_1_0',
-    );
-    expect(active.output.schemaName).toBe('evidence_propose_assessment_1_2_0');
+    expect(historicalV1.output).toMatchObject({
+      mode: 'json',
+      schemaName: 'evidence_propose_assessment_1_0_0',
+    });
+    expect(historicalV2.output).toMatchObject({
+      mode: 'json',
+      schemaName: 'evidence_propose_assessment_1_1_0',
+    });
+    expect(active.output).toMatchObject({
+      mode: 'json',
+      schemaName: 'evidence_propose_assessment_1_2_0',
+    });
     const registry = createContractRegistry([
       evidenceProposeAssessmentContractV1,
       evidenceProposeAssessmentContractV2,

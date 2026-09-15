@@ -6,12 +6,16 @@ import {
 } from 'node:http';
 
 import { ACME_RUNTIME_ERROR_VERSION } from './acme-runtime-wire.js';
-import type { AcmeRuntimeHost } from './acme-runtime-host.js';
+
+export interface AcmeRuntimeFetchHost {
+  fetch(request: Request): Promise<Response>;
+}
 
 export interface AcmeRuntimeListenerOptions {
-  readonly host: AcmeRuntimeHost;
+  readonly host: AcmeRuntimeFetchHost;
   readonly hostname: string;
   readonly port: number;
+  readonly transportErrorProtocolVersion?: string;
 }
 
 export interface AcmeRuntimeListenerAddress {
@@ -202,13 +206,16 @@ async function writeFetchResponse(
   }
 }
 
-function transportFailure(target: ServerResponse): void {
+function transportFailure(
+  target: ServerResponse,
+  protocolVersion: string = ACME_RUNTIME_ERROR_VERSION,
+): void {
   if (target.headersSent || target.writableEnded) {
     target.destroy();
     return;
   }
   const body = JSON.stringify({
-    protocolVersion: ACME_RUNTIME_ERROR_VERSION,
+    protocolVersion,
     code: 'RUNTIME_TRANSPORT_FAILURE',
     message: 'The runtime HTTP transport could not complete the request.',
   });
@@ -219,10 +226,11 @@ function transportFailure(target: ServerResponse): void {
 }
 
 async function handleNodeRequest(
-  host: AcmeRuntimeHost,
+  host: AcmeRuntimeFetchHost,
   origin: string,
   request: IncomingMessage,
   response: ServerResponse,
+  protocolVersion: string,
 ): Promise<void> {
   const abort = new AbortController();
   const abortIfIncomplete = (): void => {
@@ -241,7 +249,7 @@ async function handleNodeRequest(
     if (response.destroyed) return;
     await writeFetchResponse(fetchResponse, response);
   } catch {
-    transportFailure(response);
+    transportFailure(response, protocolVersion);
   }
 }
 
@@ -257,13 +265,21 @@ export function createAcmeRuntimeListener(
   let bound: AcmeRuntimeListenerAddress | undefined;
   let listenPromise: Promise<AcmeRuntimeListenerAddress> | undefined;
 
+  const protocolVersion =
+    options.transportErrorProtocolVersion ?? ACME_RUNTIME_ERROR_VERSION;
   const server = createServer((request, response) => {
     const origin = bound?.origin;
     if (origin === undefined) {
-      transportFailure(response);
+      transportFailure(response, protocolVersion);
       return;
     }
-    void handleNodeRequest(options.host, origin, request, response);
+    void handleNodeRequest(
+      options.host,
+      origin,
+      request,
+      response,
+      protocolVersion,
+    );
   });
 
   async function listen(): Promise<AcmeRuntimeListenerAddress> {
