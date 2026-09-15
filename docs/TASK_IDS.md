@@ -46,3 +46,4 @@ above the floor as well as the active task.
 | ACME-0174 | deterministic reuse observability | felixnissen | 2026-08-26 | contrib/acme-0174-reuse-observability |
 | ACME-0175 | open-source release and commercial boundary | felixnissen | 2026-08-26 | felix/acme-0175-open-source-commercial-readiness |
 | ACME-0176 | model-only text/tool streaming execution runtime | Grok (delegated) | 2026-09-15 | prepare ACME as non-cognitive provider-execution substrate for A008 and other clients |
+| ACME-0177 | OpenAI multi-turn history and structured error preservation | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME test |
