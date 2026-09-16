@@ -339,7 +339,7 @@ describe('ModelExecutionEngine', () => {
             type: 'tool-call-delta',
             sequence: 0,
             index: 0,
-            argumentsDelta: '{\"city\":',
+            argumentsDelta: '{"city":',
           };
           yield {
             type: 'tool-call-delta',
@@ -351,7 +351,7 @@ describe('ModelExecutionEngine', () => {
             type: 'tool-call-delta',
             sequence: 2,
             index: 0,
-            argumentsDelta: '\"Paris\"}',
+            argumentsDelta: '"Paris"}',
           };
           yield { type: 'completed', sequence: 3, response: toolResponse };
         },

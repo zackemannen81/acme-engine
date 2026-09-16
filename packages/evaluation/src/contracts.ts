@@ -1,4 +1,8 @@
-import type { ContractRef, ExecutionResult, JsonValue } from '@acme-engine/core';
+import type {
+  ContractRef,
+  ExecutionResult,
+  JsonValue,
+} from '@acme-engine/core';
 
 export const QUALITY_SUBJECT_VERSION = 'acme-quality-subject/1' as const;
 export const QUALITY_EVALUATION_VERSION = 'acme-quality-evaluation/1' as const;

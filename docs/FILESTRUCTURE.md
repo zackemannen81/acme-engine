@@ -1,10 +1,11 @@
 # File Structure
 
-Last updated: 2026-09-15
+Last updated: 2026-09-16
 
 The repository source is open source under the root Apache-2.0 `LICENSE`.
-`package.json` remains npm-private as a publication guard, not as a source
-access or licensing statement.
+The workspace root `package.json` remains npm-private as a publication guard.
+ADR-0055 marks only the model-runtime dependency closure under
+`@acme-engine/*` as publish-ready; no registry publication is claimed here.
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -198,6 +199,11 @@ acme-engine/
 │   │       ├── fixtures.ts
 │   │       ├── gateway.test.ts
 │   │       └── transport-fetch.test.ts
+│   ├── model-runtime/
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── src/index.ts
+│   │   └── test/runtime.test.ts
 │   ├── live-safety/
 │   │   ├── README.md
 │   │   ├── package.json
@@ -671,6 +677,7 @@ acme-engine/
 │   │   ├── 0052-apache-2.0-open-source-distribution.md
 │   │   ├── 0053-model-only-execution-runtime.md
 │   │   ├── 0054-model-runtime-v2-multi-provider-routing.md
+│   │   ├── 0055-public-npm-model-runtime-library.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
@@ -944,21 +951,21 @@ content remains intentionally omitted here.
 
 ## Implemented Workspace
 
-- `@acme/core`: pure domain-neutral contracts, deterministic primitives,
+- `@acme-engine/core`: pure domain-neutral contracts, deterministic primitives,
   input-bound response validation, static registries, pure revisioned
   state/memory preparation, filtered post-memory state projection and the
   aggregate repository port/digest plus the bounded single-task
   ExecutionEngine and replay verifier. Zod is its only external runtime
   dependency.
-- `@acme/adapter-memory`: deterministic aggregate repository with immutable
+- `@acme-engine/adapter-memory`: deterministic aggregate repository with immutable
   copy-on-commit transactions and read-only evidence inspection, plus a
   separate append-only in-memory quality-evaluation store.
-- `@acme/evaluation`: domain-neutral post-execution evaluation contracts,
+- `@acme-engine/evaluation`: domain-neutral post-execution evaluation contracts,
   immutable content-derived identity, a static evaluator registry, pure
   deterministic execution and exact recorded-external replay.
 - `@acme/adapter-model-mock`: deterministic exact-call gateway scripts,
   immutable normalized outcomes and read-only invocation evidence.
-- `@acme/adapter-model-openai`: the OpenAI Responses mapping behind an
+- `@acme-engine/adapter-model-openai`: the OpenAI Responses mapping behind an
   injected transport port, so request construction, normalization and failure
   classification are exercised offline. Canonical JSON Schemas are lowered into
   the provider's strict structured-output subset before dispatch, with local
@@ -966,11 +973,14 @@ content remains intentionally omitted here.
   published from the separate `./transport-fetch` entry point, so the default
   surface stays network-free. v2 generation controls that this surface can
   honor are mapped; the rest fail closed before dispatch.
-- `@acme/adapter-model-chat-completions`: OpenAI-compatible Chat Completions
+- `@acme-engine/adapter-model-chat-completions`: OpenAI-compatible Chat Completions
   mapping behind the same transport port. Profiles inject endpoint, model,
   capabilities and thinking-template mapping. Text, tools, continuation, SSE,
   usage and ADR-0014 classification are in scope; ACME structured JSON output
   is refused on this surface.
+- `@acme-engine/model-runtime`: publish-ready in-process composition over the
+  existing model execution engine, routed gateway and provider adapters. It
+  exposes execution directly to Node consumers and starts no HTTP listener.
 - `@acme/live-safety`: pure provider-neutral credential-field refusal,
   explicit opt-in, environment-credential and nested budget primitives shared
   by live application surfaces. It performs no I/O and owns no authorization.
@@ -1010,7 +1020,7 @@ content remains intentionally omitted here.
   two read-only projections: `projectEvidenceV2Timeline` (P3, every
   occurrence, unknown time unordered) and `projectEvidenceV2Consensus` (J6,
   accepted material only, claim-scoped verdicts, no case-level verdict). It
-  depends on `@acme/core` for the
+  depends on `@acme-engine/core` for the
   prompt-contract and module types only, and `pnpm boundaries` forbids it from
   importing the frozen application.
 - `@acme/evidence-v2-contracts`: the V2 stored records and the single
@@ -1084,7 +1094,7 @@ content remains intentionally omitted here.
 - `@acme/testing`: reusable ExecutionRepository, ModelGateway, DomainModule
   and QualityEvaluationStore conformance, typed test support and the
   ScenarioRunner over `acme-scenario/1` and `acme-scenario/2`. It depends only
-  on `@acme/core` and `@acme/evaluation`; the caller injects composition and
+  on `@acme-engine/core` and `@acme-engine/evaluation`; the caller injects composition and
   fixture loading.
 - `@acme/cli`: the composition root. It is the only place that selects a
   concrete repository adapter, quality store and model gateway (`--script`

@@ -1,5 +1,19 @@
 # Journal
 
+## 2026-09-16 — ACME-0181: publishable in-process model runtime
+
+- Date: 2026-09-16
+- Author: OpenAI assistant
+- Task: ACME-0181, Complete. Archived to `docs/finished/ACME-0181_publishable-model-runtime-npm-boundary.md`.
+- Decision: [ADR-0055](adr/0055-public-npm-model-runtime-library.md) defines a public `@acme-engine/*` library boundary without making the workspace root publishable.
+- Runtime: `@acme-engine/model-runtime@0.1.0` embeds the existing model execution engine, routed gateway, provider adapters and in-memory model-call repository without starting HTTP. The private CLI service consumes the same composition.
+- Public closure: `core`, `evaluation`, `adapter-memory`, `adapter-model-openai`, `adapter-model-chat-completions` and `model-runtime`, all `0.1.0`. Internal `workspace:*` edges pack as concrete `0.1.0` dependencies.
+- Artifact proof: all six packages were packed after the final build; a consumer outside the ACME workspace installed only those tarballs and completed an injected-provider execution with `PACKED_CONSUMER_OK`. No registry fallback was required.
+- Verification: docs/format/lint/typecheck/boundaries/build pass; tests pass at 1073 unit, 86 conformance, 97 integration and 26 scenario. Boundary negative fixtures were repaired so forbidden imports remain load-bearing after the package-scope migration.
+- Publication: no `npm publish`, release or tag occurred. Registry publication is intentionally a separate explicit release action.
+- Downstream: A008 can consume the runtime in-process after publication (or from a verified local tarball during integration) while keeping A008 backend as the service boundary.
+- Signature: OpenAI assistant
+
 ## 2026-09-15 — ACME-0180: model runtime v2 and multi-provider routing
 
 - Date: 2026-09-15

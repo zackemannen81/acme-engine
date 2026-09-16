@@ -1,1 +1,1 @@
-import '../../../../../../packages/adapter-memory/src/index.ts';
+import '../../../../../../apps/cli/src/index.ts';

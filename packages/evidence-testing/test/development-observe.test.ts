@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeModelRequestHash, type ExecutionReadContext } from '@acme-engine/core';
+import {
+  computeModelRequestHash,
+  type ExecutionReadContext,
+} from '@acme-engine/core';
 import {
   evidenceObserveArtifactContract,
   evidenceObserveArtifactTask,

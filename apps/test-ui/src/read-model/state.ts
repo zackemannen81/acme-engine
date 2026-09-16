@@ -1,4 +1,8 @@
-import type { JsonValue, StateSnapshot, StateTransition } from '@acme-engine/core';
+import type {
+  JsonValue,
+  StateSnapshot,
+  StateTransition,
+} from '@acme-engine/core';
 
 import {
   contentView,

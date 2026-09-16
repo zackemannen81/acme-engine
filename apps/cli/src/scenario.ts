@@ -1,7 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, dirname } from 'node:path';
 
-import type { JsonValue, ModelGateway, ModelSelection } from '@acme-engine/core';
+import type {
+  JsonValue,
+  ModelGateway,
+  ModelSelection,
+} from '@acme-engine/core';
 import {
   createOpenAiResponsesGateway,
   type ProviderTransport,

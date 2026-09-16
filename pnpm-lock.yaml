@@ -50,30 +50,33 @@ importers:
 
   apps/cli:
     dependencies:
-      '@acme/adapter-memory':
+      '@acme-engine/adapter-memory':
         specifier: workspace:*
         version: link:../../packages/adapter-memory
-      '@acme/adapter-model-chat-completions':
+      '@acme-engine/adapter-model-chat-completions':
         specifier: workspace:*
         version: link:../../packages/adapter-model-chat-completions
+      '@acme-engine/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
+      '@acme-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@acme-engine/evaluation':
+        specifier: workspace:*
+        version: link:../../packages/evaluation
+      '@acme-engine/model-runtime':
+        specifier: workspace:*
+        version: link:../../packages/model-runtime
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
-      '@acme/adapter-model-openai':
-        specifier: workspace:*
-        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
       '@acme/adapter-sqlite':
         specifier: workspace:*
         version: link:../../packages/adapter-sqlite
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@acme/evaluation':
-        specifier: workspace:*
-        version: link:../../packages/evaluation
       '@acme/module-narrative':
         specifier: workspace:*
         version: link:../../packages/module-narrative
@@ -96,6 +99,15 @@ importers:
 
   apps/evidence-workbench-api:
     dependencies:
+      '@acme-engine/adapter-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-memory
+      '@acme-engine/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
+      '@acme-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@acme/adapter-evidence-artifact-file':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-artifact-file
@@ -117,21 +129,12 @@ importers:
       '@acme/adapter-evidence-product-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-product-postgres
-      '@acme/adapter-memory':
-        specifier: workspace:*
-        version: link:../../packages/adapter-memory
       '@acme/adapter-model-mock':
         specifier: workspace:*
         version: link:../../packages/adapter-model-mock
-      '@acme/adapter-model-openai':
-        specifier: workspace:*
-        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@acme/evidence-artifacts':
         specifier: workspace:*
         version: link:../../packages/evidence-artifacts
@@ -169,6 +172,15 @@ importers:
 
   apps/evidence-workbench-v2-api:
     dependencies:
+      '@acme-engine/adapter-memory':
+        specifier: workspace:*
+        version: link:../../packages/adapter-memory
+      '@acme-engine/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../../packages/adapter-model-openai
+      '@acme-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@acme/adapter-evidence-artifact-file':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-artifact-file
@@ -187,18 +199,9 @@ importers:
       '@acme/adapter-evidence-v2-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-evidence-v2-postgres
-      '@acme/adapter-memory':
-        specifier: workspace:*
-        version: link:../../packages/adapter-memory
-      '@acme/adapter-model-openai':
-        specifier: workspace:*
-        version: link:../../packages/adapter-model-openai
       '@acme/adapter-postgres':
         specifier: workspace:*
         version: link:../../packages/adapter-postgres
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@acme/evidence-artifacts':
         specifier: workspace:*
         version: link:../../packages/evidence-artifacts
@@ -228,7 +231,7 @@ importers:
 
   apps/evidence-workbench-worker:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@acme/evidence-product-contracts':
@@ -240,18 +243,18 @@ importers:
 
   apps/test-ui:
     dependencies:
-      '@acme/adapter-memory':
+      '@acme-engine/adapter-memory':
         specifier: workspace:*
         version: link:../../packages/adapter-memory
-      '@acme/adapter-model-openai':
+      '@acme-engine/adapter-model-openai':
         specifier: workspace:*
         version: link:../../packages/adapter-model-openai
+      '@acme-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@acme/adapter-sqlite':
         specifier: workspace:*
         version: link:../../packages/adapter-sqlite
-      '@acme/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@acme/live-safety':
         specifier: workspace:*
         version: link:../../packages/live-safety
@@ -286,7 +289,7 @@ importers:
 
   packages/adapter-evidence-auth-memory:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-auth':
@@ -295,7 +298,7 @@ importers:
 
   packages/adapter-evidence-auth-postgres:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-auth':
@@ -320,7 +323,7 @@ importers:
 
   packages/adapter-evidence-product-file:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-artifacts':
@@ -345,7 +348,7 @@ importers:
 
   packages/adapter-evidence-product-postgres:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-artifacts':
@@ -388,28 +391,28 @@ importers:
 
   packages/adapter-memory:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
-      '@acme/evaluation':
+      '@acme-engine/evaluation':
         specifier: workspace:*
         version: link:../evaluation
 
   packages/adapter-model-chat-completions:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
 
   packages/adapter-model-mock:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
 
   packages/adapter-model-openai:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -418,10 +421,10 @@ importers:
 
   packages/adapter-postgres:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
-      '@acme/evaluation':
+      '@acme-engine/evaluation':
         specifier: workspace:*
         version: link:../evaluation
       pg:
@@ -434,10 +437,10 @@ importers:
 
   packages/adapter-sqlite:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
-      '@acme/evaluation':
+      '@acme-engine/evaluation':
         specifier: workspace:*
         version: link:../evaluation
       better-sqlite3:
@@ -456,7 +459,7 @@ importers:
 
   packages/evaluation:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -466,7 +469,7 @@ importers:
 
   packages/evidence-artifacts:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -475,7 +478,7 @@ importers:
 
   packages/evidence-auth:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -484,7 +487,7 @@ importers:
 
   packages/evidence-product-contracts:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-artifacts':
@@ -505,7 +508,7 @@ importers:
 
   packages/evidence-testing:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       '@acme/evidence-artifacts':
@@ -551,9 +554,24 @@ importers:
 
   packages/live-safety: {}
 
+  packages/model-runtime:
+    dependencies:
+      '@acme-engine/adapter-memory':
+        specifier: workspace:*
+        version: link:../adapter-memory
+      '@acme-engine/adapter-model-chat-completions':
+        specifier: workspace:*
+        version: link:../adapter-model-chat-completions
+      '@acme-engine/adapter-model-openai':
+        specifier: workspace:*
+        version: link:../adapter-model-openai
+      '@acme-engine/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/module-evidence:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -562,7 +580,7 @@ importers:
 
   packages/module-evidence-v2:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -571,7 +589,7 @@ importers:
 
   packages/module-narrative:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -580,7 +598,7 @@ importers:
 
   packages/module-research:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -589,10 +607,10 @@ importers:
 
   packages/testing:
     dependencies:
-      '@acme/core':
+      '@acme-engine/core':
         specifier: workspace:*
         version: link:../core
-      '@acme/evaluation':
+      '@acme-engine/evaluation':
         specifier: workspace:*
         version: link:../evaluation
     devDependencies:

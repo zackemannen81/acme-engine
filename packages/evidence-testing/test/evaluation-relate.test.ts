@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeModelRequestHash, createContractRegistry } from '@acme-engine/core';
+import {
+  computeModelRequestHash,
+  createContractRegistry,
+} from '@acme-engine/core';
 import {
   deriveEvidenceRelationId,
   evidenceRelateObservationsContract,

@@ -19,6 +19,30 @@ tracked it; the file and value remain local and were not copied into audit
 evidence. The scoped proof and limitations are recorded in
 [the ACME-0175 acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Public npm model-runtime boundary
+
+ACME-0181 accepts [ADR-0055](adr/0055-public-npm-model-runtime-library.md) and
+adds the publish-ready `@acme-engine/model-runtime@0.1.0` Node library. It
+embeds the existing `ModelExecutionEngine`, routed gateway, OpenAI Responses
+adapter, OpenAI-compatible Chat Completions adapter and in-memory model-call
+repository without starting HTTP or changing model-execution semantics.
+
+The initial public dependency closure is `@acme-engine/core`,
+`@acme-engine/evaluation`, `@acme-engine/adapter-memory`,
+`@acme-engine/adapter-model-openai`,
+`@acme-engine/adapter-model-chat-completions` and
+`@acme-engine/model-runtime`, all at `0.1.0`. The workspace root remains
+`private: true`; ACME-0181 publishes nothing to npm and creates no release or
+tag.
+
+The private `acme-model-runtime` service now consumes the same library
+composition before adding HTTP/SSE hosting, authorization and environment
+configuration. Six local tarballs were packed with only distributable `dist`
+content plus package metadata; pnpm rewrote internal `workspace:*` dependencies
+to `0.1.0`. A consumer outside the ACME workspace installed only those packed
+artifacts and completed an injected-provider in-process execution with
+`PACKED_CONSUMER_OK` and no listener.
+
 ## Model-only execution runtime
 
 ACME-0176 adds the accepted [ADR-0053](adr/0053-model-only-execution-runtime.md)
@@ -52,7 +76,7 @@ and the additive [`acme-model-runtime/2`](design/acme-model-runtime-2.md) wire.
 `topP`, `reasoningBudget`, `enableThinking`, `reasoningEffort` and `seed`.
 Those controls are optional on the provider-neutral `ModelRequest` and do not
 change historical hashes when absent. A routed `ModelGateway` dispatches only
-by caller-owned `providerHint`. `@acme/adapter-model-chat-completions` maps
+by caller-owned `providerHint`. `@acme-engine/adapter-model-chat-completions` maps
 NVIDIA-hosted and other OpenAI-compatible Chat Completions profiles. The
 runnable `acme-model-runtime` composition starts from environment-only
 credentials for OpenAI Responses, NVIDIA Chat Completions and optional extra
@@ -191,7 +215,7 @@ record. The two failures that killed the frozen extractor are designed out rathe
 than tuned: there is no coverage field to enumerate (R-04), and each window's
 occurrences are persisted in the same step that commits it (R-05). Window
 identity is content-derived, so a re-run executes only windows with no committed
-execution. `@acme/core` was used unchanged, which is the first live evidence for
+execution. `@acme-engine/core` was used unchanged, which is the first live evidence for
 ADR-0047 §9's proof obligation.
 
 Recorded on a fresh database and bucket with the real binder, through the
@@ -491,7 +515,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-08-16
+Last updated: 2026-09-16
 
 ## Repository
 
@@ -503,7 +527,7 @@ Last updated: 2026-08-16
   dependencies use exact versions.
 - Strict ESM TypeScript, ESLint, Prettier, Vitest and dependency-cruiser are
   configured.
-- `@acme/core` uses exact Zod `4.4.3` for public runtime schemas.
+- `@acme-engine/core` uses exact Zod `4.4.3` for public runtime schemas.
 - Secret-free GitHub Actions CI mirrors documentation, formatting, lint,
   typecheck, boundary, test and build commands.
 - Frozen task charters, parent/child tasks, paused tasks and backlog proposals
@@ -607,7 +631,7 @@ There is currently:
 - portable replay evidence containing the exact validated task input,
   immutable recorded read set and prepared commit
 - versioned `acme-operation-digest-1` with canonical ordering rules
-- a deterministic `@acme/adapter-memory` that implements request idempotency,
+- a deterministic `@acme-engine/adapter-memory` that implements request idempotency,
   ledger/model-call evidence, state/memory/document reads and immutable
   copy-on-commit transactions
 - atomic promotion of candidate/evaluator evidence, documents, memory
@@ -651,7 +675,7 @@ There is currently:
 - a reusable non-empty provider-neutral `ModelGateway` conformance suite in
   `@acme/testing` that the scripted mock and the OpenAI adapter both pass
   unchanged
-- an `@acme/adapter-model-openai` targeting the OpenAI Responses API behind an
+- an `@acme-engine/adapter-model-openai` targeting the OpenAI Responses API behind an
   injected transport port, with request mapping, response normalization,
   deterministic strict structured-output schema lowering (ADR-0015) and the
   ADR-0014 failure classification
@@ -1512,7 +1536,7 @@ redaction and Slice 9 readiness.
 - **ACME-0053:** S10 browser live evaluation with live-only history, explicit
   process and per-run confirmation gates, protected single-execute launch and
   no credential field or value in browser/workspace artifacts.
-- **ACME-0054:** `@acme/evaluation`, deterministic and recorded-external
+- **ACME-0054:** `@acme-engine/evaluation`, deterministic and recorded-external
   evaluators, immutable content-derived identities, append-only in-memory
   storage and ScenarioRunner v2 quality evaluation/assertion steps (ADR-0025).
 - **ACME-0055:** Governing-document reality audit plus a repository-derived
@@ -1698,7 +1722,7 @@ ACME-0038, so its path is frozen and the directory is no longer temporary.
 
 ### Post-execution quality evaluation
 
-Delivered by ACME-0054 (ADR-0025): `@acme/evaluation` accepts an immutable
+Delivered by ACME-0054 (ADR-0025): `@acme-engine/evaluation` accepts an immutable
 `acme-quality-subject/1` bound to an exact run, execution, artifact and
 contract. A static registry runs named deterministic evaluators or replays an
 exact `acme-recorded-quality-evaluation/1`; both produce structured scores,

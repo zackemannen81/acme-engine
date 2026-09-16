@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { sha256, type ModelGateway, type ModelSelection } from '@acme-engine/core';
+import {
+  sha256,
+  type ModelGateway,
+  type ModelSelection,
+} from '@acme-engine/core';
 
 import {
   createQualityEvaluationInput,
