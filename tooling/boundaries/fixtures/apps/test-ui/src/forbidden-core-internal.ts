@@ -1,1 +1,1 @@
-import '../../../../../../packages/core/src/execution-engine.ts';
+import '../../../../../../packages/module-narrative/src/identity.ts';

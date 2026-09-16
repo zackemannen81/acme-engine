@@ -8,7 +8,7 @@ import {
   type ModelRequest,
   type PromptContract,
   type SemanticIssue,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   EVIDENCE_RELATE_OBSERVATIONS_CONTRACT_REF,

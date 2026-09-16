@@ -1,10 +1,12 @@
-{
-  "name": "@acme/core",
-  "version": "0.0.0",
-  "private": true,
+﻿{
+  "name": "@acme-engine/core",
+  "version": "0.1.0",
   "type": "module",
   "files": [
-    "dist"
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
   ],
   "exports": {
     ".": {
@@ -18,5 +20,17 @@
   },
   "dependencies": {
     "zod": "4.4.3"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "\u003e=24.0.0 \u003c25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zackemannen81/acme-engine.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

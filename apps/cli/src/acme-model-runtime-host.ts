@@ -9,7 +9,7 @@ import {
   validateModelRequest,
   validateModelSelection,
   validateRequiredModelCapabilities,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   ACME_MODEL_RUNTIME_COMPATIBILITY_PATH,

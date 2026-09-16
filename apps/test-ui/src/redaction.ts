@@ -1,4 +1,4 @@
-import type { ExecutionPolicy, JsonValue } from '@acme/core';
+import type { ExecutionPolicy, JsonValue } from '@acme-engine/core';
 
 import { VIEW_UNAVAILABLE } from './view.js';
 

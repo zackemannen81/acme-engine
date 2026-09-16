@@ -1,4 +1,4 @@
-import { computeModelRequestHash } from '@acme/core';
+import { computeModelRequestHash } from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import { researchObserveEvidenceContract } from '../src/contracts/observe-evidence.js';

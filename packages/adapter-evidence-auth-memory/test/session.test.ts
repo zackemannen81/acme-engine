@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAes256GcmPayloadEncryptor, nodeHashing } from '@acme/core';
+import {
+  createAes256GcmPayloadEncryptor,
+  nodeHashing,
+} from '@acme-engine/core';
 import {
   EvidenceAuthenticationError,
   createEvidenceSessionService,

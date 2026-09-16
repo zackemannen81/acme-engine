@@ -3,7 +3,7 @@ import {
   type ExecutionResult,
   type Hashing,
   type JsonValue,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   QUALITY_ARTIFACT_DIGEST_ALGORITHM,

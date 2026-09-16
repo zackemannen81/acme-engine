@@ -1,4 +1,4 @@
-import { nodeHashing, type Hashing } from '@acme/core';
+import { nodeHashing, type Hashing } from '@acme-engine/core';
 
 import type {
   QualityEvaluationInput,

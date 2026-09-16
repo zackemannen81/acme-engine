@@ -2,7 +2,7 @@ import {
   type DomainModule,
   type TaskDefinition,
   type TaskInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   domainModuleConformance,

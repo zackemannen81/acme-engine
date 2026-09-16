@@ -1,0 +1,15 @@
+{
+  "extends": "../../tooling/typescript/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../adapter-memory" },
+    { "path": "../adapter-model-openai" },
+    { "path": "../adapter-model-chat-completions" }
+  ]
+}

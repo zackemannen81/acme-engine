@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import type { Clock, JsonValue, PayloadEncryptor } from '@acme/core';
+import type { Clock, JsonValue, PayloadEncryptor } from '@acme-engine/core';
 import { runScenario, seededIdGenerator } from '@acme/testing';
 
 import { resolveReference } from '../catalog/paths.js';

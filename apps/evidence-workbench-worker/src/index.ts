@@ -1,4 +1,4 @@
-import { sha256 } from '@acme/core';
+import { sha256 } from '@acme-engine/core';
 import {
   EVIDENCE_PRODUCT_JOB_SCHEMA_VERSION,
   EVIDENCE_LIVE_OBSERVATION_JOB_SCHEMA_VERSION,

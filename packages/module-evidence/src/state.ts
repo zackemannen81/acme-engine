@@ -1,4 +1,4 @@
-import type { DomainIssue, JsonValue } from '@acme/core';
+import type { DomainIssue, JsonValue } from '@acme-engine/core';
 
 import {
   deriveEvidenceAssessmentContentHash,

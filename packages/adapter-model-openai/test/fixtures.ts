@@ -2,7 +2,7 @@ import type {
   GatewayCallContext,
   ModelRequest,
   ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import type {
   ProviderTransport,

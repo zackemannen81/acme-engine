@@ -1,4 +1,4 @@
-import type { ExecutionPolicy } from '@acme/core';
+import type { ExecutionPolicy } from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import {

@@ -5,7 +5,7 @@ import type {
   ExecutionResult,
   JsonValue,
   ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   ACME_RUNTIME_COMPATIBILITY_PATH,

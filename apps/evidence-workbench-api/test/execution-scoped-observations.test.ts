@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { RepositoryEvidence } from '@acme/core';
+import type { RepositoryEvidence } from '@acme-engine/core';
 import type { EvidenceObservation } from '@acme/module-evidence';
 
 import { selectExecutionObservations } from '../src/live-observation.js';

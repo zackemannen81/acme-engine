@@ -8,7 +8,7 @@ import {
   type ModelRequest,
   type ModelSelection,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import {

@@ -15,12 +15,12 @@ import {
 import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
 import { createPostgresEvidenceProductRepository } from '@acme/adapter-evidence-product-postgres';
 import { migrateEvidenceProductSchema } from '@acme/adapter-evidence-product-postgres';
-import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
+import { createInMemoryExecutionRepository } from '@acme-engine/adapter-memory';
 import {
   createScriptedModelGateway,
   type ScriptedModelGateway,
 } from '@acme/adapter-model-mock';
-import type { ProviderTransport } from '@acme/adapter-model-openai';
+import type { ProviderTransport } from '@acme-engine/adapter-model-openai';
 import {
   createPostgresExecutionRepository,
   migratePostgresSchema,
@@ -43,7 +43,7 @@ import {
   type IdGenerator,
   type ModelSelection,
   type RepositoryEvidence,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   createEvidenceSessionService,
   deriveEvidencePrincipalRef,

@@ -80,6 +80,9 @@
       "path": "./packages/testing"
     },
     {
+      "path": "./packages/model-runtime"
+    },
+    {
       "path": "./apps/cli"
     },
     {

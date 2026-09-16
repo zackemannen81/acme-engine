@@ -8,7 +8,7 @@ import {
   type ModelSelection,
   type ModelStreamEvent,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 export interface ModelGatewayConformanceCall {

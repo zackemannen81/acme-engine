@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { canonicalJson, sha256 } from '@acme/core';
+import { canonicalJson, sha256 } from '@acme-engine/core';
 import {
   EvidenceCaseDataPolicySchema,
   EvidenceCaseMembershipSchema,

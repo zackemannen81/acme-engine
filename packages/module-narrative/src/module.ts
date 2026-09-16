@@ -1,4 +1,4 @@
-import { defineModule } from '@acme/core';
+import { defineModule } from '@acme-engine/core';
 
 import { narrativeMemoryPolicy } from './memory-policy.js';
 import {

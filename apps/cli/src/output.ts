@@ -1,4 +1,4 @@
-import type { JsonValue } from '@acme/core';
+import type { JsonValue } from '@acme-engine/core';
 
 export const CLI_OUTPUT_VERSION = 'acme-cli/1' as const;
 

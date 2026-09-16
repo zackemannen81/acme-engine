@@ -17,7 +17,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "zod": "4.4.3"
   }
 }

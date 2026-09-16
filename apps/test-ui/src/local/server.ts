@@ -13,8 +13,8 @@ import type {
   IdGenerator,
   ModelGateway,
   PayloadEncryptor,
-} from '@acme/core';
-import type { ProviderTransport } from '@acme/adapter-model-openai';
+} from '@acme-engine/core';
+import type { ProviderTransport } from '@acme-engine/adapter-model-openai';
 import { parseScenario } from '@acme/testing';
 import { parse as parseYaml } from 'yaml';
 

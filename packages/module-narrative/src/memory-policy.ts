@@ -7,7 +7,7 @@ import {
   type MemoryRecord,
   type MemoryResolution,
   type RankedMemory,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   narrativeCandidateIdentity,

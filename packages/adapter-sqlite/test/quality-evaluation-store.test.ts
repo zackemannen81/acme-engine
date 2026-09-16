@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { sha256 } from '@acme/core';
+import { sha256 } from '@acme-engine/core';
 import {
   createQualityEvaluationInput,
   createQualityEvaluationRecord,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 
 import {
   createSqliteQualityEvaluationStore,

@@ -1,4 +1,8 @@
-import type { TaskContractOutput, TaskInput, TaskName } from '@acme/core';
+import type {
+  TaskContractOutput,
+  TaskInput,
+  TaskName,
+} from '@acme-engine/core';
 
 import {
   researchModule,

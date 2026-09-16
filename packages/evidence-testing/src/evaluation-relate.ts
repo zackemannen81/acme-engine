@@ -1,4 +1,4 @@
-import { canonicalJson, computeModelRequestHash } from '@acme/core';
+import { canonicalJson, computeModelRequestHash } from '@acme-engine/core';
 import {
   evidenceRelateObservationsContract,
   EvidenceRelateObservationsInputSchema,

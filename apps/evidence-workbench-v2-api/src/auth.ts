@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 
-import { nodeHashing, type PayloadEncryptor } from '@acme/core';
+import { nodeHashing, type PayloadEncryptor } from '@acme-engine/core';
 import {
   authorizeEvidenceCaseAction,
   createEvidenceSessionService,

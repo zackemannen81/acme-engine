@@ -3,7 +3,7 @@ import {
   createAes256GcmPayloadEncryptor,
   type PreparedCommit,
   type PreparedCommitContent,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import { createInMemoryExecutionRepository } from '../src/index.js';

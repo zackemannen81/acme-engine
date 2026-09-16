@@ -13,7 +13,7 @@ import {
   type ModelRequest,
   type ModelSelection,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   createQualityEvaluationInput,
   recordedExternalEvaluator,
@@ -21,7 +21,7 @@ import {
   type QualityEvaluationRecord,
   type QualityEvaluatorRef,
   type QualityVerdict,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 
 export const SCENARIO_SCHEMA_VERSION = 'acme-scenario/1' as const;
 export const SCENARIO_SCHEMA_VERSION_V2 = 'acme-scenario/2' as const;
@@ -172,7 +172,7 @@ export type ScenarioFixtureLoader = (path: string) => Promise<JsonValue>;
 
 /**
  * Supplied by the caller so the runner never imports a concrete adapter and
- * `@acme/testing` keeps depending on `@acme/core` alone.
+ * `@acme/testing` keeps depending on `@acme-engine/core` alone.
  */
 export interface ScenarioComposition {
   readonly repository: ExecutionRepository;

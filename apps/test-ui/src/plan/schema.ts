@@ -4,7 +4,7 @@ import {
   type ExecutionPolicy,
   type JsonValue,
   type ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { resolveReference } from '../catalog/paths.js';
 

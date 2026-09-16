@@ -8,7 +8,7 @@ import type {
   RecordedRankedMemory,
   StateSnapshot,
   StoredDocument,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   contentView,

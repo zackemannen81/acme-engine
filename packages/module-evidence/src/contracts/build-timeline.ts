@@ -5,7 +5,7 @@ import {
   type JsonValue,
   type ModelRequest,
   type PromptContract,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { EVIDENCE_BUILD_TIMELINE_CONTRACT_REF } from '../catalogue.js';
 import { immutableEvidence } from '../immutable.js';

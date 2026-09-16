@@ -14,17 +14,17 @@ import {
   type ModelSelection,
   type OutboxDispatcher,
   type OutboxRecord,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   createQualityEvaluationInput,
   runLiveModelQualityJudge,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 import { createScriptedModelGateway } from '@acme/adapter-model-mock';
 import {
   createOpenAiResponsesGateway,
   type ProviderTransport,
-} from '@acme/adapter-model-openai';
-import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+} from '@acme-engine/adapter-model-openai';
+import { createFetchTransport } from '@acme-engine/adapter-model-openai/transport-fetch';
 
 import {
   parseCommand,

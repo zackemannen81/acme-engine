@@ -1,4 +1,4 @@
-import { sha256 } from '@acme/core';
+import { sha256 } from '@acme-engine/core';
 import {
   EVIDENCE_REDACTION_REPLACEMENT_VERSION,
   EVIDENCE_TEXT_IMPORT_MAX_BYTES,

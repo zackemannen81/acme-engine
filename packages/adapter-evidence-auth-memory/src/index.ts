@@ -1,4 +1,4 @@
-import { canonicalJson } from '@acme/core';
+import { canonicalJson } from '@acme-engine/core';
 import {
   EvidenceIdentitySnapshotSchema,
   EvidenceCaseMembershipSchema,

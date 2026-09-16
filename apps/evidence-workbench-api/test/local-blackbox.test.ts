@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { sha256 } from '@acme/core';
+import { sha256 } from '@acme-engine/core';
 
 import { createFileEvidenceProductRepository } from '@acme/adapter-evidence-product-file';
 import { buildEvidenceReviewedAssessmentExport } from '@acme/evidence-product-contracts';

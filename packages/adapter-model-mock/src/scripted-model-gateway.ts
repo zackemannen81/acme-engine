@@ -17,7 +17,7 @@ import {
   type ModelSelection,
   type ModelStreamEvent,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 export interface ScriptedModelProfile {
   readonly selection: ModelSelection;

@@ -5,7 +5,7 @@ import {
   type ModelRequest,
   type ModelSelection,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import type {
   QualityEvaluationInput,

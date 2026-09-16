@@ -8,7 +8,7 @@ import {
   type PromptContract,
   type SemanticIssue,
   type ContractRef,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF,

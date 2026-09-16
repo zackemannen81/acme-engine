@@ -12,7 +12,7 @@ import {
   type ModelStreamEvent,
   type NormalizedModelResponse,
   type NormalizedToolCall,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { immutableJson } from './immutable.js';
 import { buildResponsesBody } from './request.js';

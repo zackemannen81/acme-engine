@@ -18,7 +18,7 @@ import {
   type TaskDefinition,
   type TaskInput,
   type TaskName,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 type ModuleParts<M extends AnyDomainModule> =

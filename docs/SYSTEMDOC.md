@@ -22,11 +22,33 @@ current tree, immediate owner/provider escalation and rotation; removing a
 file alone neither revokes the credential nor erases Git history. The current
 proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Public npm model-runtime library boundary
+
+[ADR-0055](adr/0055-public-npm-model-runtime-library.md) defines the supported
+in-process Node composition as `@acme-engine/model-runtime@0.1.0`. The library
+constructs the existing `ModelExecutionEngine` over explicit OpenAI Responses,
+NVIDIA/OpenAI-compatible Chat Completions or compatible provider routes. It
+exposes `createAcmeModelRuntime()` and never opens a socket.
+
+The package does not own cognition, memory, tool approval/execution or model
+selection policy. The caller still prepares messages, tools, selected model and
+generation controls; ACME retains execution, streaming, cancellation,
+idempotency, provider isolation and model-call evidence semantics. The HTTP/SSE
+`acme-model-runtime/1` and `/2` protocols remain transport options layered on
+the same embedded composition by the private CLI service.
+
+The publishable closure is `@acme-engine/core`, `@acme-engine/evaluation`,
+`@acme-engine/adapter-memory`, `@acme-engine/adapter-model-openai`,
+`@acme-engine/adapter-model-chat-completions` and
+`@acme-engine/model-runtime`, initially versioned `0.1.0`. Root remains
+npm-private. ACME-0181 proves local packing and external tarball consumption;
+it does not publish a registry artifact, tag, release or deployment.
+
 ## Canonical external runtime boundary
 
 [ADR-0051](adr/0051-canonical-acme-runtime-boundary.md) defines
 `acme-runtime/1` as ACME's external single-execution protocol. The boundary
-lives in the CLI/composition layer, not `@acme/core`.
+lives in the CLI/composition layer, not `@acme-engine/core`.
 
 - `apps/cli/src/acme-runtime-wire.ts` owns the versioned generic JSON wire.
 - `apps/cli/src/acme-runtime-host.ts` owns authenticated compatibility and
@@ -103,7 +125,7 @@ without changing v1. Neither protocol is an extension of `acme-runtime/1`.
 Optional `topP`, `reasoningBudget`, `enableThinking`, `reasoningEffort` and
 `seed` join the provider-neutral request. A routed gateway selects only the
 configured `providerHint` and fails closed when the route is missing.
-`@acme/adapter-model-chat-completions` is the OpenAI-compatible Chat
+`@acme-engine/adapter-model-chat-completions` is the OpenAI-compatible Chat
 Completions adapter; NVIDIA-hosted Nemotron/Kimi-style selections share that
 wire. The optional `acme-model-runtime` Node executable composes v2, the
 router, OpenAI Responses, NVIDIA Chat Completions and extra compatible
@@ -167,8 +189,8 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-09-15
-Status: Approved architecture with a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, OpenAI Responses and OpenAI-compatible Chat Completions mappings, acme-model-runtime/1 and /2, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
+Last updated: 2026-09-16
+Status: Approved architecture with a publish-ready in-process model runtime library, a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, OpenAI Responses and OpenAI-compatible Chat Completions mappings, acme-model-runtime/1 and /2, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -183,14 +205,14 @@ but do not define or supersede system behavior, contracts or accepted ADRs.
 
 - pnpm workspace pinned to Node `24.18.0` and pnpm `10.34.5`
 - strict ESM TypeScript project references
-- `@acme/core` contract package, `@acme/adapter-memory`,
+- `@acme-engine/core` contract package, `@acme-engine/adapter-memory`,
   `@acme/adapter-sqlite`, `@acme/adapter-model-mock`,
-  `@acme/adapter-model-openai`, `@acme/module-narrative`,
-  `@acme/module-research`, `@acme/evaluation`, reusable
+  `@acme-engine/adapter-model-openai`, `@acme/module-narrative`,
+  `@acme/module-research`, `@acme-engine/evaluation`, reusable
   repository/gateway/module/quality-store conformance support in
   `@acme/testing`, the
   `@acme/cli` composition root and the `@acme/test-ui` read model
-- workspace import test from `@acme/testing` to `@acme/core`
+- workspace import test from `@acme/testing` to `@acme-engine/core`
 - dependency-cruiser package-boundary enforcement
 - source vocabulary guard for `packages/core/src`
 - negative fixtures proving forbidden core-to-app, module-to-adapter,
@@ -206,7 +228,7 @@ provider gate.
 
 ## Implemented Contract Layer
 
-`@acme/core` now implements:
+`@acme-engine/core` now implements:
 
 - common JSON, identity, timestamp, document and diagnostic types
 - canonical JSON algorithm `acme-cjson-1` and SHA-256 hashing
@@ -378,7 +400,7 @@ proves the standing sequence the domain exists to produce:
 ## Implemented DomainModule Conformance
 
 `@acme/testing` exports a reusable `domainModuleConformance()` suite over
-public `@acme/core` contracts:
+public `@acme-engine/core` contracts:
 
 - strongly typed task selection retains task input, contract output, state and
   delta inference
@@ -403,7 +425,7 @@ module-owned unit-test concerns. A dependency rule rejects future
 
 ## Implemented Post-Memory State Projection
 
-`@acme/core` now defines the bridge between pure memory resolution and pure
+`@acme-engine/core` now defines the bridge between pure memory resolution and pure
 state preparation:
 
 - `ModuleResult.stateIntent` is typed interpreted intent rather than a
@@ -452,7 +474,7 @@ port. Mock-specific invocation evidence remains outside `ModelGateway`.
 
 ## Implemented StateEngine
 
-`@acme/core` implements pure state preparation without store access:
+`@acme-engine/core` implements pure state preparation without store access:
 
 - `StatePrepareContext` carries entity, execution, operation and time context;
   namespace remains module-owned
@@ -475,7 +497,7 @@ promotion.
 
 ## Implemented MemoryEngine
 
-`@acme/core` implements pure memory policy execution without store access:
+`@acme-engine/core` implements pure memory policy execution without store access:
 
 - candidate and loaded-record envelopes are strictly validated at their trust
   boundaries
@@ -500,7 +522,7 @@ compare-and-swap and promotes mutations atomically.
 
 ## Implemented In-Memory Unit of Work
 
-`@acme/adapter-memory` implements the aggregate `ExecutionRepository`:
+`@acme-engine/adapter-memory` implements the aggregate `ExecutionRepository`:
 
 - request-key/fingerprint acceptance, immutable execution lookup and terminal
   outcomes
@@ -553,8 +575,8 @@ runner over compatible `acme-scenario/1` and `acme-scenario/2` formats.
   scenario is data, not a program
 - the runner never reads a file and never imports a concrete adapter. The
   caller injects the fixture loader and builds the composition, so
-  `@acme/testing` depends only on the domain-neutral `@acme/core` and
-  `@acme/evaluation` packages
+  `@acme/testing` depends only on the domain-neutral `@acme-engine/core` and
+  `@acme-engine/evaluation` packages
 - the composition is built from the scenario's own `seed`, so the declared
   clock and ID allocation are the ones the run uses
 - `composition.gateway` is `mock` (default offline fixtures) or `openai`
@@ -575,7 +597,7 @@ engine. The agreement is only evidence while both expressions exist.
 
 ADR-0025 separates quality assessment from both the proposed pre-commit
 `EvaluationDecision` safety gate and S8 population measurements.
-`@acme/evaluation` is a sibling layer that depends only on public core types;
+`@acme-engine/evaluation` is a sibling layer that depends only on public core types;
 ExecutionEngine and canonical execution evidence do not depend on it.
 
 - `acme-quality-subject/1` binds run id, execution id, artifact identity and
@@ -656,7 +678,7 @@ interrupted execution is resumed by re-submitting the same request through
 
 ## Implemented Provider Boundary
 
-ADR-0014 fixes how ACME reaches a real provider. `@acme/adapter-model-openai`
+ADR-0014 fixes how ACME reaches a real provider. `@acme-engine/adapter-model-openai`
 implements `ModelGateway` against the OpenAI Responses API and depends on a
 transport port that carries only an opaque request and result. The transport
 never parses a body, never classifies a failure and never sees an ACME type.
@@ -716,7 +738,7 @@ and first migration.
   `loadReplayEvidence()` that return detached, deeply frozen values and open no
   transaction
 
-Observable behavior is identical to `@acme/adapter-memory`, including
+Observable behavior is identical to `@acme-engine/adapter-memory`, including
 encrypted-payload sealing when both are given the same encryptor (ciphertext
 bytes differ per call because IVs are random; `responseHash` and presence of
 an envelope match). Both adapters run the same conformance suite. A committed
@@ -1477,7 +1499,7 @@ Coverage is derived from stored rows rather than demanded of the model, and an
 empty response is valid.
 
 `createEvidenceV2Extractor` in `apps/evidence-workbench-v2-api` composes
-`@acme/core`'s `createExecutionEngine` unchanged with `evidenceV2Module`. It
+`@acme-engine/core`'s `createExecutionEngine` unchanged with `evidenceV2Module`. It
 plans the windows, states the exact bounded call count before spending anything,
 executes one engine call per outstanding window keyed by a content-derived
 request key, and persists each window's occurrences **in the same step that
@@ -1524,7 +1546,7 @@ The target product layering is:
 Evidence Integrity web / API / worker
   → PostgreSQL, object-storage and model adapters
   → Evidence domain module and pure policies
-  → @acme/core
+  → @acme-engine/core
 ```
 
 The accepted baseline is React/Vite, Fastify, a separate Node worker, the

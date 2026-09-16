@@ -1,0 +1,39 @@
+﻿{
+  "name": "@acme-engine/model-runtime",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@acme-engine/adapter-memory": "workspace:*",
+    "@acme-engine/adapter-model-chat-completions": "workspace:*",
+    "@acme-engine/adapter-model-openai": "workspace:*",
+    "@acme-engine/core": "workspace:*"
+  },
+  "engines": {
+    "node": "\u003e=24.0.0 \u003c25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zackemannen81/acme-engine.git",
+    "directory": "packages/model-runtime"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@acme/evidence-artifacts": "workspace:*",
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/module-evidence": "workspace:*",
     "pg": "8.16.3"

@@ -5,7 +5,7 @@ import {
   createModelExecutionEngine,
   type ModelRequest,
   type NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { createInMemoryModelExecutionRepository } from '../src/index.js';
 

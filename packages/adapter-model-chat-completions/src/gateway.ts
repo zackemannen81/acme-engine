@@ -18,12 +18,11 @@ import {
   type NormalizedModelResponse,
   type NormalizedToolCall,
   type NormalizedUsage,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import type {
   ProviderTransport,
   ProviderTransportResult,
-  ProviderTransportStreamEvent,
 } from './transport.js';
 export type ThinkingTemplateMode = 'enable_thinking' | 'thinking';
 

@@ -13,7 +13,7 @@ import type {
   StateSnapshot,
   StateTransition,
   StoredDocument,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 /**
  * Handcrafted recorded evidence.

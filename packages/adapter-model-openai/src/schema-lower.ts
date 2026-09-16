@@ -3,7 +3,7 @@ import {
   canonicalJson,
   nodeHashing,
   type JsonValue,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { immutableJson } from './immutable.js';
 

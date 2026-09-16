@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { AcmeError, nodeHashing, type Hashing } from '@acme/core';
+import { AcmeError, nodeHashing, type Hashing } from '@acme-engine/core';
 import type { Pool } from 'pg';
 
 export interface Migration {

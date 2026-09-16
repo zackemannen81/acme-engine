@@ -1,26 +1,15 @@
 import { timingSafeEqual } from 'node:crypto';
 
 import {
-  createChatCompletionsGateway,
   type ChatCompletionsControls,
-  type ChatCompletionsModelProfile,
   type ProviderTransport as ChatCompletionsTransport,
-} from '@acme/adapter-model-chat-completions';
-import { createFetchTransport as createChatCompletionsFetchTransport } from '@acme/adapter-model-chat-completions/transport-fetch';
-import { createInMemoryModelExecutionRepository } from '@acme/adapter-memory';
+} from '@acme-engine/adapter-model-chat-completions';
+import type { ProviderTransport as OpenAiTransport } from '@acme-engine/adapter-model-openai';
+import type { ModelCapabilities, ModelSelection } from '@acme-engine/core';
 import {
-  createOpenAiResponsesGateway,
-  type OpenAiModelProfile,
-  type ProviderTransport as OpenAiTransport,
-} from '@acme/adapter-model-openai';
-import { createFetchTransport as createOpenAiFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
-import {
-  createModelExecutionEngine,
-  createRoutedModelGateway,
-  type ModelCapabilities,
-  type ModelGateway,
-  type ModelSelection,
-} from '@acme/core';
+  createAcmeModelRuntime,
+  NVIDIA_CHAT_COMPLETIONS_ENDPOINT,
+} from '@acme-engine/model-runtime';
 
 import {
   createAcmeModelRuntimeHost,
@@ -35,8 +24,7 @@ import {
   type AcmeRuntimeListenerAddress,
 } from './acme-runtime-listener.js';
 
-export const NVIDIA_CHAT_COMPLETIONS_ENDPOINT =
-  'https://integrate.api.nvidia.com/v1/chat/completions' as const;
+export { NVIDIA_CHAT_COMPLETIONS_ENDPOINT };
 
 export interface AcmeModelRuntimeOpenAiProfileConfig {
   readonly selection: ModelSelection;
@@ -604,60 +592,6 @@ export function createModelRuntimeBearerAuthorizer(
   };
 }
 
-function addRoute(
-  routes: Map<string, ModelGateway>,
-  hint: string,
-  gateway: ModelGateway,
-): void {
-  const existing = routes.get(hint);
-  if (existing !== undefined && existing !== gateway) {
-    throw new Error(
-      `Provider route ${hint} is configured on more than one gateway.`,
-    );
-  }
-  routes.set(hint, gateway);
-}
-
-function requireProviderHint(selection: ModelSelection, label: string): string {
-  if (selection.providerHint === undefined) {
-    throw new Error(`${label} requires selection.providerHint.`);
-  }
-  return selection.providerHint;
-}
-
-function toOpenAiProfiles(
-  profiles: readonly AcmeModelRuntimeOpenAiProfileConfig[],
-): readonly OpenAiModelProfile[] {
-  return profiles.map((profile) =>
-    Object.freeze({
-      selection: profile.selection,
-      model: profile.model,
-      capabilities: profile.capabilities ?? defaultOpenAiCapabilities(),
-    }),
-  );
-}
-
-function toChatProfiles(
-  profiles: readonly AcmeModelRuntimeChatProfileConfig[],
-  options: {
-    readonly provider: string;
-    readonly endpoint: string;
-    readonly headers: () => Readonly<Record<string, string>>;
-  },
-): readonly ChatCompletionsModelProfile[] {
-  return profiles.map((profile) =>
-    Object.freeze({
-      selection: profile.selection,
-      provider: profile.provider ?? options.provider,
-      model: profile.model,
-      endpoint: options.endpoint,
-      capabilities: profile.capabilities ?? defaultChatCapabilities(),
-      ...(profile.controls === undefined ? {} : { controls: profile.controls }),
-      headers: options.headers,
-    }),
-  );
-}
-
 export async function startAcmeModelRuntimeService(
   options: AcmeModelRuntimeServiceOptions = {},
 ): Promise<AcmeModelRuntimeService> {
@@ -665,104 +599,23 @@ export async function startAcmeModelRuntimeService(
     options.config ?? readAcmeModelRuntimeServiceConfig(),
   );
   const now = options.now ?? (() => new Date().toISOString());
-  const routes = new Map<string, ModelGateway>();
-
-  if (config.openAi !== undefined) {
-    const gateway = createOpenAiResponsesGateway({
-      transport: options.openAiTransport ?? createOpenAiFetchTransport(),
-      now,
-      ...(config.openAi.baseUrl === undefined
+  const runtime = createAcmeModelRuntime({
+    config: {
+      ...(config.openAi === undefined ? {} : { openAi: config.openAi }),
+      ...(config.nvidia === undefined ? {} : { nvidia: config.nvidia }),
+      ...(config.compatible === undefined
         ? {}
-        : { baseUrl: config.openAi.baseUrl }),
-      headers: () => ({
-        authorization: `Bearer ${config.openAi?.apiKey ?? ''}`,
-      }),
-      profiles: toOpenAiProfiles(config.openAi.profiles),
-    });
-    for (const [index, profile] of config.openAi.profiles.entries()) {
-      addRoute(
-        routes,
-        requireProviderHint(
-          profile.selection,
-          `openAi.profiles[${String(index)}]`,
-        ),
-        gateway,
-      );
-    }
-  }
-
-  if (config.nvidia !== undefined) {
-    const endpoint = config.nvidia.endpoint ?? NVIDIA_CHAT_COMPLETIONS_ENDPOINT;
-    const apiKey = config.nvidia.apiKey;
-    const gateway = createChatCompletionsGateway({
-      transport:
-        options.chatCompletionsTransport ??
-        createChatCompletionsFetchTransport(),
-      now,
-      profiles: toChatProfiles(config.nvidia.profiles, {
-        provider: 'nvidia',
-        endpoint,
-        headers: () => ({ authorization: `Bearer ${apiKey}` }),
-      }),
-    });
-    for (const [index, profile] of config.nvidia.profiles.entries()) {
-      addRoute(
-        routes,
-        requireProviderHint(
-          profile.selection,
-          `nvidia.profiles[${String(index)}]`,
-        ),
-        gateway,
-      );
-    }
-  }
-
-  if (config.compatible !== undefined) {
-    for (const [index, route] of config.compatible.entries()) {
-      const apiKey = route.apiKey;
-      const gateway = createChatCompletionsGateway({
-        transport:
-          options.chatCompletionsTransport ??
-          createChatCompletionsFetchTransport(),
-        now,
-        profiles: toChatProfiles(route.profiles, {
-          provider: route.provider ?? route.providerHint,
-          endpoint: route.endpoint,
-          headers: () => ({ authorization: `Bearer ${apiKey}` }),
-        }),
-      });
-      addRoute(
-        routes,
-        boundedText(
-          route.providerHint,
-          `compatible[${String(index)}].providerHint`,
-          200,
-        ),
-        gateway,
-      );
-      for (const [profileIndex, profile] of route.profiles.entries()) {
-        addRoute(
-          routes,
-          requireProviderHint(
-            profile.selection,
-            `compatible[${String(index)}].profiles[${String(profileIndex)}]`,
-          ),
-          gateway,
-        );
-      }
-    }
-  }
-
-  const engine = createModelExecutionEngine({
-    clock: { now },
-    ids: {
-      next: (kind) => `${kind}-${crypto.randomUUID()}`,
+        : { compatible: config.compatible }),
     },
-    repository: createInMemoryModelExecutionRepository(),
-    gateway: createRoutedModelGateway({
-      routes: Object.fromEntries(routes),
-    }),
+    now,
+    ...(options.openAiTransport === undefined
+      ? {}
+      : { openAiTransport: options.openAiTransport }),
+    ...(options.chatCompletionsTransport === undefined
+      ? {}
+      : { chatCompletionsTransport: options.chatCompletionsTransport }),
   });
+  const engine = runtime.engine;
 
   const host = createAcmeModelRuntimeHost({
     engine,
@@ -780,7 +633,7 @@ export async function startAcmeModelRuntimeService(
     transportErrorProtocolVersion: 'acme-model-runtime-error/1',
   });
   const address = await listener.listen();
-  const providers = Object.freeze([...routes.keys()].sort());
+  const providers = runtime.providers;
 
   let closed = false;
   return Object.freeze({

@@ -1,4 +1,4 @@
-import { canonicalJson, sha256 } from '@acme/core';
+import { canonicalJson, sha256 } from '@acme-engine/core';
 import {
   canonicalizeEvidenceText,
   deriveEvidenceArtifactVersionId,

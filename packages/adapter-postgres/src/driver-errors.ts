@@ -1,4 +1,4 @@
-import { AcmeError, type ExecutionStatus } from '@acme/core';
+import { AcmeError, type ExecutionStatus } from '@acme-engine/core';
 
 /**
  * SQLSTATE classes and codes mapped to retryable PERSISTENCE_TRANSIENT

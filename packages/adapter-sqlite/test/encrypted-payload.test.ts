@@ -7,7 +7,7 @@ import {
   createAes256GcmPayloadEncryptor,
   type PreparedCommit,
   type PreparedCommitContent,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createSqliteExecutionRepository, openDatabase } from '../src/index.js';

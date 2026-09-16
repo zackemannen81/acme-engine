@@ -2,7 +2,7 @@
  * The V2 domain module.
  *
  * Deliberately small. ADR-0048 §8 uses the engine unchanged, so this supplies
- * only what `@acme/core` requires to execute one task: a namespace, a state, a
+ * only what `@acme-engine/core` requires to execute one task: a namespace, a state, a
  * delta, a reducer, invariants, a memory policy and one task definition.
  *
  * State here is the engine's bookkeeping, not the product's. Occurrences are
@@ -19,7 +19,7 @@ import type {
   MemoryCandidate,
   ModuleResult,
   TaskDefinition,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { z } from 'zod';
 
 import {

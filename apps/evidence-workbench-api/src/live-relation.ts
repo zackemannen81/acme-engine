@@ -10,7 +10,7 @@ import {
   type ExecutionRepository,
   type IdGenerator,
   type RepositoryEvidence,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type { EvidenceCaseAuthorizationContext } from '@acme/evidence-auth';
 import { EvidenceSecurityAuditEventSchema } from '@acme/evidence-artifacts';
 import {

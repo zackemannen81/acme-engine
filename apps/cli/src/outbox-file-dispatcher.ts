@@ -6,7 +6,7 @@ import type {
   IsoTimestamp,
   JsonValue,
   OutboxDispatcher,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 /** Versioned on-disk delivery envelope identity. */
 export const ACME_OUTBOX_FILE_DELIVERY = 'acme-outbox-file-delivery/1' as const;

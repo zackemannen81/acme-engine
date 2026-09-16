@@ -1,10 +1,12 @@
-{
-  "name": "@acme/adapter-model-openai",
-  "version": "0.0.0",
-  "private": true,
+﻿{
+  "name": "@acme-engine/adapter-model-openai",
+  "version": "0.1.0",
   "type": "module",
   "files": [
-    "dist"
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map"
   ],
   "exports": {
     ".": {
@@ -21,7 +23,19 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "zod": "4.4.3"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "\u003e=24.0.0 \u003c25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zackemannen81/acme-engine.git",
+    "directory": "packages/adapter-model-openai"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

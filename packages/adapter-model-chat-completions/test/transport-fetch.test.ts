@@ -17,12 +17,6 @@ function request(
   };
 }
 
-function abortError(): Error {
-  const error = new Error('The operation was aborted.');
-  error.name = 'AbortError';
-  return error;
-}
-
 describe('Chat Completions fetch transport delivery classification', () => {
   it('returns the status, lowercased headers and body verbatim', async () => {
     const fetch = vi.fn(

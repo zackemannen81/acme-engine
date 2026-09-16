@@ -1,6 +1,6 @@
 import { immutableEvidence } from '../immutable.js';
 
-import type { ModelRequest, SemanticIssue } from '@acme/core';
+import type { ModelRequest, SemanticIssue } from '@acme-engine/core';
 
 /**
  * Build a bounded repair request from the request that produced an invalid

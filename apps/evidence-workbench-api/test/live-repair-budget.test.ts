@@ -5,7 +5,7 @@ import {
   EVIDENCE_LIVE_PROVIDER_CALL_CEILING,
   EVIDENCE_LIVE_REPAIR_BUDGET,
 } from '../src/live-observation.js';
-import type { ModelGateway, ModelRequest } from '@acme/core';
+import type { ModelGateway, ModelRequest } from '@acme-engine/core';
 
 const request = {
   messages: [],

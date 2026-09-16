@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeModelRequestHash } from '@acme/core';
+import { computeModelRequestHash } from '@acme-engine/core';
 import {
   evidenceObserveArtifactContract,
   pairEvidenceCorrectionObservations,

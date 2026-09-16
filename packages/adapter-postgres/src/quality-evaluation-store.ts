@@ -3,14 +3,14 @@ import {
   nodeHashing,
   type Hashing,
   type JsonValue,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   QualityEvaluationError,
   validateQualityEvaluationRecordIdentity,
   type QualityEvaluationQuery,
   type QualityEvaluationRecord,
   type QualityEvaluationStore,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 import type { Pool } from 'pg';
 
 import { withPostgresDriverErrors } from './driver-errors.js';
