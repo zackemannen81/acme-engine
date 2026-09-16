@@ -3,7 +3,7 @@ import type {
   MemoryCandidate,
   MemoryRecord,
   StoredDocument,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   NARRATIVE_MEMORY_SCHEMA_VERSION,

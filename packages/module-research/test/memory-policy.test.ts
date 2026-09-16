@@ -1,4 +1,4 @@
-import type { MemoryCandidate, MemoryResolution } from '@acme/core';
+import type { MemoryCandidate, MemoryResolution } from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import { RESEARCH_OBSERVE_EVIDENCE_CONTRACT_REF } from '../src/contracts/observe-evidence.js';

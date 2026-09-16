@@ -25,10 +25,10 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/adapter-memory": "workspace:*",
-    "@acme/adapter-model-openai": "workspace:*",
+    "@acme-engine/adapter-memory": "workspace:*",
+    "@acme-engine/adapter-model-openai": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "@acme/live-safety": "workspace:*",
     "@acme/module-narrative": "workspace:*",
     "@acme/module-research": "workspace:*",

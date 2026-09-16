@@ -16,15 +16,15 @@ import {
   createEvidenceIdentityMigrations,
 } from '@acme/adapter-evidence-auth-postgres';
 import { migratePostgresSchema } from '@acme/adapter-postgres';
-import { createAes256GcmPayloadEncryptor } from '@acme/core';
+import { createAes256GcmPayloadEncryptor } from '@acme-engine/core';
 import {
   createEvidenceArtifactKeyring,
   type EvidenceArtifactObjectStore,
 } from '@acme/evidence-artifacts';
 import pg from 'pg';
 
-import { createOpenAiResponsesGateway } from '@acme/adapter-model-openai';
-import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+import { createOpenAiResponsesGateway } from '@acme-engine/adapter-model-openai';
+import { createFetchTransport } from '@acme-engine/adapter-model-openai/transport-fetch';
 import { createPostgresExecutionRepository } from '@acme/adapter-postgres';
 
 import { createEvidenceV2App } from './app.js';

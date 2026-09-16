@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 
 import {
   EvidenceAuthorizationError,

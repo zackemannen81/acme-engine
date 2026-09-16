@@ -1,4 +1,4 @@
-import { AmbiguousModelCallError, type ModelRequest } from '@acme/core';
+import { AmbiguousModelCallError, type ModelRequest } from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import {

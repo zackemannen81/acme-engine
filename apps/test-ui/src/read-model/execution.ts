@@ -8,7 +8,7 @@ import type {
   ExecutionStatus,
   JsonValue,
   ModelCallRecord,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   optionalContentView,

@@ -1,4 +1,4 @@
-export { ACME_CORE_PACKAGE, type AcmeCorePackageName } from '@acme/core';
+export { ACME_CORE_PACKAGE, type AcmeCorePackageName } from '@acme-engine/core';
 export {
   parseCommand,
   UsageError,

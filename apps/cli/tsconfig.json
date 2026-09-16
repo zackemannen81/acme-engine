@@ -5,7 +5,9 @@
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "references": [
     {
       "path": "../../packages/adapter-memory"
@@ -39,6 +41,9 @@
     },
     {
       "path": "../../packages/testing"
+    },
+    {
+      "path": "../../packages/model-runtime"
     }
   ]
 }

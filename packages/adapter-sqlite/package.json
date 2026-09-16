@@ -17,8 +17,8 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*",
-    "@acme/evaluation": "workspace:*",
+    "@acme-engine/core": "workspace:*",
+    "@acme-engine/evaluation": "workspace:*",
     "better-sqlite3": "12.4.1"
   },
   "devDependencies": {

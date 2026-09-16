@@ -9,7 +9,7 @@ describe('sealed evaluation truth guard', () => {
   it('allows normal prompt dependencies', () => {
     expect(() =>
       assertNoSealedTruthPromptDependency([
-        '@acme/core',
+        '@acme-engine/core',
         '@acme/evidence-testing',
         '@acme/module-evidence',
       ]),

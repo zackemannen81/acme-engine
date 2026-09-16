@@ -5,7 +5,7 @@ import {
   randomBytes,
 } from 'node:crypto';
 
-import { canonicalJson } from '@acme/core';
+import { canonicalJson } from '@acme-engine/core';
 
 import {
   EvidenceArtifactObjectEnvelopeSchema,

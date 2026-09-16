@@ -4,7 +4,7 @@ import {
   sha256,
   type JsonValue,
   type StoredDocument,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { immutableJson } from './immutable.js';
 import {

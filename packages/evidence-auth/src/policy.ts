@@ -1,4 +1,4 @@
-import type { Hashing } from '@acme/core';
+import type { Hashing } from '@acme-engine/core';
 
 import {
   EVIDENCE_AUTH_POLICY_VERSION,

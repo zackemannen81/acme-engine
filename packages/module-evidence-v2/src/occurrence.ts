@@ -7,7 +7,7 @@
  * the record is assembled from the source.
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 import { z } from 'zod';
 
 export const EVIDENCE_V2_OCCURRENCE_SCHEMA_VERSION = 'evidence-v2-occurrence/1';

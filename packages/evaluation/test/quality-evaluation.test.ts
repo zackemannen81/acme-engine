@@ -1,4 +1,4 @@
-import { canonicalJson, sha256, type JsonValue } from '@acme/core';
+import { canonicalJson, sha256, type JsonValue } from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 import {

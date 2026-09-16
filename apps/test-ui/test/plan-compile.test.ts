@@ -1,4 +1,4 @@
-import { AcmeError, canonicalJson, type JsonValue } from '@acme/core';
+import { AcmeError, canonicalJson, type JsonValue } from '@acme-engine/core';
 import { parseScenario } from '@acme/testing';
 import { describe, expect, it } from 'vitest';
 

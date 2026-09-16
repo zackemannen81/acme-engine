@@ -14,7 +14,7 @@
  * itself would pre-empt it.
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 import { z } from 'zod';
 
 import type {

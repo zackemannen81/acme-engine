@@ -11,7 +11,7 @@
  * execution (R-09, ADR-0048 §7 applied to compare).
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 
 /** One side of a compare window. A single occurrence is never split. */
 export const EVIDENCE_V2_COMPARE_MAX_CURRENT = 12;

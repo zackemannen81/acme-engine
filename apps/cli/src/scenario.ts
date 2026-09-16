@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, dirname } from 'node:path';
 
-import type { JsonValue, ModelGateway, ModelSelection } from '@acme/core';
+import type { JsonValue, ModelGateway, ModelSelection } from '@acme-engine/core';
 import {
   createOpenAiResponsesGateway,
   type ProviderTransport,
-} from '@acme/adapter-model-openai';
-import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+} from '@acme-engine/adapter-model-openai';
+import { createFetchTransport } from '@acme-engine/adapter-model-openai/transport-fetch';
 import {
   parseScenario,
   runScenario,

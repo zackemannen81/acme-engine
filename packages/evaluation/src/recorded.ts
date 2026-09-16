@@ -1,4 +1,4 @@
-import { nodeHashing, type Hashing, type JsonValue } from '@acme/core';
+import { nodeHashing, type Hashing, type JsonValue } from '@acme-engine/core';
 
 import {
   RECORDED_QUALITY_EVALUATION_VERSION,

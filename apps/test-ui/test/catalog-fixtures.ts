@@ -9,7 +9,7 @@ import {
   type ModuleRegistry,
   type DomainMemoryPolicy,
   type PromptContract,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { z } from 'zod';
 
 /**

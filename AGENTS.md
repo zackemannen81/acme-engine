@@ -39,7 +39,7 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   an in-process JobRunner with progress and cooperative cancel; synchronous
   `launchPlan` remains for scripts and tests. Default entry is pure (no I/O);
   workbench serve is opt-in on `./local`. It is a leaf.
-- `@acme/evaluation` adds domain-neutral, immutable post-execution quality
+- `@acme-engine/evaluation` adds domain-neutral, immutable post-execution quality
   assessments. Deterministic evaluators and replayed recorded-external
   evaluators produce versioned scores, findings and verdicts without mutating
   execution evidence (ADR-0025). ScenarioRunner v2 runs and asserts them

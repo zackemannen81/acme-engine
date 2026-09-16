@@ -9,7 +9,7 @@ import {
   type IdGenerator,
   type ModelGateway,
   type ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type {
   EvidenceV2ComparisonWindowState,
   EvidenceV2Repository,

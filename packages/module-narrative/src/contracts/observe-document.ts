@@ -6,7 +6,7 @@ import {
   type ModelRequest,
   type PromptContract,
   type SemanticIssue,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { normalizeReferenceText } from '../identity.js';
 import { immutableJson } from '../immutable.js';

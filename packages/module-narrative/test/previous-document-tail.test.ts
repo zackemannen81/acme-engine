@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AcmeError } from '@acme/core';
+import { AcmeError } from '@acme-engine/core';
 
 import {
   buildPreviousDocumentTail,

@@ -1,4 +1,4 @@
-import { AcmeError, nodeHashing, type Hashing } from '@acme/core';
+import { AcmeError, nodeHashing, type Hashing } from '@acme-engine/core';
 import type { Pool, PoolClient } from 'pg';
 
 import { assertSchemaName, qIdent, schemaAdvisoryLockKey } from './schema.js';

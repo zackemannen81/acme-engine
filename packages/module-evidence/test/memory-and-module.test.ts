@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MemoryCandidate, MemoryRecord } from '@acme/core';
+import type { MemoryCandidate, MemoryRecord } from '@acme-engine/core';
 
 import {
   EVIDENCE_MEMORY_SCHEMA_VERSION,

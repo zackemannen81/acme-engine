@@ -7,7 +7,7 @@ import {
   type IdGenerator,
   type PreparedCommit,
   type PreparedCommitContent,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createInMemoryExecutionRepository } from '../src/index.js';

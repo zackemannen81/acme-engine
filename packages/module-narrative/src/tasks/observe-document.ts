@@ -8,7 +8,7 @@ import {
   type ModuleResult,
   type StateDelta,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { NARRATIVE_OBSERVE_DOCUMENT_CONTRACT_REF } from '../contracts/observe-document.js';
 import {

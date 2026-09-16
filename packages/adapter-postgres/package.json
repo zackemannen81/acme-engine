@@ -18,8 +18,8 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*",
-    "@acme/evaluation": "workspace:*",
+    "@acme-engine/core": "workspace:*",
+    "@acme-engine/evaluation": "workspace:*",
     "pg": "8.16.3"
   },
   "devDependencies": {

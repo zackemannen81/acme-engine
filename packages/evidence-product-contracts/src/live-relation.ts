@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { sha256 } from '@acme/core';
+import { sha256 } from '@acme-engine/core';
 import { EvidenceNonBlankStringSchema } from '@acme/module-evidence';
 
 import { EvidenceRequestedLiveObservationBudgetSchema } from './live-observation.js';

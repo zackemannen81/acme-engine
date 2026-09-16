@@ -1,11 +1,11 @@
-import { canonicalJson, type Hashing, type JsonValue } from '@acme/core';
+import { canonicalJson, type Hashing, type JsonValue } from '@acme-engine/core';
 import {
   QualityEvaluationError,
   validateQualityEvaluationRecordIdentity,
   type QualityEvaluationQuery,
   type QualityEvaluationRecord,
   type QualityEvaluationStore,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 
 export interface InMemoryQualityEvaluationStoreOptions {
   readonly hashing?: Hashing;

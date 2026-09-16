@@ -18,7 +18,7 @@ import {
   type NormalizedModelResponse,
   type NormalizedToolCall,
   type NormalizedUsage,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import type {
   ProviderTransport,

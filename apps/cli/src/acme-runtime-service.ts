@@ -1,11 +1,11 @@
 import { timingSafeEqual } from 'node:crypto';
 
-import type { ModelSelection } from '@acme/core';
+import type { ModelSelection } from '@acme-engine/core';
 import {
   createOpenAiResponsesGateway,
   type ProviderTransport,
-} from '@acme/adapter-model-openai';
-import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
+} from '@acme-engine/adapter-model-openai';
+import { createFetchTransport } from '@acme-engine/adapter-model-openai/transport-fetch';
 
 import {
   createAcmeRuntimeHost,

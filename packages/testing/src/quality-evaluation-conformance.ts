@@ -3,13 +3,13 @@ import {
   sha256,
   type Hashing,
   type JsonValue,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   createQualityEvaluationInput,
   createQualityEvaluationRecord,
   type QualityEvaluationRecord,
   type QualityEvaluationStore,
-} from '@acme/evaluation';
+} from '@acme-engine/evaluation';
 import { describe, expect, it } from 'vitest';
 
 export interface QualityEvaluationStoreConformanceOptions {

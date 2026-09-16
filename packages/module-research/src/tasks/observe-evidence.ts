@@ -9,7 +9,7 @@ import {
   type ModuleResult,
   type StateDelta,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { RESEARCH_OBSERVE_EVIDENCE_CONTRACT_REF } from '../contracts/observe-evidence.js';
 import {

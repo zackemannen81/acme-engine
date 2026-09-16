@@ -12,7 +12,7 @@
  * standing is. The relation does not store a standing field.
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 import { z } from 'zod';
 
 import type { EvidenceV2Standing } from './review.js';

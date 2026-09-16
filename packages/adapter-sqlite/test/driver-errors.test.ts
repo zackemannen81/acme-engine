@@ -6,7 +6,7 @@ import {
   AcmeError,
   type AcceptedExecution,
   type IdGenerator,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {

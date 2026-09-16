@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
-import { createAes256GcmPayloadEncryptor } from '@acme/core';
+import { createInMemoryExecutionRepository } from '@acme-engine/adapter-memory';
+import { createAes256GcmPayloadEncryptor } from '@acme-engine/core';
 import type {
   ModelCapabilities,
   ModelGateway,
   ModelRequest,
   NormalizedModelResponse,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type {
   EvidenceV2ArtifactRecord,
   EvidenceV2ExtractionWindowState,

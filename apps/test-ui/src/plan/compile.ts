@@ -4,7 +4,7 @@ import {
   type ExecutionRequest,
   type JsonValue,
   type ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   available,

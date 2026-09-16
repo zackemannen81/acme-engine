@@ -33,7 +33,7 @@ import {
 
 import { createDeterministicEvidenceAuthenticator } from '@acme/adapter-evidence-auth-memory';
 import { createInMemoryEvidenceIdentityRepository } from '@acme/adapter-evidence-auth-memory';
-import { createAes256GcmPayloadEncryptor } from '@acme/core';
+import { createAes256GcmPayloadEncryptor } from '@acme-engine/core';
 
 import { createEvidenceV2PdfExtractor } from '@acme/adapter-evidence-v2-pdf';
 

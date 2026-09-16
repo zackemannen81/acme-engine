@@ -1,4 +1,4 @@
-import type { ExecutionPolicy, JsonValue } from '@acme/core';
+import type { ExecutionPolicy, JsonValue } from '@acme-engine/core';
 
 import { compileTestPlan, type CompiledScenario } from '../plan/compile.js';
 import { parseTestPlan, type TestPlan } from '../plan/schema.js';

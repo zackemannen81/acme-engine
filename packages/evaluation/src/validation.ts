@@ -1,4 +1,4 @@
-import { canonicalJson, type JsonValue } from '@acme/core';
+import { canonicalJson, type JsonValue } from '@acme-engine/core';
 
 import {
   QUALITY_EVALUATION_VERSION,

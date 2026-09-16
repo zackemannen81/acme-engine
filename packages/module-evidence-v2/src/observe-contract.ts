@@ -17,7 +17,7 @@ import type {
   ModelMessage,
   PromptContract,
   SemanticIssue,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { z } from 'zod';
 
 import {

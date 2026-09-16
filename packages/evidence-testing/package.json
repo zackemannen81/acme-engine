@@ -34,7 +34,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "@acme/evidence-artifacts": "workspace:*",
     "@acme/evidence-product-contracts": "workspace:*",
     "@acme/evidence-views": "workspace:*",

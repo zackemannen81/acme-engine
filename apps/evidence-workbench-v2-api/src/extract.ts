@@ -11,7 +11,7 @@ import {
   type RepositoryEvidence,
   type ModelGateway,
   type ModelSelection,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type {
   EvidenceV2ExtractionWindowState,
   EvidenceV2Repository,

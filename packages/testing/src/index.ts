@@ -1,4 +1,4 @@
-import { ACME_CORE_PACKAGE, type AcmeCorePackageName } from '@acme/core';
+import { ACME_CORE_PACKAGE, type AcmeCorePackageName } from '@acme-engine/core';
 
 export const TESTING_CORE_PACKAGE: AcmeCorePackageName = ACME_CORE_PACKAGE;
 

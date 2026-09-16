@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { JsonValue } from '@acme/core';
+import type { JsonValue } from '@acme-engine/core';
 
 export const NARRATIVE_NAMESPACE = 'narrative' as const;
 export const NARRATIVE_STATE_SCHEMA_VERSION = 'narrative-state/1' as const;

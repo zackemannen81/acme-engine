@@ -8,7 +8,7 @@ import {
   type ModelRequest,
   type PromptContract,
   type SemanticIssue,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   buildEvidenceSourceSegments,

@@ -38,7 +38,7 @@ import {
   type StoredDocument,
   type StoredEvaluatorRun,
   type StoredMemoryCandidate,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 export interface InMemoryExecutionRepositoryOptions {
   readonly ids: IdGenerator;

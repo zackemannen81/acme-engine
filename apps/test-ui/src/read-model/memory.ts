@@ -4,7 +4,7 @@ import type {
   MemoryResolution,
   PreparedCommit,
   PreparedMemoryDecision,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   contentView,

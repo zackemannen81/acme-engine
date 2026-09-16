@@ -1,7 +1,6 @@
 {
-  "name": "@acme/evaluation",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@acme-engine/evaluation",
+  "version": "0.1.0",
   "type": "module",
   "files": [
     "dist"
@@ -17,9 +16,21 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/core": "workspace:*"
+    "@acme-engine/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "4.0.18"
+  },
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zackemannen81/acme-engine.git",
+    "directory": "packages/evaluation"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

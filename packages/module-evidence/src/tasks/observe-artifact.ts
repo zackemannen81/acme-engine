@@ -9,7 +9,7 @@ import {
   type ModuleResult,
   type StateDelta,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { EVIDENCE_OBSERVE_ARTIFACT_CONTRACT_REF } from '../catalogue.js';
 import { locateUniqueEvidenceQuote } from '../canonical-text.js';

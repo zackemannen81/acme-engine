@@ -1,4 +1,4 @@
-import { canonicalJson, type JsonValue } from '@acme/core';
+import { canonicalJson, type JsonValue } from '@acme-engine/core';
 
 export function freezeDeep<T>(value: T, seen = new WeakSet<object>()): T {
   if (value === null || typeof value !== 'object' || seen.has(value)) {

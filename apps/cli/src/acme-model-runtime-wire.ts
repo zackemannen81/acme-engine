@@ -7,7 +7,7 @@ import type {
   ModelSelection,
   NormalizedModelResponse,
   NormalizedUsage,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 export const ACME_MODEL_RUNTIME_PROTOCOL_VERSION =
   'acme-model-runtime/1' as const;

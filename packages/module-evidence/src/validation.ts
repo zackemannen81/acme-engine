@@ -1,4 +1,4 @@
-import type { DomainIssue } from '@acme/core';
+import type { DomainIssue } from '@acme-engine/core';
 
 import {
   evidenceLineCount,

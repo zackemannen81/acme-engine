@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 
-import { canonicalJson, sha256 } from '@acme/core';
+import { canonicalJson, sha256 } from '@acme-engine/core';
 import {
   EvidenceArtifactBackupManifestSchema,
   EvidenceArtifactLifecycleEventSchema,

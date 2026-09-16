@@ -1,4 +1,4 @@
-import { computeModelRequestHash } from '@acme/core';
+import { computeModelRequestHash } from '@acme-engine/core';
 import {
   evidenceProposeAssessmentContract,
   EvidenceProposeAssessmentInputV1Schema,

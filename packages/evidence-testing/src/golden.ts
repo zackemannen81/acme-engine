@@ -27,7 +27,7 @@ import {
   type EvidenceRelation,
   type EvidenceTemporalBound,
 } from '@acme/module-evidence';
-import type { JsonValue } from '@acme/core';
+import type { JsonValue } from '@acme-engine/core';
 
 import {
   loadCorpusManifest,

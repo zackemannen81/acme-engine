@@ -4,7 +4,7 @@ import type {
   ExecutionPolicy,
   JsonValue,
   ModuleRegistry,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   comparePaths,
@@ -434,7 +434,7 @@ function scenarioDetail(
 /**
  * Read a thrown validator error structurally rather than with `instanceof`,
  * so the catalog stays correct even when the validator was loaded from a
- * different copy of `@acme/core` than this package's types came from.
+ * different copy of `@acme-engine/core` than this package's types came from.
  */
 function validatorError(error: unknown): {
   readonly code: string;

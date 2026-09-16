@@ -1,4 +1,4 @@
-import { canonicalJson, sha256, type MemoryCandidate } from '@acme/core';
+import { canonicalJson, sha256, type MemoryCandidate } from '@acme-engine/core';
 
 import {
   ResearchMemoryValueSchema,

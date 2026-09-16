@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { canonicalJson } from '@acme/core';
+import { canonicalJson } from '@acme-engine/core';
 import type { Pool } from 'pg';
 
 export interface EvidenceIdentityMigration {

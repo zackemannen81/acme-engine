@@ -1,9 +1,9 @@
 import {
   createOpenAiResponsesGateway,
   type ProviderTransport,
-} from '@acme/adapter-model-openai';
-import { createFetchTransport } from '@acme/adapter-model-openai/transport-fetch';
-import type { Clock, ModelGateway, ModelSelection } from '@acme/core';
+} from '@acme-engine/adapter-model-openai';
+import { createFetchTransport } from '@acme-engine/adapter-model-openai/transport-fetch';
+import type { Clock, ModelGateway, ModelSelection } from '@acme-engine/core';
 import type { EvidenceCaseAuthorizationContext } from '@acme/evidence-auth';
 import { EVIDENCE_STAGE_A_TEXT_DATA_CLASS } from '@acme/evidence-product-contracts';
 import {

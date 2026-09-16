@@ -38,7 +38,7 @@ import {
   type StoredDocument,
   type StoredEvaluatorRun,
   type StoredMemoryCandidate,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type { Database, Statement } from 'better-sqlite3';
 
 import { withSqliteDriverErrors } from './driver-errors.js';
@@ -199,7 +199,7 @@ function assertMutableExecution(execution: ExecutionRecord): void {
 
 /**
  * Durable `ExecutionRepository` backed by SQLite. Observable behavior matches
- * `@acme/adapter-memory`; the shared conformance suite is authoritative for
+ * `@acme-engine/adapter-memory`; the shared conformance suite is authoritative for
  * both. ADR-0003 fixes the revisioned Unit of Work this class implements.
  */
 export class SqliteExecutionRepository implements ExecutionRepository {

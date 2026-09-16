@@ -16,7 +16,7 @@ import type {
   StateSnapshot,
   StateTransition,
   StoredDocument,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 export interface ExecutionRow {
   readonly execution_id: string;

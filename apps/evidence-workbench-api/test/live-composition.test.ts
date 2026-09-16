@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { ProviderTransport } from '@acme/adapter-model-openai';
+import type { ProviderTransport } from '@acme-engine/adapter-model-openai';
 
 import {
   EVIDENCE_LIVE_CONFIRMATION_VERSION,

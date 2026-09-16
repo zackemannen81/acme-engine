@@ -17,19 +17,20 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@acme/adapter-memory": "workspace:*",
+    "@acme-engine/adapter-memory": "workspace:*",
     "@acme/adapter-model-mock": "workspace:*",
-    "@acme/adapter-model-openai": "workspace:*",
-    "@acme/adapter-model-chat-completions": "workspace:*",
+    "@acme-engine/adapter-model-openai": "workspace:*",
+    "@acme-engine/adapter-model-chat-completions": "workspace:*",
     "@acme/adapter-sqlite": "workspace:*",
     "@acme/adapter-postgres": "workspace:*",
-    "@acme/core": "workspace:*",
+    "@acme-engine/core": "workspace:*",
     "pg": "8.16.3",
-    "@acme/evaluation": "workspace:*",
+    "@acme-engine/evaluation": "workspace:*",
     "@acme/module-narrative": "workspace:*",
     "@acme/module-research": "workspace:*",
     "@acme/testing": "workspace:*",
-    "yaml": "2.8.1"
+    "yaml": "2.8.1",
+    "@acme-engine/model-runtime": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.15.5"

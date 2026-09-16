@@ -16,7 +16,7 @@ import {
   type ModelExecutionResumeState,
   type ModelExecutionTerminal,
   type PayloadEncryptor,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type { Database, Statement } from 'better-sqlite3';
 
 import { withSqliteDriverErrors } from './driver-errors.js';

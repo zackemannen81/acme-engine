@@ -6,7 +6,7 @@
  * reader cannot mistake a stable identifier order for a clock.
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 
 import type { EvidenceV2Claim } from './claim.js';
 import type { EvidenceV2TemporalBound } from './occurrence.js';

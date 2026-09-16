@@ -16,7 +16,7 @@ import type {
   MemoryCandidate,
   ModuleResult,
   TaskDefinition,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { z } from 'zod';
 
 import {

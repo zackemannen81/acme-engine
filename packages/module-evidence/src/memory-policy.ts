@@ -6,7 +6,7 @@ import {
   type MemoryCandidate,
   type MemoryRecord,
   type RankedMemory,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   deriveEvidenceEventId,

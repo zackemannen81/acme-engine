@@ -1,4 +1,4 @@
-import type { DiagnosticFact, ReplayReport } from '@acme/core';
+import type { DiagnosticFact, ReplayReport } from '@acme-engine/core';
 
 import type { RedactionOptions } from '../redaction.js';
 import {

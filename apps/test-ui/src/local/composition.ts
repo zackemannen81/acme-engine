@@ -1,4 +1,4 @@
-import { createInMemoryExecutionRepository } from '@acme/adapter-memory';
+import { createInMemoryExecutionRepository } from '@acme-engine/adapter-memory';
 import {
   createSqliteExecutionRepository,
   openDatabase,
@@ -19,7 +19,7 @@ import {
   type ModuleRegistry,
   type PayloadEncryptor,
   type RepositoryEvidence,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   narrativeModule,
   narrativeObserveDocumentContract,

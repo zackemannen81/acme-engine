@@ -16,7 +16,7 @@ import {
   type ModelExecutionResumeState,
   type ModelExecutionTerminal,
   type PayloadEncryptor,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 export interface InMemoryModelExecutionRepositoryOptions {
   readonly hashing?: Hashing;

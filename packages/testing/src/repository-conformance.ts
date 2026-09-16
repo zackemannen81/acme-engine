@@ -10,7 +10,7 @@ import {
   type PayloadEncryptor,
   type PreparedCommit,
   type PreparedCommitContent,
-} from '@acme/core';
+} from '@acme-engine/core';
 import { describe, expect, it } from 'vitest';
 
 export interface ExecutionRepositoryConformanceOptions {

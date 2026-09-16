@@ -2,7 +2,7 @@ import {
   type Hashing,
   type JsonValue,
   type PayloadEncryptor,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   EvidenceAuthenticationError,

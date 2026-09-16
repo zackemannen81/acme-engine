@@ -11,7 +11,7 @@
  * enough to resume against (ADR-0048 §7).
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 
 /** ADR-0048 §4. */
 export const EVIDENCE_V2_WINDOW_MAX_UNITS = 24;

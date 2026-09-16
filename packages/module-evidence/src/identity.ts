@@ -1,4 +1,4 @@
-import { canonicalJson, sha256, type JsonValue } from '@acme/core';
+import { canonicalJson, sha256, type JsonValue } from '@acme-engine/core';
 import { z } from 'zod';
 
 import { evidenceTextBytes } from './canonical-text.js';

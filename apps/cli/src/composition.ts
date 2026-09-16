@@ -15,11 +15,11 @@ import {
   type ModelGateway,
   type PayloadEncryptor,
   type RepositoryEvidence,
-} from '@acme/core';
+} from '@acme-engine/core';
 import {
   createInMemoryExecutionRepository,
   createInMemoryQualityEvaluationStore,
-} from '@acme/adapter-memory';
+} from '@acme-engine/adapter-memory';
 import {
   createSqliteExecutionRepository,
   createSqliteQualityEvaluationStore,
@@ -32,7 +32,7 @@ import {
   verifyPostgresSchema,
   type PostgresExecutionRepository,
 } from '@acme/adapter-postgres';
-import type { QualityEvaluationStore } from '@acme/evaluation';
+import type { QualityEvaluationStore } from '@acme-engine/evaluation';
 import {
   narrativeModule,
   narrativeObserveDocumentContract,

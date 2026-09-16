@@ -1,4 +1,4 @@
-import { AcmeError, type ExecutionStatus } from '@acme/core';
+import { AcmeError, type ExecutionStatus } from '@acme-engine/core';
 
 /**
  * SQLite result codes that mean "try again later" under contention or locking.

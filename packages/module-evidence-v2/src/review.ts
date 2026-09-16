@@ -16,7 +16,7 @@
  * at again.
  */
 
-import { nodeHashing } from '@acme/core';
+import { nodeHashing } from '@acme-engine/core';
 import { z } from 'zod';
 
 export const EVIDENCE_V2_REVIEW_SCHEMA_VERSION = 'evidence-v2-review/1';

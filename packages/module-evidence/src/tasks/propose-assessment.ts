@@ -8,7 +8,7 @@ import {
   type ModuleResult,
   type StateDelta,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import { EVIDENCE_PROPOSE_ASSESSMENT_CONTRACT_REF } from '../catalogue.js';
 import {

@@ -38,7 +38,7 @@ import {
   type StoredDocument,
   type StoredEvaluatorRun,
   type StoredMemoryCandidate,
-} from '@acme/core';
+} from '@acme-engine/core';
 import type { Pool, PoolClient } from 'pg';
 
 import {
@@ -221,7 +221,7 @@ function isUniqueViolation(error: unknown): boolean {
 
 /**
  * Durable `ExecutionRepository` backed by PostgreSQL. Observable behavior
- * matches `@acme/adapter-sqlite` / `@acme/adapter-memory`; the shared
+ * matches `@acme/adapter-sqlite` / `@acme-engine/adapter-memory`; the shared
  * conformance suite is authoritative. ADR-0033 fixes concurrency mechanisms.
  */
 export class PostgresExecutionRepository implements ExecutionRepository {

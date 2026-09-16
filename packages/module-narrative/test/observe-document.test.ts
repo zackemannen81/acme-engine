@@ -4,7 +4,7 @@ import {
   computeModelRequestHash,
   createContractRegistry,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   NARRATIVE_DELTA_SCHEMA_VERSION,

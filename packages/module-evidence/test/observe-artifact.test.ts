@@ -7,7 +7,7 @@ import {
   sha256,
   type ExecutionReadContext,
   type StateProjectionInput,
-} from '@acme/core';
+} from '@acme-engine/core';
 
 import {
   EVIDENCE_DELTA_SCHEMA_VERSION,

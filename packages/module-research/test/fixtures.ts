@@ -1,4 +1,4 @@
-import type { ExecutionReadContext, MemoryRecord } from '@acme/core';
+import type { ExecutionReadContext, MemoryRecord } from '@acme-engine/core';
 
 import {
   deriveResearchPropositionKey,
