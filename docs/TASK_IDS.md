@@ -50,3 +50,4 @@ above the floor as well as the active task.
 | ACME-0178 | contiguous terminal sequence after streamed failure | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME test |
 | ACME-0179 | Preserve whitespace tool-call argument fragments | OpenAI assistant | 2026-09-15 | consumer-driven repair from A008 live ACME tool streaming |
 | ACME-0180 | multi-provider model runtime and generation-control parity | OpenAI assistant | 2026-09-15 | add provider routing and preserve A008 generation controls without changing cognition |
+| ACME-0181 | publishable model runtime npm boundary | OpenAI assistant | 2026-09-16 | expose ACME model runtime as installable @acme-engine packages for in-process consumers |
