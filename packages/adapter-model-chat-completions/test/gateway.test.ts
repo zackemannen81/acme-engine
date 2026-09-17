@@ -121,7 +121,11 @@ describe('Chat Completions request mapping', () => {
   });
 
   it('keeps text-only user content as the existing plain string wire shape', () => {
-    const body = buildChatCompletionsBody(fixtureRequest, fixtureProfile, false);
+    const body = buildChatCompletionsBody(
+      fixtureRequest,
+      fixtureProfile,
+      false,
+    );
     expect(body.messages).toEqual([{ role: 'user', content: 'Say hello.' }]);
   });
 

@@ -276,7 +276,11 @@ function userContent(
     }
     if (part.type === 'image') {
       if (part.dataRef.trim().length === 0) {
-        fail('INVALID_REQUEST', `${label} contains an empty image dataRef.`, false);
+        fail(
+          'INVALID_REQUEST',
+          `${label} contains an empty image dataRef.`,
+          false,
+        );
       }
       content.push({ type: 'image_url', image_url: { url: part.dataRef } });
       continue;
