@@ -1,5 +1,9 @@
 # Current Status
 
+## Native image parts on Chat Completions
+
+ACME-0182 maps the existing provider-neutral `ModelContentPart` image shape onto OpenAI-compatible Chat Completions user content as ordered `image_url` blocks. Text-only user messages retain the existing plain-string wire shape, while assistant/tool mapping is unchanged. This is execution-surface support only: image storage, capability selection and application semantics remain caller-owned.
+
 ## Open-source source distribution
 
 ACME repository source is open source under Apache License 2.0, as decided by

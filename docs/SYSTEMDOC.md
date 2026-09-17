@@ -1,5 +1,9 @@
 # System Documentation
 
+## Chat Completions multimodal request mapping
+
+`@acme-engine/adapter-model-chat-completions` accepts caller-prepared image parts only on user messages. Mixed text/image user content is serialized in original order using Chat Completions `text` and `image_url` blocks; text-only requests remain strings for wire compatibility. Empty image references fail before provider dispatch. ACME does not fetch, classify or persist image data and does not change application cognition or memory semantics.
+
 ## Source distribution and publication boundary
 
 [ADR-0052](adr/0052-apache-2.0-open-source-distribution.md) makes the ACME

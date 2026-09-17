@@ -83,6 +83,73 @@ describe('Chat Completions request mapping', () => {
     });
   });
 
+  it('maps ordered user text and image parts to Chat Completions multimodal content', () => {
+    const body = buildChatCompletionsBody(
+      {
+        ...fixtureRequest,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'What is shown?' },
+              {
+                type: 'image',
+                mediaType: 'image/png',
+                dataRef: 'data:image/png;base64,AAAA',
+              },
+              { type: 'text', text: 'Be concise.' },
+            ],
+          },
+        ],
+      },
+      fixtureProfile,
+      false,
+    );
+    expect(body.messages).toEqual([
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'What is shown?' },
+          {
+            type: 'image_url',
+            image_url: { url: 'data:image/png;base64,AAAA' },
+          },
+          { type: 'text', text: 'Be concise.' },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps text-only user content as the existing plain string wire shape', () => {
+    const body = buildChatCompletionsBody(fixtureRequest, fixtureProfile, false);
+    expect(body.messages).toEqual([{ role: 'user', content: 'Say hello.' }]);
+  });
+
+  it('rejects an empty image data reference before provider dispatch', () => {
+    expect(() =>
+      buildChatCompletionsBody(
+        {
+          ...fixtureRequest,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Inspect this.' },
+                { type: 'image', mediaType: 'image/png', dataRef: '   ' },
+              ],
+            },
+          ],
+        },
+        fixtureProfile,
+        false,
+      ),
+    ).toThrowError(
+      expect.objectContaining({
+        data: expect.objectContaining({ code: 'INVALID_REQUEST' }),
+      }),
+    );
+  });
+
   it('maps thinking template mode thinking rather than enable_thinking', () => {
     const body = buildChatCompletionsBody(
       { ...fixtureRequest, enableThinking: true },
