@@ -6981,3 +6981,11 @@ Add one dated, signed entry for every meaningful work session or handoff.
   writing TypeScript. A rendering surface is not chartered, and the
   specification's gate 2 (local SPA) remains unbuilt.
 - Signature: Claude
+
+## 2026-09-17 — ACME-0182 native Chat Completions image parts
+
+- Added ordered user `text` + `image_url` mapping for the existing ACME image content-part contract.
+- Preserved text-only user wire parity and existing assistant/tool mappings.
+- Verification: 24/24 focused adapter tests, workspace typecheck, `pnpm docs:check`, and `git diff --check` passed.
+- This unblocks A008-0124 native vision through the normal ACME execution substrate without adding cognition or memory semantics to ACME.
+- Signature: ChatGPT (operator)

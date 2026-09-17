@@ -253,14 +253,46 @@ function textContent(
         'INVALID_REQUEST',
         `${label} contains a content part this provider surface cannot map.`,
         false,
-        {
-          partType: part.type,
-        },
+        { partType: part.type },
       );
     }
     text += part.text;
   }
   return text;
+}
+
+function userContent(
+  parts: ModelRequest['messages'][number]['content'],
+  label: string,
+): JsonValue {
+  if (parts.every((part) => part.type === 'text')) {
+    return textContent(parts, label);
+  }
+  const content: JsonValue[] = [];
+  for (const part of parts) {
+    if (part.type === 'text') {
+      content.push({ type: 'text', text: part.text });
+      continue;
+    }
+    if (part.type === 'image') {
+      if (part.dataRef.trim().length === 0) {
+        fail(
+          'INVALID_REQUEST',
+          `${label} contains an empty image dataRef.`,
+          false,
+        );
+      }
+      content.push({ type: 'image_url', image_url: { url: part.dataRef } });
+      continue;
+    }
+    fail(
+      'INVALID_REQUEST',
+      `${label} contains a content part this provider surface cannot map.`,
+      false,
+      { partType: part.type },
+    );
+  }
+  return content;
 }
 function wireMessages(request: ModelRequest): readonly JsonObject[] {
   const result: JsonObject[] = [];
@@ -290,7 +322,10 @@ function wireMessages(request: ModelRequest): readonly JsonObject[] {
     if (message.role !== 'assistant') {
       result.push({
         role: message.role,
-        content: textContent(message.content, `Model message ${messageIndex}`),
+        content:
+          message.role === 'user'
+            ? userContent(message.content, `Model message ${messageIndex}`)
+            : textContent(message.content, `Model message ${messageIndex}`),
       });
       return;
     }
