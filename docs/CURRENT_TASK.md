@@ -68,7 +68,7 @@ The native OpenAI Responses adapter accepts mixed user text/image content and em
 - [ ] Adapter/model-runtime typecheck + build.
 - [ ] Full unit and conformance suites.
 - [ ] Format/lint/boundaries/docs/diff checks.
-- [ ] Packed-manifest inspection.
+- [x] Packed-manifest inspection.
 - [ ] Registry-only 0.1.5 consumer proof after publication.
 
 ## References
@@ -110,6 +110,9 @@ The native OpenAI Responses adapter accepts mixed user text/image content and em
 - Full static gates passed: format, lint, boundaries, docs, typecheck, build and diff-check. Docs check reports the same 34 historical non-gating missing-path citations.
 - Full unit suite: 161/161 files, 1086/1086 tests passed.
 - Full conformance suite: 13/13 files, 86/86 tests passed.
+- Packed 0.1.5 manifests contain concrete dependency versions and no `workspace:*` leakage.
+- Clean tarball-only consumer installed adapter/runtime/facade 0.1.5 and returned `ACME_0188_TARBALL_CONSUMER_OK input_text,input_image`.
+- Registry publication is pending npm re-authentication; current `npm whoami` returns 401.
 
 ## Documentation Updates
 
