@@ -28,7 +28,12 @@ proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret
 
 ## Public `acme-engine` facade
 
-[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine` as the convenience import surface for embedded ACME model execution. The current installable release is `0.1.1`; `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`, while model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `0.0.1` CLI-only package is not a compatibility contract, and the broken `0.1.0` registry artifacts must not be used because they preserved unsupported `workspace:*` dependency specifications. ACME-0184 establishes pnpm-packed tarballs as the registry publication artifact.
+[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine` as the convenience import surface for embedded ACME model execution. The current installable release is `0.1.2`; `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`, while model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `0.0.1` CLI-only package is not a compatibility contract, and the broken `0.1.0` registry artifacts must not be used because they preserved unsupported `workspace:*` dependency specifications. ACME-0184 establishes pnpm-packed tarballs as the registry publication artifact.
+
+
+## Model execution stream intent
+
+`ModelRequest.stream` is an optional caller-owned execution control. An explicit `false` is authoritative: `ModelExecutionEngine` routes that request through `ModelGateway.generate()` even when the selected gateway also implements `stream()`. When `stream` is omitted or not false, existing streaming selection remains unchanged. This preserves provider wire semantics for non-streaming Chat Completions and prevents ordinary JSON responses from being parsed as SSE. The engine continues to project the generated response onto the normal event surface (`content-delta` followed by terminal completion), so downstream execution evidence/event contracts remain stable.
 
 ## Public npm model-runtime library boundary
 

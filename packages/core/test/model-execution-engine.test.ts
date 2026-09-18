@@ -211,6 +211,52 @@ describe('ModelExecutionEngine', () => {
     expect(events.map((event) => event.sequence)).toEqual([0, 1, 2]);
   });
 
+  it('uses generate when the request explicitly disables streaming', async () => {
+    let generates = 0;
+    let streams = 0;
+    const events: ModelStreamEvent[] = [];
+    const engine = createModelExecutionEngine({
+      clock: { now: () => now },
+      ids: ids(),
+      repository: new FakeModelExecutionRepository(),
+      gateway: {
+        async capabilities() {
+          return { structuredOutput: true, tools: true, vision: false };
+        },
+        async generate(request) {
+          generates += 1;
+          expect(request.stream).toBe(false);
+          return textResponse;
+        },
+        async *stream() {
+          streams += 1;
+          yield { type: 'completed', sequence: 0, response: textResponse };
+        },
+      },
+    });
+
+    const result = await engine.execute(
+      {
+        requestKey: 'text-non-stream',
+        model: selection,
+        request: { ...textRequest, stream: false },
+      },
+      {
+        onEvent: (event) => {
+          events.push(event);
+        },
+      },
+    );
+
+    expect(result.status).toBe('succeeded');
+    expect(generates).toBe(1);
+    expect(streams).toBe(0);
+    expect(events.map((event) => event.type)).toEqual([
+      'content-delta',
+      'completed',
+    ]);
+  });
+
   it('returns a tool call without executing it and accepts a later tool result', async () => {
     const toolResponse: NormalizedModelResponse = {
       ...textResponse,

@@ -687,7 +687,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
 
     try {
       const stream =
-        this.#gateway.stream === undefined
+        envelope.request.stream === false || this.#gateway.stream === undefined
           ? streamFromGenerate(this.#gateway, envelope.request, context)
           : this.#gateway.stream(envelope.request, context);
       let completed: NormalizedModelResponse | undefined;

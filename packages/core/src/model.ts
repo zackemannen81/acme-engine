@@ -64,6 +64,7 @@ export interface ModelRequest {
   readonly enableThinking?: boolean;
   readonly reasoningEffort?: string;
   readonly seed?: number;
+  readonly stream?: boolean;
 }
 
 export function isJsonModelOutput(
