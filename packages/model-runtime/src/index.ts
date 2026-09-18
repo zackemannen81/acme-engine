@@ -5,6 +5,7 @@ import {
   createChatCompletionsGateway,
   type ChatCompletionsControls,
   type ChatCompletionsModelProfile,
+  type MaxOutputTokensParameter,
   type ProviderTransport as ChatCompletionsTransport,
 } from '@acme-engine/adapter-model-chat-completions';
 import { createFetchTransport as createChatCompletionsFetchTransport } from '@acme-engine/adapter-model-chat-completions/transport-fetch';
@@ -43,6 +44,7 @@ export interface AcmeModelRuntimeChatProfileConfig {
   readonly provider?: string;
   readonly capabilities?: ModelCapabilities;
   readonly controls?: ChatCompletionsControls;
+  readonly maxOutputTokensParameter?: MaxOutputTokensParameter;
 }
 
 export interface AcmeModelRuntimeCompatibleRouteConfig {
@@ -177,6 +179,9 @@ function toChatProfiles(
       endpoint: options.endpoint,
       capabilities: profile.capabilities ?? defaultChatCapabilities(),
       ...(profile.controls === undefined ? {} : { controls: profile.controls }),
+      ...(profile.maxOutputTokensParameter === undefined
+        ? {}
+        : { maxOutputTokensParameter: profile.maxOutputTokensParameter }),
       headers: options.headers,
     }),
   );

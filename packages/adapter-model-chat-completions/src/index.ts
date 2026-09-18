@@ -5,6 +5,7 @@ export {
   type ChatCompletionsControls,
   type ChatCompletionsGatewayOptions,
   type ChatCompletionsModelProfile,
+  type MaxOutputTokensParameter,
   type ThinkingTemplateMode,
 } from './gateway.js';
 export {

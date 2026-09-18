@@ -60,9 +60,9 @@ Add an explicit profile-level output-token parameter choice to the Chat Completi
 
 ### Minimum Verification Gates
 
-- [ ] Focused adapter regression for both output-token field names.
-- [ ] Model-runtime config propagation regression.
-- [ ] Full typecheck and build.
+- [x] Focused adapter regression for both output-token field names.
+- [x] Model-runtime config propagation regression.
+- [x] Full typecheck and build.
 - [ ] Full unit and conformance suites.
 - [ ] Format, lint, boundaries, docs and diff checks.
 - [ ] Packed manifest inspection for 0.1.4.
@@ -71,9 +71,9 @@ Add an explicit profile-level output-token parameter choice to the Chat Completi
 
 ## Checklist
 
-- [ ] Add profile-level wire-field contract.
-- [ ] Propagate through model-runtime config.
-- [ ] Add regressions.
+- [x] Add profile-level wire-field contract.
+- [x] Propagate through model-runtime config.
+- [x] Add regressions.
 - [ ] Bump/publish public dependency closure to 0.1.4.
 - [ ] Verify registry consumer.
 - [ ] Update docs, archive task, restore template and push.
