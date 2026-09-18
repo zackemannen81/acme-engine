@@ -72,6 +72,38 @@ function partText(part: ModelContentPart, index: number): string {
   return part.text;
 }
 
+function userInputContent(
+  parts: readonly ModelContentPart[],
+  messageIndex: number,
+): JsonValue[] {
+  const content: JsonValue[] = [];
+  parts.forEach((part, partIndex) => {
+    if (part.type === 'text') {
+      content.push({ type: 'input_text', text: part.text });
+      return;
+    }
+    if (part.type === 'image') {
+      if (part.dataRef.trim().length === 0) {
+        invalid('A user image content part requires a non-empty dataRef.', {
+          messageIndex,
+          partIndex,
+        });
+      }
+      content.push({ type: 'input_image', image_url: part.dataRef });
+      return;
+    }
+    if (part.type === 'tool-call') {
+      return;
+    }
+    invalid('The OpenAI Responses adapter cannot map this user content part.', {
+      messageIndex,
+      partIndex,
+      partType: part.type,
+    });
+  });
+  return content;
+}
+
 function toolParameters(tool: ModelFunctionTool, index: number): JsonValue {
   try {
     return lowerStrictStructuredOutputSchema(tool.parameters);
@@ -145,31 +177,38 @@ export function buildResponsesBody(
       }
       return;
     }
-    const textParts = message.content.filter((part) => part.type === 'text');
     const toolCallParts = message.content.filter(
       (part) => part.type === 'tool-call',
     );
-    const other = message.content.filter(
-      (part) => part.type !== 'text' && part.type !== 'tool-call',
-    );
-    if (other.length > 0) {
-      invalid('The OpenAI Responses adapter cannot map this content part.', {
-        messageIndex,
-        partType: other[0]?.type ?? 'unknown',
-      });
-    }
-    if (textParts.length > 0) {
-      input.push({
-        role: message.role,
-        content: [
-          {
-            type: message.role === 'assistant' ? 'output_text' : 'input_text',
-            text: textParts
-              .map((part, partIndex) => partText(part, partIndex))
-              .join(''),
-          },
-        ],
-      });
+    if (message.role === 'user') {
+      const content = userInputContent(message.content, messageIndex);
+      if (content.length > 0) {
+        input.push({ role: 'user', content });
+      }
+    } else {
+      const textParts = message.content.filter((part) => part.type === 'text');
+      const other = message.content.filter(
+        (part) => part.type !== 'text' && part.type !== 'tool-call',
+      );
+      if (other.length > 0) {
+        invalid('The OpenAI Responses adapter cannot map this content part.', {
+          messageIndex,
+          partType: other[0]?.type ?? 'unknown',
+        });
+      }
+      if (textParts.length > 0) {
+        input.push({
+          role: 'assistant',
+          content: [
+            {
+              type: 'output_text',
+              text: textParts
+                .map((part, partIndex) => partText(part, partIndex))
+                .join(''),
+            },
+          ],
+        });
+      }
     }
     for (const part of toolCallParts) {
       if (part.type !== 'tool-call') {
