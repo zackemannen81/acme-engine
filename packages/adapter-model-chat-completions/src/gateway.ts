@@ -25,9 +25,7 @@ import type {
   ProviderTransportResult,
 } from './transport.js';
 export type ThinkingTemplateMode = 'enable_thinking' | 'thinking';
-export type MaxOutputTokensParameter =
-  | 'max_tokens'
-  | 'max_completion_tokens';
+export type MaxOutputTokensParameter = 'max_tokens' | 'max_completion_tokens';
 
 export interface ChatCompletionsControls {
   readonly temperature?: boolean;

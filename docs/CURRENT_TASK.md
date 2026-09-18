@@ -63,9 +63,9 @@ Add an explicit profile-level output-token parameter choice to the Chat Completi
 - [x] Focused adapter regression for both output-token field names.
 - [x] Model-runtime config propagation regression.
 - [x] Full typecheck and build.
-- [ ] Full unit and conformance suites.
-- [ ] Format, lint, boundaries, docs and diff checks.
-- [ ] Packed manifest inspection for 0.1.4.
+- [x] Full unit and conformance suites.
+- [x] Format, lint, boundaries, docs and diff checks.
+- [x] Packed manifest inspection for 0.1.4.
 - [ ] Registry-only 0.1.4 consumer proof.
 - [ ] A008 focused embedded OpenAI config/request proof.
 
