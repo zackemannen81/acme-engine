@@ -6989,3 +6989,10 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Verification: 24/24 focused adapter tests, workspace typecheck, `pnpm docs:check`, and `git diff --check` passed.
 - This unblocks A008-0124 native vision through the normal ACME execution substrate without adding cognition or memory semantics to ACME.
 - Signature: ChatGPT (operator)
+## 2026-09-18 — ACME-0183 public `acme-engine` facade
+
+- Operator: ChatGPT. Added `packages/acme-engine@0.1.0` as a re-export-only facade over `@acme-engine/model-runtime`; the monorepo root now uses private internal identity `@acme-engine/workspace` to avoid a workspace-name collision.
+- ADR-0056 intentionally replaces the experimental `acme-engine@0.0.1` CLI-only npm role with an importable ESM library surface while leaving the private sidecar/service composition in the repository.
+- Packed the seven-package public closure; the facade tarball rewrote its workspace dependency to exact `@acme-engine/model-runtime@0.1.0`. A clean external consumer installed only packed tarballs and returned `ACME_FACADE_CONSUMER_OK fixture` using `import { createAcmeModelRuntime } from "acme-engine"` with a vision-capable route.
+- Verification: package build/typecheck, root build/typecheck, 161/161 unit files and 1076/1076 tests with bounded workers, docs-check and diff-check pass. A first unconstrained unit run produced three unrelated 5 s suite-load timeouts; all three passed 10/10 isolated before the complete bounded-worker rerun passed.
+- Registry publication is deliberately deferred until this change is merged to canonical main. Signature: ChatGPT

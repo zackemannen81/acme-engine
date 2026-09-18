@@ -23,6 +23,10 @@ tracked it; the file and value remain local and were not copied into audit
 evidence. The scoped proof and limitations are recorded in
 [the ACME-0175 acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Public `acme-engine` facade
+
+ACME-0183 adds `packages/acme-engine@0.1.0` as the simple public in-process import surface. It re-exports `@acme-engine/model-runtime` without duplicating execution code. The workspace root is renamed internally to `@acme-engine/workspace` and remains `private: true`, avoiding a workspace package-name collision while preserving the publication guard. Packed-artifact verification rewrites the facade dependency from `workspace:*` to `@acme-engine/model-runtime@0.1.0`; a clean external consumer installed only the packed public closure and constructed a vision-capable runtime through `import { createAcmeModelRuntime } from "acme-engine"`, producing `ACME_FACADE_CONSUMER_OK`. Registry publication is a separate final external effect.
+
 ## Public npm model-runtime boundary
 
 ACME-0181 accepts [ADR-0055](adr/0055-public-npm-model-runtime-library.md) and
