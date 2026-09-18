@@ -28,7 +28,7 @@ proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret
 
 ## Public `acme-engine` facade
 
-[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine@0.1.0` as the convenience import surface for embedded ACME model execution. `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`; model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `acme-engine@0.0.1` CLI-only bundle is not a compatibility contract for the 0.1.0 library role.
+[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine` as the convenience import surface for embedded ACME model execution. The current installable release is `0.1.1`; `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`, while model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `0.0.1` CLI-only package is not a compatibility contract, and the broken `0.1.0` registry artifacts must not be used because they preserved unsupported `workspace:*` dependency specifications. ACME-0184 establishes pnpm-packed tarballs as the registry publication artifact.
 
 ## Public npm model-runtime library boundary
 
