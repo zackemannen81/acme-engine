@@ -5,6 +5,10 @@ import type {
   ProviderTransportRequest,
   ProviderTransportStreamEvent,
 } from '@acme-engine/adapter-model-chat-completions';
+import type {
+  ProviderTransport as OpenAiProviderTransport,
+  ProviderTransportRequest as OpenAiProviderTransportRequest,
+} from '@acme-engine/adapter-model-openai';
 import type { ModelStreamEvent } from '@acme-engine/core';
 
 import { createAcmeModelRuntime } from '../src/index.js';
@@ -25,6 +29,37 @@ function chatSse(text: string): string {
       'data: [DONE]',
     ].join('\n\n') + '\n\n'
   );
+}
+
+function openAiTransport(): OpenAiProviderTransport & {
+  readonly sent: OpenAiProviderTransportRequest[];
+} {
+  const sent: OpenAiProviderTransportRequest[] = [];
+  return {
+    sent,
+    async send(request) {
+      sent.push(request);
+      return {
+        kind: 'response',
+        status: 200,
+        headers: {},
+        body: JSON.stringify({
+          id: 'resp_embedded_openai',
+          model: 'gpt-5.6-luna',
+          status: 'completed',
+          output: [
+            {
+              type: 'message',
+              role: 'assistant',
+              status: 'completed',
+              content: [{ type: 'output_text', text: 'I see it.' }],
+            },
+          ],
+          usage: { input_tokens: 12, output_tokens: 4, total_tokens: 16 },
+        }),
+      };
+    },
+  };
 }
 
 function transport(): ProviderTransport & {
@@ -244,5 +279,83 @@ describe('embedded ACME model runtime', () => {
       model: 'nvidia/test-model',
       stream: false,
     });
+  });
+});
+
+it('routes native OpenAI vision input through the Responses gateway', async () => {
+  const provider = openAiTransport();
+  const runtime = createAcmeModelRuntime({
+    now: () => now,
+    ids: { next: (kind) => `${kind}-openai-vision-test` },
+    openAiTransport: provider,
+    config: {
+      openAi: {
+        apiKey: 'test-openai-key',
+        profiles: [
+          {
+            selection: {
+              profile: 'openai-vision',
+              providerHint: 'openai',
+              modelHint: 'gpt-5.6-luna',
+            },
+            model: 'gpt-5.6-luna',
+            capabilities: {
+              structuredOutput: true,
+              tools: true,
+              vision: true,
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  const dataRef = 'data:image/png;base64,iVBORw0KGgo=';
+  const result = await runtime.execute({
+    requestKey: 'embedded-openai-vision-request',
+    model: {
+      profile: 'openai-vision',
+      providerHint: 'openai',
+      modelHint: 'gpt-5.6-luna',
+    },
+    requiredCapabilities: { vision: true },
+    request: {
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'What is in this image?' },
+            { type: 'image', mediaType: 'image/png', dataRef },
+          ],
+        },
+      ],
+      output: { mode: 'text' },
+      maxOutputTokens: 256,
+      reasoningEffort: 'none',
+      stream: false,
+    },
+  });
+
+  expect(runtime.providers).toEqual(['openai']);
+  expect(result.status).toBe('succeeded');
+  if (result.status !== 'succeeded') {
+    throw new Error(`expected success, received ${result.status}`);
+  }
+  expect(result.response.text).toBe('I see it.');
+  expect(provider.sent).toHaveLength(1);
+  expect(provider.sent[0]?.url).toBe('https://api.openai.com/v1/responses');
+  expect(JSON.parse(provider.sent[0]?.body ?? '{}')).toMatchObject({
+    model: 'gpt-5.6-luna',
+    input: [
+      {
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'What is in this image?' },
+          { type: 'input_image', image_url: dataRef },
+        ],
+      },
+    ],
+    max_output_tokens: 256,
+    reasoning: { effort: 'none' },
   });
 });

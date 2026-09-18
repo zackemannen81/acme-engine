@@ -83,7 +83,7 @@ The native OpenAI Responses adapter accepts mixed user text/image content and em
 - [x] Claim task id.
 - [x] Freeze charter.
 - [x] Add Responses image mapping and validation.
-- [ ] Add adapter/runtime regressions.
+- [x] Add adapter/runtime regressions.
 - [ ] Run verification gates.
 - [ ] Bump/publish public closure 0.1.5.
 - [ ] Verify clean registry consumer.
@@ -105,6 +105,8 @@ The native OpenAI Responses adapter accepts mixed user text/image content and em
 - OpenAI Responses adapter gateway suite: 51/51 passed after image mapping.
 - `@acme-engine/adapter-model-openai` typecheck passed.
 - `git diff --check` passed for the first implementation checkpoint.
+- Focused adapter + model-runtime suite: 55/55 passed; runtime proof emitted `/v1/responses` with ordered `input_text` + `input_image`, `max_output_tokens` and reasoning effort.
+- `@acme-engine/model-runtime` typecheck passed.
 
 ## Documentation Updates
 
