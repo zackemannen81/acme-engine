@@ -149,9 +149,7 @@ describe('OpenAI Responses request mapping', () => {
         messages: [
           {
             role: 'user',
-            content: [
-              { type: 'image', mediaType: 'image/png', dataRef },
-            ],
+            content: [{ type: 'image', mediaType: 'image/png', dataRef }],
           },
         ],
       },
