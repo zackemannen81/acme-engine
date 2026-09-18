@@ -2,7 +2,7 @@
 
 Task ID: ACME-0185
 Parent Task: A008-0127 (external consumer blocker)
-Status: Ready
+Status: In Progress
 Owner: ChatGPT (operator)
 Created: 2026-09-18
 Last updated: 2026-09-18
