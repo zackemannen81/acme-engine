@@ -5,9 +5,8 @@
 ACME is open-source software licensed under the
 [Apache License 2.0](LICENSE). The source license and publication state are
 separate: the workspace root remains `private: true`, while versioned public
-packages are released deliberately. The `acme-engine@0.1.0` release candidate is
-the next in-process consumer surface, implemented as a thin facade over
-`@acme-engine/model-runtime`. Hosted services
+packages are released deliberately. The current installable in-process consumer surface is `acme-engine@0.1.1`,
+implemented as a thin facade over `@acme-engine/model-runtime`. Hosted services
 or deployment guarantees are not implied by package publication.
 
 ACME is a greenfield project for building and evaluating a domain-neutral,
@@ -43,7 +42,7 @@ on its own, because scheduling belongs to whatever process operates ACME.
 
 ## npm library
 
-The verified 0.1.0 release candidate uses this embedded model-execution entry point after publication:
+The current registry release uses this embedded model-execution entry point:
 
 ```bash
 npm install acme-engine

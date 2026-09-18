@@ -9,10 +9,10 @@ ACME-0182 maps the existing provider-neutral `ModelContentPart` image shape onto
 ACME repository source is open source under Apache License 2.0, as decided by
 [ADR-0052](adr/0052-apache-2.0-open-source-distribution.md). The standard terms
 are in the root `LICENSE`, and the root package manifest identifies
-`Apache-2.0`. Its npm `private: true` flag remains an accidental-publication
-guard only: no npm package has been published, and open-source source
-distribution does not by itself announce a versioned release, deployment,
-hosted service, support commitment or separate commercial product.
+`Apache-2.0`. Its npm `private: true` flag remains an accidental-publication guard for the
+workspace root only. Versioned public packages are now published deliberately;
+open-source source distribution still does not by itself announce deployment,
+hosted-service, support or separate commercial-product commitments.
 
 ACME-0175 also completed a content-redacted secret audit of the current tree,
 ignored environment files and every reachable Git revision. No environment
@@ -25,7 +25,7 @@ evidence. The scoped proof and limitations are recorded in
 
 ## Public `acme-engine` facade
 
-ACME-0183 adds `packages/acme-engine@0.1.0` as the simple public in-process import surface. It re-exports `@acme-engine/model-runtime` without duplicating execution code. The workspace root is renamed internally to `@acme-engine/workspace` and remains `private: true`, avoiding a workspace package-name collision while preserving the publication guard. Packed-artifact verification rewrites the facade dependency from `workspace:*` to `@acme-engine/model-runtime@0.1.0`; a clean external consumer installed only the packed public closure and constructed a vision-capable runtime through `import { createAcmeModelRuntime } from "acme-engine"`, producing `ACME_FACADE_CONSUMER_OK`. Registry publication is a separate final external effect.
+`acme-engine@0.1.1` is the current installable npm facade over `@acme-engine/model-runtime@0.1.1`. ACME-0184 repairs the initial 0.1.0 registry publication, whose manifests incorrectly preserved `workspace:*` internal dependencies because the workspace directories were published directly. Version 0.1.1 was published only from pnpm-created tarballs whose manifests were preflighted to contain concrete `0.1.1` internal versions. Registry inspection confirms all seven public packages expose concrete dependencies and `latest=0.1.1`; a clean registry-only consumer successfully ran `npm install acme-engine`, imported `createAcmeModelRuntime`, and constructed a vision-capable route (`ACME_0184_REGISTRY_CONSUMER_OK`). Version 0.1.0 remains immutable registry history and must not be used. The workspace root remains `@acme-engine/workspace`, `private: true`.
 
 ## Public npm model-runtime boundary
 

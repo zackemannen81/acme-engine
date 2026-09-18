@@ -6996,3 +6996,11 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Packed the seven-package public closure; the facade tarball rewrote its workspace dependency to exact `@acme-engine/model-runtime@0.1.0`. A clean external consumer installed only packed tarballs and returned `ACME_FACADE_CONSUMER_OK fixture` using `import { createAcmeModelRuntime } from "acme-engine"` with a vision-capable route.
 - Verification: package build/typecheck, root build/typecheck, 161/161 unit files and 1076/1076 tests with bounded workers, docs-check and diff-check pass. A first unconstrained unit run produced three unrelated 5 s suite-load timeouts; all three passed 10/10 isolated before the complete bounded-worker rerun passed.
 - Registry publication is deliberately deferred until this change is merged to canonical main. Signature: ChatGPT
+## 2026-09-18 — ACME-0184 npm publication repair
+
+- Operator: ChatGPT. Repaired the unusable 0.1.0 npm publication by bumping the seven public ACME packages to 0.1.1 without runtime/API changes. Source workspace edges remain `workspace:*`; registry artifacts are now created only by `pnpm pack`.
+- Pre-publication proof: all seven packed manifests contained exact `0.1.1` internal dependencies and zero workspace protocol references (`PACK_MANIFESTS_OK`); a clean tarball-only consumer returned `ACME_0184_TARBALL_CONSUMER_OK fixture`.
+- Published the verified tarballs in dependency order. npm registry inspection confirms concrete 0.1.1 dependency chains for every public package.
+- Final registry-only proof: a clean external consumer ran `npm install acme-engine`, imported `createAcmeModelRuntime`, constructed a vision-capable compatible route and returned `ACME_0184_REGISTRY_CONSUMER_OK fixture`.
+- `acme-engine@0.1.1` is now the first supported installable registry release. `0.1.0` remains immutable broken registry history and must not be used.
+- Verification: public closure build/typecheck, tarball manifests, tarball consumer, registry manifests, registry consumer, docs-check and diff-check pass. Signature: ChatGPT

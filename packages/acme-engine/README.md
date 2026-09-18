@@ -18,5 +18,5 @@ import { createAcmeModelRuntime } from 'acme-engine';
 `@acme-engine/model-runtime` package. It does not own application cognition,
 memory, prompts, tool policy, or model-selection strategy.
 
-Version 0.1.0 intentionally replaces the experimental 0.0.1 CLI-only package
-role with an importable library API.
+Version 0.1.1 is the first installable registry release of the importable library API.
+Version 0.1.0 was published with unresolved workspace protocol dependencies and must not be used.

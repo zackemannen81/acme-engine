@@ -1,6 +1,6 @@
 {
   "name": "acme-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ACME model execution runtime for provider-neutral AI systems",
   "type": "module",
   "license": "Apache-2.0",
