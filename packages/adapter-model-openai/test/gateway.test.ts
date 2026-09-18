@@ -141,7 +141,62 @@ describe('OpenAI Responses request mapping', () => {
     },
   );
 
-  it('rejects non-text content rather than silently dropping it', () => {
+  it('maps user image content to Responses input_image', () => {
+    const dataRef = 'data:image/png;base64,iVBORw0KGgo=';
+    const { body } = buildResponsesBody(
+      {
+        ...fixtureRequest,
+        messages: [
+          {
+            role: 'user',
+            content: [{ type: 'image', mediaType: 'image/png', dataRef }],
+          },
+        ],
+      },
+      fixtureModel,
+    );
+    expect((body as { input: readonly unknown[] }).input).toEqual([
+      {
+        role: 'user',
+        content: [{ type: 'input_image', image_url: dataRef }],
+      },
+    ]);
+  });
+
+  it('preserves mixed user text/image content order', () => {
+    const first = 'data:image/png;base64,AAAA';
+    const second = 'data:image/jpeg;base64,BBBB';
+    const { body } = buildResponsesBody(
+      {
+        ...fixtureRequest,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'before' },
+              { type: 'image', mediaType: 'image/png', dataRef: first },
+              { type: 'text', text: 'between' },
+              { type: 'image', mediaType: 'image/jpeg', dataRef: second },
+            ],
+          },
+        ],
+      },
+      fixtureModel,
+    );
+    expect((body as { input: readonly unknown[] }).input).toEqual([
+      {
+        role: 'user',
+        content: [
+          { type: 'input_text', text: 'before' },
+          { type: 'input_image', image_url: first },
+          { type: 'input_text', text: 'between' },
+          { type: 'input_image', image_url: second },
+        ],
+      },
+    ]);
+  });
+
+  it('rejects an empty user image dataRef before transport', () => {
     expect(() =>
       buildResponsesBody(
         {
@@ -150,7 +205,37 @@ describe('OpenAI Responses request mapping', () => {
             {
               role: 'user',
               content: [
-                { type: 'image', mediaType: 'image/png', dataRef: 'ref' },
+                { type: 'image', mediaType: 'image/png', dataRef: '   ' },
+              ],
+            },
+          ],
+        },
+        fixtureModel,
+      ),
+    ).toThrowError(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          code: 'INVALID_REQUEST',
+          message: expect.stringContaining('non-empty dataRef'),
+        }),
+      }),
+    );
+  });
+
+  it('continues to reject assistant image history', () => {
+    expect(() =>
+      buildResponsesBody(
+        {
+          ...fixtureRequest,
+          messages: [
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'image',
+                  mediaType: 'image/png',
+                  dataRef: 'data:image/png;base64,AAAA',
+                },
               ],
             },
           ],

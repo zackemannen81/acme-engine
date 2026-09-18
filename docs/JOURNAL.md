@@ -7031,3 +7031,13 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Consumer proof: a clean fresh-cache registry consumer installed the 0.1.4 dependency chain and returned `ACME_0187_REGISTRY_CONSUMER_OK 321`, proving `max_completion_tokens` was emitted and `max_tokens` omitted.
 - A008 integration proof: a detached worktree from canonical A008 `origin/main` consumed registry 0.1.4, passed build plus the embedded/parity/config suite 20/20, and a dedicated OpenAI route regression passed 7/7 while observing `max_completion_tokens: 321` and no `max_tokens`.
 - Signature: ChatGPT (operator)
+
+## 2026-09-18 — ACME-0188 native OpenAI Responses image parity
+
+- Operator: ChatGPT. Extended the existing native OpenAI Responses adapter so ordered user `text` and `image` model-content parts map to Responses `input_text` and `input_image`; the provider-ready image `dataRef` is carried as `image_url`.
+- Scope stayed bounded: Chat Completions behavior, provider selection policy, A008 cognition/memory semantics, durable image history and Responses statefulness were unchanged. Empty image refs fail before transport; assistant image history remains unsupported.
+- Verification: focused adapter/runtime 55/55; full format/lint/boundaries/docs/typecheck/build/diff gates; unit 161/161 files and 1086/1086 tests; conformance 13/13 files and 86/86 tests.
+- Release: published `@acme-engine/adapter-model-openai@0.1.5`, `@acme-engine/model-runtime@0.1.5` and `acme-engine@0.1.5` from pnpm-packed tarballs with concrete registry dependency versions and no `workspace:*` leakage.
+- Consumer proof: a fresh registry-only install resolved `acme-engine@0.1.5 -> @acme-engine/model-runtime@0.1.5 -> @acme-engine/adapter-model-openai@0.1.5` and returned `ACME_0188_REGISTRY_CONSUMER_OK`, observing `https://api.openai.com/v1/responses` with ordered `input_text` + `input_image`, `max_output_tokens: 321` and `reasoning.effort: "none"`.
+- Follow-up: A008 may now separately move Luna from the generic compatible Chat Completions profile back to the native `openAi` Responses profile without losing vision support.
+- Signature: ChatGPT (operator)
