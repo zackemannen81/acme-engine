@@ -25,7 +25,12 @@ evidence. The scoped proof and limitations are recorded in
 
 ## Public `acme-engine` facade
 
-`acme-engine@0.1.1` is the current installable npm facade over `@acme-engine/model-runtime@0.1.1`. ACME-0184 repairs the initial 0.1.0 registry publication, whose manifests incorrectly preserved `workspace:*` internal dependencies because the workspace directories were published directly. Version 0.1.1 was published only from pnpm-created tarballs whose manifests were preflighted to contain concrete `0.1.1` internal versions. Registry inspection confirms all seven public packages expose concrete dependencies and `latest=0.1.1`; a clean registry-only consumer successfully ran `npm install acme-engine`, imported `createAcmeModelRuntime`, and constructed a vision-capable route (`ACME_0184_REGISTRY_CONSUMER_OK`). Version 0.1.0 remains immutable registry history and must not be used. The workspace root remains `@acme-engine/workspace`, `private: true`.
+`acme-engine@0.1.2` is the current installable npm facade over `@acme-engine/model-runtime@0.1.2`. ACME-0184 repairs the initial 0.1.0 registry publication, whose manifests incorrectly preserved `workspace:*` internal dependencies because the workspace directories were published directly. Version 0.1.1 was published only from pnpm-created tarballs whose manifests were preflighted to contain concrete `0.1.1` internal versions. Registry inspection for the repaired 0.1.1 release established the tarball-only publication baseline; a clean registry-only consumer successfully ran `npm install acme-engine`, imported `createAcmeModelRuntime`, and constructed a vision-capable route (`ACME_0184_REGISTRY_CONSUMER_OK`). Version 0.1.0 remains immutable registry history and must not be used. The workspace root remains `@acme-engine/workspace`, `private: true`.
+
+
+## Explicit non-stream model execution intent
+
+ACME-0185 adds optional `ModelRequest.stream` to the public model contract and makes `ModelExecutionEngine` use `ModelGateway.generate()` when the caller explicitly sets `stream: false`, even when the gateway also exposes `stream()`. Requests that do not explicitly disable streaming keep the existing streaming path. This fixes embedded consumers whose provider correctly returns ordinary JSON for `stream:false`; ACME no longer feeds that JSON to an SSE parser and misclassifies it as a truncated stream. The current public release is `0.1.2`. Focused core/model-runtime regressions pass, full build/typecheck passes, unit is 1078/1078, conformance is 86/86, packed-artifact and registry-only consumers both prove `send=1 / stream=0` for explicit non-streaming execution.
 
 ## Public npm model-runtime boundary
 

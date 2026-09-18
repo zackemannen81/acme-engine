@@ -7004,3 +7004,10 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Final registry-only proof: a clean external consumer ran `npm install acme-engine`, imported `createAcmeModelRuntime`, constructed a vision-capable compatible route and returned `ACME_0184_REGISTRY_CONSUMER_OK fixture`.
 - `acme-engine@0.1.1` is now the first supported installable registry release. `0.1.0` remains immutable broken registry history and must not be used.
 - Verification: public closure build/typecheck, tarball manifests, tarball consumer, registry manifests, registry consumer, docs-check and diff-check pass. Signature: ChatGPT
+## 2026-09-18 — ACME-0185 explicit non-stream execution intent
+
+- Operator: ChatGPT. A008-0127 exposed that `ModelExecutionEngine` selected a gateway's `stream()` path whenever available, even when the caller intended `stream:false`; Chat Completions therefore sent non-streaming provider requests but ACME attempted to consume ordinary JSON through the SSE path.
+- Added optional `ModelRequest.stream`, validated it at the core boundary, and made explicit `false` select `generate()` while preserving existing streaming behavior otherwise. No provider routing, retry, cognition or package-topology semantics changed.
+- Verification: focused core/model-runtime 14/14, full build/typecheck, 1078/1078 unit tests and 86/86 conformance pass.
+- Released the unchanged public package closure as 0.1.2 from pnpm-created tarballs only. `PACK_MANIFESTS_OK` proved concrete internal 0.1.2 dependencies and no packed workspace protocol references.
+- Tarball-only consumer returned `ACME_0185_TARBALL_CONSUMER_OK tarball-ok send=1 stream=0`; registry-only consumer returned `ACME_0185_REGISTRY_CONSUMER_OK registry-ok send=1 stream=0`. `acme-engine@0.1.2` is the current public release. Signature: ChatGPT

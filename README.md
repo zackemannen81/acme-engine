@@ -5,7 +5,7 @@
 ACME is open-source software licensed under the
 [Apache License 2.0](LICENSE). The source license and publication state are
 separate: the workspace root remains `private: true`, while versioned public
-packages are released deliberately. The current installable in-process consumer surface is `acme-engine@0.1.1`,
+packages are released deliberately. The current installable in-process consumer surface is `acme-engine@0.1.2`,
 implemented as a thin facade over `@acme-engine/model-runtime`. Hosted services
 or deployment guarantees are not implied by package publication.
 

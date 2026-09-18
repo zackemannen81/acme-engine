@@ -1,12 +1,12 @@
-﻿# ACME-0185 — honor non-streaming model execution intent
+# Current Task
 
-Task ID: ACME-0185
-Parent Task: A008-0127 (external consumer blocker)
-Status: In Progress
-Owner: ChatGPT (operator)
-Created: 2026-09-18
-Last updated: 2026-09-18
-Charter frozen at: 2026-09-18; claim revision `785ff26`
+Task ID:
+Parent Task: None
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Read First
 
@@ -18,90 +18,91 @@ Charter frozen at: 2026-09-18; claim revision `785ff26`
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- Relevant model-runtime ADRs
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-A008''s in-process migration exposed that `ModelExecutionEngine` selects a gateway''s `stream()` method whenever one exists, even when the model request explicitly carries `stream: false`. Chat Completions then sends a non-streaming provider request but ACME attempts to consume the JSON response as SSE, producing truncated/invalid stream failures and incorrect timeout semantics.
+Describe the task, why it is being done now and the intended outcome.
 
 ## Task Charter
 
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
+
 ### Goal
 
-Make ACME honor explicit non-streaming model request intent without changing streaming defaults or provider semantics.
+Define one primary outcome.
 
 ### Primary Deliverable
 
-`ModelExecutionEngine` uses `gateway.generate()` when a validated model request explicitly sets `stream: false`, and otherwise preserves the existing streamed execution path when the gateway supports streaming.
+Name the concrete artifact or behavior that completes the task.
 
 ### In Scope
 
-- Change the engine''s generate-vs-stream selection at the model execution boundary.
-- Add focused engine regressions for explicit `stream:false`, explicit/default streaming behavior, terminal response/evidence, and provider transport shape.
-- Verify Chat Completions non-streaming JSON responses are consumed through `generate()`.
-- Verify streaming requests still emit deltas and terminal completion through `stream()`.
-- Release the unchanged public package topology as npm version `0.1.2` using the verified pnpm-pack/tarball publication procedure from ACME-0184.
-- Verify registry manifests contain concrete internal `0.1.2` dependencies and a clean consumer can import/use `acme-engine@0.1.2`.
-- Update required project status/system/journal documentation.
+- List work required for the primary deliverable.
 
 ### Out of Scope
 
-- A008 implementation changes.
-- Provider routing or profile-selection changes.
-- New streaming APIs or callback semantics.
-- Changing provider adapters'' existing wire formats.
-- Memory, cognition, orchestration or task-runtime behavior.
-- Automatic fallback/retry policy changes.
-- Package-topology or public-API redesign.
+- List adjacent work that must not be absorbed.
 
 ### Definition of Done
 
-- Explicit `stream:false` executes through `ModelGateway.generate()` even when `stream()` is available.
-- Requests that are not explicitly non-streaming preserve the existing streamed path when supported.
-- Non-streaming Chat Completions JSON completes successfully and is not classified as a truncated stream.
-- Streaming event ordering/evidence behavior remains unchanged.
-- Relevant core/model-runtime/adapter tests, typecheck/build, docs checks and diff checks pass.
-- All seven public packages are published at `0.1.2` from verified pnpm tarballs with concrete internal dependency versions.
-- A clean registry-only consumer installs/imports `acme-engine@0.1.2` successfully.
+- Define objective, verifiable completion conditions.
 
 ### Minimum Verification Gates
 
-- [ ] Focused ModelExecutionEngine generate-vs-stream regression.
-- [ ] Chat Completions explicit non-stream JSON regression.
-- [ ] Existing streaming engine/adapter regression.
-- [ ] Public closure build/typecheck/tests.
-- [ ] Version/lockfile consistency at 0.1.2.
-- [ ] Tarball manifests contain no `workspace:*`.
-- [ ] Clean tarball consumer proof.
-- [ ] npm publication from verified tarballs in dependency order.
-- [ ] Registry manifest verification.
-- [ ] Clean registry-only consumer import/runtime proof.
-- [ ] `pnpm docs:check` and `git diff --check`.
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
+
+## References
+
+- Add relevant documents, code, decisions and external contracts.
 
 ## Checklist
 
-- [ ] Add failing regression that proves explicit `stream:false` must use `generate()`.
-- [ ] Make the minimal engine selection fix.
-- [ ] Run focused and public-closure verification.
-- [ ] Update version/package-lock metadata to 0.1.2.
-- [ ] Pack and inspect all public tarballs.
-- [ ] Prove tarballs in a clean external consumer.
-- [ ] Publish verified tarballs and inspect registry manifests.
-- [ ] Prove registry-only install/import.
-- [ ] Update CURRENT_STATUS, SYSTEMDOC and JOURNAL.
-- [ ] Archive the completed task and restore CURRENT_TASK template.
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
 
 ## Decisions and Notes
-
-- This task is a bounded blocker discovered by A008-0127.
-- The consumer''s explicit non-streaming intent is authoritative. Gateway capability availability must not override it.
-- No A008-side workaround is accepted as the primary repair because the incorrect execution-mode choice is inside ACME''s model execution boundary.
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
 
 ## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
 
 -none
 
 ## Verification
 
-Pending.
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
 
+## Documentation Updates
+
+- [ ] `docs/CURRENT_STATUS.md`
+- [ ] `docs/SYSTEMDOC.md`
+- [ ] `docs/JOURNAL.md`
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
+
+## Handoff and Follow-ups
+
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
+
+## Finalize When Complete
+
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
+- Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.
