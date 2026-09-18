@@ -130,7 +130,60 @@ describe('embedded ACME model runtime', () => {
     expect(JSON.parse(provider.sent[0]?.body ?? '{}')).toMatchObject({
       model: 'nvidia/test-model',
       stream: true,
+      max_tokens: 128,
     });
+  });
+
+  it('propagates a profile-specific output-token parameter to Chat Completions', async () => {
+    const provider = transport();
+    const runtime = createAcmeModelRuntime({
+      now: () => now,
+      ids: { next: (kind) => `${kind}-token-field-test` },
+      chatCompletionsTransport: provider,
+      config: {
+        nvidia: {
+          apiKey: 'test-api-key',
+          profiles: [
+            {
+              selection: {
+                profile: 'completion-token-field',
+                providerHint: 'nvidia-completion-field',
+                modelHint: 'test-model',
+              },
+              model: 'nvidia/test-model',
+              controls: { maxOutputTokens: true },
+              maxOutputTokensParameter: 'max_completion_tokens',
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await runtime.execute({
+      requestKey: 'embedded-token-field-request',
+      model: {
+        profile: 'completion-token-field',
+        providerHint: 'nvidia-completion-field',
+        modelHint: 'test-model',
+      },
+      request: {
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'hello' }] },
+        ],
+        output: { mode: 'text' },
+        maxOutputTokens: 128,
+        stream: false,
+      },
+    });
+
+    expect(result.status).toBe('succeeded');
+    expect(provider.sent).toHaveLength(1);
+    const body = JSON.parse(provider.sent[0]?.body ?? '{}') as Record<
+      string,
+      unknown
+    >;
+    expect(body.max_completion_tokens).toBe(128);
+    expect(body).not.toHaveProperty('max_tokens');
   });
 
   it('honors explicit non-streaming intent with a JSON provider response', async () => {

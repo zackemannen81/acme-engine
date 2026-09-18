@@ -7021,3 +7021,13 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Registry proof: a clean registry-only consumer installed `acme-engine@0.1.3` and reproduced response-start followed by timeout as `failed TIMEOUT` (`ACME_0186_REGISTRY_CONSUMER_OK`).
 - Integration order: this branch is based on the unmerged ACME-0185 branch and must merge after ACME-0185.
 - Signature: ChatGPT
+
+## 2026-09-18 — ACME-0187 profile-specific Chat Completions output-token wire field
+
+- Operator: ChatGPT. A008 embedded OpenAI chat reached the provider but OpenAI rejected the generic Chat Completions `max_tokens` field and required `max_completion_tokens`.
+- Added an explicit profile-level `maxOutputTokensParameter` contract to the Chat Completions adapter and model-runtime config. The default remains `max_tokens`; callers may explicitly select `max_completion_tokens`. ACME does not infer this from provider or model names, and the provider-neutral request remains `maxOutputTokens`.
+- Verification: focused adapter/runtime 30/30; full docs/format/lint/boundaries/typecheck/build/diff gates; unit 161/161 files and 1082/1082 tests; conformance 13/13 files and 86/86 tests.
+- Release: published `@acme-engine/adapter-model-chat-completions@0.1.4`, `@acme-engine/model-runtime@0.1.4` and `acme-engine@0.1.4` from pnpm-packed tarballs with concrete dependency versions and no `workspace:*` leakage.
+- Consumer proof: a clean fresh-cache registry consumer installed the 0.1.4 dependency chain and returned `ACME_0187_REGISTRY_CONSUMER_OK 321`, proving `max_completion_tokens` was emitted and `max_tokens` omitted.
+- A008 integration proof: a detached worktree from canonical A008 `origin/main` consumed registry 0.1.4, passed build plus the embedded/parity/config suite 20/20, and a dedicated OpenAI route regression passed 7/7 while observing `max_completion_tokens: 321` and no `max_tokens`.
+- Signature: ChatGPT (operator)

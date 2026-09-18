@@ -25,6 +25,7 @@ import type {
   ProviderTransportResult,
 } from './transport.js';
 export type ThinkingTemplateMode = 'enable_thinking' | 'thinking';
+export type MaxOutputTokensParameter = 'max_tokens' | 'max_completion_tokens';
 
 export interface ChatCompletionsControls {
   readonly temperature?: boolean;
@@ -44,6 +45,7 @@ export interface ChatCompletionsModelProfile {
   readonly endpoint: string;
   readonly capabilities: ModelCapabilities;
   readonly controls?: ChatCompletionsControls;
+  readonly maxOutputTokensParameter?: MaxOutputTokensParameter;
   readonly headers?: () => Readonly<Record<string, string>>;
 }
 
@@ -412,7 +414,8 @@ export function buildChatCompletionsBody(
   if (request.temperature !== undefined) body.temperature = request.temperature;
   if (request.topP !== undefined) body.top_p = request.topP;
   if (request.maxOutputTokens !== undefined) {
-    body.max_tokens = request.maxOutputTokens;
+    body[profile.maxOutputTokensParameter ?? 'max_tokens'] =
+      request.maxOutputTokens;
   }
   if (request.stop !== undefined) body.stop = [...request.stop];
   if (request.reasoningBudget !== undefined) {

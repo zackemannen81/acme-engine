@@ -83,6 +83,19 @@ describe('Chat Completions request mapping', () => {
     });
   });
 
+  it('can map output budget to max_completion_tokens for profiles that require it', () => {
+    const body = buildChatCompletionsBody(
+      fixtureRequest,
+      {
+        ...fixtureProfile,
+        maxOutputTokensParameter: 'max_completion_tokens',
+      },
+      false,
+    );
+    expect(body.max_completion_tokens).toBe(1024);
+    expect(body).not.toHaveProperty('max_tokens');
+  });
+
   it('maps ordered user text and image parts to Chat Completions multimodal content', () => {
     const body = buildChatCompletionsBody(
       {
