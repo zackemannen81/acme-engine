@@ -416,6 +416,44 @@ async function drainStream(
 }
 
 describe('Chat Completions SSE', () => {
+  it('preserves timeout classification after a successful response start', async () => {
+    const transport: ProviderTransport = {
+      async send() {
+        return ok(completedResponseBody);
+      },
+      async *stream() {
+        yield { kind: 'response-start' as const, status: 200, headers: {} };
+        yield {
+          kind: 'no-response' as const,
+          reason: 'timeout' as const,
+          delivery: 'unknown' as const,
+        };
+      },
+    };
+    await expect(
+      drainStream(gateway(transport), fixtureRequest),
+    ).rejects.toMatchObject({ data: { code: 'TIMEOUT' } });
+  });
+
+  it('keeps non-timeout interruption after a successful response start invalid', async () => {
+    const transport: ProviderTransport = {
+      async send() {
+        return ok(completedResponseBody);
+      },
+      async *stream() {
+        yield { kind: 'response-start' as const, status: 200, headers: {} };
+        yield {
+          kind: 'no-response' as const,
+          reason: 'network' as const,
+          delivery: 'unknown' as const,
+        };
+      },
+    };
+    await expect(
+      drainStream(gateway(transport), fixtureRequest),
+    ).rejects.toMatchObject({ data: { code: 'MODEL_INVALID_RESPONSE' } });
+  });
+
   it('emits reasoning and content deltas then a completed response', async () => {
     const sse = sseBody([
       `data: ${JSON.stringify({ id: 'chatcmpl_s', model: fixtureModel, choices: [{ index: 0, delta: { reasoning_content: 'plan' } }] })}`,

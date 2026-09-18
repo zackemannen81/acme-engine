@@ -844,6 +844,7 @@ export class ChatCompletionsGateway implements ModelGateway {
         continue;
       }
       if (event.kind === 'no-response') {
+        if (event.reason === 'timeout') classifyNoResponse(event);
         if (
           responseStarted &&
           responseStatus !== undefined &&
