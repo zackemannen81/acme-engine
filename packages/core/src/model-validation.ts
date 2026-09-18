@@ -33,6 +33,7 @@ const requestKeys = [
   'reasoningEffort',
   'seed',
   'stop',
+  'stream',
   'temperature',
   'tools',
   'topP',
@@ -414,6 +415,11 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     seed = nonNegativeInteger(value.seed, 'Model request seed');
   }
 
+  let stream: boolean | undefined;
+  if (Object.hasOwn(value, 'stream')) {
+    stream = boolean(value.stream, 'Model request stream');
+  }
+
   let stop: readonly string[] | undefined;
   if (Object.hasOwn(value, 'stop')) {
     if (!Array.isArray(value.stop) || value.stop.length === 0) {
@@ -453,6 +459,7 @@ function validateRequestValue(value: JsonObject): ModelRequest {
     ...(enableThinking === undefined ? {} : { enableThinking }),
     ...(reasoningEffort === undefined ? {} : { reasoningEffort }),
     ...(seed === undefined ? {} : { seed }),
+    ...(stream === undefined ? {} : { stream }),
   });
 }
 

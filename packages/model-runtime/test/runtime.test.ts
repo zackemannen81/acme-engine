@@ -132,4 +132,64 @@ describe('embedded ACME model runtime', () => {
       stream: true,
     });
   });
+
+  it('honors explicit non-streaming intent with a JSON provider response', async () => {
+    const provider = transport();
+    const runtime = createAcmeModelRuntime({
+      now: () => now,
+      ids: { next: (kind) => `${kind}-non-stream-test` },
+      chatCompletionsTransport: provider,
+      config: {
+        nvidia: {
+          apiKey: 'test-api-key',
+          profiles: [
+            {
+              selection: {
+                profile: 'default',
+                providerHint: 'nvidia',
+                modelHint: 'test-model',
+              },
+              model: 'nvidia/test-model',
+              controls: {
+                temperature: true,
+                maxOutputTokens: true,
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await runtime.execute({
+      requestKey: 'embedded-non-stream-request',
+      model: {
+        profile: 'default',
+        providerHint: 'nvidia',
+        modelHint: 'test-model',
+      },
+      request: {
+        messages: [
+          {
+            role: 'user',
+            content: [{ type: 'text', text: 'hello without SSE' }],
+          },
+        ],
+        output: { mode: 'text' },
+        temperature: 0,
+        maxOutputTokens: 128,
+        stream: false,
+      },
+    });
+
+    expect(result.status).toBe('succeeded');
+    if (result.status !== 'succeeded') {
+      throw new Error(`expected success, received ${result.status}`);
+    }
+    expect(result.response.text).toBe('hello');
+    expect(provider.sent).toHaveLength(1);
+    expect(JSON.parse(provider.sent[0]?.body ?? '{}')).toMatchObject({
+      model: 'nvidia/test-model',
+      stream: false,
+    });
+  });
 });
