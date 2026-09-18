@@ -57,3 +57,4 @@ above the floor as well as the active task.
 | ACME-0185 | honor non-streaming model execution intent | ChatGPT (operator) | 2026-09-18 | make ModelExecutionEngine use generate() when request stream is explicitly false so embedded consumers preserve non-streaming provider semantics |
 | ACME-0186 | preserve timeout classification after streamed response start | ChatGPT (operator) | 2026-09-18 | keep transport timeout as TIMEOUT after HTTP 2xx response-start while preserving invalid-response for non-timeout stream truncation |
 | ACME-0187 | profile-specific Chat Completions output-token wire field | ChatGPT (operator) | 2026-09-18 | preserve provider/model-specific max output token parameter naming for embedded A008 OpenAI Chat Completions |
+| ACME-0188 | native OpenAI Responses image parity | ChatGPT (operator) | 2026-09-18 | preserve ACME image content parts on the native OpenAI Responses route so embedded A008 can restore Responses without losing vision |
