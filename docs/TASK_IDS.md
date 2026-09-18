@@ -54,3 +54,4 @@ above the floor as well as the active task.
 | ACME-0182 | native image parts in Chat Completions model runtime | ChatGPT (operator) | 2026-09-17 | map existing ACME image content parts to provider image_url blocks for A008 native vision parity |
 | ACME-0183 | acme-engine public facade package | ChatGPT (operator) | 2026-09-18 | replace legacy CLI-only acme-engine npm package with importable facade over @acme-engine/model-runtime while keeping workspace root private |
 | ACME-0184 | repair npm workspace dependency publication | ChatGPT (operator) | 2026-09-18 | republish public ACME closure as 0.1.1 from pnpm-packed tarballs so registry manifests contain concrete versions instead of workspace:* |
+| ACME-0185 | honor non-streaming model execution intent | ChatGPT (operator) | 2026-09-18 | make ModelExecutionEngine use generate() when request stream is explicitly false so embedded consumers preserve non-streaming provider semantics |
