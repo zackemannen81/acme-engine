@@ -1,52 +1,108 @@
-# ACME-0186 — preserve timeout classification after streamed response start
+# Current Task
 
-Task ID: ACME-0186
-Parent Task: ACME-0185 / A008-0127 consumer migration
-Status: In Progress
-Owner: ChatGPT (operator)
-Created: 2026-09-18
-Last updated: 2026-09-18
-Charter frozen at: 2026-09-18; claim revision `c528c39`
+Task ID:
+Parent Task: None
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
+
+## Read First
+
+- `AGENTS.md`
+- `docs/TASK_WORKFLOW.md`
+- `docs/PROJECT_BRIEF.md`
+- `docs/CONTRIBUTING.md`
+- `docs/CURRENT_STATUS.md`
+- `docs/SYSTEMDOC.md`
+- `docs/JOURNAL.md`
+- `docs/FILESTRUCTURE.md`
+- Relevant ADRs under `docs/adr/`
 
 ## Task Summary
+A task is never considered done until:
+JOURNAL.md, SYSTEMDOC.md, CURRENT_STATUS.md is a jour.
 
-A008-0127 proves that the Chat Completions streaming adapter overwrites an explicit transport timeout with `MODEL_INVALID_RESPONSE` whenever HTTP 2xx response-start already occurred. This loses the caller's provider-timeout semantics even though the transport knows the terminal reason is timeout.
+Describe the task, why it is being done now and the intended outcome.
 
-## Goal
+## Task Charter
 
-Preserve a known transport timeout as ACME `TIMEOUT` after a successful HTTP response has started, without weakening truncated-stream detection for network/other incomplete streams.
+The charter is editable while status is `Draft` and immutable once status is
+`Ready`.
 
-## Primary Deliverable
+### Goal
 
-In Chat Completions `stream()`, a `no-response` event with `reason: "timeout"` is classified by the existing `classifyNoResponse()` path before the post-response-start invalid-response rule. Non-timeout interruption after a 2xx response-start retains the current `MODEL_INVALID_RESPONSE` behavior.
+Define one primary outcome.
 
-## In Scope
+### Primary Deliverable
 
-- Add focused streaming timeout regression.
-- Preserve existing network/truncated-stream invalid-response regression.
-- Apply the minimal classification-order fix in the Chat Completions gateway.
-- Run focused adapter/runtime and full relevant verification.
-- Publish only the changed public dependency path as patch release 0.1.3:
-  - `@acme-engine/adapter-model-chat-completions@0.1.3`
-  - `@acme-engine/model-runtime@0.1.3`
-  - `acme-engine@0.1.3`
-- Pack with pnpm, inspect concrete internal versions, prove tarball and registry consumers.
-- Update status/system/journal docs.
+Name the concrete artifact or behavior that completes the task.
 
-## Out of Scope
+### In Scope
 
-- A008 implementation changes.
-- Changing non-timeout truncated-stream classification.
-- Retry/fallback policy.
-- Core ModelExecutionEngine changes.
-- Provider routing/model selection changes.
-- Re-versioning unchanged ACME packages solely for cosmetic version alignment.
+- List work required for the primary deliverable.
 
-## Definition of Done
+### Out of Scope
 
-- Streaming timeout after HTTP 2xx response-start surfaces ACME code `TIMEOUT`.
-- Streaming network/other interruption after HTTP 2xx response-start remains `MODEL_INVALID_RESPONSE`.
-- Existing streaming success semantics remain unchanged.
-- Focused adapter/model-runtime, full unit/typecheck/build/conformance, docs/diff gates pass.
-- Verified 0.1.3 tarballs publish successfully for the three changed dependency-path packages.
-- Clean registry consumer installs `acme-engine@0.1.3` and preserves timeout classification.
+- List adjacent work that must not be absorbed.
+
+### Definition of Done
+
+- Define objective, verifiable completion conditions.
+
+### Minimum Verification Gates
+
+- [ ] Define checks that may be strengthened but not removed after `Ready`.
+
+## References
+
+- Add relevant documents, code, decisions and external contracts.
+
+## Checklist
+
+- [ ] Break work into concrete, ordered steps.
+- [ ] Keep this checklist aligned with actual progress.
+- [ ] Add verification and documentation steps.
+
+## Decisions and Notes
+- A checkpoint after each step or substep is required. Checklist is therefore updated along the work and `CURRENT_STATUS.md` is always updated when changes affect the behavior.
+- Record decisions and assumptions within the frozen charter.
+- Classify discoveries using `docs/TASK_WORKFLOW.md`.
+
+## Charter Amendment Log
+
+Only non-semantic corrections are allowed after `Ready`.
+
+-none
+
+## Verification
+
+- [ ] Define task-appropriate technical checks.
+- [ ] Define manual or scenario validation when relevant.
+- [ ] Document skipped checks and reasons.
+
+## Documentation Updates
+
+- [ ] `docs/CURRENT_STATUS.md`
+- [ ] `docs/SYSTEMDOC.md`
+- [ ] `docs/JOURNAL.md`
+- [ ] `docs/FILESTRUCTURE.md` when structure changes
+- [ ] ADRs when long-lived decisions change
+
+## Handoff and Follow-ups
+
+- Current state:
+- Next recommended step:
+- Blockers:
+- Child tasks:
+- Resume condition:
+- Open questions:
+
+## Finalize When Complete
+
+- Archive this file under `docs/finished/`.
+- Restore this template or populate the next approved task.
+- Add a signed `docs/JOURNAL.md` entry.
+- If Goal or Definition of Done changed, supersede this task instead of
+  rewriting it.

@@ -7011,3 +7011,13 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Verification: focused core/model-runtime 14/14, full build/typecheck, 1078/1078 unit tests and 86/86 conformance pass.
 - Released the unchanged public package closure as 0.1.2 from pnpm-created tarballs only. `PACK_MANIFESTS_OK` proved concrete internal 0.1.2 dependencies and no packed workspace protocol references.
 - Tarball-only consumer returned `ACME_0185_TARBALL_CONSUMER_OK tarball-ok send=1 stream=0`; registry-only consumer returned `ACME_0185_REGISTRY_CONSUMER_OK registry-ok send=1 stream=0`. `acme-engine@0.1.2` is the current public release. Signature: ChatGPT
+
+## 2026-09-18 — ACME-0186 streamed timeout classification
+
+- Operator: ChatGPT. A008-0127 exposed that Chat Completions could replace a known transport timeout with `MODEL_INVALID_RESPONSE` after HTTP 2xx response-start.
+- Change: the streaming gateway now classifies explicit `no-response: timeout` through the existing timeout path before applying the generic post-start truncation rule. Non-timeout interruption remains `MODEL_INVALID_RESPONSE`.
+- Release: published `@acme-engine/adapter-model-chat-completions@0.1.3`, `@acme-engine/model-runtime@0.1.3` and `acme-engine@0.1.3` from the verified dependency path.
+- Verification: focused adapter/runtime 28/28; full format/lint/boundaries/typecheck/build; unit 1080/1080; conformance 86/86; docs and diff checks pass.
+- Registry proof: a clean registry-only consumer installed `acme-engine@0.1.3` and reproduced response-start followed by timeout as `failed TIMEOUT` (`ACME_0186_REGISTRY_CONSUMER_OK`).
+- Integration order: this branch is based on the unmerged ACME-0185 branch and must merge after ACME-0185.
+- Signature: ChatGPT
