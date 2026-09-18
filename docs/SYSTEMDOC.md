@@ -117,7 +117,10 @@ without changing v1. Neither protocol is an extension of `acme-runtime/1`.
   1 MiB.
 - The OpenAI Responses adapter honors text output, function tools, tool-result
   continuation and SSE while retaining ADR-0014 delivery/ambiguity
-  classification. `generate` remains the buffered contract used by
+  classification. ACME-0188 also maps ordered user `text` + `image` content
+  to Responses `input_text` + `input_image`, carrying the existing provider-ready
+  image `dataRef` as `image_url`; empty refs fail before transport and assistant
+  image history remains unsupported. `generate` remains the buffered contract used by
   `ExecutionEngine`. On `acme-model-runtime/2` it maps `topP` and
   `reasoningEffort` and refuses `stop`, `seed`, `enableThinking` and
   `reasoningBudget` rather than dropping them.
