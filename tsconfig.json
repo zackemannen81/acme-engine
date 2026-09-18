@@ -83,6 +83,9 @@
       "path": "./packages/model-runtime"
     },
     {
+      "path": "./packages/acme-engine"
+    },
+    {
       "path": "./apps/cli"
     },
     {

@@ -4,9 +4,11 @@
 
 ACME is open-source software licensed under the
 [Apache License 2.0](LICENSE). The source license and publication state are
-separate: this workspace deliberately remains `private: true` in npm metadata
-to prevent accidental registry publication, and no package, hosted service or
-versioned release is implied by making the repository source open source.
+separate: the workspace root remains `private: true`, while versioned public
+packages are released deliberately. The `acme-engine@0.1.0` release candidate is
+the next in-process consumer surface, implemented as a thin facade over
+`@acme-engine/model-runtime`. Hosted services
+or deployment guarantees are not implied by package publication.
 
 ACME is a greenfield project for building and evaluating a domain-neutral,
 replayable AI execution engine. Narrative is the first reference module, not
@@ -28,7 +30,7 @@ opt-in gate. Encrypted-payload retention seals model responses at rest.
 `acme-scenario/2` files, and can execute with the mock gateway (`--script`) or
 live OpenAI (`--gateway openai`). Post-execution quality evaluations persist in
 an in-memory or durable SQLite store and are read through
-`acme quality list|inspect|judge`. No published package exists.
+`acme quality list|inspect|judge`.
 
 Milestone 2 is complete. An execution interrupted after a successful model
 call resumes from the recorded response without paying for a second one, or
@@ -38,6 +40,22 @@ one revision produce exactly one commit, are proven by injected fault and
 contended write rather than assumed. Committed domain events leave the outbox
 through an explicit bounded drain with at-least-once delivery: nothing drains
 on its own, because scheduling belongs to whatever process operates ACME.
+
+## npm library
+
+The verified 0.1.0 release candidate uses this embedded model-execution entry point after publication:
+
+```bash
+npm install acme-engine
+```
+
+```ts
+import { createAcmeModelRuntime } from "acme-engine";
+```
+
+`acme-engine` is a convenience facade; execution remains implemented by the
+versioned `@acme-engine/model-runtime` dependency closure. ACME does not absorb
+consumer cognition, memory, prompts, tool policy or model-selection strategy.
 
 ## POC #1 (frozen)
 

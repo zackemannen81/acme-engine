@@ -26,6 +26,10 @@ current tree, immediate owner/provider escalation and rotation; removing a
 file alone neither revokes the credential nor erases Git history. The current
 proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret-audit.md).
 
+## Public `acme-engine` facade
+
+[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine@0.1.0` as the convenience import surface for embedded ACME model execution. `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`; model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `acme-engine@0.0.1` CLI-only bundle is not a compatibility contract for the 0.1.0 library role.
+
 ## Public npm model-runtime library boundary
 
 [ADR-0055](adr/0055-public-npm-model-runtime-library.md) defines the supported

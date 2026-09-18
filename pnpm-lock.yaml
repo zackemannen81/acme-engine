@@ -275,6 +275,12 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/acme-engine:
+    dependencies:
+      '@acme-engine/model-runtime':
+        specifier: workspace:*
+        version: link:../model-runtime
+
   packages/adapter-evidence-artifact-file:
     dependencies:
       '@acme/evidence-artifacts':

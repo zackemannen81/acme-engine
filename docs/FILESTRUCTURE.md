@@ -1,11 +1,10 @@
 # File Structure
 
-Last updated: 2026-09-16
+Last updated: 2026-09-18
 
 The repository source is open source under the root Apache-2.0 `LICENSE`.
 The workspace root `package.json` remains npm-private as a publication guard.
-ADR-0055 marks only the model-runtime dependency closure under
-`@acme-engine/*` as publish-ready; no registry publication is claimed here.
+ADR-0055 defines the scoped model-runtime dependency closure; ADR-0056 adds `packages/acme-engine` as the unscoped convenience facade while the workspace root remains npm-private.
 
 Generated `node_modules/` and `dist/` directories are intentionally omitted.
 
@@ -204,6 +203,11 @@ acme-engine/
 │   │   ├── tsconfig.json
 │   │   ├── src/index.ts
 │   │   └── test/runtime.test.ts
+│   ├── acme-engine/
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── tsconfig.json
+│   │   └── src/index.ts
 │   ├── live-safety/
 │   │   ├── README.md
 │   │   ├── package.json
@@ -678,6 +682,7 @@ acme-engine/
 │   │   ├── 0053-model-only-execution-runtime.md
 │   │   ├── 0054-model-runtime-v2-multi-provider-routing.md
 │   │   ├── 0055-public-npm-model-runtime-library.md
+│   │   ├── 0056-public-acme-engine-facade.md
 │   │   ├── README.md
 │   │   └── template.md
 │   ├── concepts_sandbox/
