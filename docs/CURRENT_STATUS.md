@@ -162,8 +162,10 @@ frozen as a diagnostic reference. The replacement model, V1 boundary, proof
 journeys and binding regression requirements are normative in
 [the V2 domain specification](design/evidence-workbench-v2-domain-specification.md).
 
-The replacement is being built layer by layer below. ACME-0158 is complete.
-No task is active.
+The replacement was built layer by layer through ACME-0162, which closed the
+last two ADR-0049 product surfaces. Later runtime/publication work continues
+above this historical V2 construction narrative. Active work is owned only by
+`docs/CURRENT_TASK.md`; this status document does not duplicate task activation.
 Nothing below this section is retracted by the decision: the engine,
 persistence, artifact security, authorization, case isolation and live model
 boundary carry forward unchanged, and no data authority changes. Stage A remains
@@ -532,7 +534,7 @@ history, and deterministic bounded search covers case-scoped evidence and
 review metadata. File and PostgreSQL adapters persist the new records; the
 browser exposes My review work and Search.
 
-Last updated: 2026-09-16
+Last updated: 2026-09-19
 
 ## Repository
 
@@ -860,16 +862,17 @@ There is currently:
   module, cross-module, evaluation-adapter, SQLite-driver and Domain-Test-UI
   boundary fixtures (both "the app imports no package internal" and "nothing
   imports the app")
-- 644 passing unit-suite tests across packages (93 files) exercised by
-  `pnpm test:unit`, with separate conformance (69 tests, 11 files), integration
-  (57 tests, 11 files) and scenario (26 tests, 7 files) gates. Counts observed
-  2026-08-11
+- Latest ACME-0188 verification passed 1086/1086 unit and 86/86 conformance
+  tests together with build, typecheck, lint, dependency boundaries, format and
+  documentation checks. Earlier per-gate counts below remain historical task
+  evidence rather than a current suite census.
 - compile-time task-name/input/output, state-projection and conformance-subject
   inference checks
 - non-empty passing repository, gateway and module conformance, integration
   and scenario gates
-- no published package
-- no deployment
+- deliberate public npm publication exists; the current convenience facade is
+  `acme-engine@0.1.5` and the workspace root remains npm-private
+- no hosted deployment is claimed
 
 ## Approved Direction
 

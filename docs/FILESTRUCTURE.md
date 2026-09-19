@@ -977,15 +977,17 @@ content remains intentionally omitted here.
   preflight refusal for unlowerable constructs. A `fetch` transport is
   published from the separate `./transport-fetch` entry point, so the default
   surface stays network-free. v2 generation controls that this surface can
-  honor are mapped; the rest fail closed before dispatch.
+  honor are mapped; the rest fail closed before dispatch. ACME-0188 adds
+  ordered user `text`/`image` mapping to Responses `input_text`/`input_image`.
 - `@acme-engine/adapter-model-chat-completions`: OpenAI-compatible Chat Completions
   mapping behind the same transport port. Profiles inject endpoint, model,
-  capabilities and thinking-template mapping. Text, tools, continuation, SSE,
-  usage and ADR-0014 classification are in scope; ACME structured JSON output
-  is refused on this surface.
-- `@acme-engine/model-runtime`: publish-ready in-process composition over the
-  existing model execution engine, routed gateway and provider adapters. It
-  exposes execution directly to Node consumers and starts no HTTP listener.
+  capabilities and thinking-template mapping. Text, ordered user image parts,
+  tools, continuation, SSE, usage and ADR-0014 classification are in scope;
+  ACME structured JSON output is refused on this surface.
+- `@acme-engine/model-runtime`: published in-process composition over the
+  existing model execution engine, routed gateway and provider adapters. The
+  current `acme-engine@0.1.5` closure resolves model-runtime 0.1.5. It exposes
+  execution directly to Node consumers and starts no HTTP listener.
 - `@acme/live-safety`: pure provider-neutral credential-field refusal,
   explicit opt-in, environment-credential and nested budget primitives shared
   by live application surfaces. It performs no I/O and owns no authorization.
@@ -1005,7 +1007,8 @@ content remains intentionally omitted here.
   behavior, attention/export helpers, compact state/delta, pure reducer/
   invariants and memory policy.
 - `@acme/module-evidence-v2`: the replacement Evidence application domain
-  module under ADR-0047. It currently owns one layer, source structure:
+  module under ADR-0047. It owns the layered V2 domain model, beginning with
+  source structure:
   canonical text to source parts and citable units, pure and total, with unique
   quote binding as an emission precondition, deterministic index/front-matter
   classification, titles as labels carrying their own provenance, and

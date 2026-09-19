@@ -5,7 +5,22 @@ The replacement Evidence application domain module, accepted in
 specified in
 [the V2 domain specification](../../docs/design/evidence-workbench-v2-domain-specification.md).
 
-It currently contains one layer: **source structure**.
+The implemented V2 domain is layered and keeps derivation/review semantics explicit:
+
+```text
+Artifact → SourcePart → CitableUnit
+         → Chain → ChainInstance
+         → ObservationOccurrence
+         → Relation / comparison
+         → Timeline + ConsensusProjection
+```
+
+The package owns source structure, deterministic chain/instance organization,
+bounded observation planning/interpretation, relation/comparison semantics and
+the read-only timeline/consensus projections. Persistence and HTTP/browser
+composition remain outside this module.
+
+## Source structure
 
 ```text
 Artifact → SourcePart → CitableUnit

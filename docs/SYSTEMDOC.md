@@ -12,8 +12,10 @@ the normative license text and `package.json` declares `Apache-2.0` while
 retaining `private: true`. That manifest flag controls npm publication safety;
 it is not an access-control mechanism and does not alter source-license rights.
 
-This source-distribution boundary does not publish a package, create a release
-or deploy a service. Apache-2.0 permits commercial use and proprietary
+ADR-0052's source-distribution decision did not itself publish a package,
+create a release or deploy a service. Later explicitly authorized tasks did
+publish versioned npm packages; the workspace root remains private and no
+hosted deployment is implied. Apache-2.0 permits commercial use and proprietary
 embedding subject to its terms, but grants no trademark rights and promises no
 support, warranty, certification, hosting or separate commercial edition.
 Third-party components continue under their own upstream licenses.
@@ -28,7 +30,7 @@ proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret
 
 ## Public `acme-engine` facade
 
-[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine` as the convenience import surface for embedded ACME model execution. The current installable release is `0.1.4`; `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`, while model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. ACME-0186 preserves an explicit Chat Completions transport timeout as `TIMEOUT` even after a successful HTTP response start; other post-start stream interruption remains `MODEL_INVALID_RESPONSE`. ACME-0187 makes the Chat Completions output-token wire field profile-configurable: profiles default to `max_tokens`, while a caller may explicitly select `max_completion_tokens`. The provider-neutral request remains `maxOutputTokens`; ACME does not infer the wire field from provider or model names. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `0.0.1` CLI-only package is not a compatibility contract, and the broken `0.1.0` registry artifacts must not be used because they preserved unsupported `workspace:*` dependency specifications. ACME-0184 establishes pnpm-packed tarballs as the registry publication artifact.
+[ADR-0056](adr/0056-public-acme-engine-facade.md) defines `acme-engine` as the convenience import surface for embedded ACME model execution. The current installable release is `0.1.5`; `packages/acme-engine/src/index.ts` only re-exports `@acme-engine/model-runtime`, while model execution, routing, streaming, cancellation, evidence and provider-adapter behavior remain owned by the existing scoped packages. ACME-0186 preserves an explicit Chat Completions transport timeout as `TIMEOUT` even after a successful HTTP response start; other post-start stream interruption remains `MODEL_INVALID_RESPONSE`. ACME-0187 makes the Chat Completions output-token wire field profile-configurable: profiles default to `max_tokens`, while a caller may explicitly select `max_completion_tokens`. ACME-0188 advances the native OpenAI Responses path to 0.1.5 and maps ordered user text/image content to `input_text`/`input_image` without changing assistant history or application ownership. The provider-neutral request remains `maxOutputTokens`; ACME does not infer the wire field from provider or model names. The monorepo root uses the internal private name `@acme-engine/workspace` and is never the published artifact. The experimental `0.0.1` CLI-only package is not a compatibility contract, and the broken `0.1.0` registry artifacts must not be used because they preserved unsupported `workspace:*` dependency specifications. ACME-0184 establishes pnpm-packed tarballs as the registry publication artifact.
 
 
 ## Model execution stream intent
@@ -37,8 +39,10 @@ proof is [ACME-0175's acceptance record](acceptance/ACME-0175-open-source-secret
 
 ## Public npm model-runtime library boundary
 
-[ADR-0055](adr/0055-public-npm-model-runtime-library.md) defines the supported
-in-process Node composition as `@acme-engine/model-runtime@0.1.0`. The library
+[ADR-0055](adr/0055-public-npm-model-runtime-library.md) introduced the supported
+in-process Node composition as `@acme-engine/model-runtime@0.1.0`; the current
+published runtime in the `acme-engine@0.1.5` closure is
+`@acme-engine/model-runtime@0.1.5`. The library
 constructs the existing `ModelExecutionEngine` over explicit OpenAI Responses,
 NVIDIA/OpenAI-compatible Chat Completions or compatible provider routes. It
 exposes `createAcmeModelRuntime()` and never opens a socket.
@@ -50,12 +54,13 @@ idempotency, provider isolation and model-call evidence semantics. The HTTP/SSE
 `acme-model-runtime/1` and `/2` protocols remain transport options layered on
 the same embedded composition by the private CLI service.
 
-The publishable closure is `@acme-engine/core`, `@acme-engine/evaluation`,
+The public closure is `@acme-engine/core`, `@acme-engine/evaluation`,
 `@acme-engine/adapter-memory`, `@acme-engine/adapter-model-openai`,
 `@acme-engine/adapter-model-chat-completions` and
 `@acme-engine/model-runtime`, initially versioned `0.1.0`. Root remains
-npm-private. ACME-0181 proves local packing and external tarball consumption;
-it does not publish a registry artifact, tag, release or deployment.
+npm-private. ACME-0181 proved local packing and external tarball consumption
+without publishing; ACME-0183/0184 then established the public facade and
+registry-safe packed publication, followed by bounded releases through 0.1.5.
 
 ## Canonical external runtime boundary
 
@@ -205,8 +210,8 @@ canonical evidence rather than model-authored rationale text.
 JSON, Markdown, DOCX and PDF bytes under a per-case export policy, and every
 release or refusal appends an `evidence-export-audit-record/1`.
 
-Last updated: 2026-09-16
-Status: Approved architecture with a publish-ready in-process model runtime library, a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, OpenAI Responses and OpenAI-compatible Chat Completions mappings, acme-model-runtime/1 and /2, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
+Last updated: 2026-09-19
+Status: Approved architecture with a published in-process model runtime library, a bounded single-task ExecutionEngine, pure engines, NarrativeModule and ResearchModule, replay verification, shared conformance, in-memory and durable SQLite Units of Work, model mock, OpenAI Responses and OpenAI-compatible Chat Completions mappings, acme-model-runtime/1 and /2, ScenarioRunner v1/v2 including live multi-step, post-execution quality evaluation with a durable store, CLI quality surfaces and a live-model judge, a CLI composition root and a Domain Test UI through a complete S1–S10 loopback HTML workbench with async launch plus the pure S11 quality view
 
 This document describes long-lived system boundaries. Live provider calls are
 opt-in only (`pnpm test:live`) and are not part of default CI.
@@ -967,10 +972,11 @@ those decisions with candidates, excludes ignored/rejected resolutions and
 hands immutable applied evidence to the task-owned hook. StateEngine accepts
 the resulting typed delta and prepares a validated next-state candidate. The
 in-memory and durable SQLite repositories can atomically promote those
-prepared effects. Provider normalization remains a live-adapter
-responsibility; the deterministic mock accepts only complete validated
-normalized fixtures. The bounded ExecutionEngine orchestrates this path; live
-normalization remains future work.
+prepared effects. Provider normalization remains an adapter responsibility; the deterministic
+mock accepts only complete validated normalized fixtures, while the OpenAI
+Responses and OpenAI-compatible Chat Completions adapters perform their live
+wire mapping/normalization behind transport ports. The bounded ExecutionEngine
+orchestrates the provider-neutral path and does not absorb provider semantics.
 
 ## Persistence Direction
 
@@ -983,20 +989,19 @@ normalization remains future work.
 - Model responses are durably recorded before interpretation and canonical
   commit.
 - Domain events and outbox rows commit together.
-- SQLite remains the only implemented durable adapter. ADR-0029 selects
-  self-hosted Supabase as the POC #1 platform with the adapter on plain
-  PostgreSQL wire, and
-  [ADR-0033](adr/0033-postgresql-persistence-architecture.md) decides that
-  adapter's architecture: `pg` with an injected pool the adapter never owns;
-  separate `acme` and `evidence` schemas under separate roles with no
-  cross-schema foreign key or transaction; one `READ COMMITTED` transaction per
-  Unit of Work with compare-and-swap by conditional update and row count;
-  outbox leasing by `FOR UPDATE SKIP LOCKED` under the unchanged ADR-0018
-  semantics; canonical JSON, timestamps and hashes stored as `text` because
-  content-derived identity requires byte fidelity; the ADR-0003/0013 migration
-  format with per-schema ledgers and a transaction-scoped advisory lock; and
-  SQLSTATE-keyed error classification into the existing taxonomy. No adapter is
-  implemented yet, and no deployment decision is made.
+- SQLite and PostgreSQL are implemented durable adapters. ADR-0029 selected
+  self-hosted Supabase/PostgreSQL for POC #1, and
+  [ADR-0033](adr/0033-postgresql-persistence-architecture.md) defines the
+  implemented `@acme/adapter-postgres` architecture: `pg` with an injected pool
+  the adapter never owns; separate `acme` and `evidence` schemas under separate
+  roles with no cross-schema foreign key or transaction; one `READ COMMITTED`
+  transaction per Unit of Work with compare-and-swap by conditional update and
+  row count; outbox leasing by `FOR UPDATE SKIP LOCKED` under ADR-0018 semantics;
+  canonical JSON, timestamps and hashes stored as `text`; per-schema migration
+  ledgers with a transaction-scoped advisory lock; and SQLSTATE-keyed error
+  classification into the existing taxonomy. The POC has runnable PostgreSQL
+  compositions; this still does not constitute a general production-deployment
+  decision.
 
 ## Domain Proof
 
@@ -1230,10 +1235,12 @@ packages) as a diagnostic reference. The replacement model — `Case`, `Artifact
 `SourcePart`, `Chain`, `ChainInstance`, `ObservationOccurrence`, `Claim`,
 `Relation`, `Review`/`Standing`, `ConsensusProjection` — is normative in
 [`evidence-workbench-v2-domain-specification.md`](design/evidence-workbench-v2-domain-specification.md)
-and is not yet implemented. Everything described below the application layer —
-engine, persistence, artifact security, authorization, case isolation and the
-live model boundary — is carried forward unchanged, and no data authority
-changes. Only maintenance that preserves the frozen application's diagnostic
+and is now implemented in bounded layers across `@acme/module-evidence-v2`,
+V2 contracts, persistence and V2 API/web surfaces. `docs/CURRENT_STATUS.md`
+owns the exact delivered coverage and any residual gaps. Everything described
+below the application layer — engine, persistence, artifact security,
+authorization, case isolation and the live model boundary — carries forward
+without widening data authority. Only maintenance that preserves the frozen application's diagnostic
 value is permitted there; ACME-0149 is the first and so far only such change,
 replacing a fixed `Maximum model calls: 1` confirmation with the planner's own
 bounded call count from a read-only case-scoped `coverage-plan` route.
@@ -2131,13 +2138,13 @@ transports; ACME-0110 also proves primary review and late-evidence reassessment.
   fact.
 - ScenarioRunner multi-step live is available (`gateway: openai`); single-execute
   live remains via CLI and test-ui `launchLiveExecution` (S10).
-- Residual gaps (trust-stage evidence and related items) are inventoried with
-  work packages and activation order in
-  [`docs/design/gap-resolution-plan.md`](design/gap-resolution-plan.md)
-  (ACME-0056). WP-D through WP-Q (including quality CLI, S11 view and live
-  judge) are delivered as ACME-0057–0068, and WP-T's T1 async launch (G08) is
-  closed by ACME-0069. Open: G12 trust-stage evidence (WP-E), the WP-T
-  residuals T2/T3/T4, and the deferred WP-P, WP-K and WP-X items.
+- ACME-0056's gap-resolution plan is retained as historical programme evidence.
+  WP-D through WP-Q (including quality CLI, S11 view and live judge) were
+  delivered as ACME-0057–0068, and WP-T's T1 async launch (G08) closed in
+  ACME-0069. Its old `Open:` inventory is not current gap authority after the
+  later Evidence, runtime and publication programmes; current implemented state
+  and persistent gaps belong in `docs/CURRENT_STATUS.md`, while active work is
+  owned only by `docs/CURRENT_TASK.md`.
 
 ## Deliberately Deferred Decisions
 
@@ -2146,7 +2153,7 @@ transports; ACME-0110 also proves primary review and late-evidence reassessment.
 - workflow runtime beyond ScenarioRunner
 - vector retrieval
 - provider-specific reconciliation details
-- encryption key lifecycle (KMS, rotation) and privacy deletion
+- final production KMS/key-governance integration and broader privacy-deletion policy
 
 These require evidence and ADRs before implementation. See also the accept /
 defer dispositions in the gap-resolution plan.
@@ -2155,6 +2162,7 @@ ACME-0073's
 [`first-poc-application-discovery.md`](design/first-poc-application-discovery.md)
 remains a historical discovery memo. ADR-0028 supersedes its Research-first
 recommendation and accepts the Evidence Integrity Workbench plus PostgreSQL as
-the hosted POC target. SQLite remains the only delivered durable adapter. The
-PostgreSQL adapter, managed provider, hosting, authentication, data handling
-and implementation require separately activated work.
+the POC target. Subsequent work delivered the PostgreSQL adapter, authenticated
+case/product boundaries and the bounded POC data-handling compositions. General
+production hosting, managed-provider selection and production operations remain
+separate decisions rather than consequences of that POC implementation.

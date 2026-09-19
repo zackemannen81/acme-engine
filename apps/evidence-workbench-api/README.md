@@ -1,5 +1,12 @@
 # Local Evidence Integrity Workbench
 
+> **Status:** frozen diagnostic reference under ADR-0047. This README documents
+> the preserved pre-V2 Evidence application and its historical delivery path.
+> Present-tense capability statements below describe that frozen application,
+> not the current Evidence V2 product surface. Current implementation truth is
+> in `../../docs/CURRENT_STATUS.md`; the replacement application lives under
+> `apps/evidence-workbench-v2-*` and `packages/module-evidence-v2`.
+
 This is the offline Evidence reviewer surface through Slice 5. It starts a
 loopback-only product API, a bounded in-process worker and a dependency-free
 browser shell. On a new local workspace it imports the open synthetic
@@ -90,9 +97,10 @@ HTTPS public origin. See
 
 ## POC #1 live composition capability
 
-The default and local compositions remain scripted/mock-only. ACME-0105 adds a
-closed hosted capability for ADR-0039/0040; startup makes no provider call and
-there is not yet a product route that can invoke it. Enabling the capability
+In the ACME-0105 slice documented here, the default and local compositions were
+scripted/mock-only. ACME-0105 added a closed hosted capability for ADR-0039/0040;
+startup made no provider call and that slice did not yet expose a product route
+that could invoke it. Enabling the preserved capability
 requires every setting below:
 
 | Setting | Required value |
