@@ -1,7 +1,7 @@
 # ACME Project Brief
 
 Status: Approved direction
-Last updated: 2026-08-26
+Last updated: 2026-09-19
 
 ## Identity
 
@@ -9,10 +9,14 @@ Last updated: 2026-08-26
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
 - Distribution: Open-source repository source under Apache License 2.0. The
-  npm workspace remains private only as a publication guard; no package,
-  deployment, hosted service or versioned release is implied.
-- Phase: Milestones 1 and 2 delivered; experimental live path proven
-  (see `docs/CURRENT_STATUS.md`)
+  npm workspace root remains private only as an accidental-publication guard.
+  Versioned public packages are released deliberately; the current convenience
+  facade is `acme-engine@0.1.5`. Package publication does not imply a hosted
+  service, deployment or support commitment.
+- Phase: Milestones 1 and 2 are delivered; the frozen Evidence Integrity POC,
+  external/model-only runtime boundaries and published in-process model runtime
+  now coexist. Exact implemented capability and gaps live in
+  `docs/CURRENT_STATUS.md`.
 
 ## Problem
 

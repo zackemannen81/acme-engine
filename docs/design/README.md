@@ -73,21 +73,22 @@ Application surfaces:
   default shell to Source stream / Claim / Stance / Search.
 
 - [`evidence-workbench-v2-domain-specification.md`](evidence-workbench-v2-domain-specification.md)
-  — proposed domain model, supported flow, V1 boundary, acceptance journeys and
-  binding regression knowledge for the replacement Evidence application under
-  [`ADR-0047`](../adr/0047-evidence-application-model-reset.md). Normative: the
-  ADR is accepted and its §10 decisions are taken. It replaces the surface
-  decided by ADR-0046 and inherits the product definition's authority ladder and
-  immutable boundaries unchanged. Implementation is not activated by it.
+  — accepted normative domain model, supported flow, V1 boundary, acceptance
+  journeys and binding regression knowledge for the replacement Evidence
+  application under [`ADR-0047`](../adr/0047-evidence-application-model-reset.md).
+  The specification did not activate implementation by itself; later claimed
+  tasks implemented the replacement in bounded layers. It replaces the ADR-0046
+  application surface while preserving the product definition's authority ladder
+  and immutable boundaries. Exact delivered coverage belongs in CURRENT_STATUS.
 
 - [`evidence-workbench-v2-interface-plan.md`](evidence-workbench-v2-interface-plan.md)
-  — proposed sequencing for the Evidence Workbench 2.0 interface request:
+  — delivered sequencing for the Evidence Workbench 2.0 interface programme:
   substrate activation on the running self-hosted Supabase (ACME-0156), the
   workbench shell and case status (ACME-0157), PDF import (ACME-0158), review
   and standing (ACME-0159), claims (ACME-0160), relations and instance
-  comparison (ACME-0161) and the global timeline plus consensus (ACME-0162).
-  Not activated. Two steps require decisions that do not exist yet: the V2
-  surface set and the PDF ingestion boundary.
+  comparison (ACME-0161), and the global timeline plus consensus (ACME-0162).
+  The required V2 surface-set and PDF-ingestion decisions were accepted before
+  their implementation slices; ACME-0162 closed the final two ADR-0049 surfaces.
 
 - [`domain-test-ui-specification.md`](domain-test-ui-specification.md) —
   Domain Test UI / TestRegistry Workbench. Activated by ACME-0039 and

@@ -8,13 +8,14 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
 - Expansion: Adaptive Context Memory Engine
 - Repository: `acme-engine`
 - Distribution: Repository source is open source under Apache License 2.0.
-  Root npm `private: true` prevents accidental registry publication; it does
-  not make the source proprietary or change the license. Publication,
-  deployment and versioned releases require separate explicit authority.
+  Root npm `private: true` prevents accidental workspace publication; it does
+  not make the source proprietary or change the license. Versioned public
+  packages are deliberately released under explicit task authority; the current
+  convenience facade is `acme-engine@0.1.5`. Deployment remains separate.
 - Purpose: Build and evaluate a domain-neutral, replayable AI execution engine.
 - Current phase: Milestones 1 and 2 delivered; experimental live path proven.
-  The contract layer, pure StateEngine and MemoryEngine, in-memory and durable
-  SQLite repositories, deterministic model mock, shared conformance kits,
+  The contract layer, pure StateEngine and MemoryEngine, in-memory plus durable
+  SQLite/PostgreSQL repositories, deterministic model mock, shared conformance kits,
   NarrativeModule, ResearchModule, bounded single-task ExecutionEngine,
   ScenarioRunner, post-execution quality evaluation and CLI composition root
   exist. Both reference domains have
@@ -23,13 +24,17 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   gate, and has reached live success for both reference contracts.
   Encrypted-payload retention is implemented behind an injected
   `PayloadEncryptor`. The CLI selects the mock gateway via `--script` or a
-  live OpenAI gateway via `--gateway openai` (env credentials).
+  live OpenAI gateway via `--gateway openai` (env credentials). The public
+  embedded model-execution surface is now `acme-engine@0.1.5` over
+  `@acme-engine/model-runtime@0.1.5`; detailed package/runtime truth belongs in
+  `docs/CURRENT_STATUS.md`.
 - Milestone 2 is complete: an interrupted execution resumes from its recorded
   model call without a second provider call (ADR-0017); rollback and
   compare-and-swap are proven by injected fault and contended write rather
   than assumed; and committed events leave the outbox through an explicit
   bounded drain with at-least-once delivery (ADR-0018). Nothing drains on its
-  own, and neither reference module emits domain events yet.
+  own. Narrative has emitted `narrative.document-observed` domain events since
+  ACME-0062; scheduling remains an external/operator responsibility.
 - The Domain Test UI is activated (ADR-0019 to ADR-0024, ADR-0027).
   `apps/test-ui` holds phases 1–6 as versioned view contracts (S1–S10) plus the
   pure S11 quality view, and a loopback HTML workbench with S1–S10 rendered. It
@@ -47,8 +52,10 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   (ADR-0026), `acme quality list|inspect|judge` reads and drives them, and a
   live-model judge runs outside the synchronous harness under the usual
   opt-in and environment-only credentials.
-- ADR-0028 accepts the Evidence Integrity Workbench as the first real product
-  POC. Its normative definition is
+- Historical V1/Stage-A POC chronology follows for policy context; it describes
+  the delivered pre-ADR-0047 application and must not be read as current V2 gap
+  authority. ADR-0028 accepts the Evidence Integrity Workbench as the first real
+  product POC. Its normative definition is
   `docs/design/evidence-integrity-workbench-product-definition.md`: V1 uses a
   synthetic text corpus, treats the model as a candidate generator, preserves
   source-bound observations and changed accounts, requires human review and
@@ -114,9 +121,11 @@ ACME is docs-first. Every task begins in `docs/CURRENT_TASK.md`.
   specified in
   `docs/design/evidence-workbench-v2-domain-specification.md` together with the
   V1 boundary, the P1–P3 proof journeys, the defect-classification rules and
-  binding regression requirements R-01–R-10 / W-01–W-03. None of it is
-  implemented yet. The delivered workbench under `apps/evidence-workbench-*` is
-  frozen as a diagnostic reference: only maintenance preserving its diagnostic
+  binding regression requirements R-01–R-10 / W-01–W-03. The replacement has
+  since been implemented in bounded V2 layers; `docs/CURRENT_STATUS.md` owns the
+  exact delivered surface and remaining gaps. The earlier delivered workbench
+  under `apps/evidence-workbench-*` is frozen as a diagnostic reference: only
+  maintenance preserving its diagnostic
   value is permitted there, chartered separately and never bundled with new
   work. Engine, persistence, artifact security, authorization, case isolation
   and the live model boundary carry forward unchanged, and no data authority

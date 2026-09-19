@@ -5,8 +5,8 @@
 ACME is open-source software licensed under the
 [Apache License 2.0](LICENSE). The source license and publication state are
 separate: the workspace root remains `private: true`, while versioned public
-packages are released deliberately. The current installable in-process consumer surface is `acme-engine@0.1.2`,
-implemented as a thin facade over `@acme-engine/model-runtime`. Hosted services
+packages are released deliberately. The current installable in-process consumer surface is `acme-engine@0.1.5`,
+implemented as a thin facade over `@acme-engine/model-runtime@0.1.5`. Hosted services
 or deployment guarantees are not implied by package publication.
 
 ACME is a greenfield project for building and evaluating a domain-neutral,
@@ -53,7 +53,10 @@ import { createAcmeModelRuntime } from "acme-engine";
 ```
 
 `acme-engine` is a convenience facade; execution remains implemented by the
-versioned `@acme-engine/model-runtime` dependency closure. ACME does not absorb
+versioned `@acme-engine/model-runtime` dependency closure. The current 0.1.5
+chain includes native OpenAI Responses mapping for ordered user text/image
+parts; the OpenAI-compatible Chat Completions adapter also accepts ordered user
+image parts. ACME does not fetch or persist those images and does not absorb
 consumer cognition, memory, prompts, tool policy or model-selection strategy.
 
 ## POC #1 (frozen)
@@ -95,15 +98,21 @@ docs/hrd/, hrd/           Derived human-readable Swedish artifacts
 tests/                    Conformance, integration, scenario and opt-in live gates
 apps/cli/                 Composition root: execute, replay, inspect
 apps/test-ui/             Domain Test UI read model, catalog, plans and launch
+apps/evidence-workbench-v2-api/ V2 Evidence composition/API surface
+apps/evidence-workbench-v2-web/ V2 Evidence browser surface
 packages/core/            Domain-neutral contracts and deterministic primitives
 packages/evaluation/      Post-execution scores, findings and quality verdicts
 packages/adapter-memory/  Deterministic copy-on-commit repository
 packages/adapter-sqlite/  Durable WAL-mode revisioned repository
+packages/adapter-postgres/ Durable PostgreSQL execution/quality repository
 packages/adapter-model-mock/ Exact finite model-call scripts
 packages/adapter-model-openai/ OpenAI Responses mapping behind a transport port
 packages/adapter-model-chat-completions/ OpenAI-compatible Chat Completions mapping
+packages/model-runtime/     Published in-process model execution composition
+packages/acme-engine/       Public convenience facade over model-runtime
 packages/module-narrative/ Narrative observe-document reference module
 packages/module-research/ Research observe-evidence reference module
+packages/module-evidence-v2/ Replacement Evidence V2 domain module
 packages/testing/         Conformance kits and ScenarioRunner v1/v2 support
 tooling/                   Shared configuration and repository checks
 ```
@@ -121,11 +130,12 @@ for the durable boundary.
 ## Current objective
 
 `docs/CURRENT_TASK.md` is the sole source for active work. See
-`docs/CURRENT_STATUS.md` for implemented capability and persistent gaps.
-Multi-step live runs, durable quality-evaluation storage, outbox redrive and a
-file transport, driver-error classification, stranded-execution operator
-commands and async workbench launch are delivered (ACME-0057–0069). What
-remains open is trust-stage evidence granularity, the Domain Test UI residuals
-(plan `measurements`, adapter discovery, browser CI), ambiguous call
-reconciliation, key lifecycle and optional parameter-capability gating. The
-next task must be explicitly approved before activation.
+`docs/CURRENT_STATUS.md` for implemented capability and persistent gaps. As of
+2026-09-19 the latest merged model-execution/publication line is ACME-0188:
+`acme-engine@0.1.5` exposes `@acme-engine/model-runtime@0.1.5`, native OpenAI
+Responses accepts ordered user text/image input, and the earlier ACME-0182,
+0185–0187 changes supply Chat Completions image mapping, explicit non-stream
+intent, preserved timeout classification and profile-selected output-token wire
+naming. POC #1 remains frozen as a self-runnable V2 application. This summary
+does not activate a new objective; the next task still requires an explicit
+claim and charter.
