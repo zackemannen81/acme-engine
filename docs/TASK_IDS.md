@@ -58,3 +58,4 @@ above the floor as well as the active task.
 | ACME-0186 | preserve timeout classification after streamed response start | ChatGPT (operator) | 2026-09-18 | keep transport timeout as TIMEOUT after HTTP 2xx response-start while preserving invalid-response for non-timeout stream truncation |
 | ACME-0187 | profile-specific Chat Completions output-token wire field | ChatGPT (operator) | 2026-09-18 | preserve provider/model-specific max output token parameter naming for embedded A008 OpenAI Chat Completions |
 | ACME-0188 | native OpenAI Responses image parity | ChatGPT (operator) | 2026-09-18 | preserve ACME image content parts on the native OpenAI Responses route so embedded A008 can restore Responses without losing vision |
+| ACME-0189 | docs-first reality sync | ChatGPT (operator) | 2026-09-19 | reconcile README and current governing docs with published/runtime reality |
