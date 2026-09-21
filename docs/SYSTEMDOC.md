@@ -707,9 +707,12 @@ never parses a body, never classifies a failure and never sees an ACME type.
 - request mapping turns system messages into instructions and preserves the
   supplied order, so the stable part of a call stays ahead of the changing part
 - output JSON Schema is lowered into the provider's strict structured-output
-  subset before dispatch: discriminated `oneOf` becomes nested `anyOf`, every
-  property is required (optionals as required-and-nullable), and unlowerable
-  constructs raise `UNSUPPORTED_CAPABILITY` with no network call
+  subset before dispatch: a `oneOf` becomes nested `anyOf` only after a bounded
+  pairwise-disjointness proof (distinct simple types except `integer`/`number`,
+  disjoint finite `const`/`enum` values, or distinct shared-property object
+  discriminators); every property is required (optionals as required-and-
+  nullable), and unlowerable constructs raise `UNSUPPORTED_CAPABILITY` with no
+  network call
 - a separate `providerWireSchemaHash` (`acme-provider-wire-schema-hash-1`)
   records the lowered wire schema without changing
   `acme-model-request-hash-1`, which still digests the canonical request

@@ -259,7 +259,7 @@ describe('OpenAI Responses request mapping', () => {
           type: 'object',
           properties: {
             value: {
-              oneOf: [{ type: 'string' }, { type: 'number' }],
+              oneOf: [{ type: 'integer' }, { type: 'number' }],
             },
           },
           required: ['value'],

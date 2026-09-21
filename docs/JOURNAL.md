@@ -7063,3 +7063,25 @@ Add one dated, signed entry for every meaningful work session or handoff.
   discriminated-object proof, while its existing regression explicitly refuses
   `string | number`; ADR-0015 states the same prior boundary.
 - Signature: ChatGPT (operator)
+
+## 2026-09-19 — ACME-0190 lossless `oneOf` schema lowering
+
+- Operator: ChatGPT. Extended the OpenAI strict structured-output lowerer to
+  rewrite `oneOf` as `anyOf` only after a conservative pairwise-disjointness
+  proof. It now accepts different simple JSON types except `integer`/`number`,
+  disjoint finite `const`/`enum` value sets, and the existing shared-property
+  distinct-`const` object-discriminator rule.
+- Valid MCP schemas such as nested `boolean | string` now lower losslessly.
+  Same-typed unconstrained branches, `integer | number`, overlapping enums and
+  all unproven pairs still fail locally with `UNSUPPORTED_CAPABILITY` before
+  transport.
+- Updated the stale gateway refusal fixture from newly valid `string | number`
+  to genuinely overlapping `integer | number`. ADR-0015, current status and
+  system documentation now state the exact bounded proof boundary.
+- Verification: focused lowerer/gateway 64/64; typecheck; unit 161 files / 1090
+  tests; conformance 13 files / 86 tests; format, lint, boundaries, docs and
+  diff checks all pass. `docs:check` reports 34 historical non-gating path
+  warnings. No live call, publication, version change, tag or deployment.
+- Archived completed charter:
+  `docs/finished/ACME-0190_lossless-oneof-schema-lowering.md`.
+- Signature: ChatGPT (operator)
