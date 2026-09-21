@@ -68,6 +68,103 @@ function pathLabel(path: SchemaPath): string {
     .join('.');
 }
 
+function literalValueKeys(schema: JsonValue): ReadonlySet<string> | null {
+  if (!isPlainObject(schema)) {
+    return null;
+  }
+
+  const values = Object.hasOwn(schema, 'const')
+    ? [schema.const]
+    : Array.isArray(schema.enum) && schema.enum.length > 0
+      ? schema.enum
+      : null;
+  if (values === null || !values.every(isJsonValue)) {
+    return null;
+  }
+
+  return new Set(values.map((value) => canonicalJson(value)));
+}
+
+type SimpleJsonType =
+  'array' | 'boolean' | 'integer' | 'null' | 'number' | 'object' | 'string';
+
+function simpleJsonType(schema: JsonValue): SimpleJsonType | null {
+  if (!isPlainObject(schema) || typeof schema.type !== 'string') {
+    return null;
+  }
+
+  switch (schema.type) {
+    case 'array':
+    case 'boolean':
+    case 'integer':
+    case 'null':
+    case 'number':
+    case 'object':
+    case 'string':
+      return schema.type;
+    default:
+      return null;
+  }
+}
+
+function distinctSimpleTypes(
+  left: SimpleJsonType,
+  right: SimpleJsonType,
+): boolean {
+  return (
+    left !== right &&
+    !(left === 'integer' && right === 'number') &&
+    !(left === 'number' && right === 'integer')
+  );
+}
+
+function pairwiseDisjoint(branches: readonly JsonValue[]): boolean {
+  if (branches.length === 0) {
+    return false;
+  }
+
+  for (let leftIndex = 0; leftIndex < branches.length; leftIndex += 1) {
+    const left = branches[leftIndex];
+    if (left === undefined) {
+      return false;
+    }
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < branches.length;
+      rightIndex += 1
+    ) {
+      const right = branches[rightIndex];
+      if (right === undefined) {
+        return false;
+      }
+
+      const leftType = simpleJsonType(left);
+      const rightType = simpleJsonType(right);
+      if (
+        leftType !== null &&
+        rightType !== null &&
+        distinctSimpleTypes(leftType, rightType)
+      ) {
+        continue;
+      }
+
+      const leftValues = literalValueKeys(left);
+      const rightValues = literalValueKeys(right);
+      if (
+        leftValues !== null &&
+        rightValues !== null &&
+        [...leftValues].every((value) => !rightValues.has(value))
+      ) {
+        continue;
+      }
+
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * True when every branch is an object schema that fixes a distinct `const`
  * on the same property key. Under that condition `oneOf` and `anyOf` coincide.
@@ -222,11 +319,11 @@ function lowerNode(schema: JsonValue, path: SchemaPath): JsonValue {
         `JSON Schema 'oneOf' at ${pathLabel(path)} is empty or not an array.`,
       );
     }
-    if (discriminators(branches) === null) {
+    if (discriminators(branches) === null && !pairwiseDisjoint(branches)) {
       refuse(
         'oneOf',
         [...path, 'oneOf'],
-        `JSON Schema 'oneOf' at ${pathLabel(path)} cannot be lowered without loss: branches are not a discriminated union with distinct constant discriminators.`,
+        `JSON Schema 'oneOf' at ${pathLabel(path)} cannot be lowered without loss: branches are not provably pairwise disjoint.`,
       );
     }
     delete working.oneOf;

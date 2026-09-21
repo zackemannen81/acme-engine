@@ -35,8 +35,10 @@ Constrained decoding is what prevents that cost.
 `@acme/adapter-model-openai` owns a pure, deterministic lowering from
 canonical JSON Schema to the provider's strict structured-output subset:
 
-- discriminated `oneOf` (distinct constant discriminators on a shared property)
-  becomes nested `anyOf`
+- a `oneOf` whose branches are provably pairwise disjoint becomes nested
+  `anyOf`: the proof accepts distinct simple JSON types except `integer` versus
+  `number`, disjoint finite `const`/`enum` literal sets, and the existing
+  shared-property distinct-constant object discriminator
 - every object property is required; a property that was optional becomes
   required-and-nullable
 - `$schema` and similar metadata are stripped
@@ -60,11 +62,25 @@ unknowns. State, delta and memory schemas keep `.optional()`, because
 Schemas shared by output and state paths are split. Modules drop `null` during
 interpretation when the domain still wants absence in state.
 
-### Plain unions are refused, not guessed
+### `oneOf` is lowered only after a bounded disjointness proof
 
-`oneOf` → `anyOf` is sound only under provable disjointness. Zod
-`discriminatedUnion` guarantees distinct const discriminators;
-`z.union` does not and must be refused.
+`oneOf` → `anyOf` is sound only when no JSON value can match two branches. The
+adapter proves that condition pairwise, using only these structural rules:
+
+- different simple JSON types (`array`, `boolean`, `null`, `object`, `string`,
+  `integer`, `number`) are disjoint except `integer` and `number`, which
+  overlap;
+- two literal branches are disjoint when their non-empty finite sets of JSON
+  values from `const` or `enum` have no common canonical JSON value; or
+- every object branch fixes a distinct primitive `const` on one shared
+  property, preserving the original discriminated-union rule.
+
+The proof is intentionally not a general JSON Schema satisfiability solver.
+It does not infer disjointness from descriptions, examples, formats, patterns,
+ranges, object shapes or unsupported keywords. Same-typed unconstrained
+branches, `integer | number`, overlapping enums and all unproven pairs are
+refused before dispatch. This admits legitimate MCP forms such as
+`boolean | string` without silently changing schema semantics.
 
 ## Alternatives Considered
 

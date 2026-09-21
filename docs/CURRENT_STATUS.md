@@ -1,4 +1,13 @@
-# Current Status
+## Lossless `oneOf` lowering for external JSON Schema
+
+ACME-0190 expands the OpenAI strict structured-output lowerer only where it
+can structurally prove every `oneOf` pair disjoint, then rewrites it losslessly
+to `anyOf`. In addition to existing shared-property distinct-`const` object
+discriminators, it accepts distinct simple JSON types except `integer` versus
+`number`, and disjoint finite `const`/`enum` literal sets. This admits valid
+MCP forms such as `boolean | string`, including nested properties. Overlapping
+or unproven unions remain local `UNSUPPORTED_CAPABILITY` refusals before
+transport; canonical request identity and provider routing are unchanged.
 
 ## Native image parts on OpenAI Responses
 

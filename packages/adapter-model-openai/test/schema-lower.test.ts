@@ -147,29 +147,91 @@ describe('lowerStrictStructuredOutputSchema', () => {
     });
   });
 
-  it('refuses a plain oneOf without distinct const discriminators', () => {
-    expect(() =>
-      lowerStrictStructuredOutputSchema({
-        type: 'object',
-        properties: {
-          value: {
-            oneOf: [{ type: 'string' }, { type: 'number' }],
-          },
+  it('lowers pairwise-disjoint primitive oneOf branches, including nested MCP properties', () => {
+    const lowered = lowerStrictStructuredOutputSchema({
+      type: 'object',
+      properties: {
+        restore: {
+          oneOf: [{ type: 'boolean' }, { type: 'string' }],
         },
-        required: ['value'],
-        additionalProperties: false,
-      }),
-    ).toThrowError(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          code: 'UNSUPPORTED_CAPABILITY',
-          details: expect.objectContaining({
-            construct: 'oneOf',
+        value: {
+          oneOf: [{ type: 'string' }, { type: 'number' }],
+        },
+        target: {
+          oneOf: [{ type: 'object' }, { type: 'null' }],
+        },
+        identifier: {
+          oneOf: [{ type: 'integer' }, { type: 'string' }],
+        },
+      },
+      required: ['restore', 'value', 'target', 'identifier'],
+      additionalProperties: false,
+    });
+
+    expect(lowered).toMatchObject({
+      properties: {
+        restore: { anyOf: [{ type: 'boolean' }, { type: 'string' }] },
+        value: { anyOf: [{ type: 'string' }, { type: 'number' }] },
+        target: { anyOf: [{ type: 'object' }, { type: 'null' }] },
+        identifier: { anyOf: [{ type: 'integer' }, { type: 'string' }] },
+      },
+    });
+  });
+
+  it('lowers distinct literal const and enum branches', () => {
+    const lowered = lowerStrictStructuredOutputSchema({
+      oneOf: [
+        { const: 'restore' },
+        { enum: ['create', 'update'] },
+        { const: null },
+      ],
+    });
+
+    expect(lowered).toEqual({
+      anyOf: [
+        { const: 'restore' },
+        { enum: ['create', 'update'] },
+        { const: null },
+      ],
+    });
+  });
+
+  it.each([
+    {
+      name: 'integer and number',
+      branches: [{ type: 'integer' }, { type: 'number' }],
+    },
+    {
+      name: 'overlapping enums',
+      branches: [
+        { enum: ['create', 'update'] },
+        { enum: ['update', 'delete'] },
+      ],
+    },
+    {
+      name: 'same-typed unconstrained branches',
+      branches: [{ type: 'string' }, { type: 'string' }],
+    },
+  ])(
+    'refuses $name oneOf branches that are not provably disjoint',
+    ({ branches }) => {
+      expect(() =>
+        lowerStrictStructuredOutputSchema({
+          type: 'object',
+          properties: { value: { oneOf: branches } },
+          required: ['value'],
+          additionalProperties: false,
+        }),
+      ).toThrowError(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            code: 'UNSUPPORTED_CAPABILITY',
+            details: expect.objectContaining({ construct: 'oneOf' }),
           }),
         }),
-      }),
-    );
-  });
+      );
+    },
+  );
 
   it('refuses overlapping discriminator consts', () => {
     expect(() =>
