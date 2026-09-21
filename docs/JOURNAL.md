@@ -7041,3 +7041,25 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Consumer proof: a fresh registry-only install resolved `acme-engine@0.1.5 -> @acme-engine/model-runtime@0.1.5 -> @acme-engine/adapter-model-openai@0.1.5` and returned `ACME_0188_REGISTRY_CONSUMER_OK`, observing `https://api.openai.com/v1/responses` with ordered `input_text` + `input_image`, `max_output_tokens: 321` and `reasoning.effort: "none"`.
 - Follow-up: A008 may now separately move Luna from the generic compatible Chat Completions profile back to the native `openAi` Responses profile without losing vision support.
 - Signature: ChatGPT (operator)
+
+## 2026-09-19 — ACME-0189 superseded; ACME-0190 drafted
+
+- ACME-0189 was a frozen documentation-only reality-sync charter. The discovery
+  that the OpenAI strict-output lowerer refuses valid, provably disjoint
+  MCP/JSON Schema primitive `oneOf` unions changes runtime behavior and cannot
+  be added to that charter honestly.
+- ACME-0189 is archived as `Superseded` at
+  `docs/finished/ACME-0189_docs-first-reality-sync.md`; its docs-sync
+  Definition of Done was not completed.
+- ACME-0190 is drafted to extend the provider-adapter lowerer only for
+  explicitly proven pairwise-disjoint branches, beginning with primitive
+  categories such as `boolean | string`. It retains fail-closed refusal for
+  overlap or insufficient proof and excludes provider calls, publication and
+  version changes.
+- The ACME-0190 identity has been appended to `docs/TASK_IDS.md`, but its claim
+  has not yet been merged to canonical `main`; the charter remains `Draft` and
+  implementation must not begin until that condition is met.
+- Evidence: the current `schema-lower.ts` converts `oneOf` only after its
+  discriminated-object proof, while its existing regression explicitly refuses
+  `string | number`; ADR-0015 states the same prior boundary.
+- Signature: ChatGPT (operator)
