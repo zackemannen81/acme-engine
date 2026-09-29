@@ -61,3 +61,4 @@ above the floor as well as the active task.
 | ACME-0189 | docs-first reality sync | ChatGPT (operator) | 2026-09-19 | reconcile README and current governing docs with published/runtime reality |
 | ACME-0190 | lossless disjoint `oneOf` schema lowering | ChatGPT (operator) | 2026-09-19 | admit proven-disjoint MCP/JSON Schema unions at the OpenAI strict-output adapter boundary |
 | ACME-0191 | publish lossless `oneOf` schema lowering | ChatGPT (operator) | 2026-09-19 | release the verified OpenAI schema-lowering improvement for A008 through the public `acme-engine` facade |
+| ACME-0192 | explicit per-tool non-strict provider execution | Codex | 2026-09-30 | expose strict-by-default function tool mode for A008 with explicit provider mapping and diagnostics |
