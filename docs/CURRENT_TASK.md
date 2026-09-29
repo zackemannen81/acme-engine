@@ -1,12 +1,12 @@
 # Current Task
 
-Task ID: ACME-0191
+Task ID: ACME-0192
 Parent Task: None
-Status: Draft
-Owner: ChatGPT (operator)
-Created: 2026-09-19
-Last updated: 2026-09-19
-Charter frozen at:
+Status: Ready
+Owner: Codex
+Created: 2026-09-30
+Last updated: 2026-09-30
+Charter frozen at: 2026-09-30; claim 1cb2bef verified on origin/main
 
 ## Read First
 
@@ -18,139 +18,126 @@ Charter frozen at:
 - `docs/SYSTEMDOC.md`
 - `docs/JOURNAL.md`
 - `docs/FILESTRUCTURE.md`
-- `docs/adr/0055-public-npm-model-runtime-library.md`
-- `docs/adr/0056-public-acme-engine-facade.md`
+- ADR-0015, ADR-0053, ADR-0054, ADR-0055 and ADR-0056
 
 ## Task Summary
 
-Release the merged ACME-0190 lossless `oneOf` schema lowering so A008 can consume
-it through the public `acme-engine` Node package. The public dependency closure
-must remain registry-safe: source manifests may retain `workspace:*`, but packed
-and published artifacts must contain concrete dependency versions.
+A008 embeds ACME for provider execution and needs an explicit non-strict tool
+option for MCP schemas outside OpenAI's strict subset. ACME carries the option;
+the caller owns MCP policy, argument validation and bounded correction attempts.
 
 ## Task Charter
 
-The charter is editable while status is `Draft` and immutable once status is
-`Ready`.
-
 ### Goal
 
-Make ACME-0190's proven-disjoint `oneOf` lowering available to A008 through a
-new installable `acme-engine` patch release.
+Allow callers of the embedded model runtime to select non-strict function
+calling per tool while retaining strict as the default and preserving the
+independent guarantees of structured final output.
 
 ### Primary Deliverable
 
-Published npm packages `@acme-engine/adapter-model-openai@0.1.6`,
-`@acme-engine/model-runtime@0.1.6`, and `acme-engine@0.1.6`, with a clean
-registry-only consumer proof of the public facade path.
+A public per-tool `strict?: boolean` contract, validated and mapped explicitly
+to OpenAI Responses and Chat Completions, with request identity, diagnostics,
+offline regression coverage and documented caller responsibilities.
 
 ### In Scope
 
-- Bump the affected public package versions from `0.1.5` to `0.1.6`.
-- Build and pack the affected public dependency closure with pnpm.
-- Inspect packed manifests for concrete internal dependency versions and no
-  `workspace:` protocol leakage.
-- Publish the three packages in dependency order after offline verification.
-- Prove a clean external consumer installs `acme-engine@0.1.6` from npm and
-  exercises the public facade's OpenAI strict-schema path for `boolean | string`.
-- Record the release truth in the governed documentation and task handoff.
+- Validate and preserve explicit tool strictness, including request hashing.
+- Default each tool independently to strict; preserve original parameter
+  schemas in explicit non-strict mode without strict-schema lowering.
+- Keep OpenAI Responses strict lowering and fail-closed refusal for strict
+  tools, and map the explicit boolean on compatible Chat Completions tools.
+- Expose content-free effective per-tool mode diagnostics and retain them on
+  terminal/replayed embedded execution results.
+- Document caller resolution of tool override, MCP-server default, then true;
+  original-schema validation before execution in both modes; bounded caller
+  correction; and ACME's non-execution/non-retry ownership boundary.
+- Preserve frozen HTTP v1/v2 tool shapes; the new option is embedded-only.
+- Record an ADR, update system/status/package documentation, journal, archive,
+  commit, push the development branch and open a PR.
+- Preserve the separately paused ACME-0191 release charter and local changes.
 
 ### Out of Scope
 
-- Any change to ACME runtime behavior, public API, schema-lowering semantics or
-  provider routing beyond the already merged ACME-0190 implementation.
-- Publishing unrelated packages, tags, GitHub releases, deployments or live
-  model-provider calls.
-- Changes in A008 itself.
+- A008 changes, MCP discovery/configuration or a tool executor in ACME.
+- Automatic mode fallback, schema weakening, argument repair or model retry.
+- Changing structured final-output schemas, domain execution or data authority.
+- npm publication, version bumps, live provider calls, deployment, tags/releases
+  or merging the implementation PR.
 
 ### Definition of Done
 
-- The three named npm packages are available at exactly `0.1.6` with a concrete,
-  installable dependency chain.
-- A clean consumer using only registry artifacts imports `acme-engine` and
-  demonstrates lossless lowering of a `boolean | string` `oneOf` through the
-  OpenAI path without network provider dispatch.
-- Required offline verification passes and the release is documented.
-- No unscoped external mutation occurs beyond the three named npm publications.
+- Omitted/true tool modes are strict; false is honored individually, including
+  mixed-mode requests and schemas refused by the strict Responses lowerer.
+- Invalid mode values fail locally. Non-strict schemas reach the provider
+  unchanged; structured final output remains strict and independently checked.
+- Explicit modes affect identity; requests omitting the new field retain
+  historical hashes. A changed mode cannot reuse another mode's execution.
+- Effective modes are visible without exposing tool names, schemas or arguments.
+- Public facade execution and streaming/buffered provider mappings are proven
+  offline. Frozen HTTP protocols refuse the new option explicitly.
+- Required checks pass; documentation, signed journal and archive are complete.
+- Changes are committed, pushed and available in a reviewable PR.
 
 ### Minimum Verification Gates
 
-- [ ] `pnpm typecheck`
-- [ ] Focused OpenAI adapter and model-runtime tests
-- [ ] `pnpm test:unit`
-- [ ] `pnpm test:conformance`
-- [ ] `pnpm boundaries`
-- [ ] `pnpm format:check`
-- [ ] `pnpm docs:check`
-- [ ] Packed-manifest inspection and clean registry-only consumer proof
-- [ ] `git diff --check`
+- [ ] Focused core validation/hash/engine, both adapter and public facade tests.
+- [ ] `pnpm typecheck`.
+- [ ] `pnpm test:unit --maxWorkers=2` (includes offline integration/scenarios).
+- [ ] `pnpm test:conformance --maxWorkers=2`.
+- [ ] `pnpm lint`, `pnpm boundaries`, `pnpm format:check`, `pnpm docs:check`.
+- [ ] `git diff --check`.
+- [ ] No live calls, publication, version bumps or unrelated local edits.
 
 ## References
 
-- `docs/finished/ACME-0190_lossless-oneof-schema-lowering.md`
-- `docs/adr/0055-public-npm-model-runtime-library.md`
-- `docs/adr/0056-public-acme-engine-facade.md`
-- `packages/adapter-model-openai/package.json`
-- `packages/model-runtime/package.json`
-- `packages/acme-engine/package.json`
+- https://developers.openai.com/api/docs/guides/function-calling
+- `packages/core/src/model.ts`
+- `packages/adapter-model-openai/src/request.ts`
+- `packages/adapter-model-chat-completions/src/gateway.ts`
+- `packages/acme-engine/src/index.ts`
 
 ## Checklist
 
-- [ ] Merge the ACME-0191 ID claim to `main`.
-- [ ] Freeze this charter at `Ready` after the ID claim is on `main`.
-- [ ] Bump the three public package versions and release documentation.
-- [ ] Build, run required offline verification, pack and inspect artifacts.
-- [ ] Publish the three verified package tarballs in dependency order.
-- [ ] Run and record the clean registry-only consumer proof.
-- [ ] Update `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md` and `docs/JOURNAL.md`.
-- [ ] Complete, archive and restore `docs/CURRENT_TASK.md`.
+- [x] Claim ACME-0192 on remote main and create an isolated development branch.
+- [x] Charter and freeze the task before implementation.
+- [ ] Implement the contract, mappings, diagnostics and compatibility guards.
+- [ ] Add offline regressions and verify all gates.
+- [ ] Update ADR/system/status/package documentation and signed journal.
+- [ ] Archive, restore the template, commit, push and open a PR.
 
 ## Decisions and Notes
 
-- Release scope is exactly the public path affected by ACME-0190:
-  `@acme-engine/adapter-model-openai -> @acme-engine/model-runtime -> acme-engine`.
-- The npm publication is explicitly authorized by this task only after all
-  minimum verification gates and packed-artifact inspection pass.
-- `pnpm pack`, not direct workspace-directory publication, is the publication
-  artifact baseline established by ACME-0184.
+- ACME-0191 is preserved in `docs/paused/ACME-0191_publish-oneof-schema-lowering.md`;
+  its release candidate edits remain in the original checkout/release branch.
+- Chat Completions previously omitted provider strictness. Sending true by
+  default is an intentional behavior change; provider rejection is surfaced,
+  never retried in a weaker mode. Its schema passthrough remains unchanged.
 
 ## Charter Amendment Log
 
-Only non-semantic corrections are allowed after `Ready`.
-
--none
+None.
 
 ## Verification
 
-- [ ] Run every minimum verification gate.
-- [ ] Confirm npm reports the three exact `0.1.6` versions after publication.
-- [ ] Use an external temporary consumer directory with no workspace links for
-  the registry-only proof.
-- [ ] Record any skipped check and its reason.
+Pending implementation. Live infrastructure and paid evaluation are outside
+this provider-mapping task; deterministic transports exercise the boundary.
 
 ## Documentation Updates
 
-- [ ] `docs/CURRENT_STATUS.md`
-- [ ] `docs/SYSTEMDOC.md`
-- [ ] `docs/JOURNAL.md`
-- [ ] `packages/acme-engine/README.md`
-- [ ] `docs/FILESTRUCTURE.md` not required; no structure change is expected.
-- [ ] ADRs not required; ADR-0055/0056 already decide the release boundary.
+- [ ] `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, `docs/FILESTRUCTURE.md`.
+- [ ] New ADR and collection index.
+- [ ] Public facade/runtime README guidance.
+- [ ] `docs/JOURNAL.md` and task archive.
 
 ## Handoff and Follow-ups
 
-- Current state: Draft; local ID claim prepared.
-- Next recommended step: merge the ID claim to `main`, then freeze the charter.
-- Blockers: the ID claim must land on `main` before `Ready`; publication waits
-  for all frozen verification gates.
-- Child tasks: None.
-- Resume condition: `ACME-0191` claim visible on `origin/main`.
-- Open questions: None.
+- Current state: Ready, frozen after remote-main ID claim.
+- Next step: implement and verify.
+- Blockers: None.
+- Publication and A008 adoption require separate work after review.
 
 ## Finalize When Complete
 
-- Archive this file under `docs/finished/`.
-- Restore this template or populate the next approved task.
-- Add a signed `docs/JOURNAL.md` entry.
-- If Goal or Definition of Done changed, supersede this task instead of
-  rewriting it.
+Archive under `docs/finished/`, restore `docs/template_CURRENT_TASK.md`, and
+leave a signed journal entry with checks and outstanding release responsibility.
