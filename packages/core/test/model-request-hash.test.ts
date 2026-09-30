@@ -147,3 +147,31 @@ describe(ACME_MODEL_REQUEST_HASH_ALGORITHM, () => {
     ).not.toBe(computeModelRequestHash(request()));
   });
 });
+
+it('hashes explicit tool modes while preserving the historical omitted-mode input', () => {
+  const tool = {
+    type: 'function' as const,
+    name: 'lookup',
+    parameters: { type: 'object' },
+  };
+  const base: ModelRequest = { ...request(), tools: [tool] };
+  const absent = computeModelRequestHash(base);
+  let canonicalInput = '';
+  computeModelRequestHash(base, {
+    canonicalJson: (value) => {
+      canonicalInput = JSON.stringify(value);
+      return canonicalInput;
+    },
+    sha256: (value) => String(value),
+  });
+  expect(JSON.parse(canonicalInput).request.tools).toEqual([tool]);
+  const strict = computeModelRequestHash({
+    ...base,
+    tools: [{ ...tool, strict: true }],
+  });
+  const loose = computeModelRequestHash({
+    ...base,
+    tools: [{ ...tool, strict: false }],
+  });
+  expect(new Set([absent, strict, loose]).size).toBe(3);
+});

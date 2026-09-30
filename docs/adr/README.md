@@ -97,6 +97,8 @@ current architecture.
 - [`0055-public-npm-model-runtime-library.md`](0055-public-npm-model-runtime-library.md)
 - [`0056-public-acme-engine-facade.md`](0056-public-acme-engine-facade.md)
 
+- [`0057-explicit-per-tool-strictness.md`](0057-explicit-per-tool-strictness.md)
+
 The starting point for a new decision is
 [`template.md`](template.md), which is a form rather than a decision and
 carries no status of its own.

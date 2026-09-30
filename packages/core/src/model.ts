@@ -50,6 +50,8 @@ export interface ModelFunctionTool {
   readonly name: string;
   readonly description?: string;
   readonly parameters: JsonValue;
+  /** Provider schema enforcement; omitted means true. Arguments remain untrusted. */
+  readonly strict?: boolean;
 }
 
 export interface ModelRequest {

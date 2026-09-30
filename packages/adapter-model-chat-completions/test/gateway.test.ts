@@ -213,6 +213,7 @@ describe('Chat Completions request mapping', () => {
         type: 'function',
         function: {
           name: 'get_weather',
+          strict: true,
           parameters: toolRequest.tools?.[0]?.parameters,
         },
       },
@@ -546,3 +547,57 @@ describe('Chat Completions SSE', () => {
     });
   });
 });
+
+it.each([false, true])(
+  'maps mixed tool modes explicitly for Chat Completions stream=%s',
+  (stream) => {
+    const tool = toolRequest.tools?.[0];
+    if (tool === undefined) throw new Error('Missing tool fixture.');
+    const looseParameters = {
+      type: 'object',
+      properties: {
+        query: { oneOf: [{ type: 'integer' }, { type: 'number' }] },
+      },
+      additionalProperties: true,
+    };
+    const body = buildChatCompletionsBody(
+      {
+        ...toolRequest,
+        tools: [
+          tool,
+          {
+            ...tool,
+            name: 'loose',
+            strict: false,
+            parameters: looseParameters,
+          },
+          { ...tool, name: 'explicit', strict: true },
+        ],
+      },
+      fixtureProfile,
+      stream,
+    );
+    expect(body.tools).toEqual([
+      {
+        type: 'function',
+        function: {
+          name: tool.name,
+          parameters: tool.parameters,
+          strict: true,
+        },
+      },
+      {
+        type: 'function',
+        function: { name: 'loose', parameters: looseParameters, strict: false },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'explicit',
+          parameters: tool.parameters,
+          strict: true,
+        },
+      },
+    ]);
+  },
+);

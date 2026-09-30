@@ -1,6 +1,6 @@
 # File Structure
 
-Last updated: 2026-09-18
+Last updated: 2026-09-30
 
 The repository source is open source under the root Apache-2.0 `LICENSE`.
 The workspace root `package.json` remains npm-private as a publication guard.
@@ -1310,3 +1310,9 @@ the archive naming convention instead.
 
 `docs/concepts_sandbox/temp/` is frozen despite its name: the archived
 ACME-0038 cites the mock by path, so the file can no longer move.
+
+ACME-0192 adds the per-tool provider-mode decision in
+`docs/adr/0057-explicit-per-tool-strictness.md` and the facade-through-provider
+regression suite in `packages/model-runtime/test/tool-strictness.test.ts`.
+The independent release charter is preserved at
+`docs/paused/ACME-0191_publish-oneof-schema-lowering.md`.

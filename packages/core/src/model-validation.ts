@@ -53,6 +53,7 @@ const toolDefinitionKeys = [
   'description',
   'name',
   'parameters',
+  'strict',
   'type',
 ] as const;
 const toolCallKeys = ['arguments', 'name', 'toolCallId'] as const;
@@ -345,6 +346,9 @@ function validateTool(value: JsonValue, index: number): ModelFunctionTool {
       ? { description: text(candidate.description, `${label} description`) }
       : {}),
     parameters: candidate.parameters as JsonValue,
+    ...(Object.hasOwn(candidate, 'strict')
+      ? { strict: boolean(candidate.strict, `${label} strict`) }
+      : {}),
   });
 }
 

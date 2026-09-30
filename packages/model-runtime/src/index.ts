@@ -32,6 +32,8 @@ import {
 export const NVIDIA_CHAT_COMPLETIONS_ENDPOINT =
   'https://integrate.api.nvidia.com/v1/chat/completions' as const;
 
+export type { ModelFunctionTool, ModelRequest } from '@acme-engine/core';
+
 export interface AcmeModelRuntimeOpenAiProfileConfig {
   readonly selection: ModelSelection;
   readonly model: string;

@@ -128,6 +128,19 @@ function isAmbiguous(error: unknown): boolean {
   );
 }
 
+function toolDiagnostics(
+  request: ModelExecutionRequest['request'],
+): Pick<ModelExecutionDiagnostic, 'toolModes'> {
+  return request.tools === undefined
+    ? {}
+    : {
+        toolModes: request.tools.map((tool, toolIndex) => ({
+          toolIndex,
+          strict: tool.strict ?? true,
+        })),
+      };
+}
+
 function diagnosticOf(
   error: AcmeErrorData,
   extra: Partial<ModelExecutionDiagnostic> = {},
@@ -420,7 +433,10 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         status: 'conflicted',
         modelExecutionId: acceptance.existingExecutionId,
         error,
-        diagnostic: diagnosticOf(error, { kind: 'conflict' }),
+        diagnostic: {
+          ...diagnosticOf(error, { kind: 'conflict' }),
+          ...toolDiagnostics(envelope.request),
+        },
       });
       await executionOptions.onEvent?.({
         type: 'failed',
@@ -445,9 +461,12 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
     } catch (error) {
       const data = errorData(error, 'calling-model');
       const status = terminalStatus(data);
-      const diagnostic = isAmbiguous(error)
-        ? diagnosticOf(data, { kind: 'ambiguous-delivery' })
-        : diagnosticOf(data);
+      const diagnostic = {
+        ...(isAmbiguous(error)
+          ? diagnosticOf(data, { kind: 'ambiguous-delivery' })
+          : diagnosticOf(data)),
+        ...toolDiagnostics(envelope.request),
+      };
       const result: ModelExecutionResult = deepFreeze({
         status,
         modelExecutionId,
@@ -523,7 +542,10 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
           status: 'failed',
           modelExecutionId: existing.modelExecutionId,
           error,
-          diagnostic: diagnosticOf(error),
+          diagnostic: {
+            ...diagnosticOf(error),
+            ...toolDiagnostics(existing.request),
+          },
         });
         if (existing.status !== 'failed') {
           await this.#repository.markTerminal({
@@ -545,7 +567,11 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         replayed: true,
         response,
         usage: response.usage,
-        diagnostic: { kind: 'completed', finishReason: response.finishReason },
+        diagnostic: {
+          kind: 'completed',
+          finishReason: response.finishReason,
+          ...toolDiagnostics(existing.request),
+        },
       });
       if (existing.status !== 'succeeded') {
         await this.#repository.markTerminal({
@@ -570,10 +596,12 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         stage: 'calling-model' as const,
         retryable: false,
       };
-      const diagnostic =
-        primary.status === 'ambiguous'
+      const diagnostic = {
+        ...(primary.status === 'ambiguous'
           ? diagnosticOf(error, { kind: 'ambiguous-delivery' })
-          : diagnosticOf(error);
+          : diagnosticOf(error)),
+        ...toolDiagnostics(existing.request),
+      };
       const result: ModelExecutionResult = deepFreeze({
         status: 'failed' as const,
         modelExecutionId: existing.modelExecutionId,
@@ -607,7 +635,10 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
       status: 'failed' as const,
       modelExecutionId: existing.modelExecutionId,
       error,
-      diagnostic: diagnosticOf(error, { kind: 'ambiguous-delivery' }),
+      diagnostic: {
+        ...diagnosticOf(error, { kind: 'ambiguous-delivery' }),
+        ...toolDiagnostics(existing.request),
+      },
     });
     await this.#repository.failModelCall({
       modelCallId: primary.modelCallId,
@@ -738,6 +769,7 @@ class ModelOnlyExecutionEngine implements ModelExecutionEngine {
         diagnostic: {
           kind: 'completed',
           finishReason: completed.finishReason,
+          ...toolDiagnostics(envelope.request),
         },
       });
       await this.#repository.markTerminal({

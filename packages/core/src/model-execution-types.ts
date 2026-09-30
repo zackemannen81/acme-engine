@@ -55,6 +55,11 @@ export interface ModelExecutionDiagnostic {
   readonly delivery?: 'not-sent' | 'sent' | 'unknown';
   readonly httpStatus?: number;
   readonly finishReason?: NormalizedModelResponse['finishReason'];
+  /** Effective provider modes in request tool order; contains no tool content. */
+  readonly toolModes?: readonly {
+    readonly toolIndex: number;
+    readonly strict: boolean;
+  }[];
 }
 
 export type ModelExecutionStatus =

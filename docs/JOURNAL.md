@@ -7085,3 +7085,44 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Archived completed charter:
   `docs/finished/ACME-0190_lossless-oneof-schema-lowering.md`.
 - Signature: ChatGPT (operator)
+## 2026-09-30 — ACME-0192 explicit per-tool strictness
+
+- Operator: Codex. Claimed ACME-0192 on remote main in commit 1cb2bef,
+  created codex/acme-0192-tool-strict-mode in an isolated managed worktree,
+  and committed the frozen Ready charter before implementation (764c5dc).
+  The original checkout's staged ACME-0191 release changes remain untouched;
+  its recorded paused charter is preserved in
+  `docs/paused/ACME-0191_publish-oneof-schema-lowering.md` with an index entry.
+- Delivered `ModelFunctionTool.strict?: boolean` and public facade/runtime
+  type exports. Each omitted mode defaults to true; only explicit false sends
+  the original OpenAI Responses tool schema without strict lowering. Mixed
+  tools retain independent modes and strict structured final output is unchanged.
+  Chat Completions now sends `function.strict` explicitly, an intentional
+  behavior change from its previous omitted flag; schema passthrough remains.
+- Request validation rejects non-booleans, preserves omitted fields and hashes
+  explicit modes. Changing only the mode under an accepted request key conflicts.
+  Terminal `diagnostic.toolModes` records only tool index and effective boolean;
+  successful/failed replay and interrupted-call recovery preserve the evidence.
+  HTTP v1/v2 refuse the embedded-only field and keep their frozen diagnostic shape.
+- ADR-0057 and current/package documentation specify A008 ownership of per-MCP
+  defaults, original-schema validation before any execution in both modes and
+  bounded correction requests. ACME parses JSON and returns candidates; it
+  neither executes tools nor retries/weakens modes. The public-facade regression
+  suite is `packages/model-runtime/test/tool-strictness.test.ts`.
+- Verification: typecheck; full offline unit gate with two workers, 162 files /
+  1,120 tests (includes integration and scenario/evaluation); conformance,
+  13 files / 86 tests; final focused core/adapters/facade/HTTP run, 12 files /
+  166 tests, including the subsequently added interrupted-resume diagnostic test.
+  Lint, boundaries, format, docs and diff checks passed. Documentation retains
+  31 historical non-gating missing-path warnings. No live provider or external
+  infrastructure gate ran; those are outside this task's authority and claim.
+- Completed charter archived at
+  `docs/finished/ACME-0192_explicit-per-tool-strictness.md` and current task
+  restored from the template. Delivery is the committed/pushed branch and PR;
+  the implementation PR is not merged by this task.
+- Follow-up: no npm publication or version bump occurred. A separate verified
+  release must cover core, both provider adapters, model-runtime and facade,
+  with an explicit Chat Completions default-mode migration note. ACME-0191's
+  paused release remains independent; A008 source and validation policy were
+  not changed.
+- Signature: Codex
