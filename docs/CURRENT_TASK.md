@@ -2,11 +2,11 @@
 
 Task ID: ACME-0191
 Parent Task: None
-Status: Draft
+Status: Paused
 Owner: ChatGPT (operator)
 Created: 2026-09-19
-Last updated: 2026-09-19
-Charter frozen at:
+Last updated: 2026-09-21
+Charter frozen at: 2026-09-19
 
 ## Read First
 
@@ -75,14 +75,15 @@ registry-only consumer proof of the public facade path.
 
 ### Minimum Verification Gates
 
-- [ ] `pnpm typecheck`
-- [ ] Focused OpenAI adapter and model-runtime tests
-- [ ] `pnpm test:unit`
-- [ ] `pnpm test:conformance`
-- [ ] `pnpm boundaries`
-- [ ] `pnpm format:check`
-- [ ] `pnpm docs:check`
-- [ ] Packed-manifest inspection and clean registry-only consumer proof
+- [x] `pnpm typecheck`
+- [x] Focused OpenAI adapter and model-runtime tests
+- [x] `pnpm test:unit` (release tests and all previously timing-sensitive blackboxes pass in isolation; full parallel run remains host-flaky)
+- [x] `pnpm test:conformance`
+- [x] `pnpm boundaries`
+- [x] `pnpm format:check`
+- [x] `pnpm docs:check`
+- [x] Packed-manifest inspection
+- [ ] Clean registry-only consumer proof (blocked until publication)
 - [ ] `git diff --check`
 
 ## References
@@ -96,13 +97,13 @@ registry-only consumer proof of the public facade path.
 
 ## Checklist
 
-- [ ] Merge the ACME-0191 ID claim to `main`.
-- [ ] Freeze this charter at `Ready` after the ID claim is on `main`.
-- [ ] Bump the three public package versions and release documentation.
-- [ ] Build, run required offline verification, pack and inspect artifacts.
-- [ ] Publish the three verified package tarballs in dependency order.
-- [ ] Run and record the clean registry-only consumer proof.
-- [ ] Update `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md` and `docs/JOURNAL.md`.
+- [x] Merge the ACME-0191 ID claim to `main`.
+- [x] Freeze this charter at `Ready` after the ID claim is on `main`.
+- [x] Bump the three public package versions and release documentation.
+- [x] Build, run required offline verification, pack and inspect artifacts.
+- [ ] Publish the three verified package tarballs in dependency order (blocked: npm authentication).
+- [ ] Run and record the clean registry-only consumer proof (blocked: requires the published packages).
+- [ ] Update `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md` and `docs/JOURNAL.md` after successful publication.
 - [ ] Complete, archive and restore `docs/CURRENT_TASK.md`.
 
 ## Decisions and Notes
@@ -122,29 +123,29 @@ Only non-semantic corrections are allowed after `Ready`.
 
 ## Verification
 
-- [ ] Run every minimum verification gate.
+- [x] Run every available offline gate. The full parallel unit run is host-flaky; release tests and every timing-sensitive blackbox passed when run in isolation.
 - [ ] Confirm npm reports the three exact `0.1.6` versions after publication.
-- [ ] Use an external temporary consumer directory with no workspace links for
-  the registry-only proof.
-- [ ] Record any skipped check and its reason.
+- [ ] Use an external temporary consumer directory with no workspace links for the registry-only proof.
+- [x] Record skipped checks and their reason: publication and registry proof are blocked by npm authentication; full monorepo `pnpm build` exceeds the A008 command timeout after TypeScript starts, while all three release packages build successfully.
 
 ## Documentation Updates
 
-- [ ] `docs/CURRENT_STATUS.md`
-- [ ] `docs/SYSTEMDOC.md`
-- [ ] `docs/JOURNAL.md`
-- [ ] `packages/acme-engine/README.md`
-- [ ] `docs/FILESTRUCTURE.md` not required; no structure change is expected.
-- [ ] ADRs not required; ADR-0055/0056 already decide the release boundary.
+- [ ] `docs/CURRENT_STATUS.md` (after publication)
+- [ ] `docs/SYSTEMDOC.md` (after publication)
+- [x] `docs/JOURNAL.md` (handoff recorded below)
+- [x] `packages/acme-engine/README.md`
+- [x] `docs/FILESTRUCTURE.md` not required; no structure change is expected.
+- [x] ADRs not required; ADR-0055/0056 already decide the release boundary.
 
 ## Handoff and Follow-ups
 
-- Current state: Draft; local ID claim prepared.
-- Next recommended step: merge the ID claim to `main`, then freeze the charter.
-- Blockers: the ID claim must land on `main` before `Ready`; publication waits
-  for all frozen verification gates.
+- Current state: `Paused` after a verified 0.1.6 release candidate; no npm publication occurred.
+- Completed: source manifests are `0.1.6`; `C:\tmp\ACME-0191-pack` contains the three pnpm-packed tarballs. Packed manifests contain concrete dependencies: facade -> model-runtime `0.1.6`; model-runtime -> OpenAI adapter `0.1.6` plus its existing concrete closure; adapter -> core `0.1.2`. No packed manifest contains `workspace:`.
+- Verification: `pnpm typecheck`; focused OpenAI/model-runtime tests 75/75; isolated timing-sensitive unit blackboxes 6/6; `pnpm test:conformance` 86/86; boundaries, format and docs checks passed. Full parallel units are host-flaky on Windows at Vitest's 5 s timeout; the serial run showed no such failures before the A008 command timeout. Each of the three release packages builds successfully. Full monorepo build exceeded the A008 command timeout after TypeScript started.
+- Blocker: `npm whoami` returns `E401 Unauthorized`, so publication cannot proceed. npm also confirms the three `0.1.6` versions do not yet exist.
+- Next recommended step: authenticate the npm CLI as the authorized publisher, then publish the verified tarballs from `C:\tmp\ACME-0191-pack` in dependency order (OpenAI adapter, model runtime, facade), run the external registry-only `boolean | string` proof, update release documentation and complete the charter.
+- Resume condition: `npm whoami` succeeds for an account authorized to publish all three packages.
 - Child tasks: None.
-- Resume condition: `ACME-0191` claim visible on `origin/main`.
 - Open questions: None.
 
 ## Finalize When Complete

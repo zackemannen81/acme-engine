@@ -26,6 +26,7 @@ Release lineage after the repaired registry baseline:
 - 0.1.2 preserves explicit non-stream execution intent.
 - 0.1.3 preserves explicit transport timeouts after response start.
 - 0.1.4 adds profile-selected Chat Completions output-token wire naming.
+- 0.1.6 adds lossless lowering of provably disjoint `oneOf` schema branches, including `boolean | string`, for the native OpenAI strict structured-output path.
 - 0.1.5 adds native OpenAI Responses ordered user text/image input.
 
 Version 0.1.0 was published with unresolved workspace protocol dependencies and must not be used.

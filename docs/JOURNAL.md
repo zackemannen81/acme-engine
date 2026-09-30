@@ -7085,3 +7085,11 @@ Add one dated, signed entry for every meaningful work session or handoff.
 - Archived completed charter:
   `docs/finished/ACME-0190_lossless-oneof-schema-lowering.md`.
 - Signature: ChatGPT (operator)
+## 2026-09-21 — ACME-0191 public package release paused
+
+- Operator: ChatGPT. Claimed ACME-0191 was confirmed on `main`, and the frozen release charter advanced to `Ready` before any release work. The source manifests for `@acme-engine/adapter-model-openai`, `@acme-engine/model-runtime`, and `acme-engine` are now version `0.1.6`; the facade README records the ACME-0190 lossless proven-disjoint `oneOf` lowering.
+- Package candidate: all three affected packages built and were pnpm-packed into `C:\tmp\ACME-0191-pack`. Inspection of their embedded manifests proves concrete registry-safe dependencies: `acme-engine -> @acme-engine/model-runtime@0.1.6 -> @acme-engine/adapter-model-openai@0.1.6`; no packed manifest contains `workspace:`.
+- Verification: typecheck; focused OpenAI/model-runtime tests 75/75; affected timing-sensitive unit blackboxes 6/6 in isolation; conformance 13 files / 86 tests; boundaries, format and documentation checks passed. Full parallel unit runs are host-flaky on this Windows runner because unrelated file-I/O blackboxes exceed Vitest's 5-second timeout; serial execution passed those cases before the A008 command timeout. Full monorepo build also exceeded that command timeout after TypeScript started, but each released package built successfully.
+- Blocker: `npm whoami` returned `E401 Unauthorized`. The npm registry confirms none of the three `0.1.6` versions exist. No publication, tag, release or other remote mutation occurred, and the required registry-only consumer proof cannot run until publication.
+- Handoff: ACME-0191 is `Paused` in `docs/CURRENT_TASK.md`. Authenticate npm as an account authorized for all three package names, publish the already-verified tarballs in dependency order, then run the clean registry-only `boolean | string` facade proof and complete the governed release documentation.
+- Signature: ChatGPT (operator)
