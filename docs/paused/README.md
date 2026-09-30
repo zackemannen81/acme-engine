@@ -13,3 +13,6 @@ Restore the exact task to `docs/CURRENT_TASK.md` when its resume condition is
 met.
 
 Do not use this directory as a general backlog.
+
+- [ACME-0191 — publish oneOf schema lowering](ACME-0191_publish-oneof-schema-lowering.md) — Paused; npm authentication and registry proof pending.
+

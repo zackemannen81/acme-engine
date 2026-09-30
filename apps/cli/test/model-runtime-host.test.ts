@@ -67,3 +67,30 @@ describe('acme-model-runtime request versions', () => {
     ).toThrowError(/invalid shape/u);
   });
 });
+
+it.each([
+  ACME_MODEL_RUNTIME_PROTOCOL_VERSION,
+  ACME_MODEL_RUNTIME_V2_PROTOCOL_VERSION,
+])('keeps %s tool definitions frozen', (protocolVersion) => {
+  const tool = {
+    type: 'function',
+    name: 'lookup',
+    parameters: { type: 'object' },
+  };
+  const body = {
+    ...baseRequest,
+    protocolVersion,
+    request: { ...baseRequest.request, tools: [tool] },
+  };
+  expect(
+    validateAcmeModelRuntimeRequest(body, protocolVersion).request.tools,
+  ).toEqual([tool]);
+  for (const strict of [true, false]) {
+    expect(() =>
+      validateAcmeModelRuntimeRequest(
+        { ...body, request: { ...body.request, tools: [{ ...tool, strict }] } },
+        protocolVersion,
+      ),
+    ).toThrowError(/not a valid prepared model request/u);
+  }
+});

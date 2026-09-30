@@ -105,6 +105,12 @@ function userInputContent(
 }
 
 function toolParameters(tool: ModelFunctionTool, index: number): JsonValue {
+  if (tool.strict !== undefined && typeof tool.strict !== 'boolean') {
+    invalid('Function tool strict must be a boolean.', { toolIndex: index });
+  }
+  if (tool.strict === false) {
+    return tool.parameters;
+  }
   try {
     return lowerStrictStructuredOutputSchema(tool.parameters);
   } catch (error) {
@@ -238,7 +244,7 @@ export function buildResponsesBody(
               ? {}
               : { description: tool.description }),
             parameters: toolParameters(tool, index),
-            strict: true,
+            strict: tool.strict ?? true,
           }),
         );
 

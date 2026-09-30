@@ -1,3 +1,22 @@
+## Explicit per-tool strictness (source; not yet published)
+
+ACME-0192 / [ADR-0057](adr/0057-explicit-per-tool-strictness.md) add
+`ModelFunctionTool.strict?: boolean` to the embedded runtime and public facade.
+Omission defaults to true; explicit false preserves the original tool schema
+on OpenAI Responses without strict lowering. Mixed-mode requests keep each
+tool independent and structured final output remains strict. Chat Completions
+now sends `function.strict` explicitly (previously omitted), with unchanged
+schema passthrough and no automatic fallback after provider rejection.
+
+Embedded terminal diagnostics record content-free `toolModes` by tool index;
+explicit modes participate in request hashes and idempotency. A008 resolves
+MCP-server defaults into per-tool values and must validate original-schema
+arguments before execution in either mode. It owns bounded correction attempts.
+The frozen HTTP v1/v2 protocols refuse the new field. No package version or
+registry artifact changes in this task; adoption requires a separately
+verified release of the affected public dependency closure. ACME-0191 remains
+[paused](paused/ACME-0191_publish-oneof-schema-lowering.md).
+
 ## Lossless `oneOf` lowering for external JSON Schema
 
 ACME-0190 expands the OpenAI strict structured-output lowerer only where it

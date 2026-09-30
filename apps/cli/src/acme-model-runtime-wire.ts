@@ -3,6 +3,7 @@ import type {
   ModelCapabilities,
   ModelExecutionDiagnostic,
   ModelExecutionPolicy,
+  ModelFunctionTool,
   ModelRequest,
   ModelSelection,
   NormalizedModelResponse,
@@ -34,7 +35,9 @@ export interface AcmeModelRuntimeRequest {
   readonly requestKey: string;
   readonly correlationId?: string;
   readonly model: ModelSelection;
-  readonly request: ModelRequest;
+  readonly request: Omit<ModelRequest, 'tools'> & {
+    readonly tools?: readonly Omit<ModelFunctionTool, 'strict'>[];
+  };
   readonly requiredCapabilities?: Partial<ModelCapabilities>;
   readonly policy?: Partial<ModelExecutionPolicy>;
 }
@@ -52,14 +55,14 @@ export interface AcmeModelRuntimeSucceededResult {
   readonly modelExecutionId: string;
   readonly replayed: boolean;
   readonly usage: NormalizedUsage;
-  readonly diagnostic: ModelExecutionDiagnostic;
+  readonly diagnostic: Omit<ModelExecutionDiagnostic, 'toolModes'>;
   readonly response: NormalizedModelResponse;
 }
 
 export interface AcmeModelRuntimeFailedResult {
   readonly status: 'failed' | 'cancelled' | 'conflicted';
   readonly modelExecutionId: string;
-  readonly diagnostic: ModelExecutionDiagnostic;
+  readonly diagnostic: Omit<ModelExecutionDiagnostic, 'toolModes'>;
 }
 
 export type AcmeModelRuntimeStreamEvent =

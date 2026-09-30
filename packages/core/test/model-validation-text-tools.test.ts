@@ -141,3 +141,47 @@ describe('model request text and tools', () => {
     expect(withoutCalls).not.toHaveProperty('toolCalls');
   });
 });
+
+it.each([true, false])(
+  'preserves explicit tool strict=%s without filling absent defaults',
+  (strict) => {
+    const tool = {
+      type: 'function' as const,
+      name: 'lookup',
+      parameters: { type: 'object' },
+    };
+    const request: ModelRequest = {
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Hi' }] }],
+      output: { mode: 'text' },
+      tools: [tool, { ...tool, strict }],
+    };
+    const validated = validateModelRequest(request);
+    expect(validated).toEqual(request);
+    expect(validated.tools?.[0]).not.toHaveProperty('strict');
+    expect(Object.isFrozen(validated.tools?.[1])).toBe(true);
+  },
+);
+
+it.each(['false', 0, null, {}, []])(
+  'rejects non-boolean tool strict=%j',
+  (strict) => {
+    expect(() =>
+      validateModelRequest({
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Hi' }] }],
+        output: { mode: 'text' },
+        tools: [
+          {
+            type: 'function',
+            name: 'lookup',
+            parameters: { type: 'object' },
+            strict,
+          },
+        ],
+      } as unknown as ModelRequest),
+    ).toThrowError(
+      expect.objectContaining({
+        data: expect.objectContaining({ code: 'INVALID_REQUEST' }),
+      }),
+    );
+  },
+);

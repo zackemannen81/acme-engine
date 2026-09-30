@@ -247,6 +247,10 @@ export function validateAcmeModelRuntimeRequest(
   let request;
   try {
     request = validateModelRequest(value.request as never);
+    // v1/v2 freeze the original tool shape; explicit modes are embedded-only.
+    if (request.tools?.some((tool) => tool.strict !== undefined)) {
+      throw new Error('Explicit tool strictness requires the embedded API.');
+    }
   } catch {
     throw new HostRefusal(
       400,
@@ -470,7 +474,18 @@ function encodeSse(
         modelExecutionId: result.modelExecutionId,
         replayed: result.replayed,
         usage: result.usage,
-        diagnostic: result.diagnostic,
+        diagnostic: {
+          kind: result.diagnostic.kind,
+          ...(result.diagnostic.delivery === undefined
+            ? {}
+            : { delivery: result.diagnostic.delivery }),
+          ...(result.diagnostic.httpStatus === undefined
+            ? {}
+            : { httpStatus: result.diagnostic.httpStatus }),
+          ...(result.diagnostic.finishReason === undefined
+            ? {}
+            : { finishReason: result.diagnostic.finishReason }),
+        },
         response: result.response,
       };
     }
@@ -481,7 +496,18 @@ function encodeSse(
       payload.result = {
         status: result.status,
         modelExecutionId: result.modelExecutionId,
-        diagnostic: result.diagnostic,
+        diagnostic: {
+          kind: result.diagnostic.kind,
+          ...(result.diagnostic.delivery === undefined
+            ? {}
+            : { delivery: result.diagnostic.delivery }),
+          ...(result.diagnostic.httpStatus === undefined
+            ? {}
+            : { httpStatus: result.diagnostic.httpStatus }),
+          ...(result.diagnostic.finishReason === undefined
+            ? {}
+            : { finishReason: result.diagnostic.finishReason }),
+        },
       };
     }
   }

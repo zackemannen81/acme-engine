@@ -1,5 +1,45 @@
 # System Documentation
 
+## Embedded function-tool schema enforcement
+
+[ADR-0057](adr/0057-explicit-per-tool-strictness.md) adds the optional boolean
+`ModelFunctionTool.strict`, also exported through the model-runtime/facade
+TypeScript surface. Each omitted mode defaults to true. OpenAI Responses
+lowers strict tool schemas through its existing strict subset; explicit false
+passes the original schema unchanged and sends `strict: false`. No failure
+silently selects another mode. Structured final output keeps its independent
+strict schema and lowering, including when every tool is non-strict.
+
+Chat Completions sends `function.strict: tool.strict ?? true` and passes
+schemas through as before. The new explicit true default changes its earlier
+provider-default behavior. Compatible endpoints must support the selected
+mode or fail visibly; ACME cannot attest to their enforcement.
+
+The caller resolves per-tool overrides over its MCP-server defaults over true.
+Before executing a complete call, it validates arguments against the original
+schema in both modes. Stream fragments are never executable arguments. ACME
+owns JSON parsing, provider execution and evidence, not MCP policy, JSON Schema
+argument validation or tool execution. A bounded correction loop, if wanted,
+belongs to the caller and submits validation feedback through a tool result
+and a new prepared request/new request key. Malformed JSON remains a terminal
+`MODEL_INVALID_RESPONSE`.
+
+Validation preserves omission, keeping historical request hashes stable.
+Explicit booleans are hashed and mode changes under an existing request key
+conflict. Embedded terminal `diagnostic.toolModes` records ordered
+`{ toolIndex, strict }` entries on successes, failures and conflicts without
+tool names, schemas or argument content. Stored terminal results retain those
+entries on replay; recovery from recorded calls derives them from the accepted
+request. Historical terminal results remain unchanged. These entries describe
+the requested mode, not proof of provider compliance.
+
+HTTP `acme-model-runtime/1` and `/2` continue to refuse explicit tool modes
+and keep their existing SSE diagnostic shape. The new contract is embedded-only.
+The source change is not an npm release. Publication must account for the core,
+both provider adapters, model-runtime and facade, and document Chat Completions
+migration to the explicit strict default.
+
+
 ## Chat Completions multimodal request mapping
 
 `@acme-engine/adapter-model-chat-completions` accepts caller-prepared image parts only on user messages. Mixed text/image user content is serialized in original order using Chat Completions `text` and `image_url` blocks; text-only requests remain strings for wire compatibility. Empty image references fail before provider dispatch. ACME does not fetch, classify or persist image data and does not change application cognition or memory semantics.

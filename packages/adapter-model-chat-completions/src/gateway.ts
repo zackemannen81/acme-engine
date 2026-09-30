@@ -407,6 +407,7 @@ export function buildChatCompletionsBody(
           ? {}
           : { description: tool.description }),
         parameters: tool.parameters,
+        strict: tool.strict ?? true,
       },
     }));
     body.tool_choice = 'auto';

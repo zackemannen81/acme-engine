@@ -337,6 +337,10 @@ describe('acme-model-runtime/1 loopback', () => {
                 { toolCalls?: Array<{ arguments?: unknown }> } | undefined
             )?.toolCalls?.[0]?.arguments,
           ).toEqual({ city: 'Paris' });
+          expect(terminal).toMatchObject({
+            result: { diagnostic: { kind: 'completed', finishReason: 'tool' } },
+          });
+          expect(terminal).not.toHaveProperty('result.diagnostic.toolModes');
         });
       },
     );

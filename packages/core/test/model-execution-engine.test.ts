@@ -686,3 +686,59 @@ describe('ModelExecutionEngine', () => {
     expect(source).not.toMatch(/StateEngine/);
   });
 });
+
+it('rebuilds tool mode diagnostics from accepted input after interruption without another provider call', async () => {
+  const repository = new FakeModelExecutionRepository();
+  let calls = 0;
+  const engine = createModelExecutionEngine({
+    clock: { now: () => now },
+    ids: ids(),
+    repository,
+    gateway: {
+      async capabilities() {
+        return { structuredOutput: true, tools: true, vision: false };
+      },
+      async generate() {
+        calls += 1;
+        return textResponse;
+      },
+    },
+  });
+  const request = {
+    requestKey: 'resume-tool-modes',
+    model: selection,
+    request: {
+      ...textRequest,
+      tools: [
+        {
+          type: 'function' as const,
+          name: 'private_name',
+          parameters: { type: 'object' },
+          strict: false,
+        },
+      ],
+    },
+  };
+  const first = await engine.execute(request);
+  const stored = repository.executions.get(first.modelExecutionId);
+  if (stored === undefined) throw new Error('Missing accepted execution.');
+  // Simulate a crash after completeModelCall but before markTerminal.
+  const interrupted = { ...stored };
+  delete interrupted.result;
+  delete interrupted.diagnostic;
+  repository.executions.set(first.modelExecutionId, {
+    ...interrupted,
+    status: 'calling-model',
+  });
+  const recovered = await engine.execute(request);
+  expect(recovered).toMatchObject({
+    status: 'succeeded',
+    replayed: true,
+    diagnostic: { toolModes: [{ toolIndex: 0, strict: false }] },
+  });
+  expect(JSON.stringify(recovered.diagnostic)).not.toContain('private_name');
+  expect(calls).toBe(1);
+  expect(repository.executions.get(first.modelExecutionId)?.diagnostic).toEqual(
+    recovered.diagnostic,
+  );
+});
